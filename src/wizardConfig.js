@@ -124,8 +124,8 @@ export const WIZARD_CONFIG = {
               { value: 'modern', label: { en: 'Modern (Minimal Gray)', zh: '现代（极简灰）' } },
             ],
           },
-          { key: 'enableToc', type: 'toggle', label: { en: 'Table of Contents', zh: '目录页' }, desc: { en: 'Add a TOC page and category dividers grouped by product category.', zh: '添加目录页和按品类分组的分类分隔页。' } },
-          { key: 'enableSummary', type: 'toggle', label: { en: 'Summary Page', zh: '汇总页' }, desc: { en: 'Add a summary slide at the end with style count, price range, and category distribution.', zh: '在末尾添加汇总页，展示款数、价格区间和品类分布。' } },
+          { key: 'enableToc', type: 'toggle', label: { en: 'Table of Contents', zh: '目录页' }, desc: { en: 'Add a TOC page and category dividers grouped by product category. Grouping uses AI category suggestions when AI is on, otherwise keyword matching.', zh: '添加目录页和按品类分组的分类分隔页。开启 AI 时分组采用 AI 品类建议，否则用关键词匹配。' } },
+          { key: 'enableSummary', type: 'toggle', label: { en: 'Summary Page', zh: '汇总页' }, desc: { en: 'AI summary: collection overview, category & composition distribution, and a per-style details table (every style listed, missing fields shown as N/A). Needs AI — ticking it switches AI on automatically.', zh: 'AI 汇总页：系列概述、品类/成分分布和逐款明细表（所有款式都会列出，缺失字段显示 N/A）。需要 AI，勾选本项会自动打开 AI。' } },
           { key: 'exportPdf', type: 'toggle', label: { en: 'Export PDF', zh: '导出 PDF' }, desc: { en: 'Also export a PDF version (requires LibreOffice or PowerPoint).', zh: '同时导出 PDF 版本（需安装 LibreOffice 或 PowerPoint）。' } },
         ],
       },
@@ -133,10 +133,12 @@ export const WIZARD_CONFIG = {
         title: { en: 'AI & Output', zh: 'AI 与输出' },
         desc: { en: 'Enable AI descriptions and set the output path.', zh: '启用 AI 描述并设置输出路径。' },
         fields: [
-          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI Descriptions', zh: 'AI 描述' }, desc: { en: 'Let AI write product descriptions.', zh: '让 AI 自动撰写产品描述。' } },
+          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。' } },
           {
             key: 'aiModeOverride', type: 'select', label: { en: 'AI Model', zh: 'AI 模型' },
-            showWhen: (p) => p.ollamaEnabled,
+            // Shown whenever any AI feature is on (descriptions OR summary page),
+            // because the summary page calls AI on its own.
+            showWhen: (p) => p.ollamaEnabled || p.enableSummary,
             default: 'local',
             options: [
               { value: 'local', label: { en: 'Local (Ollama)', zh: '本地 (Ollama)' } },
@@ -146,7 +148,7 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'llmModel', type: 'model-picker', label: { en: 'Model Name', zh: '模型名称' },
-            showWhen: (p) => p.ollamaEnabled && p.aiModeOverride,
+            showWhen: (p) => (p.ollamaEnabled || p.enableSummary) && p.aiModeOverride,
             hint: { en: 'Leave empty to use the default model from settings.', zh: '留空则使用设置中的默认模型。' },
           },
           { key: 'outputPath', type: 'save-picker', label: { en: 'Output File', zh: '输出文件' }, ext: 'pptx', hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },

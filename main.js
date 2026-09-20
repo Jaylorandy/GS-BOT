@@ -20132,6 +20132,26 @@ ipcMain.handle('test-cloud-native-web-search', async (_event, config = {}) => {
   }
 });
 
+// ============= 更新检查（手动触发） =============
+// 后台定时检查只在"有新版本"时弹窗；用户想知道"我是不是最新版"时没有入口。
+// 这个处理器始终给出明确结果（有新版本 / 已是最新 / 失败 / 开发模式）。
+ipcMain.handle('check-for-updates', async () => {
+  try {
+    return await require('./auto-updater').manualCheck();
+  } catch (error) {
+    console.warn('[auto-updater] check-for-updates failed:', error && error.message);
+    return { status: 'error', message: error && error.message ? error.message : String(error) };
+  }
+});
+
+ipcMain.handle('get-app-version', () => {
+  try {
+    return { version: app.getVersion(), packaged: app.isPackaged };
+  } catch (error) {
+    return { version: '', packaged: false };
+  }
+});
+
 // ============= Ollama Manager IPC Handlers =============
 
 const ollamaManager = require('./ollama-manager');

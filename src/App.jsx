@@ -94,6 +94,13 @@ function AppIcon({ name, className = '' }) {
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
         </svg>
       );
+    case 'update':
+      return (
+        <svg {...sharedProps}>
+          <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" />
+          <path d="M20.7 3.6v5h-5" />
+        </svg>
+      );
     case 'help':
       return (
         <svg {...sharedProps}>
@@ -265,6 +272,8 @@ function AppContent() {
   const [showHelp, setShowHelp] = useState(false);
   const [showTaskCenter, setShowTaskCenter] = useState(false);
   const [showLogDrawer, setShowLogDrawer] = useState(false);
+  const [appVersion, setAppVersion] = useState('');
+  const [updateBusy, setUpdateBusy] = useState(false);
   const [logs, setLogs] = useState([]);
   const [setupVariant, setSetupVariant] = useState('onboarding');
   const [setupConfig, setSetupConfig] = useState(null);
@@ -285,6 +294,47 @@ function AppContent() {
   const handleLog = useCallback((entry) => {
     setLogs(prev => [...prev.slice(-300), entry]);
   }, []);
+
+  // 当前版本号，用于工具栏「检查更新」按钮的提示文字
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve(window.electronAPI?.getAppVersion?.())
+      .then((info) => {
+        if (!cancelled && info?.version) setAppVersion(info.version);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  // 手动检查更新：结果弹窗由主进程负责，这里只记录日志 + 按钮忙碌态
+  const handleCheckUpdates = async () => {
+    const api = window.electronAPI;
+    if (!api?.checkForUpdates) {
+      handleLog({ time: new Date().toLocaleTimeString(), message: tx('Update check is unavailable in this build.', '当前版本不支持检查更新。'), type: 'warning' });
+      return;
+    }
+    setUpdateBusy(true);
+    try {
+      const result = await api.checkForUpdates();
+      const status = result?.status || 'error';
+      const messages = {
+        available: tx(`New version ${result.version} found — confirm in the dialog to download.`, `发现新版本 ${result.version}，请在弹窗中确认下载。`),
+        latest: tx(`Already on the latest version (v${result.version}).`, `已是最新版本（v${result.version}）。`),
+        dev: tx('Update check only works in the packaged build.', '开发版本不支持自动更新，请在安装版中使用。'),
+        busy: tx('An update check is already running.', '正在检查更新，请稍候。'),
+        error: tx('Update check failed. Please try again later.', '检查更新失败，请稍后重试。'),
+      };
+      handleLog({
+        time: new Date().toLocaleTimeString(),
+        message: messages[status] || messages.error,
+        type: status === 'error' ? 'error' : 'info',
+      });
+    } catch (error) {
+      handleLog({ time: new Date().toLocaleTimeString(), message: tx(`Update check failed: ${error.message}`, `检查更新失败：${error.message}`), type: 'error' });
+    } finally {
+      setUpdateBusy(false);
+    }
+  };
 
   const refreshTaskCenter = async () => {
     try {
@@ -574,6 +624,18 @@ function AppContent() {
                 <AppIcon name="setup" className="workspace-tool-icon" />
               </span>
               <span className="workspace-tool-label">{tx('Setup', '设置')}</span>
+            </button>
+            <button
+              type="button"
+              className="workspace-tool-button"
+              onClick={handleCheckUpdates}
+              disabled={updateBusy}
+              title={appVersion ? tx(`Check for updates (current v${appVersion})`, `检查更新（当前 v${appVersion}）`) : tx('Check for updates', '检查更新')}
+            >
+              <span className="workspace-tool-icon-shell" aria-hidden="true">
+                <AppIcon name="update" className="workspace-tool-icon" />
+              </span>
+              <span className="workspace-tool-label">{updateBusy ? tx('Checking…', '检查中…') : tx('Update', '更新')}</span>
             </button>
             <button type="button" className="workspace-tool-button" onClick={() => setShowHelp(true)}>
               <span className="workspace-tool-icon-shell" aria-hidden="true">

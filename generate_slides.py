@@ -820,6 +820,20 @@ def resolve_apparel_vision_settings():
     }
 
 
+def resolve_ai_call_target():
+    """统一 AI 调用目标：**始终使用当前 AI 模式下配置的模型与端点**。
+    - Ollama 本地：用 llmConfig 里配置的本地模型（装了什么就用什么，不强制 moondream/garment）
+    - Ollama 云端 / GLM 等云端：用对应模式的端点、模型与 API Key
+    端点/Key/provider 与款式描述生成同源（generate_ppt 已把三种模式归一到 LLM_*）
+    返回 dict(url, model, api_key, provider)"""
+    return {
+        'url': LLM_URL,
+        'model': LLM_MODEL or OLLAMA_MODEL or '',
+        'api_key': LLM_API_KEY,
+        'provider': LLM_PROVIDER,
+    }
+
+
 def load_image_as_base64(image_path, max_size=800):
     if not image_path or not os.path.exists(image_path):
         return None
@@ -1644,13 +1658,19 @@ def parse_txt_info(text, fallback_style_number, folder=None):
     return result
 
 
-def format_composition(comp):
-    """格式化面料信息 - 按分类换行显示"""
+def format_composition(comp, outer_shell_only=False):
+    """格式化面料信息 - 按分类换行显示。
+
+    outer_shell_only=True 时只返回大身面料成分（用于成分统计与分析）：
+    里布/填充不参与统计；大身为拼接面料时列出全部拼接面料。
+    """
     if not comp:
         return ''
+    if outer_shell_only:
+        return extract_outer_shell_composition(comp)
     if isinstance(comp, str):
         return parse_composition_string(comp)
-    
+
     parts = []
     if isinstance(comp, dict):
         if comp.get('outerShell'):
@@ -1665,9 +1685,237 @@ def format_composition(comp):
     return '\n'.join(parts)
 
 
-def ensure_label_mode_description(info, style_number, image_paths):
+# 大身/面料区块关键词。取大身成分时，遇到里布/填充即截断。
+OUTER_SHELL_KEYS = ('OUTER SHELL', 'MAIN FABRIC', 'SECONDARY FABRIC')
+LINING_KEYS = ('LINING', 'FILLING', 'PADDING', 'POCKET LINING', 'SHELL LINING')
+
+_COMP_PAIR_RE = re.compile(
+    r'(\d+(?:[.,]\d+)?)\s*%\s*([A-Za-z][A-Za-z \-/]*?)(?=\s*\d+(?:[.,]\d+)?\s*%|$)'
+)
+
+
+def _split_fabric_runs(pairs):
+    """把 (百分比, 纤维) 序列按「累计到 100%」切成多块面料。
+
+    大身拼接面料会出现多块，例如 70% cotton 30% polyester 100% polyester
+    → [[(70,cotton),(30,polyester)], [(100,polyester)]]。
+    """
+    runs, current, total = [], [], 0.0
+    for pct, fiber in pairs:
+        current.append((pct, fiber))
+        total += pct
+        if total >= 99.5:
+            runs.append(current)
+            current, total = [], 0.0
+    if current:
+        runs.append(current)
+    return runs
+
+
+def extract_outer_shell_composition(comp):
+    """只取大身（OUTER SHELL / MAIN FABRIC）的面料成分。
+
+    - 里布、填充、口袋布等一律不计入（里布一般不参与成分统计）
+    - 大身为拼接面料且各自有配比时，按块全部列出
+    返回如 '100% cotton' 或 '70% cotton, 30% polyester | 100% polyester'。
+    """
+    if not comp:
+        return ''
+
+    raw = ''
+    if isinstance(comp, dict):
+        outer = comp.get('outerShell')
+        if isinstance(outer, (list, tuple)):
+            # 大身本身是拼接面料：每一项即一块面料，全部保留
+            items = [' '.join(str(x).split()) for x in outer if str(x or '').strip()]
+            if len(items) > 1:
+                return ' | '.join(items)
+            outer = items[0] if items else ''
+        if outer and str(outer).strip():
+            raw = str(outer)
+        else:
+            # 抓取器常把整段塞进 other（大身+里布连在一起）
+            raw = str(comp.get('other') or '')
+    else:
+        raw = str(comp)
+
+    raw = ' '.join(raw.split())
+    if not raw or '%' not in raw:
+        # 没有百分比：不是成分文本（可能是误存进来的描述），不当作成分
+        return ''
+
+    # 只保留大身区块：定位 OUTER SHELL / MAIN FABRIC，遇到里布/填充即截断
+    upper = raw.upper()
+    starts = [upper.find(k) for k in OUTER_SHELL_KEYS]
+    starts = [i for i in starts if i >= 0]
+    if starts:
+        begin = min(starts)
+        cuts = [upper.find(k, begin) for k in LINING_KEYS]
+        cuts = [i for i in cuts if i > begin]
+        end = min(cuts) if cuts else len(raw)
+        segment = raw[begin:end]
+        # 去掉区块名本身
+        for key in OUTER_SHELL_KEYS:
+            idx = segment.upper().find(key)
+            if idx >= 0:
+                segment = segment[:idx] + segment[idx + len(key):]
+                break
+    else:
+        # 没有部位标注（如 "Composition: 100% linen"）→ 直接引用原文
+        segment = re.sub(r'(?i)^\s*(composition|fabric composition|material)\s*:?\s*', '', raw).strip()
+        cuts = [segment.upper().find(k) for k in LINING_KEYS]
+        cuts = [i for i in cuts if i >= 0]
+        if cuts:
+            segment = segment[:min(cuts)].strip(' ,;-')
+        # 直接引用，不做重新拼接；但排除误存进来的整段描述（长句且无百分比）
+        if not segment:
+            return ''
+        if '%' not in segment and len(segment) > 60:
+            return ''
+        return segment
+
+    pairs = []
+    for pct, fiber in _COMP_PAIR_RE.findall(segment):
+        fiber = ' '.join(fiber.split()).strip(' ,-/')
+        if not fiber:
+            continue
+        pct = pct.replace(',', '.')
+        try:
+            pct_val = float(pct)
+        except ValueError:
+            continue
+        # 去掉尾部空白，避免 "100% cotton " 这类残渣
+        pairs.append((pct_val, fiber))
+
+    if not pairs:
+        return ''
+
+    runs = _split_fabric_runs(pairs)
+    fabrics = []
+    for run in runs:
+        parts = []
+        for pct_val, fiber in run:
+            pct_text = f"{pct_val:g}"
+            parts.append(f"{pct_text}% {fiber}")
+        fabrics.append(', '.join(parts))
+    return ' | '.join(fabrics)
+
+
+def _ai_missing_fields(info, settings):
+    """列出「已勾选但当前为空」的字段 —— 仅这些字段才需要 AI 补全。
+
+    已有值一律保留（不重新生成、不覆盖）。
+    ⚠️ AI 只允许编写这三项：款式描述 / 名称 / 颜色。
+      成分、门幅、克重、面料代码、款号属规格数据，视觉识别不可靠，
+      宁可留空也绝不臆造 —— 不得加入本函数。
+    """
+    settings = settings or {}
+    missing = []
+    if settings.get('includeName', True) and not str(info.get('name') or '').strip():
+        missing.append('name')
+    if settings.get('includeDescription', True) and not str(info.get('description') or '').strip():
+        missing.append('description')
+    if not str(info.get('colorRef') or info.get('colorName') or '').strip():
+        missing.append('color')
+    return missing
+
+
+def _apply_ai_field_fill(info, llm_result, missing_fields):
+    """把 AI 结果写回缺失字段。
+
+    双重保险：① 只写 missing_fields 里列出的字段；② 且该字段此刻仍为空。
+    即便调用方传错清单，已有数据也不会被 AI 覆盖。
+    """
+    filled = []
+    data = llm_result or {}
+    if 'name' in missing_fields and not str(info.get('name') or '').strip():
+        value = str(data.get('name') or '').strip()
+        if value:
+            info['name'] = value
+            filled.append('name')
+    if 'description' in missing_fields and not str(info.get('description') or '').strip():
+        value = str(data.get('description') or '').strip()
+        if value:
+            info['description'] = value
+            filled.append('description')
+    if 'color' in missing_fields and not str(info.get('colorRef') or info.get('colorName') or '').strip():
+        value = str(data.get('color') or data.get('colorRef') or '').strip()
+        if value:
+            info['colorRef'] = value
+            filled.append('color')
+    return filled
+
+
+# 幻灯片上描述可用的宽度权重（CJK 字符按 2 计）。超过就不要硬塞，交给 AI 精简。
+AI_DESC_MAX_WEIGHT = 300
+
+
+def _text_weight(text):
+    """估算文本宽度权重：CJK 字符按 2 计，其余按 1 计。"""
+    return sum(2 if ord(ch) > 0x2E80 else 1 for ch in str(text or ''))
+
+
+def _ai_long_description(info, settings):
+    """已勾选「描述」、且已有描述超出幻灯片容量 → 返回该描述，需要 AI 精简。"""
+    settings = settings or {}
+    if not settings.get('includeDescription', True):
+        return ''
+    existing = str(info.get('description') or '').strip()
+    if not existing:
+        return ''  # 空描述走「补全」路径，不是精简
+    if _text_weight(existing) <= AI_DESC_MAX_WEIGHT:
+        return ''
+    return existing
+
+
+def _condense_description(description, style_number=''):
+    """用同一个 AI 模型精简过长描述（纯文本调用，不需要图片）。"""
+    try:
+        target = resolve_ai_call_target()
+        client = LLMClient(target['url'], target['model'], target['api_key'], target['provider'])
+        prompt = (
+            "You are a fashion copy editor. Rewrite the garment description so it fits on a product slide.\n"
+            f"- Hard limit: {AI_DESC_MAX_WEIGHT} characters, counting each CJK character as 2.\n"
+            "- Keep the garment type, fit, fabric/material and notable details.\n"
+            "- Drop marketing filler, repetition and duplicated wording.\n"
+            "- Write in the SAME language as the input.\n"
+            "- No headings, no bullet points, no quotes.\n"
+            'Return ONLY JSON: {"description": "<shortened text>"}\n\n'
+            f"Style number: {style_number}\n"
+            f"Description:\n{description}"
+        )
+        result = client.call(prompt, 120)
+        if not (result or {}).get('success'):
+            print(f"  ⚠️ AI condense failed: {(result or {}).get('error', 'unknown error')}")
+            return ''
+        return str(((result or {}).get('data') or {}).get('description') or '').strip()
+    except Exception as e:
+        print(f"  ⚠️ AI condense error: {e}")
+        return ''
+
+
+def _apply_ai_condense(info, settings, style_number):
+    """过长描述 → AI 精简。返回是否改写成功。"""
+    long_desc = _ai_long_description(info, settings)
+    if not long_desc:
+        return False
+    print("  🤖 AI condensing an over-long description...")
+    shortened = _condense_description(long_desc, style_number)
+    if shortened and _text_weight(shortened) < _text_weight(long_desc):
+        before, after = _text_weight(long_desc), _text_weight(shortened)
+        info['description'] = shortened
+        print(f"  ✓ AI condensed description ({before} → {after})")
+        return True
+    print("  ⚠️ AI condense unavailable, keeping the original description")
+    return False
+
+
+def ensure_label_mode_description(info, style_number, image_paths, settings=None):
     """标签模式下按需基于图片生成描述。"""
-    if info.get('description'):
+    missing_fields = _ai_missing_fields(info, settings)
+    # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
+    _apply_ai_condense(info, settings, style_number)
+    if not missing_fields:
         return info
 
     vision_image_path = image_paths.get('vision')
@@ -1685,24 +1933,25 @@ def ensure_label_mode_description(info, style_number, image_paths):
     if info.get('labelOcrText'):
         context_parts.append(f"Label OCR:\n{info['labelOcrText']}")
 
-    print("  🤖 Generating description from garment image...")
+    print(f"  🤖 AI filling missing fields {missing_fields} from garment image...")
     llm_result = parse_with_apparel_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
     if not llm_result:
         llm_result = parse_with_llm('\n'.join(context_parts), info.get('styleNumber') or style_number, 'Unknown', image_path=vision_image_path)
-    if llm_result and llm_result.get('description'):
-        info['description'] = llm_result['description']
-        if llm_result.get('name') and not info.get('name'):
-            info['name'] = llm_result['name']
-        print("  ✓ AI description generated")
+    filled = _apply_ai_field_fill(info, llm_result, missing_fields)
+    if filled:
+        print(f"  ✓ AI filled: {', '.join(filled)}")
     else:
-        print("  ⚠️ AI description unavailable")
+        print("  ⚠️ AI returned nothing usable")
 
     return info
 
 
-def ensure_style_only_mode_description(info, style_number, image_paths):
+def ensure_style_only_mode_description(info, style_number, image_paths, settings=None):
     """仅款式图片模式下按需基于图片生成描述。"""
-    if info.get('description'):
+    missing_fields = _ai_missing_fields(info, settings)
+    # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
+    _apply_ai_condense(info, settings, style_number)
+    if not missing_fields:
         return info
 
     vision_image_path = image_paths.get('vision')
@@ -1717,24 +1966,25 @@ def ensure_style_only_mode_description(info, style_number, image_paths):
     if info.get('composition'):
         context_parts.append(f"Composition: {format_composition(info.get('composition'))}")
 
-    print("  🤖 Generating description from style images...")
+    print(f"  🤖 AI filling missing fields {missing_fields} from style images...")
     llm_result = parse_with_apparel_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
     if not llm_result:
         llm_result = parse_with_llm('\n'.join(context_parts), info.get('styleNumber') or style_number, 'Unknown', image_path=vision_image_path)
-    if llm_result and llm_result.get('description'):
-        info['description'] = llm_result['description']
-        if llm_result.get('name') and not info.get('name'):
-            info['name'] = llm_result['name']
-        print("  ✓ AI description generated")
+    filled = _apply_ai_field_fill(info, llm_result, missing_fields)
+    if filled:
+        print(f"  ✓ AI filled: {', '.join(filled)}")
     else:
-        print("  ⚠️ AI description unavailable")
+        print("  ⚠️ AI returned nothing usable")
 
     return info
 
 
-def ensure_document_mode_description(info, style_number, image_paths):
+def ensure_document_mode_description(info, style_number, image_paths, settings=None):
     """文档模式下按需基于图片补齐描述。"""
-    if info.get('description'):
+    missing_fields = _ai_missing_fields(info, settings)
+    # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
+    _apply_ai_condense(info, settings, style_number)
+    if not missing_fields:
         return info
 
     vision_image_path = image_paths.get('vision')
@@ -1755,33 +2005,27 @@ def ensure_document_mode_description(info, style_number, image_paths):
     if comp_text:
         context_parts.append(f"Composition: {comp_text}")
 
-    print("  🤖 Generating description from product image...")
+    print(f"  🤖 AI filling missing fields {missing_fields} from product image...")
     llm_result = parse_with_apparel_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
     if not llm_result:
         llm_result = parse_with_llm('\n'.join(context_parts), info.get('styleNumber') or style_number, 'Unknown', image_path=vision_image_path)
-    if llm_result:
-        if llm_result.get('description'):
-            info['description'] = llm_result['description']
-        if llm_result.get('name') and not info.get('name'):
-            info['name'] = llm_result['name']
-        if llm_result.get('color') and not info.get('colorRef'):
-            info['colorRef'] = llm_result['color']
-        if llm_result.get('composition') and not info.get('composition'):
-            info['composition'] = llm_result['composition']
-
-        if info.get('description'):
-            print("  ✓ AI description generated")
-        else:
-            print("  ⚠️ AI description unavailable")
+    # 只回填 描述/名称/颜色 —— 成分等规格字段不写（见 _ai_missing_fields 说明）
+    filled = _apply_ai_field_fill(info, llm_result, missing_fields)
+    if filled:
+        print(f"  ✓ AI filled: {', '.join(filled)}")
     else:
-        print("  ⚠️ AI description unavailable")
+        print("  ⚠️ AI returned nothing usable")
 
     return info
 
 
-def ensure_fabric_mode_description(info, style_number, image_paths):
+def ensure_fabric_mode_description(info, style_number, image_paths, settings=None):
     """面料模式下按需基于面料图生成描述。"""
-    if info.get('description'):
+    settings = settings or {}
+    # 已有描述但太长 → 先精简
+    _apply_ai_condense(info, settings, style_number)
+    # 描述未勾选 / 已有描述 → 不需要补全
+    if info.get('description') or not settings.get('includeDescription', True):
         return info
 
     vision_image_path = image_paths.get('vision') or image_paths.get('fabric')
@@ -2461,7 +2705,68 @@ def add_category_divider(prs, category_name, category_index, total_categories, c
     p3.font.color.rgb = ACTIVE_THEME['label_color']
 
 
-def add_summary_slide(prs, styles, brand='BRAND'):
+def generate_ai_collection_overview(styles):
+    """让 LLM 基于汇总统计数据生成一段简短的系列概述。
+    返回纯文本（1-2 句）或 None（失败时静默降级为仅统计）。"""
+    try:
+        cats = {}
+        comps = {}
+        price_pairs = []
+        names = []
+        for sn, folder, info in styles:
+            cat = ' '.join(str(info.get('category', '') or info.get('productGroup', '') or '').split()) or 'Uncategorized'
+            cats[cat] = cats.get(cat, 0) + 1
+            # 成分统计只算大身（里布/填充不计），拼接面料全部列出
+            comp = extract_outer_shell_composition(info.get('composition'))
+            if comp:
+                comps[comp] = comps.get(comp, 0) + 1
+            pv = str(info.get('price', '') or '').strip()
+            if pv:
+                pn = extract_price_sort_value(pv)
+                if pn != float('inf'):
+                    price_pairs.append((pn, pv))
+            nm = str(info.get('name', '') or '').strip()
+            if nm:
+                names.append(nm)
+
+        price_pairs.sort(key=lambda t: t[0])
+        digest = {
+            'total_styles': len(styles),
+            'categories': cats,
+            'top_compositions': [c for c, _ in sorted(comps.items(), key=lambda x: -x[1])[:5]],
+            'price_range': [price_pairs[0][1], price_pairs[-1][1]] if len(price_pairs) >= 2 else (price_pairs[0][1] if price_pairs else None),
+            'style_names': names[:20],
+        }
+        prompt = f"""You are a fashion collection analyst. Based on the following collection data, write a concise overview of this collection in English.
+
+Data: {json.dumps(digest, ensure_ascii=False)}
+
+Return ONLY JSON: {{"overview": "<text>"}}
+
+Rules:
+- Maximum 2 sentences, about 30-45 words total.
+- Mention style count, dominant categories, key materials, and price positioning.
+- Plain text only inside the string: no markdown, no bullet points."""
+        target = resolve_ai_call_target()
+        client = LLMClient(target['url'], target['model'], target['api_key'], target['provider'])
+        result = client.call(prompt, LLM_TIMEOUT)
+        if not result.get('success'):
+            print(f"  AI overview error: {result.get('error')}")
+            return None
+        data = result.get('data')
+        if not isinstance(data, dict):
+            return None
+        text = ' '.join(str(data.get('overview', '') or '').split())
+        # 截断到约 3 行 9pt 的长度，避免溢出
+        if len(text) > 340:
+            text = text[:339].rsplit(' ', 1)[0] + '…'
+        return text or None
+    except Exception as e:
+        print(f"  AI overview failed: {e}")
+        return None
+
+
+def add_summary_slide(prs, styles, brand='BRAND', ai_overview=None):
     """数据汇总页"""
     global ACTIVE_THEME
     slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -2488,29 +2793,68 @@ def add_summary_slide(prs, styles, brand='BRAND'):
     ln.fill.fore_color.rgb = ACTIVE_THEME['cover_bg']
     ln.line.fill.background()
 
-    # 收集统计数据
+    # ── 工具：文本框统一可控（不换行不溢出 / 截断加省略号 / 按长度缩字号）──
+    def _ellipsis(s, limit):
+        s = str(s).strip()
+        return s if len(s) <= limit else s[:max(1, limit - 1)] + '…'
+
+    def _fit_size(text, base, width_in):
+        """按文本长度自适应缩小字号（Helvetica 数字/大写约 0.62em，按 92% 可用宽度保守收缩）"""
+        text = str(text)
+        if not text:
+            return base
+        size = base
+        per_char = 0.062 * size / 9.0
+        limit = width_in * 0.92
+        while len(text) * per_char > limit and size > 8:
+            size -= 1
+            per_char = 0.062 * size / 9.0
+        return size
+
+    def _add_text(x, y, w, h, text, size, color, bold=False,
+                  align=PP_ALIGN.LEFT, wrap=True, ellipsis=None, target=None):
+        box = (target or slide).shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+        tf_ = box.text_frame
+        tf_.word_wrap = wrap
+        tf_.margin_left = Emu(0)
+        tf_.margin_right = Emu(0)
+        tf_.margin_top = Emu(0)
+        tf_.margin_bottom = Emu(0)
+        tf_.text = _ellipsis(text, ellipsis) if ellipsis else str(text)
+        p_ = tf_.paragraphs[0]
+        p_.font.name = FONT_NAME
+        p_.font.size = Pt(size)
+        p_.font.bold = bold
+        p_.font.color.rgb = color
+        p_.alignment = align
+        return box
+
+    # ── 收集统计数据 ──
     total = len(styles)
-    prices = []
+    prices = []          # [(排序值, 原始文本)]
     categories = {}
     compositions = {}
 
     for sn, folder, info in styles:
-        # 价格
-        price_val = info.get('price', '')
-        price_num = extract_price_sort_value(price_val)
-        if price_num != float('inf'):
-            prices.append(price_val.strip())
+        # 价格（记录数值用于排序，展示保留原文本）
+        price_val = str(info.get('price', '') or '').strip()
+        if price_val:
+            price_num = extract_price_sort_value(price_val)
+            if price_num != float('inf'):
+                prices.append((price_num, price_val))
 
-        # 品类
-        cat = info.get('category', '') or info.get('productGroup', '') or 'Other'
-        cat = str(cat).strip() or 'Other'
+        # 品类（压缩换行/连续空白，避免标签多行溢出互相覆盖）
+        cat = info.get('category', '') or info.get('productGroup', '') or 'Uncategorized'
+        cat = ' '.join(str(cat).split()) or 'Uncategorized'
         categories[cat] = categories.get(cat, 0) + 1
 
-        # 成分
-        comp = info.get('composition', '')
+        # 成分：只取大身面料（里布/填充不计入统计），拼接面料全部列出
+        comp = extract_outer_shell_composition(info.get('composition'))
         if comp:
-            comp_str = str(comp).strip()
-            compositions[comp_str] = compositions.get(comp_str, 0) + 1
+            compositions[comp] = compositions.get(comp, 0) + 1
+
+    prices.sort(key=lambda t: t[0])
+    price_texts = [raw for _, raw in prices]
 
     # ── 统计卡片 ──
     card_y = 1.7
@@ -2523,11 +2867,11 @@ def add_summary_slide(prs, styles, brand='BRAND'):
     cards.append(('Total Styles', str(total), ACTIVE_THEME['brand_color']))
     # 品类数
     cards.append(('Categories', str(len(categories)), ACTIVE_THEME['cover_bg']))
-    # 价格区间
-    if len(prices) >= 2:
-        cards.append(('Price Range', f"{prices[0]} ~ {prices[-1]}", ACTIVE_THEME['label_color']))
-    elif len(prices) == 1:
-        cards.append(('Price', prices[0], ACTIVE_THEME['label_color']))
+    # 价格区间（已按数值排序）
+    if len(price_texts) >= 2:
+        cards.append(('Price Range', f"{price_texts[0]} ~ {price_texts[-1]}", ACTIVE_THEME['label_color']))
+    elif len(price_texts) == 1:
+        cards.append(('Price', price_texts[0], ACTIVE_THEME['label_color']))
     else:
         cards.append(('Price', 'N/A', ACTIVE_THEME['label_color']))
     # 成分种类
@@ -2544,57 +2888,34 @@ def add_summary_slide(prs, styles, brand='BRAND'):
         card.line.color.rgb = ACTIVE_THEME['divider']
         card.line.width = Pt(1)
 
-        # 数值
-        vb = slide.shapes.add_textbox(Inches(x), Inches(card_y + 0.12), Inches(card_w), Inches(0.5))
-        vf = vb.text_frame
-        vf.text = value
-        vp = vf.paragraphs[0]
-        vp.font.name = FONT_NAME
-        vp.font.size = Pt(22)
-        vp.font.bold = True
-        vp.font.color.rgb = color
-        vp.alignment = PP_ALIGN.CENTER
+        # 数值（单行 + 按长度缩字号，长价格区间不会超出卡片）
+        vsize = _fit_size(value, 22, card_w - 0.24)
+        _add_text(x + 0.12, card_y + 0.18, card_w - 0.24, 0.45, value, vsize,
+                  color, bold=True, align=PP_ALIGN.CENTER, wrap=False)
 
         # 标签
-        lb = slide.shapes.add_textbox(Inches(x), Inches(card_y + 0.6), Inches(card_w), Inches(0.3))
-        lf = lb.text_frame
-        lf.text = label
-        lp = lf.paragraphs[0]
-        lp.font.name = FONT_NAME
-        lp.font.size = Pt(10)
-        lp.font.color.rgb = ACTIVE_THEME['label_color']
-        lp.alignment = PP_ALIGN.CENTER
+        _add_text(x + 0.12, card_y + 0.66, card_w - 0.24, 0.28, label, 10,
+                  ACTIVE_THEME['label_color'], align=PP_ALIGN.CENTER, wrap=False)
 
-    # ── 品类分布 ──
+    # ── 品类分布（左列：x 1.0 ~ 7.38）──
     cat_y = 3.2
-    cat_title = slide.shapes.add_textbox(Inches(1.0), Inches(cat_y), Inches(5.5), Inches(0.35))
-    ct_f = cat_title.text_frame
-    ct_f.text = "Category Distribution"
-    ct_p = ct_f.paragraphs[0]
-    ct_p.font.name = FONT_NAME
-    ct_p.font.size = Pt(13)
-    ct_p.font.bold = True
-    ct_p.font.color.rgb = ACTIVE_THEME['page_text']
+    _add_text(1.0, cat_y, 5.5, 0.35, "Category Distribution", 13,
+              ACTIVE_THEME['page_text'], bold=True, wrap=False)
 
-    # 按数量排序
     sorted_cats = sorted(categories.items(), key=lambda x: -x[1])
     max_count = sorted_cats[0][1] if sorted_cats else 1
 
     bar_y = cat_y + 0.5
     bar_h = 0.22
-    bar_max_w = 4.5
+    cat_label_w = 2.0
+    bar_max_w = 3.6          # 收窄：3.1+3.6+计数框 <= 7.38，避免与右列(x>=7.5)重叠
 
-    for i, (cat_name, cat_count) in enumerate(sorted_cats[:8]):
+    for i, (cat_name, cat_count) in enumerate(sorted_cats[:6]):
         y = bar_y + i * 0.32
 
         # 类别标签
-        lb = slide.shapes.add_textbox(Inches(1.0), Inches(y), Inches(2.0), Inches(0.25))
-        lf = lb.text_frame
-        lf.text = cat_name[:20]
-        lp = lf.paragraphs[0]
-        lp.font.name = FONT_NAME
-        lp.font.size = Pt(9)
-        lp.font.color.rgb = ACTIVE_THEME['page_text']
+        _add_text(1.0, y, cat_label_w, 0.25, cat_name, 9,
+                  ACTIVE_THEME['page_text'], ellipsis=26)
 
         # 条形背景
         bg_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
@@ -2612,62 +2933,163 @@ def add_summary_slide(prs, styles, brand='BRAND'):
         fill_bar.line.fill.background()
 
         # 数值
-        nb = slide.shapes.add_textbox(Inches(3.1 + bar_max_w + 0.1), Inches(y), Inches(1.0), Inches(0.25))
-        nf = nb.text_frame
-        nf.text = str(cat_count)
-        np = nf.paragraphs[0]
-        np.font.name = FONT_NAME
-        np.font.size = Pt(9)
-        np.font.color.rgb = ACTIVE_THEME['label_color']
+        _add_text(3.1 + bar_max_w + 0.08, y, 0.6, 0.25, str(cat_count), 9,
+                  ACTIVE_THEME['label_color'], wrap=False)
 
-    # ── 成分分布（右侧）──
-    comp_title = slide.shapes.add_textbox(Inches(7.5), Inches(cat_y), Inches(5.0), Inches(0.35))
-    cpt_f = comp_title.text_frame
-    cpt_f.text = "Composition Breakdown"
-    cpt_p = cpt_f.paragraphs[0]
-    cpt_p.font.name = FONT_NAME
-    cpt_p.font.size = Pt(13)
-    cpt_p.font.bold = True
-    cpt_p.font.color.rgb = ACTIVE_THEME['page_text']
+    # ── 成分分布（右列：x 7.5 ~ 13.2，全部收进页面内）──
+    _add_text(7.5, cat_y, 5.0, 0.35, "Composition Breakdown", 13,
+              ACTIVE_THEME['page_text'], bold=True, wrap=False)
 
     sorted_comps = sorted(compositions.items(), key=lambda x: -x[1])
     max_comp = sorted_comps[0][1] if sorted_comps else 1
 
-    for i, (comp_name, comp_count) in enumerate(sorted_comps[:8]):
+    comp_label_w = 2.9       # 7.5+2.9=10.4，与条形(10.55)留缝
+    comp_bar_w = 1.7         # 10.55+1.7=12.25
+    comp_num_x = 12.33       # 12.33+0.85=13.18 < 13.33 页面宽度
+
+    for i, (comp_name, comp_count) in enumerate(sorted_comps[:6]):
         y = bar_y + i * 0.32
 
         # 成分标签
-        lb = slide.shapes.add_textbox(Inches(7.5), Inches(y), Inches(3.0), Inches(0.25))
-        lf = lb.text_frame
-        lf.text = comp_name[:30]
-        lp = lf.paragraphs[0]
-        lp.font.name = FONT_NAME
-        lp.font.size = Pt(9)
-        lp.font.color.rgb = ACTIVE_THEME['page_text']
+        _add_text(7.5, y, comp_label_w, 0.25, comp_name, 9,
+                  ACTIVE_THEME['page_text'], ellipsis=40)
 
         # 条形背景
-        comp_bar_w = 2.0
         bg_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
-            Inches(10.6), Inches(y), Inches(comp_bar_w), Inches(bar_h))
+            Inches(10.55), Inches(y), Inches(comp_bar_w), Inches(bar_h))
         bg_bar.fill.solid()
         bg_bar.fill.fore_color.rgb = ACTIVE_THEME['divider']
         bg_bar.line.fill.background()
 
         fill_w = Inches(comp_bar_w * comp_count / max_comp)
         fill_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE,
-            Inches(10.6), Inches(y), fill_w, Inches(bar_h))
+            Inches(10.55), Inches(y), fill_w, Inches(bar_h))
         fill_bar.fill.solid()
         fill_bar.fill.fore_color.rgb = ACTIVE_THEME['cover_accent']
         fill_bar.line.fill.background()
 
         # 数值
-        nb = slide.shapes.add_textbox(Inches(10.6 + comp_bar_w + 0.1), Inches(y), Inches(0.8), Inches(0.25))
-        nf = nb.text_frame
-        nf.text = str(comp_count)
-        np = nf.paragraphs[0]
-        np.font.name = FONT_NAME
-        np.font.size = Pt(9)
-        np.font.color.rgb = ACTIVE_THEME['label_color']
+        _add_text(comp_num_x, y, 0.85, 0.25, str(comp_count), 9,
+                  ACTIVE_THEME['label_color'], wrap=False)
+
+    # ── AI 系列概述（仅 AI 生成成功时显示）──
+    if ai_overview:
+        _add_text(1.0, 5.88, 11.3, 0.25, "AI OVERVIEW", 9,
+                  ACTIVE_THEME['brand_color'], bold=True, wrap=False)
+        _add_text(1.0, 6.16, 11.3, 0.62, ai_overview, 9,
+                  ACTIVE_THEME['page_text'], wrap=True)
+
+    # ── 明细分页：品类/成分超过概览页容量（6 条）时，追加整页明细 ──
+    def _distribution_pages(title_prefix, items, accent):
+        if not items:
+            return
+        rows_per_page = 14
+        total_pages = math.ceil(len(items) / rows_per_page)
+        max_c = items[0][1] if items else 1
+        for pg in range(total_pages):
+            page = prs.slides.add_slide(prs.slide_layouts[6])
+            bgp = page.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, PAGE_WIDTH, PAGE_HEIGHT)
+            bgp.fill.solid()
+            bgp.fill.fore_color.rgb = ACTIVE_THEME['summary_bg']
+            bgp.line.fill.background()
+            title = title_prefix if total_pages == 1 else f"{title_prefix} ({pg + 1}/{total_pages})"
+            tbp = page.shapes.add_textbox(Inches(1.0), Inches(0.5), Inches(11.3), Inches(0.6))
+            tfp = tbp.text_frame
+            tfp.word_wrap = False
+            tfp.text = title
+            pp = tfp.paragraphs[0]
+            pp.font.name = FONT_NAME
+            pp.font.size = Pt(22)
+            pp.font.bold = True
+            pp.font.color.rgb = ACTIVE_THEME['brand_color']
+            lnp = page.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(1.0), Inches(1.25), Inches(4.0), Pt(2))
+            lnp.fill.solid()
+            lnp.fill.fore_color.rgb = ACTIVE_THEME['cover_bg']
+            lnp.line.fill.background()
+            chunk = items[pg * rows_per_page:(pg + 1) * rows_per_page]
+            for i, (name, count) in enumerate(chunk):
+                y = 1.7 + i * 0.32
+                _add_text(1.0, y, 3.6, 0.25, name, 9,
+                          ACTIVE_THEME['page_text'], ellipsis=56, target=page)
+                bg_bar = page.shapes.add_shape(MSO_SHAPE.RECTANGLE,
+                    Inches(4.8), Inches(y), Inches(6.2), Inches(0.22))
+                bg_bar.fill.solid()
+                bg_bar.fill.fore_color.rgb = ACTIVE_THEME['divider']
+                bg_bar.line.fill.background()
+                fill_bar = page.shapes.add_shape(MSO_SHAPE.RECTANGLE,
+                    Inches(4.8), Inches(y), Inches(6.2 * count / max_c), Inches(0.22))
+                fill_bar.fill.solid()
+                fill_bar.fill.fore_color.rgb = accent
+                fill_bar.line.fill.background()
+                _add_text(11.15, y, 1.0, 0.25, str(count), 9,
+                          ACTIVE_THEME['label_color'], wrap=False, target=page)
+            add_logo_pinned(page, brand, {'size': 12, 'bold': True, 'color': 'brand'})
+
+    if len(sorted_cats) > 6:
+        _distribution_pages("Category Distribution", sorted_cats, ACTIVE_THEME['cover_bg'])
+    if len(sorted_comps) > 6:
+        _distribution_pages("Composition Breakdown", sorted_comps, ACTIVE_THEME['cover_accent'])
+
+    # ── 款式明细页：所有款式逐条展示，不漏一个（缺价格/成分用 N/A / — 占位）──
+    def _style_detail_pages():
+        rows = []
+        for sn, folder, info in styles:
+            price_val = str(info.get('price', '') or '').strip()
+            pn = extract_price_sort_value(price_val) if price_val else float('inf')
+            rows.append((
+                str(info.get('styleNumber', '') or sn or '').strip(),
+                ' '.join(str(info.get('name', '') or '').split()),
+                ' '.join(str(info.get('category', '') or info.get('productGroup', '') or 'Uncategorized').split()),
+                price_val if (price_val and pn != float('inf')) else 'N/A',
+                # 明细页同样只列大身面料成分
+                extract_outer_shell_composition(info.get('composition')),
+            ))
+        if not rows:
+            return
+        rows_per_page = 13
+        total_pages = math.ceil(len(rows) / rows_per_page)
+        headers = [('STYLE', 1.0, 1.6), ('NAME', 2.7, 2.8), ('CATEGORY', 5.6, 1.8),
+                   ('PRICE', 7.5, 1.5), ('COMPOSITION', 9.1, 3.9)]
+        for pg in range(total_pages):
+            page = prs.slides.add_slide(prs.slide_layouts[6])
+            bgp = page.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, PAGE_WIDTH, PAGE_HEIGHT)
+            bgp.fill.solid()
+            bgp.fill.fore_color.rgb = ACTIVE_THEME['summary_bg']
+            bgp.line.fill.background()
+            title = "Style Details" if total_pages == 1 else f"Style Details ({pg + 1}/{total_pages})"
+            tbp = page.shapes.add_textbox(Inches(1.0), Inches(0.5), Inches(11.3), Inches(0.6))
+            tfp = tbp.text_frame
+            tfp.word_wrap = False
+            tfp.text = title
+            pp = tfp.paragraphs[0]
+            pp.font.name = FONT_NAME
+            pp.font.size = Pt(22)
+            pp.font.bold = True
+            pp.font.color.rgb = ACTIVE_THEME['brand_color']
+            lnp = page.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(1.0), Inches(1.25), Inches(4.0), Pt(2))
+            lnp.fill.solid()
+            lnp.fill.fore_color.rgb = ACTIVE_THEME['cover_bg']
+            lnp.line.fill.background()
+            for label, hx, hw in headers:
+                _add_text(hx, 1.65, hw, 0.22, label, 8,
+                          ACTIVE_THEME['label_color'], bold=True, target=page)
+            chunk = rows[pg * rows_per_page:(pg + 1) * rows_per_page]
+            for i, (sty, nm, cat, prc, cmp_) in enumerate(chunk):
+                y = 2.0 + i * 0.32
+                _add_text(1.0, y, 1.6, 0.25, sty, 9,
+                          ACTIVE_THEME['page_text'], bold=True, target=page)
+                _add_text(2.7, y, 2.8, 0.25, nm, 9,
+                          ACTIVE_THEME['page_text'], ellipsis=36, target=page)
+                _add_text(5.6, y, 1.8, 0.25, cat, 9,
+                          ACTIVE_THEME['page_text'], ellipsis=22, target=page)
+                _add_text(7.5, y, 1.5, 0.25, prc, 9,
+                          ACTIVE_THEME['page_text'], ellipsis=18,
+                          align=PP_ALIGN.RIGHT, target=page)
+                _add_text(9.1, y, 3.9, 0.25, cmp_ or '—', 9,
+                          ACTIVE_THEME['page_text'], ellipsis=52, target=page)
+            add_logo_pinned(page, brand, {'size': 12, 'bold': True, 'color': 'brand'})
+
+    _style_detail_pages()
 
     # 底部品牌名
     add_logo_pinned(slide, brand, {'size': 12, 'bold': True, 'color': 'brand'})
@@ -2684,12 +3106,13 @@ def add_product_slide(prs, style_number, folder, settings, brand='BRAND', info=N
     gen_desc = settings.get('generateDescription', False)
     print(f"  [debug] generateDescription={gen_desc} source_mode={source_mode} LLM_ENABLED={LLM_ENABLED} ENABLE_VISION={ENABLE_VISION} has_desc={bool(info.get('description'))} vision_img={image_paths.get('vision')!r} exists={os.path.exists(image_paths.get('vision') or '')}")
     if gen_desc:
+        # AI 只补「勾选了但为空」的字段，并精简过长的描述；已有值一律保留。
         if source_mode == 'label-images':
-            info = ensure_label_mode_description(info, style_number, image_paths)
+            info = ensure_label_mode_description(info, style_number, image_paths, settings)
         elif source_mode == 'style-images-only':
-            info = ensure_style_only_mode_description(info, style_number, image_paths)
+            info = ensure_style_only_mode_description(info, style_number, image_paths, settings)
         else:
-            info = ensure_document_mode_description(info, style_number, image_paths)
+            info = ensure_document_mode_description(info, style_number, image_paths, settings)
 
     # ── 左侧文字（固定坐标，不会重叠）──
     if source_mode == 'label-images':
@@ -2837,46 +3260,81 @@ def add_product_slide(prs, style_number, folder, settings, brand='BRAND', info=N
 # ── 品类分类 ─────────────────────────────────────────
 
 CATEGORY_KEYWORDS = {
+    # ── 上装（细分到具体品类，不使用 Tops/Bottoms 这类笼统大类）──
+    'Overshirts': [
+        'overshirt', 'overshirts', 'shacket', 'shirt jacket',
+    ],
+    'Shirts': [
+        'shirt', 'shirts', 'blouse', 'blouses', 'tunic', 'poplin', 'oxford shirt',
+        'flannel shirt', 'linen shirt', 'dress shirt', 'camp collar',
+    ],
+    'T-Shirts': [
+        't-shirt', 't-shirts', 'tshirt', 'tee', 'tees', 'tee shirt',
+        'tank top', 'tank', 'cami', 'camisole', 'crop top',
+    ],
+    'Polos': [
+        'polo', 'polos', 'polo shirt', 'rugby shirt',
+    ],
+    'Sweatshirts & Hoodies': [
+        'sweatshirt', 'sweatshirts', 'hoodie', 'hoodies', 'sweat shirt', 'zip sweatshirt',
+    ],
+    'Knitwear': [
+        'sweater', 'sweaters', 'jumper', 'jumpers', 'pullover', 'cardigan', 'cardigans',
+        'knit', 'knitted', 'knitwear', 'turtleneck', 'mock neck',
+    ],
     'Jackets': [
-        'jacket', 'jassen', 'jacke', 'chaqueta', 'giacca',
-        'down', 'puffer', 'bomber', 'parka', 'anorak', 'windbreaker',
-        'softshell', 'hardshell', 'fleece', 'gilet', 'vest',
-        'raincoat', 'shell', 'functional jacket',
+        'jacket', 'jackets', 'jassen', 'jacke', 'chaqueta', 'giacca', 'blazer', 'blazers',
+        'bomber', 'biker', 'utility jacket', 'denim jacket', 'leather jacket',
+        'windbreaker', 'softshell', 'hardshell', 'anorak', 'down jacket', 'puffer',
+        'gilet', 'waistcoat', 'body warmer',
     ],
-    'Tops': [
-        't-shirt', 'tshirt', 't shirt', 'tee', 'polo', 'tank',
-        'sleeveless', 'henley', 'blouse', 'top',
+    'Coats': [
+        'coat', 'coats', 'parka', 'trench', 'overcoat', 'raincoat', 'camel coat',
+        'wool coat', 'padded coat',
     ],
-    'Sweaters & Knitwear': [
-        'sweater', 'pullover', 'jumper', 'cardigan', 'knit',
-        'hoodie', 'sweatshirt', 'fleece sweater', 'jumper',
+    # ── 下装（同样细分）──
+    'Jeans': [
+        'jeans', 'jean', 'denim pant', 'denim pants', 'denim',
     ],
-    'Pants': [
-        'pant', 'trouser', 'jogger', 'legging', 'tight',
-        'jean', 'chino', 'cargo', 'short', 'bermuda',
-        'hose', 'hosen', 'wanderhose', 'funktionshose',
-        'tracksuit', 'sweatpant',
+    'Trousers': [
+        'trouser', 'trousers', 'pant', 'pants', 'chino', 'chinos', 'cargo pant',
+        'cargo pants', 'jogger', 'joggers', 'legging', 'leggings', 'palazzo',
+        'hose', 'hosen', 'wanderhose', 'funktionshose', 'sweatpant', 'sweatpants',
     ],
-    'Dresses & Skirts': [
-        'dress', 'skirt', 'gown', 'frock', 'midi', 'maxi', 'mini',
+    'Shorts': [
+        'short', 'shorts', 'bermuda', 'bermudas', 'culotte',
     ],
-    'Underwear & Base': [
-        'underwear', 'boxer', 'brief', 'sock', 'bra', 'panty',
-        'base layer', 'functional underwear', 'funktionswasche',
-        'thermo', 'thermal',
+    'Skirts': [
+        'skirt', 'skirts', 'gonna',
+    ],
+    'Dresses': [
+        'dress', 'dresses', 'gown', 'frock',
+    ],
+    'Jumpsuits & Sets': [
+        'jumpsuit', 'jumpsuits', 'playsuit', 'romper', 'co-ord', 'tracksuit',
+    ],
+    # ── 其他 ──
+    'Underwear & Base Layers': [
+        'underwear', 'boxer', 'boxers', 'brief', 'briefs', 'sock', 'socks',
+        'bra', 'bras', 'panty', 'base layer', 'functional underwear',
+        'funktionswasche', 'thermo', 'thermal',
     ],
     'Accessories': [
-        'cap', 'hat', 'beanie', 'scarf', 'glove', 'mitten',
-        'belt', 'tie', 'bag', 'backpack', 'wallet',
-        'sunglass', 'watch', 'jewelry',
+        'cap', 'caps', 'hat', 'hats', 'beanie', 'scarf', 'scarves', 'glove', 'gloves',
+        'mitten', 'mittens', 'belt', 'belts', 'tie', 'ties', 'bag', 'bags',
+        'backpack', 'wallet', 'sunglasses', 'sunglass', 'watch', 'watches', 'jewelry',
     ],
     'Shoes': [
-        'shoe', 'sneaker', 'boot', 'sandal', 'slipper', 'loafer',
+        'shoe', 'shoes', 'sneaker', 'sneakers', 'boot', 'boots', 'sandal', 'sandals',
+        'slipper', 'slippers', 'loafer', 'loafers',
     ],
 }
 
 def classify_by_keyword(style_number, folder, info):
     """从文件夹名、款号和已有信息文本中通过关键词匹配品类。
+    匹配规则（避免误判）：
+    - 词边界匹配：'shirt' 不会命中 'overshirt' / 't-shirt' / 'sweatshirt'
+    - 长词优先：出现重叠时更具体的词胜出（shirt jacket > jacket）
     返回品类名或 None。"""
     candidates = []
     candidates.append(style_number or '')
@@ -2902,8 +3360,11 @@ def classify_by_keyword(style_number, folder, info):
     for cat, keywords in CATEGORY_KEYWORDS.items():
         score = 0
         for kw in keywords:
-            if kw in combined:
-                score += combined.count(kw)
+            # 词边界匹配（前后不能紧邻字母数字），并按词长加权：越具体权重越高
+            pattern = r'(?<![a-z0-9])' + re.escape(kw) + r'(?![a-z0-9])'
+            hits = len(re.findall(pattern, combined))
+            if hits:
+                score += hits * (len(kw) + 1)
         if score > best_score:
             best_score = score
             best_cat = cat
@@ -2918,6 +3379,9 @@ def classify_by_ai(style_number, folder, info, image_paths):
     if not LLM_ENABLED:
         return None
 
+    # 与"款式描述 AI 生成"使用同一套设置与模型
+    target = resolve_ai_call_target()
+
     # 选一张可用的图片
     image_path = ''
     if image_paths:
@@ -2928,7 +3392,11 @@ def classify_by_ai(style_number, folder, info, image_paths):
                     image_path = v
                     break
 
-    image_data = load_image_as_base64(image_path) if image_path and os.path.exists(image_path) else None
+    # 视觉识别需开启"视觉分析"（与描述生成门禁一致）；未开启则退回文本 AI 分类
+    if not ENABLE_VISION:
+        print("  [category] vision disabled — using text-based AI classification")
+    use_vision = bool(ENABLE_VISION and image_path and os.path.exists(image_path))
+    image_data = load_image_as_base64(image_path) if use_vision else None
 
     prompt = f"""You are a garment classification assistant. Look at this image and determine the garment category.
 Return ONLY a single JSON object: {{"category": "<category name>"}}
@@ -2939,24 +3407,32 @@ If the image is not a garment or unclear, return {{"category": ""}}.
 Style number: {style_number}
 """
     try:
+        result = None
         if image_data:
             result = call_llm_api_with_image(
                 prompt, image_data, 60,
                 {
-                    'url': LLM_URL,
-                    'model': LLM_MODEL,
-                    'api_key': LLM_API_KEY,
-                    'provider': LLM_PROVIDER,
+                    'url': target['url'],
+                    'model': target['model'],
+                    'api_key': target['api_key'],
+                    'provider': target['provider'],
                 },
             )
-        else:
-            result = call_llm_api(
+            if not (result or {}).get('success'):
+                # 视觉调用失败（模型不支持图片/端点问题）→ 退回文本分类
+                print("  [category] vision call failed — retrying with text classification")
+                result = None
+
+        if result is None:
+            text_prompt = (
                 f"Classify this garment into one of these categories: {', '.join(CATEGORY_KEYWORDS.keys())}. "
                 f"Style number: {style_number}. "
+                f"Name: {str(info.get('name', '') or '')[:120]}. "
                 f"Description: {str(info.get('description', ''))[:200]}. "
-                f"Return ONLY JSON: {{\"category\": \"<name>\"}}",
-                60,
+                f"Return ONLY JSON: {{\"category\": \"<name>\"}}"
             )
+            client = LLMClient(target['url'], target['model'], target['api_key'], target['provider'])
+            result = client.call(text_prompt, 60)
 
         if result.get('success'):
             data = result.get('data', {})
@@ -3088,7 +3564,50 @@ def convert_to_pdf(pptx_path):
         except Exception as e:
             print(f"PowerPoint COM not available: {e}")
 
-    print("PDF conversion skipped: no LibreOffice or PowerPoint found.")
+    # 3) 回退：PowerShell COM 自动化（无需 pywin32，Windows 自带 PowerShell）
+    #    依次尝试 PowerPoint.Application 与 WPS 的 KWPP.Application
+    if sys.platform == 'win32' and not os.path.isfile(pdf_path):
+        try:
+            print("Trying PowerShell COM automation (PowerPoint / WPS)...")
+            ps_script = r"""
+param([string]$PptxPath, [string]$PdfPath)
+$ErrorActionPreference = 'Stop'
+$progIds = @('PowerPoint.Application', 'KWPP.Application')
+foreach ($id in $progIds) {
+    try {
+        $app = New-Object -ComObject $id
+        try {
+            $pres = $app.Presentations.Open($PptxPath, -1, 0, 0)
+            $pres.SaveAs($PdfPath, 32)
+            $pres.Close()
+        } finally {
+            $app.Quit()
+        }
+        if (Test-Path -LiteralPath $PdfPath) { Write-Output ("OK:" + $id); exit 0 }
+    } catch {
+        Write-Output ("FAIL:" + $id + ":" + $_.Exception.Message)
+    }
+}
+exit 1
+"""
+            ps_path = os.path.join(os.environ.get('TEMP') or os.getcwd(), 'gsbot_pptx2pdf.ps1')
+            with open(ps_path, 'w', encoding='utf-8-sig') as f:
+                f.write(ps_script)
+            result = subprocess.run(
+                ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass',
+                 '-File', ps_path, '-PptxPath', pptx_path, '-PdfPath', pdf_path],
+                capture_output=True, text=True, timeout=180,
+            )
+            print(f"PowerShell COM result: {(result.stdout or '').strip()}")
+            if os.path.isfile(pdf_path):
+                print(f"PDF created: {pdf_path}")
+                return pdf_path
+            if (result.stderr or '').strip():
+                print(f"PowerShell COM stderr: {(result.stderr or '').strip()}")
+        except Exception as e:
+            print(f"PowerShell COM conversion error: {e}")
+
+    print("PDF conversion skipped: no LibreOffice, PowerPoint or WPS found.")
     return None
 
 
@@ -3235,6 +3754,9 @@ def generate_ppt(config):
 
         cat = ensure_category(sn, folder, info, image_paths)
         if cat:
+            # 写回 info，供汇总页等后续统计复用（否则汇总页品类会全部落到 Other）
+            if not str(info.get('category', '') or '').strip():
+                info['category'] = cat
             if cat not in category_groups:
                 category_groups[cat] = []
                 category_order.append(cat)
@@ -3286,7 +3808,7 @@ def generate_ppt(config):
                             'vision': info.get('visionImagePath') or info.get('fabricImagePath') or info.get('labelImagePath') or '',
                             'fabric': info.get('fabricImagePath') or info.get('labelImagePath') or '',
                         }
-                        pair[j] = (sn, folder, ensure_fabric_mode_description(info, sn, fabric_image_paths))
+                        pair[j] = (sn, folder, ensure_fabric_mode_description(info, sn, fabric_image_paths, settings))
                 add_fabric_pair_slide(prs, pair, settings, brand)
         else:
             for i, (sn, folder, info) in enumerate(styles):
@@ -3296,23 +3818,32 @@ def generate_ppt(config):
                         'vision': info.get('visionImagePath') or info.get('fabricImagePath') or info.get('labelImagePath') or '',
                         'fabric': info.get('fabricImagePath') or info.get('labelImagePath') or '',
                     }
-                    info = ensure_fabric_mode_description(info, sn, fabric_image_paths)
+                    info = ensure_fabric_mode_description(info, sn, fabric_image_paths, settings)
                 add_fabric_single_slide(prs, sn, folder, settings, brand, info=info)
     else:
         for i, (sn, folder, info) in enumerate(styles):
             print(f"\n[{i+1}/{len(styles)}] {sn}")
             add_product_slide(prs, sn, folder, settings, brand, info=info)
 
-    # 汇总页（需要有可统计的数据才生成）
+    # 汇总页（必须 AI 参与：未启用 AI 时不生成）
     if enable_summary:
-        has_price = any(extract_price_sort_value(info.get('price', '')) != float('inf') for _, _, info in styles)
-        has_category = any(str(info.get('category', '') or info.get('productGroup', '') or '').strip() for _, _, info in styles)
-        has_comp = any(str(info.get('composition', '') or '').strip() for _, _, info in styles)
-        if has_price or has_category or has_comp:
-            add_summary_slide(prs, styles, brand)
-            print("Added summary slide")
+        if not LLM_ENABLED:
+            print("Skipped summary slide: AI is required for the summary page. Enable AI (LLM) to include it.")
         else:
-            print("Skipped summary slide: no price/category/composition data found")
+            has_price = any(extract_price_sort_value(info.get('price', '')) != float('inf') for _, _, info in styles)
+            has_category = any(str(info.get('category', '') or info.get('productGroup', '') or '').strip() for _, _, info in styles)
+            has_comp = any(str(info.get('composition', '') or '').strip() for _, _, info in styles)
+            if has_price or has_category or has_comp:
+                print("Generating AI collection overview...")
+                ai_overview = generate_ai_collection_overview(styles)
+                if ai_overview:
+                    print(f"  AI overview: {ai_overview}")
+                else:
+                    print("  AI overview unavailable — summary will show statistics only")
+                add_summary_slide(prs, styles, brand, ai_overview=ai_overview)
+                print("Added summary slide")
+            else:
+                print("Skipped summary slide: no price/category/composition data found")
 
     # 保存
     print(f"\nSaving: {output}")

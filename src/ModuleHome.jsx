@@ -849,6 +849,19 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     runningRef.current = running;
   }, [running]);
 
+  // Shared wizard field-change handler.
+  // The summary page is AI-generated, so ticking it auto-enables the AI master
+  // switch. Without this the payload carried no llmConfig, the generator logged
+  // "LLM disabled" and silently skipped the summary — which is exactly what
+  // happened when only "Summary Page" had been ticked.
+  const handleFieldChange = useCallback((key, value) => {
+    setParams((prev) => {
+      const next = { ...prev, [key]: value };
+      if (key === 'enableSummary' && value) next.ollamaEnabled = true;
+      return next;
+    });
+  }, []);
+
   const visibleSteps = useMemo(() => {
     if (!config) return [];
     const steps = config.steps.filter(step => {
@@ -1115,15 +1128,22 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           sortBy: params.sortBy || 'styleNumber',
           fillMissingSlots: params.fillMissingSlots ?? true,
         };
-        if (params.ollamaEnabled) {
+        // AI is needed by AI descriptions AND by the summary page (its overview
+        // and category suggestions are AI-generated). Sending the LLM config for
+        // either one keeps `enableSummary` from being silently skipped.
+        if (params.ollamaEnabled || params.enableSummary) {
           const aiMode = params.aiModeOverride || 'local';
           const cfg = llmSettings || {};
           const effectiveMode = aiMode === 'cloud' ? 'cloud' : (aiMode === 'apiCloud' ? 'apiCloud' : 'local');
           const apiPreset = (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {};
           payload.config.ollamaEnabled = true;
           payload.config.aiModeOverride = aiMode;
+          // Only per-style description rewriting stays tied to the AI-description
+          // toggle — the summary page is its own switch and must not force it.
+          // Vision stays on for any AI feature: styles without a description are
+          // classified from their image.
           payload.config.enableVision = true;
-          payload.config.generateDescription = true;
+          payload.config.generateDescription = !!params.ollamaEnabled;
           payload.config.llmConfig = {
             mode: effectiveMode,
             baseUrl: effectiveMode === 'cloud'
@@ -1419,7 +1439,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
                         key={field.key}
                         field={field}
                         value={params[field.key]}
-                        onChange={(v) => setParams((prev) => ({ ...prev, [field.key]: v }))}
+                        onChange={(v) => handleFieldChange(field.key, v)}
                         t={t}
                         tx={tx}
                         accentRgb={accentRgb}
@@ -1458,7 +1478,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
                         key={field.key}
                         field={field}
                         value={params[field.key]}
-                        onChange={(v) => setParams((prev) => ({ ...prev, [field.key]: v }))}
+                        onChange={(v) => handleFieldChange(field.key, v)}
                         t={t}
                         tx={tx}
                         accentRgb={accentRgb}

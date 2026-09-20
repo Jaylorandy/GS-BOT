@@ -73,6 +73,72 @@ function checkNow() {
   });
 }
 
+// ── 手动"检查更新"──────────────────────────────────────────────
+// The background timer only surfaces a dialog when an update exists, so a user
+// who wants to know "am I on the latest build?" had no button to press. This
+// path always answers, including "already up to date".
+let manualPending = null; // { resolve, timer }
+
+function settleManual(result) {
+  if (!manualPending) return;
+  clearTimeout(manualPending.timer);
+  const { resolve } = manualPending;
+  manualPending = null;
+  resolve(result);
+}
+
+async function manualCheck() {
+  const current = app.getVersion();
+  if (!app.isPackaged) {
+    await dialog.showMessageBox({
+      type: 'info',
+      title: '检查更新',
+      message: '当前是开发版本',
+      detail: '自动更新只在安装版中生效，请使用安装包版本。',
+      buttons: ['好的'],
+      noLink: true,
+    });
+    return { status: 'dev', version: current };
+  }
+  if (manualPending) {
+    return { status: 'busy', version: current };
+  }
+
+  console.log('[auto-updater] manual check requested');
+  const result = await new Promise((resolve) => {
+    manualPending = {
+      resolve,
+      timer: setTimeout(() => { settleManual({ status: 'error', version: current }); }, 30000),
+    };
+    autoUpdater.checkForUpdates().catch((err) => {
+      console.warn('[auto-updater] manual checkForUpdates failed:', err.message);
+      settleManual({ status: 'error', version: current, message: err.message });
+    });
+  });
+
+  if (result.status === 'latest') {
+    await dialog.showMessageBox({
+      type: 'info',
+      title: '检查更新',
+      message: `已是最新版本（v${current}）`,
+      detail: '当前没有可用的更新。',
+      buttons: ['好的'],
+      noLink: true,
+    });
+  } else if (result.status === 'error') {
+    await dialog.showMessageBox({
+      type: 'warning',
+      title: '检查更新失败',
+      message: '无法连接到更新服务器',
+      detail: '请检查网络后重试，或到 GitHub Releases 页面手动下载最新版本。',
+      buttons: ['好的'],
+      noLink: true,
+    });
+  }
+  // 'available' → the update-available handler already showed the download prompt.
+  return result;
+}
+
 function initAutoUpdater(options = {}) {
   if (!app.isPackaged) {
     console.log('[auto-updater] dev mode, skip');
@@ -86,8 +152,14 @@ function initAutoUpdater(options = {}) {
   autoUpdater.autoInstallOnAppQuit = true; // 选"稍后"的用户退出时自动安装
   autoUpdater.logger = console;
 
-  autoUpdater.on('update-available', (info) => { promptUpdateAvailable(info).catch(() => {}); });
-  autoUpdater.on('update-not-available', () => { sendToRenderer('update-not-available', {}); });
+  autoUpdater.on('update-available', (info) => {
+    promptUpdateAvailable(info).catch(() => {});
+    settleManual({ status: 'available', version: (info && info.version) || '', current: app.getVersion() });
+  });
+  autoUpdater.on('update-not-available', () => {
+    sendToRenderer('update-not-available', {});
+    settleManual({ status: 'latest', version: app.getVersion() });
+  });
   autoUpdater.on('download-progress', (p) => {
     sendToRenderer('update-download-progress', {
       percent: p && p.percent ? Math.round(p.percent) : 0,
@@ -102,4 +174,4 @@ function initAutoUpdater(options = {}) {
   setInterval(() => { checkNow(); }, CHECK_INTERVAL_MS);
 }
 
-module.exports = { initAutoUpdater, checkNow };
+module.exports = { initAutoUpdater, checkNow, manualCheck };

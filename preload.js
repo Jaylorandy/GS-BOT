@@ -139,6 +139,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   testApiCloudConnection: (config) => ipcRenderer.invoke('test-api-cloud-connection', config),
   listLLMModels: (options) => ipcRenderer.invoke('list-llm-models', options),
   getSystemStatus: () => ipcRenderer.invoke('get-system-status'),
+  // 手动检查更新（GitHub Releases）+ 当前版本号
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getAppVersion: () => ipcRenderer.invoke('get-app-version'),
   licenseGetStatus: () => ipcRenderer.invoke('license-get-status'),
   licenseActivate: (payload) => ipcRenderer.invoke('license-activate', payload),
   licenseClear: () => ipcRenderer.invoke('license-clear'),
