@@ -3,6 +3,8 @@ node_modules/
 dist/
 dist-ssr/
 release/
+# alternate electron-builder output (used when release/win-unpacked is file-locked)
+release-build/
 build-logs/
 tmp/
 .tmp/
