@@ -126,12 +126,7 @@
       "node_modules/is-arrayish/**/*",
       "node_modules/@img/**/*",
       "node_modules/regenerator-runtime/**/*",
-      "node_modules/**/*.{json,js}",
-      "!.trash-gsbot-old-git/**",
-      "!.broken-git-todelete/**",
-      "!.tmp*/**",
-      "!.tmp*",
-      "!.*.log"
+      "node_modules/**/*.{json,js}"
     ],
     "asar": true,
     "asarUnpack": [
@@ -229,11 +224,6 @@
           "from": "vendor/windows/label-detector",
           "to": "runtime/windows/label-detector"
         }
-      ],
-      "files": [
-        "!node_modules/onnxruntime-node/bin/napi-v3/darwin/**/*",
-        "!node_modules/onnxruntime-node/bin/napi-v3/linux/**/*",
-        "!node_modules/onnxruntime-node/bin/napi-v3/win32/arm64/**/*"
       ]
     },
     "nsis": {

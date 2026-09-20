@@ -51,6 +51,30 @@ exports.default = async function cleanWindowsAfterPack(context) {
   // Windows package ships ONLY the win32-x64 onnxruntime binary (build.files
   // excludes darwin/linux/win32-arm64, saving ~148MB). Fail loudly if the
   // exclusion ever cuts too much and the required binary disappears.
+  // Slim cross-platform onnxruntime binaries: Windows package only needs
+  // win32/x64. Do it here (afterPack) rather than via files globs — negative
+  // glob patterns in build.files/win.files break the whitelist semantics and
+  // cause electron-builder to pack the entire project directory (~2.3GB asar).
+  const ortBin = path.join(
+    context.appOutDir, 'resources', 'app.asar.unpacked', 'node_modules',
+    'onnxruntime-node', 'bin', 'napi-v3',
+  );
+  if (fs.existsSync(ortBin)) {
+    const stalePlatforms = ['darwin', 'linux'];
+    for (const plat of stalePlatforms) {
+      const p2 = path.join(ortBin, plat);
+      if (fs.existsSync(p2)) {
+        fs.rmSync(p2, { recursive: true, force: true, maxRetries: 3 });
+        console.log(`[afterPack] Slimmed onnxruntime platform ${plat}/`);
+      }
+    }
+    const arm64 = path.join(ortBin, 'win32', 'arm64');
+    if (fs.existsSync(arm64)) {
+      fs.rmSync(arm64, { recursive: true, force: true, maxRetries: 3 });
+      console.log('[afterPack] Slimmed onnxruntime platform win32/arm64/');
+    }
+  }
+
   const ortX64 = path.join(
     context.appOutDir, 'resources', 'app.asar.unpacked', 'node_modules',
     'onnxruntime-node', 'bin', 'napi-v3', 'win32', 'x64',
