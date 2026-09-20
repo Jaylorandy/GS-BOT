@@ -45,3 +45,6 @@ __pycache__/
 
 # ── secrets (license signing key never goes to public repo) ──
 license-keys/private.pem
+
+# ── corrupt .git pending deletion ──
+.broken-git-todelete/

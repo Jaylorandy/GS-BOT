@@ -1,7 +1,7 @@
 {
   "name": "zara-scraper-pro",
   "private": true,
-  "version": "2.0.1",
+  "version": "2.0.2",
   "main": "main.js",
   "description": "GS Bot - 本地服装净图、整理与工作流工具",
   "author": "Jaylor Andy",
@@ -224,6 +224,11 @@
           "from": "vendor/windows/label-detector",
           "to": "runtime/windows/label-detector"
         }
+      ],
+      "files": [
+        "!node_modules/onnxruntime-node/bin/napi-v3/darwin/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v3/linux/**/*",
+        "!node_modules/onnxruntime-node/bin/napi-v3/win32/arm64/**/*"
       ]
     },
     "nsis": {

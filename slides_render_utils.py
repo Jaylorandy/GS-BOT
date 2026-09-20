@@ -193,7 +193,9 @@ def add_text(slide, text, y_key, layout, left_margin, text_width, font_name, col
     """用固定布局添加文本，统一字体（所有段落）"""
     cfg = layout[y_key]
     txt = override_text if override_text is not None else text
-    color = color_map.get(cfg['color'])
+    # Unknown color keys must fall back to black instead of None — assigning
+    # None to font.color.rgb raises "assigned value must be type RGBColor".
+    color = color_map.get(cfg['color']) or color_map.get('black')
 
     box = slide.shapes.add_textbox(
         left_margin,
@@ -226,7 +228,9 @@ def add_custom_text(slide, text, cfg, font_name, color_map, default_left_margin,
     if not text:
         return None
 
-    color = color_map.get(cfg.get('color', 'black'))
+    # Unknown color keys must fall back to black instead of None — assigning
+    # None to font.color.rgb raises "assigned value must be type RGBColor".
+    color = color_map.get(cfg.get('color', 'black')) or color_map.get('black')
     x = cfg.get('x', default_left_margin)
     width = cfg.get('w', default_text_width)
 

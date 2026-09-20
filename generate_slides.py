@@ -1016,7 +1016,8 @@ def add_text(slide, text, y_key, override_text=None):
         LEFT_MARGIN,
         TEXT_WIDTH,
         FONT_NAME,
-        {'black': BLACK, 'gray': GRAY, 'white': WHITE, 'light_gray': LIGHT_GRAY},
+        {'black': BLACK, 'gray': GRAY, 'white': WHITE, 'light_gray': LIGHT_GRAY,
+         'brand': ACTIVE_THEME['brand_color']},
         override_text=override_text,
     )
 
@@ -1027,7 +1028,8 @@ def add_custom_text(slide, text, cfg):
         text,
         cfg,
         FONT_NAME,
-        {'black': BLACK, 'gray': GRAY, 'white': WHITE, 'light_gray': LIGHT_GRAY},
+        {'black': BLACK, 'gray': GRAY, 'white': WHITE, 'light_gray': LIGHT_GRAY,
+         'brand': ACTIVE_THEME['brand_color']},
         LEFT_MARGIN,
         TEXT_WIDTH,
     )
