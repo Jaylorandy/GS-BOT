@@ -17,9 +17,29 @@ function sendToRenderer(channel, payload) {
   }
 }
 
+// 更新状态统一走一个 channel：{ status, version?, percent?, message? }
+// status: 'available' | 'downloading' | 'downloaded' | 'latest' | 'error'
+// 之前是 4 个独立 channel，前端一个都没监听 —— 下载 480MB 期间界面毫无反馈。
+function sendUpdateStatus(payload) {
+  sendToRenderer('update-status', payload);
+}
+
+// Windows 任务栏进度条：用户在系统层面也能看到下载进度
+function setTaskbarProgress(percent) {
+  try {
+    const win = mainWindowRef || BrowserWindow.getAllWindows()[0];
+    if (win && !win.isDestroyed()) {
+      const value = typeof percent === 'number' && percent >= 0 ? Math.min(percent / 100, 1) : -1;
+      win.setProgressBar(value);
+    }
+  } catch (err) {
+    console.warn('[auto-updater] setProgressBar failed:', err.message);
+  }
+}
+
 async function promptUpdateAvailable(info) {
   const version = info && info.version ? info.version : '';
-  sendToRenderer('update-available', { version });
+  sendUpdateStatus({ status: 'available', version });
   const { response } = await dialog.showMessageBox({
     type: 'info',
     title: '发现新版本',
@@ -31,8 +51,13 @@ async function promptUpdateAvailable(info) {
     noLink: true,
   });
   if (response === 0) {
+    // 立刻进入下载态：让界面在第一个 progress 事件到达前就有反馈
+    sendUpdateStatus({ status: 'downloading', version, percent: 0 });
+    setTaskbarProgress(0);
     autoUpdater.downloadUpdate().catch((err) => {
       console.warn('[auto-updater] downloadUpdate failed:', err.message);
+      setTaskbarProgress(-1);
+      sendUpdateStatus({ status: 'error', version, message: String(err && err.message ? err.message : err) });
       dialog.showMessageBox({
         type: 'warning',
         title: '下载失败',
@@ -45,8 +70,10 @@ async function promptUpdateAvailable(info) {
   }
 }
 
-async function promptUpdateDownloaded() {
-  sendToRenderer('update-downloaded', {});
+async function promptUpdateDownloaded(info) {
+  const version = info && info.version ? info.version : '';
+  setTaskbarProgress(-1); // 下载结束，清掉任务栏进度
+  sendUpdateStatus({ status: 'downloaded', version });
   const { response } = await dialog.showMessageBox({
     type: 'info',
     title: '更新已就绪',
@@ -157,15 +184,21 @@ function initAutoUpdater(options = {}) {
     settleManual({ status: 'available', version: (info && info.version) || '', current: app.getVersion() });
   });
   autoUpdater.on('update-not-available', () => {
-    sendToRenderer('update-not-available', {});
+    sendUpdateStatus({ status: 'latest', version: app.getVersion() });
     settleManual({ status: 'latest', version: app.getVersion() });
   });
   autoUpdater.on('download-progress', (p) => {
-    sendToRenderer('update-download-progress', {
-      percent: p && p.percent ? Math.round(p.percent) : 0,
+    const percent = p && typeof p.percent === 'number' ? Math.round(p.percent) : 0;
+    setTaskbarProgress(percent);
+    sendUpdateStatus({
+      status: 'downloading',
+      percent,
+      transferred: p && p.transferred,
+      total: p && p.total,
+      bytesPerSecond: p && p.bytesPerSecond,
     });
   });
-  autoUpdater.on('update-downloaded', () => { promptUpdateDownloaded().catch(() => {}); });
+  autoUpdater.on('update-downloaded', (info) => { promptUpdateDownloaded(info).catch(() => {}); });
   autoUpdater.on('error', (err) => {
     console.warn('[auto-updater] error:', err && err.message ? err.message : err);
   });

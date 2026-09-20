@@ -142,6 +142,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 手动检查更新（GitHub Releases）+ 当前版本号
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   getAppVersion: () => ipcRenderer.invoke('get-app-version'),
+  // 自动更新状态流（available / downloading / downloaded / latest / error）。
+  // 主进程一直在推送，但此前前端没有任何订阅点 —— 下载期间界面完全没有反馈。
+  onUpdateStatus: (callback) => ipcRenderer.on('update-status', (_event, value) => callback(value)),
+  removeUpdateListeners: () => ipcRenderer.removeAllListeners('update-status'),
   licenseGetStatus: () => ipcRenderer.invoke('license-get-status'),
   licenseActivate: (payload) => ipcRenderer.invoke('license-activate', payload),
   licenseClear: () => ipcRenderer.invoke('license-clear'),

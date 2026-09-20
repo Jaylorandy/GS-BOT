@@ -258,6 +258,20 @@ function shouldShowSetup(config) {
   return !hasConfiguredSetup(config);
 }
 
+// 下载进度里的字节数转成人看的单位（1.2 GB / 480 MB）
+function formatBytes(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let n = num;
+  let i = 0;
+  while (n >= 1024 && i < units.length - 1) {
+    n /= 1024;
+    i += 1;
+  }
+  return `${n >= 100 || i === 0 ? Math.round(n) : n.toFixed(1)} ${units[i]}`;
+}
+
 function AppContent() {
   const { language, setLanguage, tx } = useI18n();
   const TAB_ITEMS = createTabItems(tx);
@@ -274,6 +288,9 @@ function AppContent() {
   const [showLogDrawer, setShowLogDrawer] = useState(false);
   const [appVersion, setAppVersion] = useState('');
   const [updateBusy, setUpdateBusy] = useState(false);
+  // 自动更新状态：主进程推送 available / downloading / downloaded / latest / error
+  const [updateStatus, setUpdateStatus] = useState(null);
+  const [updateBannerDismissed, setUpdateBannerDismissed] = useState(false);
   const [logs, setLogs] = useState([]);
   const [setupVariant, setSetupVariant] = useState('onboarding');
   const [setupConfig, setSetupConfig] = useState(null);
@@ -285,6 +302,20 @@ function AppContent() {
   const shellRef = useRef(null);
   const platform = setupDiagnostics?.platform || 'unknown';
   const currentTab = ALL_TABS.find((tab) => tab.id === activeTab) ?? TAB_ITEMS[0];
+
+  // 更新进度派生值：下载中显示百分比，下载完提示重启安装
+  const updatePercent = updateStatus && typeof updateStatus.percent === 'number'
+    ? Math.max(0, Math.min(100, Math.round(updateStatus.percent)))
+    : 0;
+  const updateDownloading = updateStatus?.status === 'downloading';
+  const updateReady = updateStatus?.status === 'downloaded';
+  const showUpdateBanner = !updateBannerDismissed && (updateDownloading || updateReady || updateStatus?.status === 'error');
+  const updateSizeText = updateDownloading && updateStatus?.total
+    ? `${formatBytes(updateStatus.transferred) || '0 B'} / ${formatBytes(updateStatus.total)}`
+    : '';
+  const updateSpeedText = updateDownloading && updateStatus?.bytesPerSecond
+    ? `${formatBytes(updateStatus.bytesPerSecond)}/s`
+    : '';
 
   const selectTab = (id) => {
     setActiveTab(id);
@@ -304,6 +335,26 @@ function AppContent() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
+  }, []);
+
+  // 自动更新状态订阅：下载 480MB 期间让界面持续显示百分比，
+  // 否则用户点完「立即下载」后界面上没有任何反馈。
+  useEffect(() => {
+    const api = window.electronAPI;
+    if (!api?.onUpdateStatus) return undefined;
+    api.onUpdateStatus((payload) => {
+      if (!payload || typeof payload !== 'object') return;
+      setUpdateStatus(payload);
+      if (payload.status === 'downloading' || payload.status === 'available') {
+        setUpdateBannerDismissed(false);
+      }
+      if (payload.status === 'downloading' && typeof payload.percent === 'number') {
+        setUpdateBusy(false);
+      }
+    });
+    return () => {
+      try { api.removeUpdateListeners?.(); } catch { /* ignore */ }
+    };
   }, []);
 
   // 手动检查更新：结果弹窗由主进程负责，这里只记录日志 + 按钮忙碌态
@@ -629,13 +680,21 @@ function AppContent() {
               type="button"
               className="workspace-tool-button"
               onClick={handleCheckUpdates}
-              disabled={updateBusy}
+              disabled={updateBusy || updateDownloading}
               title={appVersion ? tx(`Check for updates (current v${appVersion})`, `检查更新（当前 v${appVersion}）`) : tx('Check for updates', '检查更新')}
             >
               <span className="workspace-tool-icon-shell" aria-hidden="true">
                 <AppIcon name="update" className="workspace-tool-icon" />
               </span>
-              <span className="workspace-tool-label">{updateBusy ? tx('Checking…', '检查中…') : tx('Update', '更新')}</span>
+              <span className="workspace-tool-label">
+                {updateDownloading
+                  ? tx(`Downloading ${updatePercent}%`, `下载中 ${updatePercent}%`)
+                  : updateReady
+                    ? tx('Restart to update', '重启更新')
+                    : updateBusy
+                      ? tx('Checking…', '检查中…')
+                      : tx('Update', '更新')}
+              </span>
             </button>
             <button type="button" className="workspace-tool-button" onClick={() => setShowHelp(true)}>
               <span className="workspace-tool-icon-shell" aria-hidden="true">
@@ -651,6 +710,32 @@ function AppContent() {
             </div>
           </div>
         </div>
+
+        {showUpdateBanner ? (
+          <div className={`update-progress-banner${updateReady ? ' is-ready' : ''}${updateStatus?.status === 'error' ? ' is-error' : ''}`} role="status" aria-live="polite">
+            <div className="update-progress-head">
+              <span className="update-progress-title">
+                {updateReady
+                  ? tx(`Update v${updateStatus?.version || ''} is ready — restart to install.`, `新版本${updateStatus?.version ? ` v${updateStatus.version}` : ''}已下载完成，重启即可安装。`)
+                  : updateDownloading
+                    ? tx(`Downloading update${updateStatus?.version ? ` v${updateStatus.version}` : ''}…`, `正在下载更新${updateStatus?.version ? ` v${updateStatus.version}` : ''}…`)
+                    : tx(`Update failed: ${updateStatus?.message || 'unknown error'}`, `更新失败：${updateStatus?.message || '未知错误'}`)}
+              </span>
+              <div className="update-progress-meta">
+                {updateDownloading ? <span className="update-progress-percent">{updatePercent}%</span> : null}
+                {updateDownloading && (updateSizeText || updateSpeedText) ? (
+                  <span className="update-progress-detail">{[updateSizeText, updateSpeedText].filter(Boolean).join('  ·  ')}</span>
+                ) : null}
+                <button type="button" className="update-progress-dismiss" onClick={() => setUpdateBannerDismissed(true)} aria-label={tx('Hide', '隐藏')} title={tx('Hide', '隐藏')}>×</button>
+              </div>
+            </div>
+            {updateDownloading ? (
+              <div className="update-progress-track" aria-hidden="true">
+                <div className="update-progress-fill" style={{ width: `${updatePercent}%` }} />
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <main className="app-main">
           <div className="workspace-canvas">
