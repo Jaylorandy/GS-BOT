@@ -8,7 +8,11 @@ const { spawnSync } = require('child_process');
 require('./patch-electron-builder.js');
 
 const projectRoot = path.resolve(__dirname, '..');
-const releaseDir = path.join(projectRoot, 'release');
+// 默认输出到 release/。当该目录里的 app.asar 被其它进程（如编辑器/索引器）
+// 持有句柄时，删除会 EBUSY 导致打包中断 —— 可用 GSBOT_RELEASE_DIR 换一个
+// 干净目录输出，例如 GSBOT_RELEASE_DIR=release-build。
+const releaseDirName = String(process.env.GSBOT_RELEASE_DIR || 'release').trim() || 'release';
+const releaseDir = path.join(projectRoot, releaseDirName);
 const guideSourcePath = path.join(projectRoot, 'docs', 'windows-install-guide.txt');
 const packageJson = require(path.join(projectRoot, 'package.json'));
 const version = packageJson.version || '1.0.0';
@@ -264,6 +268,8 @@ run(
     ...(windowsBuildMode === 'zip-only'
       ? ['--win', 'zip', '--x64']
       : ['--win', 'nsis', 'zip', '--x64']),
+    // 输出目录跟随 releaseDir 配置，保证与 cleanWindowsOutput 清理的是同一处
+    ...(releaseDirName !== 'release' ? [`-c.directories.output=${releaseDirName}`] : []),
   ],
   {
     env: {

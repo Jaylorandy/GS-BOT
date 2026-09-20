@@ -151,6 +151,14 @@ export const WIZARD_CONFIG = {
             showWhen: (p) => (p.ollamaEnabled || p.enableSummary) && p.aiModeOverride,
             hint: { en: 'Leave empty to use the default model from settings.', zh: '留空则使用设置中的默认模型。' },
           },
+          {
+            key: 'visionModel', type: 'model-picker', label: { en: 'Vision Model', zh: '视觉模型' },
+            showWhen: (p) => (p.ollamaEnabled || p.enableSummary) && p.aiModeOverride,
+            hint: {
+              en: 'Reads the product images. Leave empty to follow the model above. Text-only models such as GLM-4.7 cannot read images — pick a vision model (e.g. glm-4.6v, glm-4v-plus) here and AI will keep working with images.',
+              zh: '用于识别产品图片。留空则跟随上方主模型。GLM-4.7 这类纯文本模型无法读图，在此选择视觉模型（如 glm-4.6v、glm-4v-plus）AI 才能看图分析。',
+            },
+          },
           { key: 'outputPath', type: 'save-picker', label: { en: 'Output File', zh: '输出文件' }, ext: 'pptx', hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
         ],
       },

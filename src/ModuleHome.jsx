@@ -347,7 +347,11 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
                 background: 'rgba(0,0,0,0.15)', color: 'inherit', fontSize: 14, cursor: 'pointer',
               }}
             >
-              <option value="" style={optStyle}>{tx('Use default model', '使用默认模型')}</option>
+              <option value="" style={optStyle}>
+                {field.key === 'visionModel'
+                  ? tx('Follow the main model', '跟随主模型')
+                  : tx('Use default model', '使用默认模型')}
+              </option>
               {modelList.map((m) => (
                 <option key={m} value={m} style={optStyle}>{m}</option>
               ))}
@@ -1164,6 +1168,16 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           };
           // User-picked model name from the wizard overrides the saved-config default.
           if (params.llmModel) payload.config.llmConfig.model = params.llmModel;
+          // Vision model is configured on its own: text-only models (GLM-4.7 and
+          // friends) cannot read images, so the wizard lets the user point vision
+          // at a multimodal model while keeping the main model for text.
+          // Empty string means "follow the main model".
+          payload.config.apparelVision = {
+            ...(params.apparelVision || {}),
+            enabled: true,
+            garmentModel: params.visionModel || '',
+            fabricModel: params.visionModel || '',
+          };
         }
       }
       if (tab.id === 'organizer') {

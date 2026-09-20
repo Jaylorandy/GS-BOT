@@ -458,8 +458,13 @@ class LLMClient:
                     return {'success': False, 'error': f'无法解析响应: {response_text[:200]}'}
                     
         except urllib.error.HTTPError as e:
-            error_body = e.read().decode('utf-8') if e.read() else str(e)
-            return {'success': False, 'error': f'HTTP {e.code}: {error_body}'}
+            # 注意：e.read() 只能读一次，读第二次会返回空 —— 必须先缓存
+            try:
+                _body = e.read().decode('utf-8', errors='replace')
+            except Exception:
+                _body = ''
+            _detail = _body.strip() or str(e)
+            return {'success': False, 'error': f'HTTP {e.code} [{self.model}]: {_detail}'}
         except urllib.error.URLError as e:
             return {'success': False, 'error': f'连接错误: {e.reason}'}
         except Exception as e:
@@ -546,14 +551,52 @@ def call_llm_api(prompt, timeout):
 # 向后兼容
 call_ollama_api = call_llm_api
 
+# 已确认拒绝图片输入的 端点|模型 组合，避免每个款式都重复发一次注定失败的请求
+VISION_UNSUPPORTED_TARGETS = set()
+
+
+def _looks_like_vision_unsupported(code, detail):
+    """判断错误是否表示"当前模型不支持图片输入"。
+    典型场景：GLM-4.7 / DeepSeek 这类纯文本推理模型收到 image_url 时返回 400。"""
+    d = str(detail or '').lower()
+    if any(k in d for k in ('image', 'vision', 'multimodal', '图片', '视觉', '不支持', 'not support')):
+        return True
+    # 400/415/422 且无更明确原因时，大概率是输入模态不匹配，值得降级重试
+    return code in (400, 415, 422)
+
+
+def _call_text_fallback(prompt, url, model, api_key, provider, timeout, reason=''):
+    """视觉不可用时的纯文本兜底调用：让 AI 仍能基于文字上下文参与，
+    而不是整个环节直接失败。"""
+    print(f"  [ai] vision unavailable ({reason}) — retrying as text-only [{model}]")
+    try:
+        client = LLMClient(url, model, api_key, provider)
+        result = client.call(prompt, timeout)
+        if isinstance(result, dict):
+            result['vision_fallback'] = True
+        return result
+    except Exception as e:
+        return {'success': False, 'error': f'text fallback failed: {e}'}
+
+
 def call_llm_api_with_image(prompt, image_base64, timeout, override=None):
-    """调用支持图片的 LLM API"""
+    """调用支持图片的 LLM API。
+
+    若当前模型不支持图片输入（如 GLM-4.7 这类纯文本推理模型），接口返回 HTTP 400。
+    此时自动降级为纯文本调用，使 AI 仍能基于文字上下文参与，而不是整环节失败。
+    已确认拒绝图片的 端点+模型 组合会被缓存，后续款式直接走文本，
+    避免每个款式都白等一次注定失败的请求。"""
     override = override or {}
     url = override.get('url') or (LLM_URL if LLM_ENABLED else OLLAMA_URL)
     model = override.get('model') or (LLM_MODEL if LLM_ENABLED else OLLAMA_MODEL)
     api_key = override.get('api_key') if 'api_key' in override else LLM_API_KEY
     provider = override.get('provider') or (LLM_PROVIDER if LLM_ENABLED else 'ollama')
-    
+
+    target_key = f'{provider}|{model}|{url}'
+    if target_key in VISION_UNSUPPORTED_TARGETS:
+        return _call_text_fallback(prompt, url, model, api_key, provider, timeout,
+                                   reason='model previously rejected image input')
+
     try:
         if provider == 'ollama':
             # Ollama 视觉模型格式
@@ -639,8 +682,19 @@ def call_llm_api_with_image(prompt, image_base64, timeout, override=None):
                 return {'success': False, 'error': f'无法解析响应: {response_text[:200]}'}
                 
     except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8') if e.read() else str(e)
-        return {'success': False, 'error': f'HTTP {e.code}: {error_body}'}
+        # 注意：e.read() 只能读一次，读第二次会返回空 —— 必须先缓存
+        try:
+            _body = e.read().decode('utf-8', errors='replace')
+        except Exception:
+            _body = ''
+        _detail = _body.strip() or str(e)
+        print(f"  [!] vision call failed: HTTP {e.code} [{model}] {_detail[:200]}")
+        # 模型不支持图片输入（GLM-4.7 等纯文本模型）→ 缓存并降级为纯文本调用
+        if _looks_like_vision_unsupported(e.code, _detail):
+            VISION_UNSUPPORTED_TARGETS.add(target_key)
+            return _call_text_fallback(prompt, url, model, api_key, provider, timeout,
+                                       reason=f'HTTP {e.code}')
+        return {'success': False, 'error': f'HTTP {e.code} [{model}]: {_detail}'}
     except urllib.error.URLError as e:
         return {'success': False, 'error': f'连接错误: {e.reason}'}
     except Exception as e:
@@ -795,12 +849,27 @@ parse_with_ollama = parse_with_llm
 # ── 工具函数 ─────────────────────────────────────────
 
 def resolve_apparel_vision_settings():
-    config = APPAREL_VISION_CONFIG or {}
-    # When no fabric model is explicitly configured, fall back to the main LLM model
-    # instead of relying on a default (gr3-fabric) that may not be installed.
-    fabric_model = config.get('fabricModel')
-    if not fabric_model:
-        fabric_model = LLM_MODEL if LLM_ENABLED else 'gr3-fabric'
+    config = dict(APPAREL_VISION_CONFIG or {})
+
+    # 视觉调用使用的模型必须跟随当前 AI 模式（本地 / Ollama 云端 / GLM 等 API 云端），
+    # 与款式描述生成同源。历史上这里会回落到硬编码的本地模型名
+    # （garment='moondream:1.8b'、fabric='gr3-fabric'），在云端模式下等于拿一个
+    # 该端点根本不存在的模型去请求 API —— 必然返回 HTTP 400，导致视觉环节全灭。
+    # 云端模式下本地模型名一定无效，直接剔除，回落到当前模式配置的模型。
+    if LLM_ENABLED and LLM_PROVIDER != 'ollama':
+        for key in ('fabricModel', 'garmentModel'):
+            value = str(config.get(key) or '')
+            if any(hint in value.lower() for hint in ('moondream', 'gr3-fabric')):
+                print(f"  [vision] ignoring local-only model '{value}' in cloud mode — using {LLM_MODEL}")
+                config[key] = ''
+
+    if LLM_ENABLED and LLM_MODEL:
+        fabric_model = config.get('fabricModel') or LLM_MODEL
+        garment_model = config.get('garmentModel') or LLM_MODEL
+    else:
+        fabric_model = config.get('fabricModel') or 'gr3-fabric'
+        garment_model = config.get('garmentModel') or 'moondream:1.8b'
+
     # When no explicit apparel vision config exists, fully inherit api_key and
     # provider from the main LLM so the API call format matches (OpenAI vs Ollama).
     # Ollama endpoints (local / ollama.com) stay on the Ollama REST format even
@@ -813,7 +882,7 @@ def resolve_apparel_vision_settings():
     return {
         'enabled': bool(config.get('enabled', True)),
         'base_url': base_url,
-        'garment_model': config.get('garmentModel') or 'moondream:1.8b',
+        'garment_model': garment_model,
         'fabric_model': fabric_model,
         'api_key': api_key,
         'provider': provider,
@@ -835,6 +904,9 @@ def resolve_ai_call_target():
 
 
 def load_image_as_base64(image_path, max_size=800):
+    """把图片统一编码为 JPEG base64。
+    调用方固定使用 "data:image/jpeg;base64," 前缀，因此这里必须保证实际编码格式
+    也是 JPEG —— 否则部分严格校验 MIME 的视觉 API（如智谱）会直接返回 400。"""
     if not image_path or not os.path.exists(image_path):
         return None
 
@@ -844,11 +916,11 @@ def load_image_as_base64(image_path, max_size=800):
             new_size = (int(img.width * ratio), int(img.height * ratio))
             img = img.resize(new_size, Image.Resampling.LANCZOS)
 
-        buffer = io.BytesIO()
-        img_format = 'JPEG' if img.mode == 'RGB' else 'PNG'
-        if img.mode in ('RGBA', 'P'):
+        # 统一转 RGB 并以 JPEG 编码（覆盖调色板 P、透明 RGBA、灰度 L 等模式）
+        if img.mode != 'RGB':
             img = img.convert('RGB')
-        img.save(buffer, format=img_format, quality=85)
+        buffer = io.BytesIO()
+        img.save(buffer, format='JPEG', quality=85)
         return base64.b64encode(buffer.getvalue()).decode('utf-8')
 
 
@@ -3277,10 +3349,16 @@ CATEGORY_KEYWORDS = {
     ],
     'Sweatshirts & Hoodies': [
         'sweatshirt', 'sweatshirts', 'hoodie', 'hoodies', 'sweat shirt', 'zip sweatshirt',
+        # 组合词：权重高于 Sweaters 里的 'pullover'，避免 "Pullover hoodie" 被判成毛衣
+        'pullover hoodie', 'zip hoodie', 'zip-through hoodie', 'hooded sweatshirt',
+        'hooded top', 'hooded jacket', 'sweat top',
     ],
-    'Knitwear': [
-        'sweater', 'sweaters', 'jumper', 'jumpers', 'pullover', 'cardigan', 'cardigans',
-        'knit', 'knitted', 'knitwear', 'turtleneck', 'mock neck',
+    'Sweaters': [
+        'sweater', 'sweaters', 'jumper', 'jumpers', 'pullover', 'pullovers',
+        'turtleneck', 'roll neck', 'mock neck', 'crew neck jumper', 'knitted top',
+    ],
+    'Cardigans': [
+        'cardigan', 'cardigans',
     ],
     'Jackets': [
         'jacket', 'jackets', 'jassen', 'jacke', 'chaqueta', 'giacca', 'blazer', 'blazers',
@@ -3329,6 +3407,37 @@ CATEGORY_KEYWORDS = {
         'slipper', 'slippers', 'loafer', 'loafers',
     ],
 }
+
+# 禁止出现的笼统大类：面料组织结构（Knitwear / Woven）与上下装泛称（Tops / Bottoms）。
+# 这些不是具体服装品类，出现在汇总页会让分类失去意义。
+# 来源有三处需要拦截：爬虫已抓字段、关键词误判、AI 返回。
+BANNED_CATEGORY_TERMS = {
+    'knitwear', 'knit', 'knitted', 'knitwear & jersey', 'jersey',
+    'woven', 'weave', 'woven fabric', 'fabric', 'textile', 'textiles',
+    'tops', 'top', 'bottoms', 'bottom',
+    'clothing', 'clothes', 'apparel', 'garment', 'garments',
+    'outerwear', 'innerwear', 'sportswear', 'activewear',
+    'other', 'others', 'unknown', 'n/a', 'na', 'none', 'null',
+    'unclassified', 'uncategorised', 'uncategorized',
+    'misc', 'miscellaneous', 'general', 'assorted',
+}
+
+
+def is_banned_category(value):
+    """判断分类值是否为需要拒绝的笼统大类（大小写无关，容忍首尾空格）。"""
+    if not value:
+        return True
+    v = str(value).strip().lower()
+    if not v:
+        return True
+    if v in BANNED_CATEGORY_TERMS:
+        return True
+    # 形如 "Knitwear / Jersey" 这类复合值，任一片段命中即拒绝
+    for part in re.split(r'[/&,|+]', v):
+        if part.strip() in BANNED_CATEGORY_TERMS:
+            return True
+    return False
+
 
 def classify_by_keyword(style_number, folder, info):
     """从文件夹名、款号和已有信息文本中通过关键词匹配品类。
@@ -3401,7 +3510,9 @@ def classify_by_ai(style_number, folder, info, image_paths):
     prompt = f"""You are a garment classification assistant. Look at this image and determine the garment category.
 Return ONLY a single JSON object: {{"category": "<category name>"}}
 
-Categories must be one of: {', '.join(CATEGORY_KEYWORDS.keys())}
+Categories must be exactly one of: {', '.join(CATEGORY_KEYWORDS.keys())}
+Never answer with a fabric structure or an umbrella term such as Knitwear, Woven, Jersey, Tops, Bottoms, Outerwear, Clothing or Other.
+Always pick the most specific garment type you can see.
 If the image is not a garment or unclear, return {{"category": ""}}.
 
 Style number: {style_number}
@@ -3440,6 +3551,10 @@ Style number: {style_number}
             # 验证返回的品类在已知列表中（模糊匹配）
             if cat:
                 cat_lower = cat.lower()
+                # 拒绝笼统大类：Knitwear / Woven / Tops / Bottoms / Outerwear / Other 等
+                if is_banned_category(cat):
+                    print(f"  [category] AI returned generic bucket '{cat}' — rejected")
+                    return None
                 for known_cat in CATEGORY_KEYWORDS.keys():
                     if known_cat.lower() in cat_lower or cat_lower in known_cat.lower():
                         return known_cat
@@ -3453,10 +3568,12 @@ Style number: {style_number}
 
 def ensure_category(style_number, folder, info, image_paths):
     """分类 fallback 链：已有数据 → 关键词匹配 → AI 视觉 → None"""
-    # 1) 已有 category/productGroup 字段
+    # 1) 已有 category/productGroup 字段（笼统大类一律不采用，继续往下走）
     cat = str(info.get('category', '') or info.get('productGroup', '') or '').strip()
-    if cat:
+    if cat and not is_banned_category(cat):
         return cat
+    if cat:
+        print(f"  [category] ignoring generic bucket from source data: '{cat}'")
 
     # 2) 关键词匹配
     cat = classify_by_keyword(style_number, folder, info)

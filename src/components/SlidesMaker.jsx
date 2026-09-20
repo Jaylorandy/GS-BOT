@@ -126,6 +126,9 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
   const [llmConfigReady, setLlmConfigReady] = useState(false);
   const [aiModeOverride, setAiModeOverride] = useState('local');
   const [aiModelOverride, setAiModelOverride] = useState('');
+  // 视觉模型可单独指定：GLM-4.7 这类纯文本模型无法读图，需要指向一个多模态模型。
+  // 留空表示跟随主模型。
+  const [visionModelOverride, setVisionModelOverride] = useState('');
   const [forceRefresh, setForceRefresh] = useState(false);
 
   // Apply presets from the ModuleHome sub-feature selection.
@@ -331,6 +334,12 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
           enableVision: ollamaEnabled,
           generateDescription: ollamaEnabled,
           llmConfig: llmConfigData,
+          apparelVision: {
+            ...(config.apparelVision || {}),
+            enabled: true,
+            garmentModel: visionModelOverride || '',
+            fabricModel: visionModelOverride || '',
+          },
           sourceMode: config.sourceMode,
         },
       });
@@ -764,6 +773,29 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
                                 showDefaultOption={false}
                                 labels={{ endpointLabel: tx('AI endpoint', 'AI 端点'), modelLabel: tx('Model name', '模型名称') }}
                               />
+                            </div>
+                            <div className="slides-ai-model-picker">
+                              <div className="slides-ai-mode-row">
+                                <span className="slides-ai-mode-label">{tx('Vision model', '视觉模型')}</span>
+                                <input
+                                  type="text"
+                                  value={visionModelOverride}
+                                  onChange={(e) => setVisionModelOverride(e.target.value)}
+                                  placeholder={tx('leave empty to follow the model above', '留空则跟随上方模型')}
+                                  disabled={isGenerating}
+                                  style={{
+                                    flex: 1, minWidth: 0, padding: '6px 10px', borderRadius: 8,
+                                    border: '1px solid rgba(255,255,255,0.18)',
+                                    background: 'rgba(0,0,0,0.25)', color: 'inherit', fontSize: 13,
+                                  }}
+                                />
+                              </div>
+                              <div className="slides-ai-status slides-ai-status--muted">
+                                {tx(
+                                  'Used to read product images. GLM-4.7 is text-only — enter glm-4.6v or glm-4v-plus to keep image analysis working.',
+                                  '用于识别产品图片。GLM-4.7 是纯文本模型，填 glm-4.6v 或 glm-4v-plus 才能看图分析。',
+                                )}
+                              </div>
                             </div>
                             {effectiveSlidesAiMode === 'local' && !aiModelOverride && (
                               <div className="slides-ai-status slides-ai-status--muted">
