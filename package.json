@@ -126,7 +126,12 @@
       "node_modules/is-arrayish/**/*",
       "node_modules/@img/**/*",
       "node_modules/regenerator-runtime/**/*",
-      "node_modules/**/*.{json,js}"
+      "node_modules/**/*.{json,js}",
+      "!.trash-gsbot-old-git/**",
+      "!.broken-git-todelete/**",
+      "!.tmp*/**",
+      "!.tmp*",
+      "!.*.log"
     ],
     "asar": true,
     "asarUnpack": [
