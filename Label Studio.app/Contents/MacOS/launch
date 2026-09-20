@@ -1,0 +1,25 @@
+#!/bin/bash
+# Label Studio launcher app
+# Already running? Just open the browser.
+if lsof -iTCP:8080 -sTCP:LISTEN >/dev/null 2>&1; then
+  open "http://localhost:8080"
+  exit 0
+fi
+
+# Open a Terminal window so the user sees logs and can Ctrl-C to stop it.
+/usr/bin/osascript <<'OSA'
+tell application "Terminal"
+  activate
+  do script "echo 'Starting Label Studio on http://localhost:8080 ...'; ~/.venv/bin/label-studio start --port 8080"
+end tell
+OSA
+
+# Wait up to 90s for the port, then open the browser.
+for i in $(seq 1 90); do
+  if lsof -iTCP:8080 -sTCP:LISTEN >/dev/null 2>&1; then
+    open "http://localhost:8080"
+    exit 0
+  fi
+  sleep 1
+done
+exit 0

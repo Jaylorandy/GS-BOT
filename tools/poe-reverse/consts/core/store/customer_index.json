@@ -1,0 +1,249 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "models",
+   "PoRecipe",
+   "CustomerRecipeIndex"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/store/customer_index.py - customer-level recipe memory.\n\nMirrors the layout-level ``recipe_cache`` but keyed by **CUSTOMER NAME**. This is\nthe missing axis of the closed loop:\n\n* Layout cache (``recipe_cache``) makes a *known layout* parse with zero AI.\n* Customer index makes a *known customer with a NEW layout* still recognizable:\n  when AI infers a fresh recipe for a customer we have seen before, we seed the\n  read with that customer's known style/column conventions so the model produces\n  a correct recipe faster and more reliably, then the new recipe is cached as\n  usual. Persisted as ``customer_recipes.json`` beside ``recipe_cache``.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "PoRecipe"
+   ],
+   "CustomerRecipeIndex"
+  ],
+  "n_instructions": 33
+ },
+ "<module>.CustomerRecipeIndex": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__init__",
+   "_load",
+   "_save",
+   "record",
+   "seed_for"
+  ],
+  "varnames": [],
+  "consts": [
+   "CustomerRecipeIndex",
+   null,
+   "cache_dir",
+   "str | None",
+   "return",
+   "dict",
+   "None",
+   "",
+   "recipe",
+   "PoRecipe",
+   "fingerprint",
+   "str",
+   "text",
+   [
+    null
+   ],
+   [
+    "cache_dir",
+    "str | None"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "return",
+    "None"
+   ],
+   [
+    ""
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "fingerprint",
+    "str",
+    "return",
+    "None"
+   ],
+   [
+    "text",
+    "str"
+   ]
+  ],
+  "n_instructions": 29
+ },
+ "<module>.CustomerRecipeIndex.__init__": {
+  "names": [
+   "cache",
+   "RecipeCache",
+   "dir",
+   "os",
+   "path",
+   "join",
+   "_load",
+   "_data"
+  ],
+  "varnames": [
+   "self",
+   "cache_dir",
+   "RecipeCache"
+  ],
+  "consts": [
+   null,
+   1,
+   [
+    "RecipeCache"
+   ],
+   "customer_recipes.json"
+  ],
+  "n_instructions": 32
+ },
+ "<module>.CustomerRecipeIndex._load": {
+  "names": [
+   "open",
+   "path",
+   "json",
+   "load",
+   "OSError",
+   "ValueError"
+  ],
+  "varnames": [
+   "self",
+   "f"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 52
+ },
+ "<module>.CustomerRecipeIndex._save": {
+  "names": [
+   "path",
+   "open",
+   "json",
+   "dump",
+   "_data",
+   "os",
+   "replace"
+  ],
+  "varnames": [
+   "self",
+   "tmp",
+   "f"
+  ],
+  "consts": [
+   null,
+   ".tmp",
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ]
+  ],
+  "n_instructions": 54
+ },
+ "<module>.CustomerRecipeIndex.record": {
+  "names": [
+   "getattr",
+   "strip",
+   "_data",
+   "setdefault",
+   "append",
+   "get",
+   "_save"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "fingerprint",
+   "cust",
+   "entry",
+   "fps",
+   "known",
+   "lt",
+   "sd"
+  ],
+  "consts": [
+   "Persist a customer -> recipe mapping after a recipe is cached.",
+   "customer",
+   "",
+   null,
+   [
+    "fingerprints",
+    "known"
+   ],
+   "fingerprints",
+   "known",
+   "layout_type",
+   "layout_types",
+   "field_defaults",
+   "style_no",
+   "style_samples",
+   "colour",
+   "colour_samples"
+  ],
+  "n_instructions": 162
+ },
+ "<module>.CustomerRecipeIndex.seed_for": {
+  "names": [
+   "lower",
+   "_data",
+   "get",
+   "append",
+   "join"
+  ],
+  "varnames": [
+   "self",
+   "text",
+   "low",
+   "best",
+   "cust",
+   "known",
+   "parts"
+  ],
+  "consts": [
+   "Return ``(customer_name, hint_str)`` if any known customer name appears\n        in ``text``, else ``(None, \"\")``. ``hint_str`` is injected into the AI\n        read prompt so the model recognizes the customer's conventions.",
+   [
+    null,
+    ""
+   ],
+   null,
+   "known",
+   "客户「",
+   "」的历史配方特征（仅供 AI 参考，不作为事实）：",
+   "layout_types",
+   "曾见版式: ",
+   ", ",
+   "style_samples",
+   "款号样例: ",
+   5,
+   "colour_samples",
+   "颜色样例: ",
+   "\n"
+  ],
+  "n_instructions": 128
+ }
+}

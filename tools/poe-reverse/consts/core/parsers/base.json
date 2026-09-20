@@ -1,0 +1,1367 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "typing",
+   "Dict",
+   "List",
+   "models",
+   "PoRecipe",
+   "PurchaseOrder",
+   "LayoutType",
+   "OrderLine",
+   "SizeQty",
+   "Token",
+   "PageWords",
+   "compile",
+   "_PRICE_RE",
+   "I",
+   "_TOTAL_KW",
+   "_FOOTER_MARGIN",
+   "_line_is_priced",
+   "_STYLE_CODE_RE",
+   "_SEQ_NUM_RE",
+   "_looks_like_style",
+   "_TJX_MARKER",
+   "_TJX_LINE_NO",
+   "_TJX_LABEL",
+   "_TJX_STANDALONE",
+   "_is_tjx_other",
+   "_COMBINED_ITEM",
+   "_UK_LEAD",
+   "_split_combined_item_lines",
+   "merge_wrapped_rows",
+   "doc_text",
+   "BaseParser",
+   "_to_int",
+   "_to_float",
+   "_SHIP_MAP",
+   "_norm_ship",
+   "_min_date",
+   "_clean",
+   "_nearest",
+   "SIZE_TOKEN",
+   "size_columns",
+   "split_row_total",
+   "is_size_header",
+   "parse_total_row",
+   "norm_date",
+   "merge_order_lines",
+   "_PRODUCT_NAME_PATTERNS",
+   "__annotations__",
+   "strip_product_name_suffix",
+   "strip_sku_code_prefix",
+   "_looks_like_sku",
+   "extract_color_from_combined"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/base.py - parser input abstraction + base class.\n\nBoth pdfplumber and OCR produce the SAME token stream (text + bbox), so parsers\nare source-agnostic. Matrix layouts (COLIN'S / SAKHA) rely on token X-positions\nto align quantities to size columns - plain text extraction drops the columns.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass",
+    "field"
+   ],
+   [
+    "Dict",
+    "List"
+   ],
+   2,
+   [
+    "PoRecipe",
+    "PurchaseOrder",
+    "LayoutType",
+    "OrderLine",
+    "SizeQty"
+   ],
+   "Token",
+   "PageWords",
+   "^\\d+\\.\\d{2}$",
+   "TOTAL|GRAND|SUBTOTAL|SUM\\b|合计|小计|总计",
+   "return",
+   "bool",
+   "^[A-Za-z0-9][A-Za-z0-9\\-./_]{1,15}$",
+   "\\d+|\\d+[\\-./]\\d+",
+   "cand",
+   "str",
+   "^\\d{1,2}[-/]\\d{1,2}\\s",
+   "^\\d+\\s",
+   "^[A-Z][A-Za-z0-9 .&/#'()-]*:",
+   "^(PURCHASE|Page|VENDOR|VAT|REGNO|DEPTNO|THE CONTRACT|THIS PURCHASE|PLEASE|TJX|BUYER|FOR EVERY|GENERAL|YOU CAN|INDIVIDUAL|TO AVOID|STEP|IN ADDITION|FULL|BOOKING|UPLOADING|PLEASE NOTE|FOR IN DEPTH|ANY INFORMATION|IF YOU|DOCUMENTATION|PACKING|GENERAL LOGISTICS)",
+   "ln",
+   "(?<!\\S)(\\d+[/-]\\d+)\\s+([A-Z]{1,3}\\d{3,})",
+   "^\\d{1,2}\\s+[A-Z]",
+   "phys",
+   "List[str]",
+   "text",
+   true,
+   [
+    "crop_footer"
+   ],
+   "pages",
+   "List[PageWords]",
+   "crop_footer",
+   "BaseParser",
+   "int",
+   "Sea",
+   "Air",
+   [
+    "VESSEL",
+    "BY SEA",
+    "SEA",
+    "OCEAN",
+    "BY OCEAN",
+    "AIR",
+    "BY AIR",
+    "AIR FREIGHT"
+   ],
+   "s",
+   "recipe",
+   "'PoRecipe'",
+   "^(?:\\d{1,3}(?:[./-]\\d{1,3})?|X{0,4}S|M|X{0,4}L)$",
+   "total_token",
+   "line_text",
+   [
+    "jeans",
+    "jean",
+    "shirt",
+    "t-shirt",
+    "tee",
+    "polo",
+    "sweater",
+    "hoodie",
+    "jacket",
+    "coat",
+    "blazer",
+    "vest",
+    "cardigan",
+    "pullover",
+    "trousers",
+    "pant",
+    "pants",
+    "short",
+    "shorts",
+    "skirt",
+    "dress",
+    "jumpsuit",
+    "overall",
+    "overalls",
+    "jogger",
+    "joggers",
+    "legging",
+    "leggings",
+    "chino",
+    "chinos",
+    "denim",
+    "sweatshirt",
+    "sweatpant",
+    "sweatpants",
+    "parka",
+    "blouson",
+    "tunic",
+    "bomber",
+    "windbreaker",
+    "fleece",
+    "track",
+    "tracksuit",
+    "footwear",
+    "sneaker",
+    "boot",
+    "capsule",
+    "pack",
+    "set",
+    "combo",
+    "bundle"
+   ],
+   "_PRODUCT_NAME_PATTERNS",
+   "word",
+   "combined",
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "cand",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "ln",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "phys",
+    "List[str]",
+    "return",
+    "List[str]"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "List[str]"
+   ],
+   [
+    "pages",
+    "List[PageWords]",
+    "crop_footer",
+    "bool",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "recipe",
+    "'PoRecipe'",
+    "text",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "total_token",
+    "str"
+   ],
+   [
+    "line_text",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "word",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "combined",
+    "str",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 264
+ },
+ "<module>.Token": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__annotations__",
+   "x0",
+   "y0",
+   "x1",
+   "y1",
+   "page",
+   "property",
+   "xc",
+   "yc",
+   "is_number"
+  ],
+  "varnames": [],
+  "consts": [
+   "Token",
+   "str",
+   "text",
+   0.0,
+   "float",
+   "x0",
+   "y0",
+   "x1",
+   "y1",
+   0,
+   "int",
+   "page",
+   "return",
+   "bool",
+   null,
+   [
+    "return",
+    "float"
+   ],
+   [
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 60
+ },
+ "<module>.Token.xc": {
+  "names": [
+   "x0",
+   "x1"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   2.0
+  ],
+  "n_instructions": 9
+ },
+ "<module>.Token.yc": {
+  "names": [
+   "y0",
+   "y1"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   2.0
+  ],
+  "n_instructions": 9
+ },
+ "<module>.Token.is_number": {
+  "names": [
+   "text",
+   "replace",
+   "isdigit"
+  ],
+  "varnames": [
+   "self",
+   "t"
+  ],
+  "consts": [
+   null,
+   ",",
+   "",
+   "."
+  ],
+  "n_instructions": 19
+ },
+ "<module>.PageWords": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__annotations__",
+   "field",
+   "list",
+   "tokens",
+   "lines",
+   "text"
+  ],
+  "varnames": [],
+  "consts": [
+   "PageWords",
+   "int",
+   "page",
+   "float",
+   "width",
+   "height",
+   [
+    "default_factory"
+   ],
+   "List[Token]",
+   "tokens",
+   3.0,
+   "y_tol",
+   "return",
+   "List[List[Token]]",
+   "str",
+   null,
+   [
+    3.0
+   ],
+   [
+    "y_tol",
+    "float",
+    "return",
+    "List[List[Token]]"
+   ],
+   [
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 40
+ },
+ "<module>.PageWords.lines": {
+  "names": [
+   "tokens",
+   "sorted",
+   "abs",
+   "yc",
+   "append",
+   "sort"
+  ],
+  "varnames": [
+   "self",
+   "y_tol",
+   "ts",
+   "out",
+   "cur",
+   "t",
+   "ln"
+  ],
+  "consts": [
+   "Group tokens into visual lines by y-center proximity, each sorted by x0.",
+   [
+    "key"
+   ],
+   0,
+   1,
+   null
+  ],
+  "n_instructions": 81
+ },
+ "<module>.PageWords.lines.<lambda>": {
+  "names": [
+   "x0"
+  ],
+  "varnames": [
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 4
+ },
+ "<module>.PageWords.text": {
+  "names": [
+   "join",
+   "lines"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "\n"
+  ],
+  "n_instructions": 15
+ },
+ "<module>.PageWords.text.<genexpr>": {
+  "names": [
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [
+   " ",
+   null
+  ],
+  "n_instructions": 22
+ },
+ "<module>.PageWords.text.<genexpr>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>._line_is_priced": {
+  "names": [
+   "any"
+  ],
+  "varnames": [
+   "ln",
+   "has_price",
+   "has_qty"
+  ],
+  "consts": [
+   "A line that carries both a unit price and a non-trivial quantity."
+  ],
+  "n_instructions": 25
+ },
+ "<module>._line_is_priced.<genexpr>": {
+  "names": [
+   "is_number",
+   "_to_int",
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   100,
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>._looks_like_style": {
+  "names": [
+   "strip",
+   "_STYLE_CODE_RE",
+   "match",
+   "_SEQ_NUM_RE",
+   "fullmatch"
+  ],
+  "varnames": [
+   "cand",
+   "s"
+  ],
+  "consts": [
+   "Heuristic: a plausible style code is 2-16 chars of alphanumerics / -/./_.\n\n    V2.0.19.17 FIX: reject pure numeric or numeric-numeric tokens like \"1\",\n    \"1-1\", \"2-3\" — these are almost always color/SKU sequence numbers in\n    matrix/line-item POs, not true style codes (e.g. TJX \"1-1/1-2/1-3\" vs\n    \"AW11078\").\n    ",
+   "",
+   false,
+   true
+  ],
+  "n_instructions": 26
+ },
+ "<module>._is_tjx_other": {
+  "names": [
+   "_TJX_LABEL",
+   "match",
+   "_TJX_STANDALONE",
+   "re",
+   "I"
+  ],
+  "varnames": [
+   "ln"
+  ],
+  "consts": [
+   null,
+   true,
+   "^(TOTAL|SUMMARY|GRAND)\\b",
+   false
+  ],
+  "n_instructions": 28
+ },
+ "<module>._split_combined_item_lines": {
+  "names": [
+   "list",
+   "_COMBINED_ITEM",
+   "finditer",
+   "len",
+   "_TJX_MARKER",
+   "match",
+   "strip",
+   "enumerate",
+   "append",
+   "extend"
+  ],
+  "varnames": [
+   "phys",
+   "out",
+   "changed",
+   "ln",
+   "marks",
+   "starts",
+   "segs",
+   "i",
+   "s",
+   "end"
+  ],
+  "consts": [
+   "Break a single physical line that carries multiple item rows into one\n    line per item. Only triggers on TJX Import-style combined tables.",
+   false,
+   2,
+   true,
+   0,
+   1
+  ],
+  "n_instructions": 123
+ },
+ "<module>._split_combined_item_lines.<listcomp>": {
+  "names": [
+   "start"
+  ],
+  "varnames": [
+   ".0",
+   "m"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._split_combined_item_lines.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>.merge_wrapped_rows": {
+  "names": [
+   "splitlines",
+   "_split_combined_item_lines",
+   "any",
+   "_TJX_MARKER",
+   "match",
+   "append",
+   "_TJX_LINE_NO",
+   "_is_tjx_other"
+  ],
+  "varnames": [
+   "text",
+   "phys0",
+   "phys",
+   "uk_mode",
+   "out",
+   "cur",
+   "ln"
+  ],
+  "consts": [
+   "Reassemble TJX-style wrapped physical lines into logical rows.\n\n    Returns the physical lines unchanged for any document that does NOT use the\n    ``N-N`` / ``N/N`` item marker (LPP line_items, matrix grids) - zero effect on\n    existing recipes. Two TJX layouts are handled:\n\n    * **UK Vendor (wrapped):** each item's leading fragments, marker (data)\n      line, and trailing fragments are spread across several physical lines and\n      are stitched into one logical row, so GLM's verbatim ``raw_line`` can be\n      located again.\n    * **Import PO (packed table):** all items share one physical line; the line\n      is split at every ``N/N STYLECODE`` marker so each item is its own row.\n\n    Both behaviours are gated on the document actually using the markers, so\n    other customers are never affected.\n    ",
+   null
+  ],
+  "n_instructions": 132
+ },
+ "<module>.merge_wrapped_rows.<listcomp>": {
+  "names": [
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "b"
+  ],
+  "consts": [
+   " "
+  ],
+  "n_instructions": 15
+ },
+ "<module>.merge_wrapped_rows.<genexpr>": {
+  "names": [
+   "_UK_LEAD",
+   "match",
+   "_TJX_MARKER"
+  ],
+  "varnames": [
+   ".0",
+   "l"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>.doc_text": {
+  "names": [
+   "lines",
+   "enumerate",
+   "_line_is_priced",
+   "_TOTAL_KW",
+   "search",
+   "join",
+   "_FOOTER_MARGIN",
+   "append"
+  ],
+  "varnames": [
+   "pages",
+   "crop_footer",
+   "out_pages",
+   "p",
+   "lines",
+   "last_keep",
+   "i",
+   "ln"
+  ],
+  "consts": [
+   "Whole-document text, pages separated by a form-feed marker.\n\n    When ``crop_footer`` is True (default), the bottom signature / legal-footer\n    zone below the last priced order row + TOTAL line is dropped. Header fields\n    and the item table are preserved untouched, so this only trims noise the AI\n    does not need and can never remove data the recipe synthesis relies on.\n    The final extraction always uses the full ``pages`` tokens, not this text.\n    ",
+   -1,
+   " ",
+   0,
+   null,
+   1,
+   "\n",
+   "\n\f\n"
+  ],
+  "n_instructions": 86
+ },
+ "<module>.doc_text.<genexpr>": {
+  "names": [
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [
+   " ",
+   null
+  ],
+  "n_instructions": 22
+ },
+ "<module>.doc_text.<genexpr>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.BaseParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "MATRIX_2AXIS",
+   "layout_type",
+   "__annotations__",
+   "parse",
+   "staticmethod",
+   "_first",
+   "_channel"
+  ],
+  "varnames": [],
+  "consts": [
+   "BaseParser",
+   "LayoutType",
+   "layout_type",
+   "",
+   [
+    "source_file"
+   ],
+   "pages",
+   "List[PageWords]",
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   0,
+   "regex",
+   "text",
+   "flags",
+   "int",
+   "entity_line",
+   null,
+   [
+    "pages",
+    "List[PageWords]",
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ],
+   [
+    0
+   ],
+   [
+    "regex",
+    "str",
+    "text",
+    "str",
+    "flags",
+    "int",
+    "return",
+    "str"
+   ],
+   [
+    "entity_line",
+    "str",
+    "recipe",
+    "PoRecipe",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 37
+ },
+ "<module>.BaseParser.parse": {
+  "names": [
+   "NotImplementedError"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 3
+ },
+ "<module>.BaseParser._first": {
+  "names": [
+   "re",
+   "search",
+   "groups",
+   "group",
+   "strip"
+  ],
+  "varnames": [
+   "regex",
+   "text",
+   "flags",
+   "m"
+  ],
+  "consts": [
+   null,
+   "",
+   1,
+   0
+  ],
+  "n_instructions": 33
+ },
+ "<module>.BaseParser._channel": {
+  "names": [
+   "channel_anchor",
+   "re",
+   "search",
+   "channel_value"
+  ],
+  "varnames": [
+   "entity_line",
+   "recipe"
+  ],
+  "consts": [
+   "Channel resolution: E-COMM token present -> E-COMM; else recipe fallback.",
+   "E-COMM"
+  ],
+  "n_instructions": 17
+ },
+ "<module>._to_int": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "split",
+   "isdigit",
+   "len",
+   "int",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s",
+   "a",
+   "b"
+  ],
+  "consts": [
+   null,
+   0,
+   ",",
+   "",
+   ".",
+   1,
+   3
+  ],
+  "n_instructions": 78
+ },
+ "<module>._to_float": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ".",
+   ""
+  ],
+  "n_instructions": 68
+ },
+ "<module>._norm_ship": {
+  "names": [
+   "strip",
+   "upper",
+   "_SHIP_MAP",
+   "get"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 23
+ },
+ "<module>._min_date": {
+  "names": [
+   "delivery_anchor",
+   "re",
+   "finditer",
+   "norm_date",
+   "_clean",
+   "append",
+   "min",
+   "group"
+  ],
+  "varnames": [
+   "recipe",
+   "text",
+   "out",
+   "m",
+   "d"
+  ],
+  "consts": [
+   "Earliest delivery date among all anchor matches (COLIN/SAKHA give per-block\n    dates; the ERP Template-A needs a single PO-level date -> take the minimum).",
+   "",
+   "(?:Date|[A-Z]late):\\s*(\\d{1,2}\\.\\d{1,2}\\.\\d{4})",
+   1
+  ],
+  "n_instructions": 80
+ },
+ "<module>._clean": {
+  "names": [
+   "groups",
+   "group",
+   "strip"
+  ],
+  "varnames": [
+   "m"
+  ],
+  "consts": [
+   null,
+   "",
+   1,
+   0
+  ],
+  "n_instructions": 25
+ },
+ "<module>._nearest": {
+  "names": [
+   "min"
+  ],
+  "varnames": [
+   "cols",
+   "xc",
+   "best"
+  ],
+  "consts": [
+   "Return the (label, xc) column whose x-center is nearest to xc, else None.",
+   null,
+   [
+    "key"
+   ]
+  ],
+  "n_instructions": 18
+ },
+ "<module>._nearest.<lambda>": {
+  "names": [
+   "abs"
+  ],
+  "varnames": [
+   "c"
+  ],
+  "consts": [
+   null,
+   1
+  ],
+  "n_instructions": 11
+ },
+ "<module>.size_columns": {
+  "names": [
+   "enumerate",
+   "SIZE_TOKEN",
+   "match",
+   "text",
+   "xc"
+  ],
+  "varnames": [
+   "tokens",
+   "total_token",
+   "idxs",
+   "ti",
+   "j"
+  ],
+  "consts": [
+   "The size columns of a grid header line, as ``[(label, xc), ...]``.\n\n    The size run is the maximal block of size-like tokens sitting immediately in\n    front of the TOTAL token, so any number of leading label tokens is tolerated:\n\n        COLOR NO COLOR XS S M L XL XXL XXS XXXL TOTAL -> XS..XXXL\n        Color Size XS S M L XL XXL Total             -> XS..XXL\n        30 31 32 33 34 36 38 TOTAL                   -> 30..38\n\n    Returns ``([], None)`` when the line is not a size header.\n    ",
+   null,
+   -1,
+   1,
+   0,
+   2
+  ],
+  "n_instructions": 90
+ },
+ "<module>.size_columns.<listcomp>": {
+  "names": [
+   "text",
+   "xc"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>.split_row_total": {
+  "names": [
+   "list",
+   "_nearest",
+   "xc",
+   "append"
+  ],
+  "varnames": [
+   "qty_tokens",
+   "cols",
+   "total_xc",
+   "nums",
+   "ref",
+   "total_tok",
+   "keep",
+   "t",
+   "col"
+  ],
+  "consts": [
+   "Split a data row's numeric tokens into (qty tokens, printed row total).\n\n    A token belongs to the TOTAL column when that column is its NEAREST column -\n    which is what tells a real grid row apart from a look-alike table printed\n    under the same header. Returns ``(qtys, total_token_or_None)``.\n    ",
+   null,
+   "\u0000TOTAL",
+   0
+  ],
+  "n_instructions": 63
+ },
+ "<module>.split_row_total.<listcomp>": {
+  "names": [
+   "is_number"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 14
+ },
+ "<module>.is_size_header": {
+  "names": [
+   "getattr",
+   "bool",
+   "re",
+   "fullmatch",
+   "strip",
+   "error"
+  ],
+  "varnames": [
+   "recipe",
+   "line_text",
+   "anchor",
+   "tok"
+  ],
+  "consts": [
+   "Decide whether a TOTAL-bearing line really is THE size header of the grid.\n\n    Priority:\n      1. ``size_header_anchor`` (V2.0.2 auto-synthesis): the whole line must\n         fullmatch it. This is what excludes SUMMARY / assortment-ratio /\n         pack-break-up grids that look like the real header.\n      2. ``size_header_token``: legacy substring check.\n      3. no hint at all -> legacy behaviour: any line carrying TOTAL qualifies.\n    ",
+   "size_header_anchor",
+   "",
+   false,
+   "size_header_token",
+   true
+  ],
+  "n_instructions": 56
+ },
+ "<module>.parse_total_row": {
+  "names": [
+   "list",
+   "is_number",
+   "_nearest",
+   "xc",
+   "_to_int",
+   "text"
+  ],
+  "varnames": [
+   "tokens_after_first",
+   "ref",
+   "total_xc",
+   "refc",
+   "out",
+   "t",
+   "col"
+  ],
+  "consts": [
+   "Map the numeric tokens of a size-aligned TOTAL row to ``{size_label: qty}``.\n\n    ``tokens_after_first`` is the TOTAL row with its leading TOTAL keyword already\n    removed (so the keyword token itself is never mis-assigned to a size column).\n    Each remaining numeric token is mapped to its NEAREST grid column; the token\n    that lands in the TOTAL column (the row's own grand total) is excluded, so the\n    returned dict holds ONLY the per-size totals. Returns ``{}`` when no size\n    columns are known.\n    ",
+   null,
+   "\u0000TOTAL",
+   0
+  ],
+  "n_instructions": 59
+ },
+ "<module>.norm_date": {
+  "names": [
+   "strip",
+   "re",
+   "match",
+   "group",
+   "len",
+   "int"
+  ],
+  "varnames": [
+   "s",
+   "_re",
+   "m",
+   "d",
+   "mo",
+   "y"
+  ],
+  "consts": [
+   "Normalize a date to YYYY-MM-DD. Handles dd.mm.yyyy / dd.mm.yy / YYYY-MM-DD.",
+   "",
+   0,
+   null,
+   "(\\d{1,2})\\.(\\d{1,2})\\.(\\d{2,4})$",
+   1,
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d",
+   "(\\d{4})-(\\d{1,2})-(\\d{1,2})$"
+  ],
+  "n_instructions": 121
+ },
+ "<module>.merge_order_lines": {
+  "names": [
+   "color_code",
+   "inseam",
+   "color_desc",
+   "tuple",
+   "sorted",
+   "sizes",
+   "append",
+   "values",
+   "items",
+   "get",
+   "next",
+   "OrderLine",
+   "style_no",
+   "unit_price",
+   "su",
+   "sum"
+  ],
+  "varnames": [
+   "lines",
+   "groups",
+   "order",
+   "ln",
+   "sig",
+   "out",
+   "merged",
+   "qmap",
+   "sz",
+   "q",
+   "prs",
+   "color_code",
+   "inseam",
+   "color_desc",
+   "sizes",
+   "src"
+  ],
+  "consts": [
+   "Group lines by (color_code, inseam, color_desc).\n\n    - IDENTICAL blocks (same size->qty map) are de-duplicated (a PDF may repeat the\n      whole order grid, e.g. COLIN'S repeats each color block several times).\n    - blocks that genuinely DIFFER (e.g. SAKHA assorted vs non-assorted sub-blocks of\n      one destination) are SUMMED, yielding the true ordered quantity.\n    ",
+   0,
+   null,
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "inseam",
+    "unit_price",
+    "su",
+    "sizes",
+    "printed_row_total"
+   ]
+  ],
+  "n_instructions": 170
+ },
+ "<module>.merge_order_lines.<genexpr>": {
+  "names": [
+   "color_code",
+   "inseam",
+   "color_desc"
+  ],
+  "varnames": [
+   ".0",
+   "l"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>.merge_order_lines.<dictcomp>": {
+  "names": [
+   "size",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>.merge_order_lines.<listcomp>": {
+  "names": [
+   "SizeQty"
+  ],
+  "varnames": [
+   ".0",
+   "sz",
+   "q"
+  ],
+  "consts": [
+   [
+    "size",
+    "qty"
+   ]
+  ],
+  "n_instructions": 16
+ },
+ "<module>.strip_product_name_suffix": {
+  "names": [
+   "strip",
+   "split",
+   "set",
+   "_PRODUCT_NAME_PATTERNS",
+   "lower",
+   "pop",
+   "join"
+  ],
+  "varnames": [
+   "text",
+   "t",
+   "words",
+   "prods"
+  ],
+  "consts": [
+   "从右侧逐词剥离已知的产品名词（如 JEANS / SHIRT），保留颜色描述。\n\n    例：``\"59J 59J DARK BLUE JEANS\"`` → ``\"59J 59J DARK BLUE\"``\n    例：``\"LIGHT BLUE\"``（无产品名词）→ ``\"LIGHT BLUE\"``\n    ",
+   "",
+   -1,
+   " "
+  ],
+  "n_instructions": 56
+ },
+ "<module>.strip_sku_code_prefix": {
+  "names": [
+   "strip",
+   "split",
+   "_looks_like_sku",
+   "pop",
+   "join"
+  ],
+  "varnames": [
+   "text",
+   "t",
+   "words"
+  ],
+  "consts": [
+   "从左侧逐词剥离看起来像 SKU 编号的词（数字字母混合，不含纯字母颜色词）。\n\n    例：``\"59J 59J DARK BLUE\"`` → ``\"DARK BLUE\"``\n    ",
+   "",
+   0,
+   " "
+  ],
+  "n_instructions": 48
+ },
+ "<module>._looks_like_sku": {
+  "names": [
+   "isalpha",
+   "len",
+   "any"
+  ],
+  "varnames": [
+   "word"
+  ],
+  "consts": [
+   "一个词是否像 SKU / 代码编号（非颜色描述词）。\n\n    规则：包含数字或包含非字母字符，且不是纯字母的短颜色词。\n    ",
+   false,
+   6,
+   true
+  ],
+  "n_instructions": 40
+ },
+ "<module>._looks_like_sku.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.extract_color_from_combined": {
+  "names": [
+   "strip",
+   "strip_product_name_suffix",
+   "strip_sku_code_prefix",
+   "len",
+   "all",
+   "split"
+  ],
+  "varnames": [
+   "combined",
+   "c"
+  ],
+  "consts": [
+   "从合并的「CODE / DESC」字符串中智能提取颜色描述。\n\n    算法：\n    1. 先 strip 右侧产品名词（JEANS / SHIRT 等）\n    2. 再 strip 左侧 SKU 代码前缀（59J / 014KK 等）\n    3. 若只剩下 SKU（无颜色描述），回退 \"\"（由 caller 决定是否保留原值）\n\n    例：``\"59J 59J DARK BLUE JEANS\"`` → ``\"DARK BLUE\"``\n    例：``\"55J 99J LIGHT BLUE\"`` → ``\"LIGHT BLUE\"``\n    例：``\"DARK BLUE JEANS\"`` → ``\"DARK BLUE\"``\n    ",
+   "",
+   2
+  ],
+  "n_instructions": 51
+ },
+ "<module>.extract_color_from_combined.<genexpr>": {
+  "names": [
+   "_looks_like_sku"
+  ],
+  "varnames": [
+   ".0",
+   "w"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ }
+}

@@ -1,0 +1,602 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "hashlib",
+   "json",
+   "os",
+   "re",
+   "models",
+   "PoRecipe",
+   "APP_NAME",
+   "CACHE_SCHEMA",
+   "compile",
+   "_MARK_RE",
+   "_APOS",
+   "_collapse_tokens",
+   "_appdata",
+   "_collapse_value_runs",
+   "_normalize_parens",
+   "skeleton",
+   "layout_fingerprint",
+   "RecipeCache"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/store/cache.py - layout fingerprint -> PoRecipe cache.\n\nThe fingerprint is derived from a NORMALIZED skeleton (volatile numbers / style /\ncolor / model codes masked to \"#\") plus coarse structural markers, so two POs of\nthe same layout (e.g. LPP 637JO and LPP XL901) collide to ONE recipe, while\ndifferent layouts (LPP vs COLIN'S vs SAKHA) stay distinct.\n\nCache dir: %APPDATA%\\Purchase Order Extractor V2\\recipe_cache\\\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "PoRecipe"
+   ],
+   "Purchase Order Extractor V2",
+   3,
+   "[A-Za-z0-9]{2,}",
+   "'‘’‛`´ʼˮ",
+   "return",
+   "str",
+   "text",
+   "raw_text",
+   "RecipeCache",
+   [
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "raw_text",
+    "str",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 75
+ },
+ "<module>._collapse_tokens": {
+  "names": [
+   "append",
+   "len",
+   "range"
+  ],
+  "varnames": [
+   "toks",
+   "dedup",
+   "t",
+   "out",
+   "changed",
+   "n",
+   "i",
+   "maxL",
+   "L"
+  ],
+  "consts": [
+   "Collapse immediately-repeated token windows so the fingerprint ignores\n    ORDER VOLUME (item-row count, size-column count, per-size totals) but keeps\n    TEMPLATE identity (the set/order of label words).\n\n    The raw fingerprint text is page-concatenated tokens (one line per page), so\n    the variable volume shows up as a *repeated subsequence* -- e.g. a matrix grid\n    'S M L # S M L # S M L #' or line-item rows '# # BLUE # # # # # RED # # #'.\n    A plain '#'-run collapse cannot catch that; we need subsequence RLE.\n    ",
+   -1,
+   true,
+   false,
+   2,
+   0
+  ],
+  "n_instructions": 103
+ },
+ "<module>._appdata": {
+  "names": [
+   "os",
+   "environ",
+   "get",
+   "path",
+   "expanduser",
+   "join",
+   "APP_NAME",
+   "makedirs"
+  ],
+  "varnames": [
+   "base",
+   "d"
+  ],
+  "consts": [
+   null,
+   "APPDATA",
+   "~/.config",
+   true,
+   [
+    "exist_ok"
+   ]
+  ],
+  "n_instructions": 33
+ },
+ "<module>._collapse_value_runs": {
+  "names": [
+   "set",
+   "append"
+  ],
+  "varnames": [
+   "toks",
+   "out",
+   "buf",
+   "t"
+  ],
+  "consts": [
+   "Collapse any maximal run of pure-'#' value tokens to ONE '#'.\n\n    After digit/word/code masking, header regions (vendor address, free-text\n    notes, parenthesized clauses) become sequences like '# ## ### #' whose LENGTH\n    varies per PO even though every token is a masked value. Collapsing pure-#\n    runs makes the fingerprint insensitive to how many content words a header\n    block carries, while structural punctuation ('(', ')', '<', '>', '+', '!',\n    '=') is preserved so row/column layout still discriminates templates.\n    ",
+   0,
+   "#",
+   1
+  ],
+  "n_instructions": 49
+ },
+ "<module>._normalize_parens": {
+  "names": [
+   "len",
+   "append"
+  ],
+  "varnames": [
+   "toks",
+   "out",
+   "i",
+   "n",
+   "j",
+   "ok",
+   "res",
+   "run",
+   "t"
+  ],
+  "consts": [
+   "Collapse parenthesized CONTENT groups to a single '(#)' and merge runs.\n\n    Raw parenthesized spans -- (MM), (invoice), (a) (b) (c) (d) size legends,\n    penalty clauses, country codes -- are all variable CONTENT, not layout.\n    Their count/order must not vary the fingerprint; a line-item ROW that sits\n    inside parentheses also reduces to '(#)', which is fine because the\n    <<HAS_...>> markers still separate line_items from matrix layouts.\n    ",
+   0,
+   "(",
+   1,
+   false,
+   ")",
+   true,
+   "#",
+   "(#)"
+  ],
+  "n_instructions": 127
+ },
+ "<module>.skeleton": {
+  "names": [
+   "re",
+   "search",
+   "append",
+   "splitlines",
+   "split",
+   "any",
+   "_MARK_RE",
+   "sub",
+   "fullmatch",
+   "_normalize_parens",
+   "_collapse_value_runs",
+   "_collapse_tokens",
+   "sorted",
+   "set",
+   "join"
+  ],
+  "varnames": [
+   "text",
+   "markers",
+   "toks",
+   "ln",
+   "raw",
+   "t",
+   "body",
+   "seq"
+  ],
+  "consts": [
+   "Mask volatile tokens so the fingerprint reflects LAYOUT, not data.\n\n    The fingerprint is content-INsensitive: same customer template (same column\n    structure / header labels) collides to ONE recipe regardless of product\n    words (MEN'S vs LADIES'), style-code formats (ABC-DEF vs ABC-DEF-GHI),\n    size legends (a) b) c) d)), vendor-address wording, or parenthesized header\n    clauses -- while genuinely different templates stay distinct via the\n    <<HAS_...>> structural markers plus the ORDERED set of distinct body token\n    TYPES (count-insensitive, so header word-/clause-count no longer varies fp).\n\n    Pipeline: per-token masking -> RLE -> value-run collapse -> paren normalize\n    -> distinct-token-type sequence.\n    ",
+   "Entity\\s+\\d+\\s+Order No",
+   "<<HAS_ENTITY>>",
+   "Destination Code",
+   "<<HAS_DESTINATION>>",
+   "COLOR NO",
+   "<<HAS_COLORNO>>",
+   "\\d",
+   "#",
+   "-",
+   "_",
+   ".",
+   "[A-Za-z]",
+   "[A-Za-z][).]",
+   "[.,:;/\\-_&]+",
+   "[A-Za-z]{1,2}",
+   "\n",
+   " "
+  ],
+  "n_instructions": 211
+ },
+ "<module>.skeleton.<genexpr>": {
+  "names": [
+   "_APOS"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>.layout_fingerprint": {
+  "names": [
+   "hashlib",
+   "sha256",
+   "skeleton",
+   "encode",
+   "hexdigest"
+  ],
+  "varnames": [
+   "raw_text"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   32
+  ],
+  "n_instructions": 21
+ },
+ "<module>.RecipeCache": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__init__",
+   "_maybe_flush_stale_schema",
+   "_path",
+   "exists",
+   "put",
+   "get",
+   "invalidate",
+   "clear_all",
+   "count",
+   "dir_list",
+   "fingerprint_and_load"
+  ],
+  "varnames": [],
+  "consts": [
+   "RecipeCache",
+   null,
+   "root",
+   "str | None",
+   "return",
+   "None",
+   "fp",
+   "str",
+   "bool",
+   "recipe",
+   "PoRecipe",
+   "int",
+   "list[str]",
+   "raw_text",
+   [
+    null
+   ],
+   [
+    "root",
+    "str | None"
+   ],
+   [
+    "return",
+    "None"
+   ],
+   [
+    "fp",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "fp",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "fp",
+    "str",
+    "recipe",
+    "PoRecipe",
+    "return",
+    "None"
+   ],
+   [
+    "fp",
+    "str",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "list[str]"
+   ],
+   [
+    "raw_text",
+    "str"
+   ]
+  ],
+  "n_instructions": 52
+ },
+ "<module>.RecipeCache.__init__": {
+  "names": [
+   "os",
+   "path",
+   "join",
+   "_appdata",
+   "dir",
+   "makedirs",
+   "_maybe_flush_stale_schema"
+  ],
+  "varnames": [
+   "self",
+   "root"
+  ],
+  "consts": [
+   null,
+   "recipe_cache",
+   true,
+   [
+    "exist_ok"
+   ]
+  ],
+  "n_instructions": 30
+ },
+ "<module>.RecipeCache._maybe_flush_stale_schema": {
+  "names": [
+   "os",
+   "path",
+   "join",
+   "dir",
+   "open",
+   "read",
+   "strip",
+   "OSError",
+   "str",
+   "CACHE_SCHEMA",
+   "listdir",
+   "endswith",
+   "remove",
+   "write",
+   "print"
+  ],
+  "varnames": [
+   "self",
+   "marker",
+   "cur",
+   "flushed",
+   "name",
+   "f"
+  ],
+  "consts": [
+   "On a fingerprint-scheme change, drop orphaned recipe files once.\n\n        Old fingerprints (which encoded row/size counts) never match the new\n        volume-insensitive fingerprints, so stale entries would just sit unused.\n        Flushing them makes a customer's first post-upgrade PO re-infer cleanly.\n        ",
+   ".schema",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   "",
+   null,
+   0,
+   ".json",
+   1,
+   "w",
+   "[cache] flushed ",
+   " stale recipe file(s) for schema "
+  ],
+  "n_instructions": 161
+ },
+ "<module>.RecipeCache._path": {
+  "names": [
+   "os",
+   "path",
+   "join",
+   "dir"
+  ],
+  "varnames": [
+   "self",
+   "fp"
+  ],
+  "consts": [
+   null,
+   ".json"
+  ],
+  "n_instructions": 13
+ },
+ "<module>.RecipeCache.exists": {
+  "names": [
+   "os",
+   "path",
+   "exists",
+   "_path"
+  ],
+  "varnames": [
+   "self",
+   "fp"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.RecipeCache.put": {
+  "names": [
+   "json",
+   "loads",
+   "to_json",
+   "open",
+   "_path",
+   "dump"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "recipe",
+   "d",
+   "f"
+  ],
+  "consts": [
+   null,
+   "fingerprint",
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ]
+  ],
+  "n_instructions": 58
+ },
+ "<module>.RecipeCache.get": {
+  "names": [
+   "open",
+   "_path",
+   "PoRecipe",
+   "from_json",
+   "read"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "f"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 42
+ },
+ "<module>.RecipeCache.invalidate": {
+  "names": [
+   "_path",
+   "os",
+   "path",
+   "exists",
+   "remove",
+   "OSError"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "p"
+  ],
+  "consts": [
+   "Delete a cached recipe (e.g. after it produced 0 order lines).\n\n        Returns True if a file was actually removed. Failures are swallowed by the\n        caller, so this never breaks the extraction pipeline.\n        ",
+   true,
+   false
+  ],
+  "n_instructions": 37
+ },
+ "<module>.RecipeCache.clear_all": {
+  "names": [
+   "os",
+   "listdir",
+   "dir",
+   "endswith",
+   "remove",
+   "path",
+   "join",
+   "OSError"
+  ],
+  "varnames": [
+   "self",
+   "removed",
+   "name"
+  ],
+  "consts": [
+   "Delete every cached recipe so all layouts re-infer from scratch.\n\n        Returns the number of recipe files removed. The ``.schema`` marker is\n        preserved so the fingerprint scheme is not re-flung. Used by the\n        \"清除布局指纹\" button when a user wants to discard every learned recipe.\n        ",
+   0,
+   ".json",
+   1
+  ],
+  "n_instructions": 51
+ },
+ "<module>.RecipeCache.count": {
+  "names": [
+   "os",
+   "listdir",
+   "dir",
+   "endswith",
+   "OSError"
+  ],
+  "varnames": [
+   "self",
+   "n",
+   "name"
+  ],
+  "consts": [
+   "Return how many layout recipes are currently cached.\n\n        Counts ``*.json`` files (the ``.schema`` marker is dotfile and ignored).\n        Used by the \"清除布局指纹 (n)\" button to show a live fingerprint count,\n        mirroring 1.6.4's \"清除客户记忆 (n)\".\n        ",
+   0,
+   ".json",
+   1
+  ],
+  "n_instructions": 38
+ },
+ "<module>.RecipeCache.dir_list": {
+  "names": [
+   "sorted",
+   "os",
+   "listdir",
+   "dir",
+   "OSError"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   "Return sorted ``<fp>.json`` filenames currently cached.\n\n        Used by the fingerprint manager panel to enumerate every saved layout\n        recipe without loading them all. The ``.schema`` marker is a dotfile and\n        is ignored.\n        "
+  ],
+  "n_instructions": 30
+ },
+ "<module>.RecipeCache.dir_list.<genexpr>": {
+  "names": [
+   "endswith"
+  ],
+  "varnames": [
+   ".0",
+   "n"
+  ],
+  "consts": [
+   ".json",
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>.RecipeCache.fingerprint_and_load": {
+  "names": [
+   "layout_fingerprint",
+   "exists",
+   "get"
+  ],
+  "varnames": [
+   "self",
+   "raw_text",
+   "fp"
+  ],
+  "consts": [
+   "Return (fingerprint, recipe_or_None).",
+   null
+  ],
+  "n_instructions": 22
+ }
+}

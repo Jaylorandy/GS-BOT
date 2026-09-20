@@ -1,0 +1,3679 @@
+# module: core.matrix_synth
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\matrix_synth.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/matrix_synth.py - V2.0.2: code-side synthesis of MATRIX grid recipes.\n\nWhy this module exists\n----------------------\n``core/recipe_synth.py`` synthesizes a ``line_pattern`` for LINE-ITEM layouts from\nthe AI's verbatim sample rows, then proves it by offline replay. Grid layouts\n(COLIN'S / SAKHA / NEW YORKER) had no such path: the AI cannot usefully quote a\n2-D grid row by row, so V2.0.0/V2.0.1 fell back to a SECOND AI call\n(``core/ai/recipe_infer.py``) plus a manual confirmation dialog. That second call\nis the slowest and most failure-prone step in the pipeline (it is what made\nOM-907398 fail outright in V2.0.0).\n\nThe key realisation is that a grid does not need to be *read* by a model at all -\nit needs to be *located*. And a real order grid announces itself structurally:\n\n    * a SIZE HEADER line: a run of size-like tokens ending in a TOTAL token;\n    * DATA ROWS underneath whose printed ROW TOTAL lands, by x-position, exactly\n      in that TOTAL column.\n\nLook-alike tables (assortment-ratio grids, pack break-ups, SUMMARY/GENERAL TOTAL\nrestatements) either miss the second property or sit under their own distinct\nheader, so they can be told apart without reading a single word.\n\nSo this module:\n\n    1. finds every candidate grid in the document (purely structural);\n    2. derives the anchors around it (destination split, section, summary,\n       colour block, colour-code shape) as a small ORDERED candidate set;\n    3. replays each candidate recipe offline with ``registry.parse`` and keeps the\n       FIRST one that reproduces the AI-reported totals exactly.\n\nStep 3 is the same gate ``recipe_synth.verify_recipe`` applies to line items, so a\nmatrix recipe reaching the cache has been proven against the printed totals - no\nsecond AI call, no manual dialog. When nothing verifies we raise and the caller\nfalls back to the legacy inference path exactly as before.\n\nNo customer name is hardcoded anywhere.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 39           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 41          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (re)
+             24 STORE_NAME               3 (re)
+
+ 42          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('dataclass', 'field'))
+             30 IMPORT_NAME              4 (dataclasses)
+             32 IMPORT_FROM              5 (dataclass)
+             34 STORE_NAME               5 (dataclass)
+             36 IMPORT_FROM              6 (field)
+             38 STORE_NAME               6 (field)
+             40 POP_TOP
+
+ 43          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               5 (('Callable', 'Dict', 'List', 'Optional', 'Sequence', 'Set', 'Tuple'))
+             46 IMPORT_NAME              7 (typing)
+             48 IMPORT_FROM              8 (Callable)
+             50 STORE_NAME               8 (Callable)
+             52 IMPORT_FROM              9 (Dict)
+             54 STORE_NAME               9 (Dict)
+             56 IMPORT_FROM             10 (List)
+             58 STORE_NAME              10 (List)
+             60 IMPORT_FROM             11 (Optional)
+             62 STORE_NAME              11 (Optional)
+             64 IMPORT_FROM             12 (Sequence)
+             66 STORE_NAME              12 (Sequence)
+             68 IMPORT_FROM             13 (Set)
+             70 STORE_NAME              13 (Set)
+             72 IMPORT_FROM             14 (Tuple)
+             74 STORE_NAME              14 (Tuple)
+             76 POP_TOP
+
+ 45          78 LOAD_CONST               6 (1)
+             80 LOAD_CONST               7 (('ExtractedData',))
+             82 IMPORT_NAME             15 (ai.data_extract)
+             84 IMPORT_FROM             16 (ExtractedData)
+             86 STORE_NAME              16 (ExtractedData)
+             88 POP_TOP
+
+ 46          90 LOAD_CONST               6 (1)
+             92 LOAD_CONST               8 (('LayoutType', 'PoRecipe'))
+             94 IMPORT_NAME             17 (models)
+             96 IMPORT_FROM             18 (LayoutType)
+             98 STORE_NAME              18 (LayoutType)
+            100 IMPORT_FROM             19 (PoRecipe)
+            102 STORE_NAME              19 (PoRecipe)
+            104 POP_TOP
+
+ 47         106 LOAD_CONST               6 (1)
+            108 LOAD_CONST               9 (('SIZE_TOKEN', 'doc_text', 'size_columns', 'split_row_total'))
+            110 IMPORT_NAME             20 (parsers.base)
+            112 IMPORT_FROM             21 (SIZE_TOKEN)
+            114 STORE_NAME              21 (SIZE_TOKEN)
+            116 IMPORT_FROM             22 (doc_text)
+            118 STORE_NAME              22 (doc_text)
+            120 IMPORT_FROM             23 (size_columns)
+            122 STORE_NAME              23 (size_columns)
+            124 IMPORT_FROM             24 (split_row_total)
+            126 STORE_NAME              24 (split_row_total)
+            128 POP_TOP
+
+ 49         130 LOAD_NAME               11 (Optional)
+            132 LOAD_NAME                8 (Callable)
+            134 LOAD_NAME               25 (str)
+            136 BUILD_LIST               1
+            138 LOAD_CONST               3 (None)
+            140 BUILD_TUPLE              2
+            142 BINARY_SUBSCR
+            152 BINARY_SUBSCR
+            162 STORE_NAME              26 (Logger)
+
+ 52         164 BUILD_SET                0
+            166 LOAD_CONST              10 (frozenset({'GESAMT', 'TOPLAM', '小计', 'TOTAL', 'TOTALE', 'SUM', '合计', 'TOTAAL', '总计', 'SUMME'}))
+            168 SET_UPDATE               1
+            170 STORE_NAME              27 (TOTAL_WORDS)
+
+ 57         172 LOAD_CONST              11 ('[0-9XxSsMmLl][0-9XxSsMmLl/.\\-]{0,5}')
+            174 STORE_NAME              28 (_SIZE_CLASS)
+
+ 62         176 LOAD_CONST              12 ('(?:[A-Z]{3,}\\s+){0,3}[A-Z]{3,}')
+            178 STORE_NAME              29 (SECTION_DELIM)
+
+ 64         180 LOAD_CONST              13 ('(?:SUMMARY|GENERAL|GRAND|TOPLAM)')
+            182 STORE_NAME              30 (_SUMMARY_WORDS)
+
+ 68         184 LOAD_CONST              14 (('Destination\\s*Code', 'Dest\\.?\\s*Code', 'Ship[\\s\\-]*To(?:\\s*Code)?', 'Consignee(?:\\s*Code)?', 'Delivery\\s*Place', 'Store\\s*Code'))
+            186 STORE_NAME              31 (_DEST_LABELS)
+
+ 77         188 LOAD_CONST              15 (48)
+            190 STORE_NAME              32 (MAX_CANDIDATES)
+
+ 83         192 LOAD_NAME                5 (dataclass)
+
+ 84         194 PUSH_NULL
+            196 LOAD_BUILD_CLASS
+            198 LOAD_CONST              16 (<code object GridInfo at 0x000002BF94A19B30, file "core\matrix_synth.py", line 83>)
+            200 MAKE_FUNCTION            0
+            202 LOAD_CONST              17 ('GridInfo')
+            204 PRECALL                  2
+            208 CALL                     2
+
+ 83         218 PRECALL                  0
+            222 CALL                     0
+
+ 84         232 STORE_NAME              33 (GridInfo)
+
+102         234 LOAD_CONST              78 (('return', 'int'))
+            236 LOAD_CONST              20 (<code object _row_total_value at 0x000002BF94AA85D0, file "core\matrix_synth.py", line 102>)
+            238 MAKE_FUNCTION            4 (annotations)
+            240 STORE_NAME              34 (_row_total_value)
+
+107         242 LOAD_CONST              21 (4)
+            244 LOAD_CONST              22 (('pre_window',))
+            246 BUILD_CONST_KEY_MAP      1
+            248 LOAD_CONST              79 (('total_token', 'str', 'pre_window', 'int', 'return', 'List[GridInfo]'))
+            250 LOAD_CONST              27 (<code object scan_grids at 0x000002BF94462020, file "core\matrix_synth.py", line 107>)
+            252 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            254 STORE_NAME              35 (scan_grids)
+
+154         256 LOAD_CONST              80 (('return', 'List[Tuple[str, List[GridInfo]]]'))
+            258 LOAD_CONST              29 (<code object total_token_candidates at 0x000002BF943828D0, file "core\matrix_synth.py", line 154>)
+            260 MAKE_FUNCTION            4 (annotations)
+            262 STORE_NAME              36 (total_token_candidates)
+
+172         264 LOAD_CONST              81 (('tokens', 'Sequence[str]', 'total_token', 'str', 'return', 'str'))
+            266 LOAD_CONST              32 (<code object size_header_anchor at 0x000002BF94391230, file "core\matrix_synth.py", line 172>)
+            268 MAKE_FUNCTION            4 (annotations)
+            270 STORE_NAME              37 (size_header_anchor)
+
+194         272 LOAD_CONST              82 (('s', 'str', 'return', 'bool'))
+            274 LOAD_CONST              35 (<code object _default_code_ok at 0x000002BF94999E70, file "core\matrix_synth.py", line 194>)
+            276 MAKE_FUNCTION            4 (annotations)
+            278 STORE_NAME              38 (_default_code_ok)
+
+199         280 LOAD_CONST              83 (('samples', 'Sequence[str]', 'return', 'str'))
+            282 LOAD_CONST              37 (<code object code_pattern at 0x000002BF946AAE30, file "core\matrix_synth.py", line 199>)
+            284 MAKE_FUNCTION            4 (annotations)
+            286 STORE_NAME              39 (code_pattern)
+
+214         288 LOAD_CONST              84 (('doc', 'str', 'return', 'List[str]'))
+            290 LOAD_CONST              40 (<code object dest_anchor_candidates at 0x000002BF944628B0, file "core\matrix_synth.py", line 214>)
+            292 MAKE_FUNCTION            4 (annotations)
+            294 STORE_NAME              40 (dest_anchor_candidates)
+
+241         296 LOAD_CONST              85 (('lines', 'Sequence[str]', 'dest_pat', 'str', 'return', 'List[str]'))
+            298 LOAD_CONST              43 (<code object section_candidates at 0x000002BF94462C70, file "core\matrix_synth.py", line 241>)
+            300 MAKE_FUNCTION            4 (annotations)
+            302 STORE_NAME              41 (section_candidates)
+
+264         304 LOAD_CONST              86 (('lines', 'Sequence[str]', 'return', 'str'))
+            306 LOAD_CONST              44 (<code object summary_anchor at 0x000002BF946925B0, file "core\matrix_synth.py", line 264>)
+            308 MAKE_FUNCTION            4 (annotations)
+            310 STORE_NAME              42 (summary_anchor)
+
+274         312 PUSH_NULL
+            314 LOAD_NAME                3 (re)
+            316 LOAD_ATTR               43 (compile)
+            326 LOAD_CONST              45 ('^[A-Za-z0-9][A-Za-z0-9._/-]{0,15}$')
+            328 PRECALL                  1
+            332 CALL                     1
+            342 STORE_NAME              44 (_CODE_OK)
+
+277         344 LOAD_CONST              87 (('members', 'Sequence[str]', 'return', 'str'))
+            346 LOAD_CONST              47 (<code object _template_anchor at 0x000002BF944632D0, file "core\matrix_synth.py", line 277>)
+            348 MAKE_FUNCTION            4 (annotations)
+            350 STORE_NAME              45 (_template_anchor)
+
+308         352 LOAD_CONST              88 (('anchor', 'str', 'pool', 'Sequence[str]', 'return', 'Tuple[int, int]'))
+            354 LOAD_CONST              51 (<code object _anchor_quality at 0x000002BF94463710, file "core\matrix_synth.py", line 308>)
+            356 MAKE_FUNCTION            4 (annotations)
+            358 STORE_NAME              46 (_anchor_quality)
+
+334         360 LOAD_CONST              89 ((4,))
+            362 LOAD_CONST              90 (('grids', 'Sequence[GridInfo]', 'limit', 'int', 'return', 'List[str]'))
+            364 LOAD_CONST              55 (<code object color_anchor_candidates at 0x000002BF94464120, file "core\matrix_synth.py", line 334>)
+            366 MAKE_FUNCTION            5 (defaults, annotations)
+            368 STORE_NAME              47 (color_anchor_candidates)
+
+372         370 LOAD_NAME                5 (dataclass)
+
+373         372 PUSH_NULL
+            374 LOAD_BUILD_CLASS
+            376 LOAD_CONST              56 (<code object MatrixCandidate at 0x000002BF94A6E870, file "core\matrix_synth.py", line 372>)
+            378 MAKE_FUNCTION            0
+            380 LOAD_CONST              57 ('MatrixCandidate')
+            382 PRECALL                  2
+            386 CALL                     2
+
+372         396 PRECALL                  0
+            400 CALL                     0
+
+373         410 STORE_NAME              48 (MatrixCandidate)
+
+378         412 LOAD_CONST              91 (('data', 'ExtractedData', 'fingerprint', 'str', 'total_token', 'str', 'layout', 'LayoutType', 'return', 'PoRecipe'))
+            414 LOAD_CONST              64 (<code object _base_recipe at 0x000002BF94A196B0, file "core\matrix_synth.py", line 378>)
+            416 MAKE_FUNCTION            4 (annotations)
+            418 STORE_NAME              49 (_base_recipe)
+
+398         420 LOAD_CONST              65 ('')
+
+399         422 LOAD_CONST               3 (None)
+
+398         424 LOAD_CONST              66 (('fingerprint', 'log'))
+            426 BUILD_CONST_KEY_MAP      2
+            428 LOAD_CONST              92 (('data', 'ExtractedData', 'fingerprint', 'str', 'log', 'Logger', 'return', 'List[MatrixCandidate]'))
+            430 LOAD_CONST              70 (<code object build_candidates at 0x000002BF943D4710, file "core\matrix_synth.py", line 398>)
+            432 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            434 STORE_NAME              50 (build_candidates)
+
+461         436 LOAD_CONST              93 (('lines', 'Sequence[str]', 'doc', 'str', 'data', 'ExtractedData', 'soft', 'Set[str]', 'return', 'str'))
+            438 LOAD_CONST              73 (<code object _price_anchor at 0x000002BF940C7D10, file "core\matrix_synth.py", line 461>)
+            440 MAKE_FUNCTION            4 (annotations)
+            442 STORE_NAME              51 (_price_anchor)
+
+505         444 LOAD_CONST              65 ('')
+
+506         446 LOAD_CONST              65 ('')
+            448 LOAD_CONST               3 (None)
+
+505         450 LOAD_CONST              74 (('fingerprint', 'source_file', 'log'))
+            452 BUILD_CONST_KEY_MAP      3
+            454 LOAD_CONST              94 (('data', 'ExtractedData', 'fingerprint', 'str', 'source_file', 'str', 'log', 'Logger'))
+            456 LOAD_CONST              76 (<code object synthesize_matrix_recipe at 0x000002BF940C9480, file "core\matrix_synth.py", line 505>)
+            458 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            460 STORE_NAME              52 (synthesize_matrix_recipe)
+
+553         462 LOAD_CONST              95 (('return', 'Tuple[int, int]'))
+            464 LOAD_CONST              77 (<code object _flaws at 0x000002BF949EC510, file "core\matrix_synth.py", line 553>)
+            466 MAKE_FUNCTION            4 (annotations)
+            468 STORE_NAME              53 (_flaws)
+            470 LOAD_CONST               3 (None)
+            472 RETURN_VALUE
+
+==============================================================================
+## <module>.GridInfo  (args=0, locals=0)
+ 83           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('GridInfo')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 85          12 LOAD_CONST               1 ('One distinct size-header signature and what sits underneath it.')
+             14 STORE_NAME               3 (__doc__)
+
+ 86          16 LOAD_CONST               2 ('str')
+             18 LOAD_NAME                4 (__annotations__)
+             20 LOAD_CONST               3 ('header_text')
+             22 STORE_SUBSCR
+
+ 87          26 LOAD_CONST               4 ('List[str]')
+             28 LOAD_NAME                4 (__annotations__)
+             30 LOAD_CONST               5 ('tokens')
+             32 STORE_SUBSCR
+
+ 88          36 LOAD_CONST               2 ('str')
+             38 LOAD_NAME                4 (__annotations__)
+             40 LOAD_CONST               6 ('total_token')
+             42 STORE_SUBSCR
+
+ 89          46 LOAD_CONST               7 (0)
+             48 STORE_NAME               5 (hits)
+             50 LOAD_CONST               8 ('int')
+             52 LOAD_NAME                4 (__annotations__)
+             54 LOAD_CONST               9 ('hits')
+             56 STORE_SUBSCR
+
+ 90          60 LOAD_CONST               7 (0)
+             62 STORE_NAME               6 (rows)
+             64 LOAD_CONST               8 ('int')
+             66 LOAD_NAME                4 (__annotations__)
+             68 LOAD_CONST              10 ('rows')
+             70 STORE_SUBSCR
+
+ 91          74 LOAD_CONST               7 (0)
+             76 STORE_NAME               7 (numeric_first)
+             78 LOAD_CONST               8 ('int')
+             80 LOAD_NAME                4 (__annotations__)
+             82 LOAD_CONST              11 ('numeric_first')
+             84 STORE_SUBSCR
+
+ 92          88 LOAD_CONST               7 (0)
+             90 STORE_NAME               8 (qty)
+             92 LOAD_CONST               8 ('int')
+             94 LOAD_NAME                4 (__annotations__)
+             96 LOAD_CONST              12 ('qty')
+             98 STORE_SUBSCR
+
+ 93         102 PUSH_NULL
+            104 LOAD_NAME                9 (field)
+            106 LOAD_NAME               10 (list)
+            108 KW_NAMES                13
+            110 PRECALL                  1
+            114 CALL                     1
+            124 STORE_NAME              11 (code_samples)
+            126 LOAD_CONST               4 ('List[str]')
+            128 LOAD_NAME                4 (__annotations__)
+            130 LOAD_CONST              14 ('code_samples')
+            132 STORE_SUBSCR
+
+ 94         136 PUSH_NULL
+            138 LOAD_NAME                9 (field)
+            140 LOAD_NAME               10 (list)
+            142 KW_NAMES                13
+            144 PRECALL                  1
+            148 CALL                     1
+            158 STORE_NAME              12 (pre_lines)
+            160 LOAD_CONST               4 ('List[str]')
+            162 LOAD_NAME                4 (__annotations__)
+            164 LOAD_CONST              15 ('pre_lines')
+            166 STORE_SUBSCR
+
+ 96         170 LOAD_NAME               13 (property)
+
+ 97         172 LOAD_CONST              20 (('return', 'bool'))
+            174 LOAD_CONST              18 (<code object is_2axis at 0x000002BF94A2ED30, file "core\matrix_synth.py", line 96>)
+            176 MAKE_FUNCTION            4 (annotations)
+
+ 96         178 PRECALL                  0
+            182 CALL                     0
+
+ 97         192 STORE_NAME              14 (is_2axis)
+            194 LOAD_CONST              19 (None)
+            196 RETURN_VALUE
+
+==============================================================================
+## <module>.GridInfo.is_2axis  (args=1, locals=1)
+# varnames: self
+ 96           0 RESUME                   0
+
+ 99           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (rows)
+             14 LOAD_CONST               1 (0)
+             16 COMPARE_OP               4 (>)
+             22 JUMP_IF_FALSE_OR_POP    18 (to 60)
+             24 LOAD_FAST                0 (self)
+             26 LOAD_ATTR                1 (numeric_first)
+             36 LOAD_CONST               2 (2)
+             38 BINARY_OP                5 (*)
+             42 LOAD_FAST                0 (self)
+             44 LOAD_ATTR                0 (rows)
+             54 COMPARE_OP               4 (>)
+        >>   60 RETURN_VALUE
+
+==============================================================================
+## <module>._row_total_value  (args=1, locals=2)
+# varnames: tok, _to_int
+102           0 RESUME                   0
+
+103           2 LOAD_CONST               1 (1)
+              4 LOAD_CONST               2 (('_to_int',))
+              6 IMPORT_NAME              0 (parsers.base)
+              8 IMPORT_FROM              1 (_to_int)
+             10 STORE_FAST               1 (_to_int)
+             12 POP_TOP
+
+104          14 PUSH_NULL
+             16 LOAD_FAST                1 (_to_int)
+             18 LOAD_FAST                0 (tok)
+             20 LOAD_ATTR                2 (text)
+             30 PRECALL                  1
+             34 CALL                     1
+             44 RETURN_VALUE
+
+==============================================================================
+## <module>.scan_grids  (args=2, locals=15)
+# varnames: pages, total_token, pre_window, grids, recent, cur, page, line, txt, cols, txc, g, pt, keep, rt
+107           0 RESUME                   0
+
+109           2 BUILD_MAP                0
+              4 STORE_FAST               3 (grids)
+
+110           6 BUILD_LIST               0
+              8 STORE_FAST               4 (recent)
+
+111          10 LOAD_CONST               1 (None)
+             12 STORE_FAST               5 (cur)
+
+112          14 LOAD_FAST                0 (pages)
+             16 GET_ITER
+        >>   18 EXTENDED_ARG             2
+             20 FOR_ITER               545 (to 1112)
+             22 STORE_FAST               6 (page)
+
+113          24 LOAD_FAST                6 (page)
+             26 LOAD_METHOD              0 (lines)
+             48 PRECALL                  0
+             52 CALL                     0
+             62 GET_ITER
+        >>   64 EXTENDED_ARG             2
+             66 FOR_ITER               520 (to 1108)
+             68 STORE_FAST               7 (line)
+
+114          70 LOAD_FAST                7 (line)
+             72 POP_JUMP_FORWARD_IF_TRUE     1 (to 76)
+
+115          74 JUMP_BACKWARD            6 (to 64)
+
+116     >>   76 LOAD_CONST               2 (' ')
+             78 LOAD_METHOD              1 (join)
+            100 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A6E6B0, file "core\matrix_synth.py", line 116>)
+            102 MAKE_FUNCTION            0
+            104 LOAD_FAST                7 (line)
+            106 GET_ITER
+            108 PRECALL                  0
+            112 CALL                     0
+            122 PRECALL                  1
+            126 CALL                     1
+            136 STORE_FAST               8 (txt)
+
+117         138 LOAD_GLOBAL              5 (NULL + size_columns)
+            150 LOAD_FAST                7 (line)
+            152 LOAD_FAST                1 (total_token)
+            154 PRECALL                  2
+            158 CALL                     2
+            168 UNPACK_SEQUENCE          2
+            172 STORE_FAST               9 (cols)
+            174 STORE_FAST              10 (txc)
+
+118         176 LOAD_FAST                9 (cols)
+            178 POP_JUMP_FORWARD_IF_FALSE   172 (to 524)
+
+119         180 LOAD_FAST                3 (grids)
+            182 LOAD_METHOD              3 (get)
+            204 LOAD_FAST                8 (txt)
+            206 PRECALL                  1
+            210 CALL                     1
+            220 STORE_FAST              11 (g)
+
+120         222 LOAD_FAST               11 (g)
+            224 POP_JUMP_FORWARD_IF_NOT_NONE    33 (to 292)
+
+121         226 LOAD_GLOBAL              9 (NULL + GridInfo)
+            238 LOAD_FAST                8 (txt)
+
+122         240 LOAD_CONST               4 (<code object <listcomp> at 0x000002BF94A6DED0, file "core\matrix_synth.py", line 122>)
+            242 MAKE_FUNCTION            0
+            244 LOAD_FAST                7 (line)
+            246 GET_ITER
+            248 PRECALL                  0
+            252 CALL                     0
+
+123         262 LOAD_FAST                1 (total_token)
+
+121         264 KW_NAMES                 5
+            266 PRECALL                  3
+            270 CALL                     3
+            280 STORE_FAST              11 (g)
+
+124         282 LOAD_FAST               11 (g)
+            284 LOAD_FAST                3 (grids)
+            286 LOAD_FAST                8 (txt)
+            288 STORE_SUBSCR
+
+125     >>  292 LOAD_FAST               11 (g)
+            294 COPY                     1
+            296 LOAD_ATTR                5 (hits)
+            306 LOAD_CONST               6 (1)
+            308 BINARY_OP               13 (+=)
+            312 SWAP                     2
+            314 STORE_ATTR               5 (hits)
+
+126         324 LOAD_FAST                4 (recent)
+            326 LOAD_FAST                2 (pre_window)
+            328 UNARY_NEGATIVE
+            330 LOAD_CONST               1 (None)
+            332 BUILD_SLICE              2
+            334 BINARY_SUBSCR
+            344 GET_ITER
+        >>  346 FOR_ITER                37 (to 422)
+            348 STORE_FAST              12 (pt)
+
+127         350 LOAD_FAST               12 (pt)
+            352 LOAD_FAST               11 (g)
+            354 LOAD_ATTR                6 (pre_lines)
+            364 CONTAINS_OP              1
+            366 POP_JUMP_FORWARD_IF_FALSE    26 (to 420)
+
+128         368 LOAD_FAST               11 (g)
+            370 LOAD_ATTR                6 (pre_lines)
+            380 LOAD_METHOD              7 (append)
+            402 LOAD_FAST               12 (pt)
+            404 PRECALL                  1
+            408 CALL                     1
+            418 POP_TOP
+        >>  420 JUMP_BACKWARD           38 (to 346)
+
+129     >>  422 LOAD_FAST               11 (g)
+            424 LOAD_FAST                9 (cols)
+            426 LOAD_FAST               10 (txc)
+            428 BUILD_TUPLE              3
+            430 STORE_FAST               5 (cur)
+
+130         432 LOAD_FAST                4 (recent)
+            434 LOAD_METHOD              7 (append)
+            456 LOAD_FAST                8 (txt)
+            458 PRECALL                  1
+            462 CALL                     1
+            472 POP_TOP
+
+131         474 LOAD_GLOBAL             17 (NULL + len)
+            486 LOAD_FAST                4 (recent)
+            488 PRECALL                  1
+            492 CALL                     1
+            502 LOAD_CONST               7 (40)
+            504 COMPARE_OP               4 (>)
+            510 POP_JUMP_FORWARD_IF_FALSE     5 (to 522)
+
+132         512 LOAD_FAST                4 (recent)
+            514 LOAD_CONST               1 (None)
+            516 LOAD_CONST               8 (20)
+            518 BUILD_SLICE              2
+            520 DELETE_SUBSCR
+
+133     >>  522 JUMP_BACKWARD          230 (to 64)
+
+134     >>  524 LOAD_FAST                4 (recent)
+            526 LOAD_METHOD              7 (append)
+            548 LOAD_FAST                8 (txt)
+            550 PRECALL                  1
+            554 CALL                     1
+            564 POP_TOP
+
+135         566 LOAD_GLOBAL             17 (NULL + len)
+            578 LOAD_FAST                4 (recent)
+            580 PRECALL                  1
+            584 CALL                     1
+            594 LOAD_CONST               7 (40)
+            596 COMPARE_OP               4 (>)
+            602 POP_JUMP_FORWARD_IF_FALSE     5 (to 614)
+
+136         604 LOAD_FAST                4 (recent)
+            606 LOAD_CONST               1 (None)
+            608 LOAD_CONST               8 (20)
+            610 BUILD_SLICE              2
+            612 DELETE_SUBSCR
+
+137     >>  614 LOAD_FAST                5 (cur)
+            616 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 622)
+
+138         618 EXTENDED_ARG             1
+            620 JUMP_BACKWARD          279 (to 64)
+
+139     >>  622 LOAD_FAST                5 (cur)
+            624 UNPACK_SEQUENCE          3
+            628 STORE_FAST              11 (g)
+            630 STORE_FAST               9 (cols)
+            632 STORE_FAST              10 (txc)
+
+140         634 LOAD_FAST                7 (line)
+            636 LOAD_CONST               9 (0)
+            638 BINARY_SUBSCR
+            648 LOAD_ATTR                9 (text)
+            658 LOAD_METHOD             10 (startswith)
+            680 LOAD_FAST                1 (total_token)
+            682 PRECALL                  1
+            686 CALL                     1
+            696 POP_JUMP_FORWARD_IF_FALSE     2 (to 702)
+
+141         698 EXTENDED_ARG             1
+            700 JUMP_BACKWARD          319 (to 64)
+
+142     >>  702 LOAD_GLOBAL             23 (NULL + split_row_total)
+            714 LOAD_FAST                7 (line)
+            716 LOAD_CONST               6 (1)
+            718 LOAD_CONST               1 (None)
+            720 BUILD_SLICE              2
+            722 BINARY_SUBSCR
+            732 LOAD_FAST                9 (cols)
+            734 LOAD_FAST               10 (txc)
+            736 PRECALL                  3
+            740 CALL                     3
+            750 UNPACK_SEQUENCE          2
+            754 STORE_FAST              13 (keep)
+            756 STORE_FAST              14 (rt)
+
+143         758 LOAD_FAST               14 (rt)
+            760 POP_JUMP_FORWARD_IF_NONE    19 (to 800)
+            762 LOAD_GLOBAL             17 (NULL + len)
+            774 LOAD_FAST               13 (keep)
+            776 PRECALL                  1
+            780 CALL                     1
+            790 LOAD_CONST              10 (2)
+            792 COMPARE_OP               0 (<)
+            798 POP_JUMP_FORWARD_IF_FALSE     2 (to 804)
+
+144     >>  800 EXTENDED_ARG             1
+            802 JUMP_BACKWARD          370 (to 64)
+
+145     >>  804 LOAD_FAST               11 (g)
+            806 COPY                     1
+            808 LOAD_ATTR               12 (rows)
+            818 LOAD_CONST               6 (1)
+            820 BINARY_OP               13 (+=)
+            824 SWAP                     2
+            826 STORE_ATTR              12 (rows)
+
+146         836 LOAD_FAST               11 (g)
+            838 COPY                     1
+            840 LOAD_ATTR               13 (qty)
+            850 LOAD_GLOBAL             29 (NULL + _row_total_value)
+            862 LOAD_FAST               14 (rt)
+            864 PRECALL                  1
+            868 CALL                     1
+            878 BINARY_OP               13 (+=)
+            882 SWAP                     2
+            884 STORE_ATTR              13 (qty)
+
+147         894 LOAD_FAST                7 (line)
+            896 LOAD_CONST               9 (0)
+            898 BINARY_SUBSCR
+            908 LOAD_METHOD             15 (is_number)
+            930 PRECALL                  0
+            934 CALL                     0
+            944 POP_JUMP_FORWARD_IF_FALSE    18 (to 982)
+
+148         946 LOAD_FAST               11 (g)
+            948 COPY                     1
+            950 LOAD_ATTR               16 (numeric_first)
+            960 LOAD_CONST               6 (1)
+            962 BINARY_OP               13 (+=)
+            966 SWAP                     2
+            968 STORE_ATTR              16 (numeric_first)
+            978 EXTENDED_ARG             1
+            980 JUMP_BACKWARD          459 (to 64)
+
+149     >>  982 LOAD_GLOBAL             17 (NULL + len)
+            994 LOAD_FAST               11 (g)
+            996 LOAD_ATTR               17 (code_samples)
+           1006 PRECALL                  1
+           1010 CALL                     1
+           1020 LOAD_CONST              11 (60)
+           1022 COMPARE_OP               0 (<)
+           1028 POP_JUMP_FORWARD_IF_FALSE    37 (to 1104)
+
+150        1030 LOAD_FAST               11 (g)
+           1032 LOAD_ATTR               17 (code_samples)
+           1042 LOAD_METHOD              7 (append)
+           1064 LOAD_FAST                7 (line)
+           1066 LOAD_CONST               9 (0)
+           1068 BINARY_SUBSCR
+           1078 LOAD_ATTR                9 (text)
+           1088 PRECALL                  1
+           1092 CALL                     1
+           1102 POP_TOP
+        >> 1104 EXTENDED_ARG             2
+           1106 JUMP_BACKWARD          522 (to 64)
+
+113     >> 1108 EXTENDED_ARG             2
+           1110 JUMP_BACKWARD          547 (to 18)
+
+151     >> 1112 LOAD_CONST              12 (<code object <listcomp> at 0x000002BF94A6E090, file "core\matrix_synth.py", line 151>)
+           1114 MAKE_FUNCTION            0
+           1116 LOAD_FAST                3 (grids)
+           1118 LOAD_METHOD             18 (values)
+           1140 PRECALL                  0
+           1144 CALL                     0
+           1154 GET_ITER
+           1156 PRECALL                  0
+           1160 CALL                     0
+           1170 RETURN_VALUE
+
+==============================================================================
+## <module>.scan_grids.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+116           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.scan_grids.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+122           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 9 (to 26)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_ATTR                0 (text)
+             22 LIST_APPEND              2
+             24 JUMP_BACKWARD           10 (to 6)
+        >>   26 RETURN_VALUE
+
+==============================================================================
+## <module>.scan_grids.<listcomp>  (args=1, locals=2)
+# varnames: .0, g
+151           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                15 (to 38)
+              8 STORE_FAST               1 (g)
+             10 LOAD_FAST                1 (g)
+             12 LOAD_ATTR                0 (rows)
+             22 LOAD_CONST               0 (0)
+             24 COMPARE_OP               4 (>)
+             30 POP_JUMP_BACKWARD_IF_FALSE    13 (to 6)
+             32 LOAD_FAST                1 (g)
+             34 LIST_APPEND              2
+             36 JUMP_BACKWARD           16 (to 6)
+        >>   38 RETURN_VALUE
+
+==============================================================================
+## <module>.total_token_candidates  (args=1, locals=6)
+# varnames: pages, p, t, out, tok, grids
+              0 MAKE_CELL                6 (counts)
+
+154           2 RESUME                   0
+
+156           4 BUILD_MAP                0
+              6 STORE_DEREF              6 (counts)
+
+157           8 LOAD_FAST                0 (pages)
+             10 GET_ITER
+        >>   12 FOR_ITER               101 (to 216)
+             14 STORE_FAST               1 (p)
+
+158          16 LOAD_FAST                1 (p)
+             18 LOAD_ATTR                0 (tokens)
+             28 GET_ITER
+        >>   30 FOR_ITER                91 (to 214)
+             32 STORE_FAST               2 (t)
+
+159          34 LOAD_FAST                2 (t)
+             36 LOAD_ATTR                1 (text)
+             46 LOAD_METHOD              2 (upper)
+             68 PRECALL                  0
+             72 CALL                     0
+             82 LOAD_METHOD              3 (rstrip)
+            104 LOAD_CONST               1 (':.')
+            106 PRECALL                  1
+            110 CALL                     1
+            120 LOAD_GLOBAL              8 (TOTAL_WORDS)
+            132 CONTAINS_OP              0
+            134 POP_JUMP_FORWARD_IF_FALSE    38 (to 212)
+
+160         136 LOAD_DEREF               6 (counts)
+            138 LOAD_METHOD              5 (get)
+            160 LOAD_FAST                2 (t)
+            162 LOAD_ATTR                1 (text)
+            172 LOAD_CONST               2 (0)
+            174 PRECALL                  2
+            178 CALL                     2
+            188 LOAD_CONST               3 (1)
+            190 BINARY_OP                0 (+)
+            194 LOAD_DEREF               6 (counts)
+            196 LOAD_FAST                2 (t)
+            198 LOAD_ATTR                1 (text)
+            208 STORE_SUBSCR
+        >>  212 JUMP_BACKWARD           92 (to 30)
+
+158     >>  214 JUMP_BACKWARD          102 (to 12)
+
+161     >>  216 BUILD_LIST               0
+            218 STORE_FAST               3 (out)
+
+162         220 LOAD_GLOBAL             13 (NULL + sorted)
+            232 LOAD_DEREF               6 (counts)
+            234 LOAD_CLOSURE             6 (counts)
+            236 BUILD_TUPLE              1
+            238 LOAD_CONST               4 (<code object <lambda> at 0x000002BF94A37EC0, file "core\matrix_synth.py", line 162>)
+            240 MAKE_FUNCTION            8 (closure)
+            242 KW_NAMES                 5
+            244 PRECALL                  2
+            248 CALL                     2
+            258 GET_ITER
+        >>  260 FOR_ITER                43 (to 348)
+            262 STORE_FAST               4 (tok)
+
+163         264 LOAD_GLOBAL             15 (NULL + scan_grids)
+            276 LOAD_FAST                0 (pages)
+            278 LOAD_FAST                4 (tok)
+            280 PRECALL                  2
+            284 CALL                     2
+            294 STORE_FAST               5 (grids)
+
+164         296 LOAD_FAST                5 (grids)
+            298 POP_JUMP_FORWARD_IF_FALSE    23 (to 346)
+
+165         300 LOAD_FAST                3 (out)
+            302 LOAD_METHOD              8 (append)
+            324 LOAD_FAST                4 (tok)
+            326 LOAD_FAST                5 (grids)
+            328 BUILD_TUPLE              2
+            330 PRECALL                  1
+            334 CALL                     1
+            344 POP_TOP
+        >>  346 JUMP_BACKWARD           44 (to 260)
+
+166     >>  348 LOAD_FAST                3 (out)
+            350 RETURN_VALUE
+
+==============================================================================
+## <module>.total_token_candidates.<lambda>  (args=1, locals=1)
+# varnames: k
+              0 COPY_FREE_VARS           1
+
+162           2 RESUME                   0
+              4 LOAD_DEREF               1 (counts)
+              6 LOAD_FAST                0 (k)
+              8 BINARY_SUBSCR
+             18 UNARY_NEGATIVE
+             20 RETURN_VALUE
+
+==============================================================================
+## <module>.size_header_anchor  (args=2, locals=6)
+# varnames: tokens, total_token, idxs, ti, j, parts
+              0 MAKE_CELL                1 (total_token)
+
+172           2 RESUME                   0
+
+179           4 LOAD_CLOSURE             1 (total_token)
+              6 BUILD_TUPLE              1
+              8 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6DC30, file "core\matrix_synth.py", line 179>)
+             10 MAKE_FUNCTION            8 (closure)
+             12 LOAD_GLOBAL              1 (NULL + enumerate)
+             24 LOAD_FAST                0 (tokens)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 GET_ITER
+             42 PRECALL                  0
+             46 CALL                     0
+             56 STORE_FAST               2 (idxs)
+
+180          58 LOAD_FAST                2 (idxs)
+             60 POP_JUMP_FORWARD_IF_TRUE     2 (to 66)
+
+181          62 LOAD_CONST               2 ('')
+             64 RETURN_VALUE
+
+182     >>   66 LOAD_FAST                2 (idxs)
+             68 LOAD_CONST               3 (-1)
+             70 BINARY_SUBSCR
+             80 STORE_FAST               3 (ti)
+
+183          82 LOAD_FAST                3 (ti)
+             84 STORE_FAST               4 (j)
+
+184          86 LOAD_FAST                4 (j)
+             88 LOAD_CONST               4 (1)
+             90 BINARY_OP               10 (-)
+             94 LOAD_CONST               5 (0)
+             96 COMPARE_OP               5 (>=)
+            102 POP_JUMP_FORWARD_IF_FALSE    72 (to 248)
+            104 LOAD_GLOBAL              3 (NULL + SIZE_TOKEN)
+            116 LOAD_ATTR                2 (match)
+            126 LOAD_FAST                0 (tokens)
+            128 LOAD_FAST                4 (j)
+            130 LOAD_CONST               4 (1)
+            132 BINARY_OP               10 (-)
+            136 BINARY_SUBSCR
+            146 PRECALL                  1
+            150 CALL                     1
+            160 POP_JUMP_FORWARD_IF_FALSE    43 (to 248)
+
+185     >>  162 LOAD_FAST                4 (j)
+            164 LOAD_CONST               4 (1)
+            166 BINARY_OP               23 (-=)
+            170 STORE_FAST               4 (j)
+
+184         172 LOAD_FAST                4 (j)
+            174 LOAD_CONST               4 (1)
+            176 BINARY_OP               10 (-)
+            180 LOAD_CONST               5 (0)
+            182 COMPARE_OP               5 (>=)
+            188 POP_JUMP_FORWARD_IF_FALSE    29 (to 248)
+            190 LOAD_GLOBAL              3 (NULL + SIZE_TOKEN)
+            202 LOAD_ATTR                2 (match)
+            212 LOAD_FAST                0 (tokens)
+            214 LOAD_FAST                4 (j)
+            216 LOAD_CONST               4 (1)
+            218 BINARY_OP               10 (-)
+            222 BINARY_SUBSCR
+            232 PRECALL                  1
+            236 CALL                     1
+            246 POP_JUMP_BACKWARD_IF_TRUE    43 (to 162)
+
+186     >>  248 LOAD_FAST                3 (ti)
+            250 LOAD_FAST                4 (j)
+            252 BINARY_OP               10 (-)
+            256 LOAD_CONST               6 (2)
+            258 COMPARE_OP               0 (<)
+            264 POP_JUMP_FORWARD_IF_FALSE     2 (to 270)
+
+187         266 LOAD_CONST               2 ('')
+            268 RETURN_VALUE
+
+188     >>  270 LOAD_CONST               7 (<code object <listcomp> at 0x000002BF94AA8120, file "core\matrix_synth.py", line 188>)
+            272 MAKE_FUNCTION            0
+            274 LOAD_FAST                0 (tokens)
+            276 LOAD_CONST               8 (None)
+            278 LOAD_FAST                4 (j)
+            280 BUILD_SLICE              2
+            282 BINARY_SUBSCR
+            292 GET_ITER
+            294 PRECALL                  0
+            298 CALL                     0
+            308 STORE_FAST               5 (parts)
+
+189         310 LOAD_FAST                5 (parts)
+            312 LOAD_METHOD              3 (append)
+            334 LOAD_GLOBAL              8 (_SIZE_CLASS)
+            346 LOAD_CONST               9 ('(?:\\s+')
+            348 BINARY_OP                0 (+)
+            352 LOAD_GLOBAL              8 (_SIZE_CLASS)
+            364 BINARY_OP                0 (+)
+            368 LOAD_CONST              10 (')+')
+            370 BINARY_OP                0 (+)
+            374 PRECALL                  1
+            378 CALL                     1
+            388 POP_TOP
+
+190         390 LOAD_FAST                5 (parts)
+            392 LOAD_CONST              11 (<code object <listcomp> at 0x000002BF94AA8300, file "core\matrix_synth.py", line 190>)
+            394 MAKE_FUNCTION            0
+            396 LOAD_FAST                0 (tokens)
+            398 LOAD_FAST                3 (ti)
+            400 LOAD_CONST               8 (None)
+            402 BUILD_SLICE              2
+            404 BINARY_SUBSCR
+            414 GET_ITER
+            416 PRECALL                  0
+            420 CALL                     0
+            430 BINARY_OP               13 (+=)
+            434 STORE_FAST               5 (parts)
+
+191         436 LOAD_CONST              12 ('\\s+')
+            438 LOAD_METHOD              5 (join)
+            460 LOAD_FAST                5 (parts)
+            462 PRECALL                  1
+            466 CALL                     1
+            476 RETURN_VALUE
+
+==============================================================================
+## <module>.size_header_anchor.<listcomp>  (args=1, locals=3)
+# varnames: .0, i, t
+              0 COPY_FREE_VARS           1
+
+179           2 RESUME                   0
+              4 BUILD_LIST               0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                13 (to 36)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (i)
+             16 STORE_FAST               2 (t)
+             18 LOAD_FAST                2 (t)
+             20 LOAD_DEREF               3 (total_token)
+             22 COMPARE_OP               2 (==)
+             28 POP_JUMP_BACKWARD_IF_FALSE    11 (to 8)
+             30 LOAD_FAST                1 (i)
+             32 LIST_APPEND              2
+             34 JUMP_BACKWARD           14 (to 8)
+        >>   36 RETURN_VALUE
+
+==============================================================================
+## <module>.size_header_anchor.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+188           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (t)
+             10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (escape)
+             32 LOAD_FAST                1 (t)
+             34 PRECALL                  1
+             38 CALL                     1
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>.size_header_anchor.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+190           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (t)
+             10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (escape)
+             32 LOAD_FAST                1 (t)
+             34 PRECALL                  1
+             38 CALL                     1
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._default_code_ok  (args=1, locals=1)
+# varnames: s
+194           0 RESUME                   0
+
+196           2 LOAD_GLOBAL              1 (NULL + bool)
+             14 LOAD_FAST                0 (s)
+             16 LOAD_METHOD              1 (isalnum)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 JUMP_IF_FALSE_OR_POP    43 (to 140)
+             54 LOAD_GLOBAL              5 (NULL + any)
+             66 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2F130, file "core\matrix_synth.py", line 196>)
+             68 MAKE_FUNCTION            0
+             70 LOAD_FAST                0 (s)
+             72 GET_ITER
+             74 PRECALL                  0
+             78 CALL                     0
+             88 PRECALL                  1
+             92 CALL                     1
+            102 JUMP_IF_FALSE_OR_POP    18 (to 140)
+            104 LOAD_GLOBAL              7 (NULL + len)
+            116 LOAD_FAST                0 (s)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 LOAD_CONST               2 (4)
+            134 COMPARE_OP               5 (>=)
+        >>  140 PRECALL                  1
+            144 CALL                     1
+            154 RETURN_VALUE
+
+==============================================================================
+## <module>._default_code_ok.<genexpr>  (args=1, locals=2)
+# varnames: .0, c
+196           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (c)
+             12 LOAD_FAST                1 (c)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.code_pattern  (args=1, locals=4)
+# varnames: samples, specials, cls, n
+199           0 RESUME                   0
+
+205           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94AB0030, file "core\matrix_synth.py", line 205>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_FAST                0 (samples)
+              8 GET_ITER
+             10 PRECALL                  0
+             14 CALL                     0
+             24 STORE_FAST               0 (samples)
+
+206          26 LOAD_FAST                0 (samples)
+             28 POP_JUMP_FORWARD_IF_FALSE    25 (to 80)
+             30 LOAD_GLOBAL              1 (NULL + all)
+             42 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94AA8210, file "core\matrix_synth.py", line 206>)
+             44 MAKE_FUNCTION            0
+             46 LOAD_FAST                0 (samples)
+             48 GET_ITER
+             50 PRECALL                  0
+             54 CALL                     0
+             64 PRECALL                  1
+             68 CALL                     1
+             78 POP_JUMP_FORWARD_IF_FALSE     2 (to 84)
+
+207     >>   80 LOAD_CONST               3 ('')
+             82 RETURN_VALUE
+
+208     >>   84 LOAD_CONST               3 ('')
+             86 LOAD_METHOD              1 (join)
+            108 LOAD_GLOBAL              5 (NULL + sorted)
+            120 LOAD_CONST               4 (<code object <setcomp> at 0x000002BF94A2EC30, file "core\matrix_synth.py", line 208>)
+            122 MAKE_FUNCTION            0
+            124 LOAD_FAST                0 (samples)
+            126 GET_ITER
+            128 PRECALL                  0
+            132 CALL                     0
+            142 PRECALL                  1
+            146 CALL                     1
+            156 PRECALL                  1
+            160 CALL                     1
+            170 STORE_FAST               1 (specials)
+
+209         172 LOAD_CONST               5 ('A-Za-z0-9')
+            174 LOAD_FAST                1 (specials)
+            176 POP_JUMP_FORWARD_IF_FALSE    20 (to 218)
+            178 LOAD_GLOBAL              7 (NULL + re)
+            190 LOAD_ATTR                4 (escape)
+            200 LOAD_FAST                1 (specials)
+            202 PRECALL                  1
+            206 CALL                     1
+            216 JUMP_FORWARD             1 (to 220)
+        >>  218 LOAD_CONST               3 ('')
+        >>  220 BINARY_OP                0 (+)
+            224 STORE_FAST               2 (cls)
+
+210         226 LOAD_GLOBAL             11 (NULL + max)
+            238 LOAD_CONST               6 (2)
+            240 LOAD_GLOBAL             13 (NULL + min)
+            252 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF94AA83F0, file "core\matrix_synth.py", line 210>)
+            254 MAKE_FUNCTION            0
+            256 LOAD_FAST                0 (samples)
+            258 GET_ITER
+            260 PRECALL                  0
+            264 CALL                     0
+            274 PRECALL                  1
+            278 CALL                     1
+            288 PRECALL                  2
+            292 CALL                     2
+            302 STORE_FAST               3 (n)
+
+211         304 LOAD_CONST               8 ('(?=.*[A-Za-z])[')
+            306 LOAD_FAST                2 (cls)
+            308 BINARY_OP                0 (+)
+            312 LOAD_CONST               9 (']{%d,}')
+            314 LOAD_FAST                3 (n)
+            316 BINARY_OP                6 (%)
+            320 BINARY_OP                0 (+)
+            324 RETURN_VALUE
+
+==============================================================================
+## <module>.code_pattern.<listcomp>  (args=1, locals=2)
+# varnames: .0, s
+205           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 6 (to 20)
+              8 STORE_FAST               1 (s)
+             10 LOAD_FAST                1 (s)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (s)
+             16 LIST_APPEND              2
+             18 JUMP_BACKWARD            7 (to 6)
+        >>   20 RETURN_VALUE
+
+==============================================================================
+## <module>.code_pattern.<genexpr>  (args=1, locals=2)
+# varnames: .0, s
+206           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (s)
+             12 LOAD_GLOBAL              1 (NULL + _default_code_ok)
+             24 LOAD_FAST                1 (s)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 YIELD_VALUE
+             42 RESUME                   1
+             44 POP_TOP
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+==============================================================================
+## <module>.code_pattern.<setcomp>  (args=1, locals=3)
+# varnames: .0, s, c
+208           0 RESUME                   0
+              2 BUILD_SET                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                29 (to 66)
+              8 STORE_FAST               1 (s)
+             10 LOAD_FAST                1 (s)
+             12 GET_ITER
+        >>   14 FOR_ITER                24 (to 64)
+             16 STORE_FAST               2 (c)
+             18 LOAD_FAST                2 (c)
+             20 LOAD_METHOD              0 (isalnum)
+             42 PRECALL                  0
+             46 CALL                     0
+             56 POP_JUMP_BACKWARD_IF_TRUE    22 (to 14)
+             58 LOAD_FAST                2 (c)
+             60 SET_ADD                  3
+             62 JUMP_BACKWARD           25 (to 14)
+        >>   64 JUMP_BACKWARD           30 (to 6)
+        >>   66 RETURN_VALUE
+
+==============================================================================
+## <module>.code_pattern.<genexpr>  (args=1, locals=2)
+# varnames: .0, s
+210           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (s)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (s)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 YIELD_VALUE
+             42 RESUME                   1
+             44 POP_TOP
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+==============================================================================
+## <module>.dest_anchor_candidates  (args=1, locals=7)
+# varnames: doc, out, label, pat, vals, found, m
+214           0 RESUME                   0
+
+216           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+217           6 LOAD_GLOBAL              0 (_DEST_LABELS)
+             18 GET_ITER
+        >>   20 FOR_ITER                84 (to 190)
+             22 STORE_FAST               2 (label)
+
+218          24 LOAD_FAST                2 (label)
+             26 LOAD_CONST               1 ('\\s*[:.]+\\s*(\\S+)')
+             28 BINARY_OP                0 (+)
+             32 STORE_FAST               3 (pat)
+
+219          34 NOP
+
+220          36 LOAD_CONST               2 (<code object <listcomp> at 0x000002BF94AA86C0, file "core\matrix_synth.py", line 220>)
+             38 MAKE_FUNCTION            0
+             40 LOAD_GLOBAL              3 (NULL + re)
+             52 LOAD_ATTR                2 (finditer)
+             62 LOAD_FAST                3 (pat)
+             64 LOAD_FAST                0 (doc)
+             66 PRECALL                  2
+             70 CALL                     2
+             80 GET_ITER
+             82 PRECALL                  0
+             86 CALL                     0
+             96 STORE_FAST               4 (vals)
+             98 JUMP_FORWARD            21 (to 142)
+        >>  100 PUSH_EXC_INFO
+
+221         102 LOAD_GLOBAL              2 (re)
+            114 LOAD_ATTR                3 (error)
+            124 CHECK_EXC_MATCH
+            126 POP_JUMP_FORWARD_IF_FALSE     3 (to 134)
+            128 POP_TOP
+
+222         130 POP_EXCEPT
+            132 JUMP_BACKWARD           57 (to 20)
+
+221     >>  134 RERAISE                  0
+        >>  136 COPY                     3
+            138 POP_EXCEPT
+            140 RERAISE                  1
+
+223     >>  142 LOAD_FAST                4 (vals)
+            144 POP_JUMP_FORWARD_IF_FALSE    21 (to 188)
+
+224         146 LOAD_FAST                1 (out)
+            148 LOAD_METHOD              4 (append)
+            170 LOAD_FAST                3 (pat)
+            172 PRECALL                  1
+            176 CALL                     1
+            186 POP_TOP
+        >>  188 JUMP_BACKWARD           85 (to 20)
+
+225     >>  190 LOAD_FAST                1 (out)
+            192 POP_JUMP_FORWARD_IF_FALSE     2 (to 198)
+
+226         194 LOAD_FAST                1 (out)
+            196 RETURN_VALUE
+
+229     >>  198 BUILD_MAP                0
+            200 STORE_FAST               5 (found)
+
+230         202 LOAD_GLOBAL              3 (NULL + re)
+            214 LOAD_ATTR                2 (finditer)
+            224 LOAD_CONST               3 ('([A-Z][A-Za-z]{2,15}(?:\\s+[A-Za-z]{2,15}){0,2}\\s*Code)\\s*[:.]+\\s*(\\S+)')
+
+231         226 LOAD_FAST                0 (doc)
+
+230         228 PRECALL                  2
+            232 CALL                     2
+            242 GET_ITER
+        >>  244 FOR_ITER               111 (to 468)
+            246 STORE_FAST               6 (m)
+
+232         248 LOAD_FAST                5 (found)
+            250 LOAD_METHOD              5 (setdefault)
+            272 LOAD_FAST                6 (m)
+            274 LOAD_METHOD              6 (group)
+            296 LOAD_CONST               4 (1)
+            298 PRECALL                  1
+            302 CALL                     1
+            312 LOAD_METHOD              7 (strip)
+            334 PRECALL                  0
+            338 CALL                     0
+            348 LOAD_GLOBAL             17 (NULL + set)
+            360 PRECALL                  0
+            364 CALL                     0
+            374 PRECALL                  2
+            378 CALL                     2
+            388 LOAD_METHOD              9 (add)
+            410 LOAD_FAST                6 (m)
+            412 LOAD_METHOD              6 (group)
+            434 LOAD_CONST               5 (2)
+            436 PRECALL                  1
+            440 CALL                     1
+            450 PRECALL                  1
+            454 CALL                     1
+            464 POP_TOP
+            466 JUMP_BACKWARD          112 (to 244)
+
+233     >>  468 LOAD_GLOBAL             21 (NULL + sorted)
+            480 LOAD_FAST                5 (found)
+            482 LOAD_METHOD             11 (items)
+            504 PRECALL                  0
+            508 CALL                     0
+            518 LOAD_CONST               6 (<code object <lambda> at 0x000002BF94AA87B0, file "core\matrix_synth.py", line 233>)
+            520 MAKE_FUNCTION            0
+            522 KW_NAMES                 7
+            524 PRECALL                  2
+            528 CALL                     2
+            538 GET_ITER
+        >>  540 FOR_ITER               107 (to 756)
+            542 UNPACK_SEQUENCE          2
+            546 STORE_FAST               2 (label)
+            548 STORE_FAST               4 (vals)
+
+234         550 LOAD_GLOBAL             25 (NULL + len)
+            562 LOAD_FAST                4 (vals)
+            564 PRECALL                  1
+            568 CALL                     1
+            578 LOAD_CONST               5 (2)
+            580 COMPARE_OP               5 (>=)
+            586 POP_JUMP_FORWARD_IF_FALSE    62 (to 712)
+
+235         588 LOAD_FAST                1 (out)
+            590 LOAD_METHOD              4 (append)
+            612 LOAD_GLOBAL              3 (NULL + re)
+            624 LOAD_ATTR               13 (escape)
+            634 LOAD_FAST                2 (label)
+            636 PRECALL                  1
+            640 CALL                     1
+            650 LOAD_METHOD             14 (replace)
+            672 LOAD_CONST               8 ('\\ ')
+            674 LOAD_CONST               9 ('\\s+')
+            676 PRECALL                  2
+            680 CALL                     2
+            690 LOAD_CONST               1 ('\\s*[:.]+\\s*(\\S+)')
+            692 BINARY_OP                0 (+)
+            696 PRECALL                  1
+            700 CALL                     1
+            710 POP_TOP
+
+236     >>  712 LOAD_GLOBAL             25 (NULL + len)
+            724 LOAD_FAST                1 (out)
+            726 PRECALL                  1
+            730 CALL                     1
+            740 LOAD_CONST               5 (2)
+            742 COMPARE_OP               5 (>=)
+            748 POP_JUMP_FORWARD_IF_FALSE     2 (to 754)
+
+237         750 POP_TOP
+            752 JUMP_FORWARD             1 (to 756)
+
+236     >>  754 JUMP_BACKWARD          108 (to 540)
+
+238     >>  756 LOAD_FAST                1 (out)
+            758 RETURN_VALUE
+ExceptionTable:
+  36 to 96 -> 100 [1]
+  100 to 128 -> 136 [2] lasti
+  134 to 134 -> 136 [2] lasti
+
+==============================================================================
+## <module>.dest_anchor_candidates.<listcomp>  (args=1, locals=2)
+# varnames: .0, m
+220           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                23 (to 54)
+              8 STORE_FAST               1 (m)
+             10 LOAD_FAST                1 (m)
+             12 LOAD_METHOD              0 (group)
+             34 LOAD_CONST               0 (1)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 LIST_APPEND              2
+             52 JUMP_BACKWARD           24 (to 6)
+        >>   54 RETURN_VALUE
+
+==============================================================================
+## <module>.dest_anchor_candidates.<lambda>  (args=1, locals=1)
+# varnames: kv
+233           0 RESUME                   0
+              2 LOAD_GLOBAL              1 (NULL + len)
+             14 LOAD_FAST                0 (kv)
+             16 LOAD_CONST               1 (1)
+             18 BINARY_SUBSCR
+             28 PRECALL                  1
+             32 CALL                     1
+             42 UNARY_NEGATIVE
+             44 RETURN_VALUE
+
+==============================================================================
+## <module>.section_candidates  (args=2, locals=9)
+# varnames: lines, dest_pat, first, i, ln, out, rx, k, s
+241           0 RESUME                   0
+
+243           2 LOAD_CONST               1 (-1)
+              4 STORE_FAST               2 (first)
+
+244           6 LOAD_GLOBAL              1 (NULL + enumerate)
+             18 LOAD_FAST                0 (lines)
+             20 PRECALL                  1
+             24 CALL                     1
+             34 GET_ITER
+        >>   36 FOR_ITER                57 (to 152)
+             38 UNPACK_SEQUENCE          2
+             42 STORE_FAST               3 (i)
+             44 STORE_FAST               4 (ln)
+
+245          46 NOP
+
+246          48 LOAD_GLOBAL              3 (NULL + re)
+             60 LOAD_ATTR                2 (search)
+             70 LOAD_FAST                1 (dest_pat)
+             72 LOAD_FAST                4 (ln)
+             74 PRECALL                  2
+             78 CALL                     2
+             88 POP_JUMP_FORWARD_IF_FALSE     4 (to 98)
+
+247          90 LOAD_FAST                3 (i)
+             92 STORE_FAST               2 (first)
+
+248          94 POP_TOP
+             96 JUMP_FORWARD            27 (to 152)
+
+246     >>   98 JUMP_BACKWARD           32 (to 36)
+        >>  100 PUSH_EXC_INFO
+
+249         102 LOAD_GLOBAL              2 (re)
+            114 LOAD_ATTR                3 (error)
+            124 CHECK_EXC_MATCH
+            126 POP_JUMP_FORWARD_IF_FALSE     8 (to 144)
+            128 POP_TOP
+
+250         130 LOAD_CONST               2 ('')
+            132 BUILD_LIST               1
+            134 SWAP                     2
+            136 POP_EXCEPT
+            138 SWAP                     2
+            140 POP_TOP
+            142 RETURN_VALUE
+
+249     >>  144 RERAISE                  0
+        >>  146 COPY                     3
+            148 POP_EXCEPT
+            150 RERAISE                  1
+
+251     >>  152 BUILD_LIST               0
+            154 STORE_FAST               5 (out)
+
+252         156 LOAD_FAST                2 (first)
+            158 LOAD_CONST               3 (0)
+            160 COMPARE_OP               4 (>)
+            166 POP_JUMP_FORWARD_IF_FALSE   144 (to 456)
+
+253         168 LOAD_GLOBAL              3 (NULL + re)
+            180 LOAD_ATTR                4 (compile)
+            190 LOAD_CONST               4 ('^')
+            192 LOAD_GLOBAL             10 (SECTION_DELIM)
+            204 BINARY_OP                0 (+)
+            208 LOAD_CONST               5 ('$')
+            210 BINARY_OP                0 (+)
+            214 PRECALL                  1
+            218 CALL                     1
+            228 STORE_FAST               6 (rx)
+
+254         230 LOAD_GLOBAL             13 (NULL + range)
+            242 LOAD_FAST                2 (first)
+            244 LOAD_CONST               6 (1)
+            246 BINARY_OP               10 (-)
+            250 LOAD_GLOBAL             15 (NULL + max)
+            262 LOAD_CONST               1 (-1)
+            264 LOAD_FAST                2 (first)
+            266 LOAD_CONST               7 (8)
+            268 BINARY_OP               10 (-)
+            272 PRECALL                  2
+            276 CALL                     2
+            286 LOAD_CONST               1 (-1)
+            288 PRECALL                  3
+            292 CALL                     3
+            302 GET_ITER
+        >>  304 FOR_ITER                75 (to 456)
+            306 STORE_FAST               7 (k)
+
+255         308 LOAD_FAST                0 (lines)
+            310 LOAD_FAST                7 (k)
+            312 BINARY_SUBSCR
+            322 LOAD_METHOD              8 (strip)
+            344 PRECALL                  0
+            348 CALL                     0
+            358 STORE_FAST               8 (s)
+
+256         360 LOAD_CONST               8 (':')
+            362 LOAD_FAST                8 (s)
+            364 CONTAINS_OP              0
+            366 POP_JUMP_FORWARD_IF_TRUE    21 (to 410)
+            368 LOAD_FAST                6 (rx)
+            370 LOAD_METHOD              9 (match)
+            392 LOAD_FAST                8 (s)
+            394 PRECALL                  1
+            398 CALL                     1
+            408 POP_JUMP_FORWARD_IF_TRUE     1 (to 412)
+
+257     >>  410 JUMP_BACKWARD           54 (to 304)
+
+258     >>  412 LOAD_FAST                5 (out)
+            414 LOAD_METHOD             10 (append)
+            436 LOAD_FAST                8 (s)
+            438 PRECALL                  1
+            442 CALL                     1
+            452 POP_TOP
+
+259         454 POP_TOP
+
+260     >>  456 LOAD_FAST                5 (out)
+            458 LOAD_METHOD             10 (append)
+            480 LOAD_CONST               2 ('')
+            482 PRECALL                  1
+            486 CALL                     1
+            496 POP_TOP
+
+261         498 LOAD_FAST                5 (out)
+            500 RETURN_VALUE
+ExceptionTable:
+  48 to 92 -> 100 [1]
+  100 to 134 -> 146 [2] lasti
+  144 to 144 -> 146 [2] lasti
+
+==============================================================================
+## <module>.summary_anchor  (args=1, locals=3)
+# varnames: lines, rx, ln
+264           0 RESUME                   0
+
+266           2 LOAD_GLOBAL              1 (NULL + re)
+             14 LOAD_ATTR                1 (compile)
+             24 LOAD_CONST               1 ('^')
+             26 LOAD_GLOBAL              4 (_SUMMARY_WORDS)
+             38 BINARY_OP                0 (+)
+             42 LOAD_CONST               2 ('\\s+(?:')
+             44 BINARY_OP                0 (+)
+             48 LOAD_CONST               3 ('|')
+             50 LOAD_METHOD              3 (join)
+
+267          72 LOAD_GLOBAL              9 (NULL + sorted)
+             84 LOAD_CONST               4 (<code object <genexpr> at 0x000002BF94A2F230, file "core\matrix_synth.py", line 267>)
+             86 MAKE_FUNCTION            0
+             88 LOAD_GLOBAL             10 (TOTAL_WORDS)
+            100 GET_ITER
+            102 PRECALL                  0
+            106 CALL                     0
+            116 PRECALL                  1
+            120 CALL                     1
+
+266         130 PRECALL                  1
+            134 CALL                     1
+            144 BINARY_OP                0 (+)
+
+267         148 LOAD_CONST               5 (')\\b')
+
+266         150 BINARY_OP                0 (+)
+            154 PRECALL                  1
+            158 CALL                     1
+            168 STORE_FAST               1 (rx)
+
+268         170 LOAD_FAST                0 (lines)
+            172 GET_ITER
+        >>  174 FOR_ITER                53 (to 282)
+            176 STORE_FAST               2 (ln)
+
+269         178 LOAD_FAST                1 (rx)
+            180 LOAD_METHOD              6 (match)
+            202 LOAD_FAST                2 (ln)
+            204 LOAD_METHOD              7 (strip)
+            226 PRECALL                  0
+            230 CALL                     0
+            240 PRECALL                  1
+            244 CALL                     1
+            254 POP_JUMP_FORWARD_IF_FALSE    12 (to 280)
+
+270         256 LOAD_GLOBAL              4 (_SUMMARY_WORDS)
+            268 LOAD_CONST               6 ('\\s+\\w+')
+            270 BINARY_OP                0 (+)
+            274 SWAP                     2
+            276 POP_TOP
+            278 RETURN_VALUE
+
+269     >>  280 JUMP_BACKWARD           54 (to 174)
+
+271     >>  282 LOAD_CONST               7 ('')
+            284 RETURN_VALUE
+
+==============================================================================
+## <module>.summary_anchor.<genexpr>  (args=1, locals=2)
+# varnames: .0, w
+267           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                26 (to 62)
+             10 STORE_FAST               1 (w)
+             12 LOAD_FAST                1 (w)
+             14 LOAD_METHOD              0 (isascii)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 POP_JUMP_BACKWARD_IF_FALSE    22 (to 8)
+             52 LOAD_FAST                1 (w)
+             54 YIELD_VALUE
+             56 RESUME                   1
+             58 POP_TOP
+             60 JUMP_BACKWARD           27 (to 8)
+        >>   62 LOAD_CONST               0 (None)
+             64 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor  (args=1, locals=5)
+# varnames: members, rows, n, sep, parts
+              0 MAKE_CELL                5 (i)
+              2 MAKE_CELL                6 (j)
+
+277           4 RESUME                   0
+
+286           6 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94AA88A0, file "core\matrix_synth.py", line 286>)
+              8 MAKE_FUNCTION            0
+             10 LOAD_FAST                0 (members)
+             12 GET_ITER
+             14 PRECALL                  0
+             18 CALL                     0
+             28 STORE_FAST               1 (rows)
+
+287          30 LOAD_GLOBAL              1 (NULL + min)
+             42 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94AA8990, file "core\matrix_synth.py", line 287>)
+             44 MAKE_FUNCTION            0
+             46 LOAD_FAST                1 (rows)
+             48 GET_ITER
+             50 PRECALL                  0
+             54 CALL                     0
+             64 PRECALL                  1
+             68 CALL                     1
+             78 STORE_FAST               2 (n)
+
+288          80 LOAD_FAST                2 (n)
+             82 LOAD_CONST               3 (3)
+             84 COMPARE_OP               0 (<)
+             90 POP_JUMP_FORWARD_IF_FALSE     2 (to 96)
+
+289          92 LOAD_CONST               4 ('')
+             94 RETURN_VALUE
+
+290     >>   96 LOAD_CONST               5 (0)
+             98 STORE_DEREF              5 (i)
+
+291         100 LOAD_DEREF               5 (i)
+            102 LOAD_FAST                2 (n)
+            104 LOAD_CONST               6 (2)
+            106 BINARY_OP               10 (-)
+            110 COMPARE_OP               0 (<)
+            116 POP_JUMP_FORWARD_IF_FALSE    76 (to 270)
+            118 LOAD_GLOBAL              3 (NULL + len)
+            130 LOAD_CLOSURE             5 (i)
+            132 BUILD_TUPLE              1
+            134 LOAD_CONST               7 (<code object <setcomp> at 0x000002BF94A6E250, file "core\matrix_synth.py", line 291>)
+            136 MAKE_FUNCTION            8 (closure)
+            138 LOAD_FAST                1 (rows)
+            140 GET_ITER
+            142 PRECALL                  0
+            146 CALL                     0
+            156 PRECALL                  1
+            160 CALL                     1
+            170 LOAD_CONST               8 (1)
+            172 COMPARE_OP               2 (==)
+            178 POP_JUMP_FORWARD_IF_FALSE    45 (to 270)
+
+292     >>  180 LOAD_DEREF               5 (i)
+            182 LOAD_CONST               8 (1)
+            184 BINARY_OP               13 (+=)
+            188 STORE_DEREF              5 (i)
+
+291         190 LOAD_DEREF               5 (i)
+            192 LOAD_FAST                2 (n)
+            194 LOAD_CONST               6 (2)
+            196 BINARY_OP               10 (-)
+            200 COMPARE_OP               0 (<)
+            206 POP_JUMP_FORWARD_IF_FALSE    31 (to 270)
+            208 LOAD_GLOBAL              3 (NULL + len)
+            220 LOAD_CLOSURE             5 (i)
+            222 BUILD_TUPLE              1
+            224 LOAD_CONST               7 (<code object <setcomp> at 0x000002BF94A6E250, file "core\matrix_synth.py", line 291>)
+            226 MAKE_FUNCTION            8 (closure)
+            228 LOAD_FAST                1 (rows)
+            230 GET_ITER
+            232 PRECALL                  0
+            236 CALL                     0
+            246 PRECALL                  1
+            250 CALL                     1
+            260 LOAD_CONST               8 (1)
+            262 COMPARE_OP               2 (==)
+            268 POP_JUMP_BACKWARD_IF_TRUE    45 (to 180)
+
+293     >>  270 LOAD_DEREF               5 (i)
+            272 LOAD_CONST               5 (0)
+            274 COMPARE_OP               2 (==)
+            280 POP_JUMP_FORWARD_IF_FALSE     2 (to 286)
+
+294         282 LOAD_CONST               4 ('')
+            284 RETURN_VALUE
+
+295     >>  286 LOAD_GLOBAL              3 (NULL + len)
+            298 LOAD_CLOSURE             5 (i)
+            300 BUILD_TUPLE              1
+            302 LOAD_CONST               9 (<code object <setcomp> at 0x000002BF94A6E330, file "core\matrix_synth.py", line 295>)
+            304 MAKE_FUNCTION            8 (closure)
+            306 LOAD_FAST                1 (rows)
+            308 GET_ITER
+            310 PRECALL                  0
+            314 CALL                     0
+            324 PRECALL                  1
+            328 CALL                     1
+            338 LOAD_CONST               6 (2)
+            340 COMPARE_OP               0 (<)
+            346 POP_JUMP_FORWARD_IF_FALSE     2 (to 352)
+
+296         348 LOAD_CONST               4 ('')
+            350 RETURN_VALUE
+
+297     >>  352 LOAD_DEREF               5 (i)
+            354 LOAD_CONST               8 (1)
+            356 BINARY_OP                0 (+)
+            360 STORE_DEREF              6 (j)
+
+298         362 BUILD_LIST               0
+            364 STORE_FAST               3 (sep)
+
+299         366 LOAD_DEREF               6 (j)
+            368 LOAD_FAST                2 (n)
+            370 LOAD_CONST               8 (1)
+            372 BINARY_OP               10 (-)
+            376 COMPARE_OP               0 (<)
+            382 POP_JUMP_FORWARD_IF_FALSE   183 (to 750)
+            384 LOAD_GLOBAL              3 (NULL + len)
+            396 LOAD_CLOSURE             6 (j)
+            398 BUILD_TUPLE              1
+            400 LOAD_CONST              10 (<code object <setcomp> at 0x000002BF94A6E410, file "core\matrix_synth.py", line 299>)
+            402 MAKE_FUNCTION            8 (closure)
+            404 LOAD_FAST                1 (rows)
+            406 GET_ITER
+            408 PRECALL                  0
+            412 CALL                     0
+            422 PRECALL                  1
+            426 CALL                     1
+            436 LOAD_CONST               8 (1)
+            438 COMPARE_OP               2 (==)
+            444 POP_JUMP_FORWARD_IF_FALSE   152 (to 750)
+
+300         446 LOAD_GLOBAL              5 (NULL + any)
+            458 LOAD_CONST              11 (<code object <genexpr> at 0x000002BF94A2EF30, file "core\matrix_synth.py", line 300>)
+            460 MAKE_FUNCTION            0
+            462 LOAD_FAST                1 (rows)
+            464 LOAD_CONST               5 (0)
+            466 BINARY_SUBSCR
+            476 LOAD_DEREF               6 (j)
+            478 BINARY_SUBSCR
+            488 GET_ITER
+            490 PRECALL                  0
+            494 CALL                     0
+            504 PRECALL                  1
+            508 CALL                     1
+
+299         518 POP_JUMP_FORWARD_IF_TRUE   115 (to 750)
+
+301     >>  520 LOAD_FAST                3 (sep)
+            522 LOAD_METHOD              3 (append)
+            544 LOAD_FAST                1 (rows)
+            546 LOAD_CONST               5 (0)
+            548 BINARY_SUBSCR
+            558 LOAD_DEREF               6 (j)
+            560 BINARY_SUBSCR
+            570 PRECALL                  1
+            574 CALL                     1
+            584 POP_TOP
+
+302         586 LOAD_DEREF               6 (j)
+            588 LOAD_CONST               8 (1)
+            590 BINARY_OP               13 (+=)
+            594 STORE_DEREF              6 (j)
+
+299         596 LOAD_DEREF               6 (j)
+            598 LOAD_FAST                2 (n)
+            600 LOAD_CONST               8 (1)
+            602 BINARY_OP               10 (-)
+            606 COMPARE_OP               0 (<)
+            612 POP_JUMP_FORWARD_IF_FALSE    68 (to 750)
+            614 LOAD_GLOBAL              3 (NULL + len)
+            626 LOAD_CLOSURE             6 (j)
+            628 BUILD_TUPLE              1
+            630 LOAD_CONST              10 (<code object <setcomp> at 0x000002BF94A6E410, file "core\matrix_synth.py", line 299>)
+            632 MAKE_FUNCTION            8 (closure)
+            634 LOAD_FAST                1 (rows)
+            636 GET_ITER
+            638 PRECALL                  0
+            642 CALL                     0
+            652 PRECALL                  1
+            656 CALL                     1
+            666 LOAD_CONST               8 (1)
+            668 COMPARE_OP               2 (==)
+            674 POP_JUMP_FORWARD_IF_FALSE    37 (to 750)
+
+300         676 LOAD_GLOBAL              5 (NULL + any)
+            688 LOAD_CONST              11 (<code object <genexpr> at 0x000002BF94A2EF30, file "core\matrix_synth.py", line 300>)
+            690 MAKE_FUNCTION            0
+            692 LOAD_FAST                1 (rows)
+            694 LOAD_CONST               5 (0)
+            696 BINARY_SUBSCR
+            706 LOAD_DEREF               6 (j)
+            708 BINARY_SUBSCR
+            718 GET_ITER
+            720 PRECALL                  0
+            724 CALL                     0
+            734 PRECALL                  1
+            738 CALL                     1
+
+299         748 POP_JUMP_BACKWARD_IF_FALSE   115 (to 520)
+
+303     >>  750 LOAD_CONST              12 (<code object <listcomp> at 0x000002BF94AA8A80, file "core\matrix_synth.py", line 303>)
+            752 MAKE_FUNCTION            0
+            754 LOAD_FAST                1 (rows)
+            756 LOAD_CONST               5 (0)
+            758 BINARY_SUBSCR
+            768 LOAD_CONST              13 (None)
+            770 LOAD_DEREF               5 (i)
+            772 BUILD_SLICE              2
+            774 BINARY_SUBSCR
+            784 GET_ITER
+            786 PRECALL                  0
+            790 CALL                     0
+            800 LOAD_CONST              14 ('(\\S+)')
+            802 BUILD_LIST               1
+            804 BINARY_OP                0 (+)
+
+304         808 LOAD_CONST              15 (<code object <listcomp> at 0x000002BF94AA8B70, file "core\matrix_synth.py", line 304>)
+            810 MAKE_FUNCTION            0
+            812 LOAD_FAST                3 (sep)
+            814 GET_ITER
+            816 PRECALL                  0
+            820 CALL                     0
+
+303         830 BINARY_OP                0 (+)
+
+304         834 LOAD_CONST              16 ('(.+)')
+            836 BUILD_LIST               1
+
+303         838 BINARY_OP                0 (+)
+            842 STORE_FAST               4 (parts)
+
+305         844 LOAD_CONST              17 ('\\s+')
+            846 LOAD_METHOD              4 (join)
+            868 LOAD_FAST                4 (parts)
+            870 PRECALL                  1
+            874 CALL                     1
+            884 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<listcomp>  (args=1, locals=2)
+# varnames: .0, m
+286           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (m)
+             10 LOAD_FAST                1 (m)
+             12 LOAD_METHOD              0 (split)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<genexpr>  (args=1, locals=2)
+# varnames: .0, r
+287           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (r)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (r)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 YIELD_VALUE
+             42 RESUME                   1
+             44 POP_TOP
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<setcomp>  (args=1, locals=2)
+# varnames: .0, r
+              0 COPY_FREE_VARS           1
+
+291           2 RESUME                   0
+              4 BUILD_SET                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                10 (to 30)
+             10 STORE_FAST               1 (r)
+             12 LOAD_FAST                1 (r)
+             14 LOAD_DEREF               2 (i)
+             16 BINARY_SUBSCR
+             26 SET_ADD                  2
+             28 JUMP_BACKWARD           11 (to 8)
+        >>   30 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<setcomp>  (args=1, locals=2)
+# varnames: .0, r
+              0 COPY_FREE_VARS           1
+
+295           2 RESUME                   0
+              4 BUILD_SET                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                10 (to 30)
+             10 STORE_FAST               1 (r)
+             12 LOAD_FAST                1 (r)
+             14 LOAD_DEREF               2 (i)
+             16 BINARY_SUBSCR
+             26 SET_ADD                  2
+             28 JUMP_BACKWARD           11 (to 8)
+        >>   30 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<setcomp>  (args=1, locals=2)
+# varnames: .0, r
+              0 COPY_FREE_VARS           1
+
+299           2 RESUME                   0
+              4 BUILD_SET                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                10 (to 30)
+             10 STORE_FAST               1 (r)
+             12 LOAD_FAST                1 (r)
+             14 LOAD_DEREF               2 (j)
+             16 BINARY_SUBSCR
+             26 SET_ADD                  2
+             28 JUMP_BACKWARD           11 (to 8)
+        >>   30 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+300           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+303           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (t)
+             10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (escape)
+             32 LOAD_FAST                1 (t)
+             34 PRECALL                  1
+             38 CALL                     1
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._template_anchor.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+304           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (t)
+             10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (escape)
+             32 LOAD_FAST                1 (t)
+             34 PRECALL                  1
+             38 CALL                     1
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._anchor_quality  (args=2, locals=9)
+# varnames: anchor, pool, rx, codes, heads, hits, txt, m, desc
+308           0 RESUME                   0
+
+310           2 NOP
+
+311           4 LOAD_GLOBAL              1 (NULL + re)
+             16 LOAD_ATTR                1 (compile)
+             26 LOAD_FAST                0 (anchor)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               2 (rx)
+             44 JUMP_FORWARD            22 (to 90)
+        >>   46 PUSH_EXC_INFO
+
+312          48 LOAD_GLOBAL              0 (re)
+             60 LOAD_ATTR                2 (error)
+             70 CHECK_EXC_MATCH
+             72 POP_JUMP_FORWARD_IF_FALSE     4 (to 82)
+             74 POP_TOP
+
+313          76 POP_EXCEPT
+             78 LOAD_CONST               1 ((0, 0))
+             80 RETURN_VALUE
+
+312     >>   82 RERAISE                  0
+        >>   84 COPY                     3
+             86 POP_EXCEPT
+             88 RERAISE                  1
+
+314     >>   90 BUILD_LIST               0
+             92 STORE_FAST               3 (codes)
+
+315          94 BUILD_LIST               0
+             96 STORE_FAST               4 (heads)
+
+316          98 LOAD_CONST               2 (0)
+            100 STORE_FAST               5 (hits)
+
+317         102 LOAD_FAST                1 (pool)
+            104 GET_ITER
+        >>  106 FOR_ITER               159 (to 426)
+            108 STORE_FAST               6 (txt)
+
+318         110 LOAD_FAST                2 (rx)
+            112 LOAD_METHOD              3 (search)
+            134 LOAD_FAST                6 (txt)
+            136 PRECALL                  1
+            140 CALL                     1
+            150 STORE_FAST               7 (m)
+
+319         152 LOAD_FAST                7 (m)
+            154 POP_JUMP_FORWARD_IF_FALSE    18 (to 192)
+            156 LOAD_FAST                7 (m)
+            158 LOAD_ATTR                4 (lastindex)
+            168 POP_JUMP_FORWARD_IF_NONE    11 (to 192)
+            170 LOAD_FAST                7 (m)
+            172 LOAD_ATTR                4 (lastindex)
+            182 LOAD_CONST               4 (2)
+            184 COMPARE_OP               0 (<)
+            190 POP_JUMP_FORWARD_IF_FALSE     1 (to 194)
+
+320     >>  192 JUMP_BACKWARD           44 (to 106)
+
+321     >>  194 LOAD_FAST                5 (hits)
+            196 LOAD_CONST               5 (1)
+            198 BINARY_OP               13 (+=)
+            202 STORE_FAST               5 (hits)
+
+322         204 LOAD_FAST                3 (codes)
+            206 LOAD_METHOD              5 (append)
+            228 LOAD_FAST                7 (m)
+            230 LOAD_METHOD              6 (group)
+            252 LOAD_CONST               5 (1)
+            254 PRECALL                  1
+            258 CALL                     1
+            268 PRECALL                  1
+            272 CALL                     1
+            282 POP_TOP
+
+323         284 LOAD_FAST                7 (m)
+            286 LOAD_METHOD              6 (group)
+            308 LOAD_CONST               4 (2)
+            310 PRECALL                  1
+            314 CALL                     1
+            324 LOAD_METHOD              7 (split)
+            346 PRECALL                  0
+            350 CALL                     0
+            360 STORE_FAST               8 (desc)
+
+324         362 LOAD_FAST                4 (heads)
+            364 LOAD_METHOD              5 (append)
+            386 LOAD_FAST                8 (desc)
+            388 POP_JUMP_FORWARD_IF_FALSE     8 (to 406)
+            390 LOAD_FAST                8 (desc)
+            392 LOAD_CONST               2 (0)
+            394 BINARY_SUBSCR
+            404 JUMP_FORWARD             1 (to 408)
+        >>  406 LOAD_CONST               6 ('')
+        >>  408 PRECALL                  1
+            412 CALL                     1
+            422 POP_TOP
+            424 JUMP_BACKWARD          160 (to 106)
+
+325     >>  426 LOAD_FAST                5 (hits)
+            428 LOAD_CONST               4 (2)
+            430 COMPARE_OP               0 (<)
+            436 POP_JUMP_FORWARD_IF_TRUE    32 (to 502)
+            438 LOAD_GLOBAL             17 (NULL + len)
+            450 LOAD_GLOBAL             19 (NULL + set)
+            462 LOAD_FAST                3 (codes)
+            464 PRECALL                  1
+            468 CALL                     1
+            478 PRECALL                  1
+            482 CALL                     1
+            492 LOAD_CONST               4 (2)
+            494 COMPARE_OP               0 (<)
+            500 POP_JUMP_FORWARD_IF_FALSE     4 (to 510)
+
+326     >>  502 LOAD_CONST               2 (0)
+            504 LOAD_FAST                5 (hits)
+            506 BUILD_TUPLE              2
+            508 RETURN_VALUE
+
+327     >>  510 LOAD_GLOBAL             21 (NULL + all)
+            522 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF94A65680, file "core\matrix_synth.py", line 327>)
+            524 MAKE_FUNCTION            0
+            526 LOAD_FAST                3 (codes)
+            528 GET_ITER
+            530 PRECALL                  0
+            534 CALL                     0
+            544 PRECALL                  1
+            548 CALL                     1
+            558 POP_JUMP_FORWARD_IF_TRUE     4 (to 568)
+
+328         560 LOAD_CONST               2 (0)
+            562 LOAD_FAST                5 (hits)
+            564 BUILD_TUPLE              2
+            566 RETURN_VALUE
+
+329     >>  568 LOAD_GLOBAL             21 (NULL + all)
+            580 LOAD_CONST               8 (<code object <genexpr> at 0x000002BF94A6E4F0, file "core\matrix_synth.py", line 329>)
+            582 MAKE_FUNCTION            0
+            584 LOAD_FAST                4 (heads)
+            586 GET_ITER
+            588 PRECALL                  0
+            592 CALL                     0
+            602 PRECALL                  1
+            606 CALL                     1
+            616 POP_JUMP_FORWARD_IF_FALSE    36 (to 690)
+            618 LOAD_GLOBAL             17 (NULL + len)
+            630 LOAD_GLOBAL             19 (NULL + set)
+            642 LOAD_FAST                4 (heads)
+            644 PRECALL                  1
+            648 CALL                     1
+            658 PRECALL                  1
+            662 CALL                     1
+            672 LOAD_CONST               5 (1)
+            674 COMPARE_OP               2 (==)
+            680 POP_JUMP_FORWARD_IF_FALSE     4 (to 690)
+
+330         682 LOAD_CONST               2 (0)
+            684 LOAD_FAST                5 (hits)
+            686 BUILD_TUPLE              2
+            688 RETURN_VALUE
+
+331     >>  690 LOAD_CONST               5 (1)
+            692 LOAD_FAST                5 (hits)
+            694 BUILD_TUPLE              2
+            696 RETURN_VALUE
+ExceptionTable:
+  4 to 42 -> 46 [0]
+  46 to 74 -> 84 [1] lasti
+  82 to 82 -> 84 [1] lasti
+
+==============================================================================
+## <module>._anchor_quality.<genexpr>  (args=1, locals=2)
+# varnames: .0, c
+327           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                30 (to 70)
+             10 STORE_FAST               1 (c)
+             12 LOAD_GLOBAL              0 (_CODE_OK)
+             24 LOAD_METHOD              1 (match)
+             46 LOAD_FAST                1 (c)
+             48 PRECALL                  1
+             52 CALL                     1
+             62 YIELD_VALUE
+             64 RESUME                   1
+             66 POP_TOP
+             68 JUMP_BACKWARD           31 (to 8)
+        >>   70 LOAD_CONST               0 (None)
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>._anchor_quality.<genexpr>  (args=1, locals=2)
+# varnames: .0, h
+329           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                 6 (to 22)
+             10 STORE_FAST               1 (h)
+             12 LOAD_FAST                1 (h)
+             14 YIELD_VALUE
+             16 RESUME                   1
+             18 POP_TOP
+             20 JUMP_BACKWARD            7 (to 8)
+        >>   22 LOAD_CONST               0 (None)
+             24 RETURN_VALUE
+
+==============================================================================
+## <module>.color_anchor_candidates  (args=2, locals=17)
+# varnames: grids, limit, pool, g, groups, txt, toks, n, scored, seen, key, members, anchor, good, hits, out, default
+334           0 RESUME                   0
+
+336           2 BUILD_LIST               0
+              4 STORE_FAST               2 (pool)
+
+337           6 LOAD_FAST                0 (grids)
+              8 GET_ITER
+        >>   10 FOR_ITER                28 (to 68)
+             12 STORE_FAST               3 (g)
+
+338          14 LOAD_FAST                2 (pool)
+             16 LOAD_METHOD              0 (extend)
+             38 LOAD_FAST                3 (g)
+             40 LOAD_ATTR                1 (pre_lines)
+             50 PRECALL                  1
+             54 CALL                     1
+             64 POP_TOP
+             66 JUMP_BACKWARD           29 (to 10)
+
+339     >>   68 BUILD_MAP                0
+             70 STORE_FAST               4 (groups)
+
+340          72 LOAD_FAST                2 (pool)
+             74 GET_ITER
+        >>   76 FOR_ITER               175 (to 428)
+             78 STORE_FAST               5 (txt)
+
+341          80 LOAD_FAST                5 (txt)
+             82 LOAD_METHOD              2 (split)
+            104 PRECALL                  0
+            108 CALL                     0
+            118 STORE_FAST               6 (toks)
+
+342         120 LOAD_GLOBAL              7 (NULL + len)
+            132 LOAD_FAST                6 (toks)
+            134 PRECALL                  1
+            138 CALL                     1
+            148 LOAD_CONST               1 (3)
+            150 COMPARE_OP               0 (<)
+            156 POP_JUMP_FORWARD_IF_TRUE    31 (to 220)
+            158 LOAD_GLOBAL              9 (NULL + any)
+            170 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94A2F330, file "core\matrix_synth.py", line 342>)
+            172 MAKE_FUNCTION            0
+            174 LOAD_FAST                6 (toks)
+            176 LOAD_CONST               3 (0)
+            178 BINARY_SUBSCR
+            188 GET_ITER
+            190 PRECALL                  0
+            194 CALL                     0
+            204 PRECALL                  1
+            208 CALL                     1
+            218 POP_JUMP_FORWARD_IF_FALSE     1 (to 222)
+
+343     >>  220 JUMP_BACKWARD           73 (to 76)
+
+344     >>  222 LOAD_CONST               4 ((3, 2, 1))
+            224 GET_ITER
+        >>  226 FOR_ITER                99 (to 426)
+            228 STORE_FAST               7 (n)
+
+345         230 LOAD_GLOBAL              7 (NULL + len)
+            242 LOAD_FAST                6 (toks)
+            244 PRECALL                  1
+            248 CALL                     1
+            258 LOAD_FAST                7 (n)
+            260 LOAD_CONST               5 (2)
+            262 BINARY_OP                0 (+)
+            266 COMPARE_OP               0 (<)
+            272 POP_JUMP_FORWARD_IF_FALSE     1 (to 276)
+
+346         274 JUMP_BACKWARD           25 (to 226)
+
+347     >>  276 LOAD_FAST                4 (groups)
+            278 LOAD_METHOD              5 (setdefault)
+            300 LOAD_GLOBAL             13 (NULL + tuple)
+            312 LOAD_FAST                6 (toks)
+            314 LOAD_CONST               6 (None)
+            316 LOAD_FAST                7 (n)
+            318 BUILD_SLICE              2
+            320 BINARY_SUBSCR
+            330 PRECALL                  1
+            334 CALL                     1
+            344 LOAD_GLOBAL             15 (NULL + set)
+            356 PRECALL                  0
+            360 CALL                     0
+            370 PRECALL                  2
+            374 CALL                     2
+            384 LOAD_METHOD              8 (add)
+            406 LOAD_FAST                5 (txt)
+            408 PRECALL                  1
+            412 CALL                     1
+            422 POP_TOP
+            424 JUMP_BACKWARD          100 (to 226)
+
+344     >>  426 JUMP_BACKWARD          176 (to 76)
+
+348     >>  428 BUILD_LIST               0
+            430 STORE_FAST               8 (scored)
+
+349         432 LOAD_GLOBAL             15 (NULL + set)
+            444 PRECALL                  0
+            448 CALL                     0
+            458 STORE_FAST               9 (seen)
+
+350         460 LOAD_FAST                4 (groups)
+            462 LOAD_METHOD              9 (items)
+            484 PRECALL                  0
+            488 CALL                     0
+            498 GET_ITER
+        >>  500 FOR_ITER               187 (to 876)
+            502 UNPACK_SEQUENCE          2
+            506 STORE_FAST              10 (key)
+            508 STORE_FAST              11 (members)
+
+351         510 LOAD_GLOBAL              7 (NULL + len)
+            522 LOAD_FAST               11 (members)
+            524 PRECALL                  1
+            528 CALL                     1
+            538 LOAD_CONST               5 (2)
+            540 COMPARE_OP               0 (<)
+            546 POP_JUMP_FORWARD_IF_FALSE     1 (to 550)
+
+352         548 JUMP_BACKWARD           25 (to 500)
+
+353     >>  550 LOAD_GLOBAL             21 (NULL + min)
+            562 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF94A65790, file "core\matrix_synth.py", line 353>)
+            564 MAKE_FUNCTION            0
+            566 LOAD_FAST               11 (members)
+            568 GET_ITER
+            570 PRECALL                  0
+            574 CALL                     0
+            584 PRECALL                  1
+            588 CALL                     1
+            598 LOAD_GLOBAL              7 (NULL + len)
+            610 LOAD_FAST               10 (key)
+            612 PRECALL                  1
+            616 CALL                     1
+            626 BINARY_OP               10 (-)
+            630 LOAD_CONST               5 (2)
+            632 COMPARE_OP               0 (<)
+            638 POP_JUMP_FORWARD_IF_FALSE     1 (to 642)
+
+354         640 JUMP_BACKWARD           71 (to 500)
+
+355     >>  642 LOAD_GLOBAL             23 (NULL + _template_anchor)
+            654 LOAD_GLOBAL             25 (NULL + sorted)
+            666 LOAD_FAST               11 (members)
+            668 PRECALL                  1
+            672 CALL                     1
+            682 PRECALL                  1
+            686 CALL                     1
+            696 STORE_FAST              12 (anchor)
+
+356         698 LOAD_FAST               12 (anchor)
+            700 POP_JUMP_FORWARD_IF_FALSE     4 (to 710)
+            702 LOAD_FAST               12 (anchor)
+            704 LOAD_FAST                9 (seen)
+            706 CONTAINS_OP              0
+            708 POP_JUMP_FORWARD_IF_FALSE     1 (to 712)
+
+357     >>  710 JUMP_BACKWARD          106 (to 500)
+
+358     >>  712 LOAD_FAST                9 (seen)
+            714 LOAD_METHOD              8 (add)
+            736 LOAD_FAST               12 (anchor)
+            738 PRECALL                  1
+            742 CALL                     1
+            752 POP_TOP
+
+359         754 LOAD_GLOBAL             27 (NULL + _anchor_quality)
+            766 LOAD_FAST               12 (anchor)
+            768 LOAD_FAST                2 (pool)
+            770 PRECALL                  2
+            774 CALL                     2
+            784 UNPACK_SEQUENCE          2
+            788 STORE_FAST              13 (good)
+            790 STORE_FAST              14 (hits)
+
+360         792 LOAD_FAST                8 (scored)
+            794 LOAD_METHOD             14 (append)
+            816 LOAD_FAST               13 (good)
+            818 UNARY_NEGATIVE
+            820 LOAD_FAST               14 (hits)
+            822 UNARY_NEGATIVE
+            824 LOAD_GLOBAL              7 (NULL + len)
+            836 LOAD_FAST               10 (key)
+            838 PRECALL                  1
+            842 CALL                     1
+            852 UNARY_NEGATIVE
+            854 LOAD_FAST               12 (anchor)
+            856 BUILD_TUPLE              4
+            858 PRECALL                  1
+            862 CALL                     1
+            872 POP_TOP
+            874 JUMP_BACKWARD          188 (to 500)
+
+361     >>  876 LOAD_FAST                8 (scored)
+            878 LOAD_METHOD             15 (sort)
+            900 PRECALL                  0
+            904 CALL                     0
+            914 POP_TOP
+
+362         916 LOAD_CONST               8 (<code object <listcomp> at 0x000002BF94A6E790, file "core\matrix_synth.py", line 362>)
+            918 MAKE_FUNCTION            0
+            920 LOAD_FAST                8 (scored)
+            922 LOAD_CONST               6 (None)
+            924 LOAD_FAST                1 (limit)
+            926 BUILD_SLICE              2
+            928 BINARY_SUBSCR
+            938 GET_ITER
+            940 PRECALL                  0
+            944 CALL                     0
+            954 STORE_FAST              15 (out)
+
+363         956 LOAD_GLOBAL             32 (PoRecipe)
+            968 LOAD_ATTR               17 (color_anchor)
+            978 STORE_FAST              16 (default)
+
+364         980 LOAD_FAST               16 (default)
+            982 LOAD_FAST               15 (out)
+            984 CONTAINS_OP              1
+            986 POP_JUMP_FORWARD_IF_FALSE    21 (to 1030)
+
+365         988 LOAD_FAST               15 (out)
+            990 LOAD_METHOD             14 (append)
+           1012 LOAD_FAST               16 (default)
+           1014 PRECALL                  1
+           1018 CALL                     1
+           1028 POP_TOP
+
+366     >> 1030 LOAD_FAST               15 (out)
+           1032 RETURN_VALUE
+
+==============================================================================
+## <module>.color_anchor_candidates.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+342           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.color_anchor_candidates.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+353           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                37 (to 84)
+             10 STORE_FAST               1 (t)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (t)
+             26 LOAD_METHOD              1 (split)
+             48 PRECALL                  0
+             52 CALL                     0
+             62 PRECALL                  1
+             66 CALL                     1
+             76 YIELD_VALUE
+             78 RESUME                   1
+             80 POP_TOP
+             82 JUMP_BACKWARD           38 (to 8)
+        >>   84 LOAD_CONST               0 (None)
+             86 RETURN_VALUE
+
+==============================================================================
+## <module>.color_anchor_candidates.<listcomp>  (args=1, locals=3)
+# varnames: .0, _, a
+362           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 9 (to 26)
+              8 UNPACK_SEQUENCE          4
+             12 STORE_FAST               1 (_)
+             14 STORE_FAST               1 (_)
+             16 STORE_FAST               1 (_)
+             18 STORE_FAST               2 (a)
+             20 LOAD_FAST                2 (a)
+             22 LIST_APPEND              2
+             24 JUMP_BACKWARD           10 (to 6)
+        >>   26 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixCandidate  (args=0, locals=0)
+372           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('MatrixCandidate')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+374          12 LOAD_CONST               1 ('PoRecipe')
+             14 LOAD_NAME                3 (__annotations__)
+             16 LOAD_CONST               2 ('recipe')
+             18 STORE_SUBSCR
+
+375          22 LOAD_CONST               3 ('str')
+             24 LOAD_NAME                3 (__annotations__)
+             26 LOAD_CONST               4 ('why')
+             28 STORE_SUBSCR
+             32 LOAD_CONST               5 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>._base_recipe  (args=4, locals=4)
+# varnames: data, fingerprint, total_token, layout
+378           0 RESUME                   0
+
+380           2 LOAD_GLOBAL              1 (NULL + PoRecipe)
+
+381          14 LOAD_FAST                1 (fingerprint)
+
+382          16 LOAD_FAST                0 (data)
+             18 LOAD_ATTR                1 (customer)
+
+383          28 LOAD_FAST                3 (layout)
+             30 LOAD_ATTR                2 (value)
+
+384          40 LOAD_CONST               1 ('2')
+
+385          42 LOAD_FAST                2 (total_token)
+
+386          44 LOAD_FAST                3 (layout)
+             46 LOAD_GLOBAL              6 (LayoutType)
+             58 LOAD_ATTR                4 (MATRIX_2AXIS)
+             68 IS_OP                    0
+
+387          70 LOAD_CONST               2 ('rows')
+
+388          72 LOAD_CONST               3 (True)
+
+389          74 LOAD_CONST               4 ('^')
+             76 LOAD_GLOBAL             10 (SECTION_DELIM)
+             88 BINARY_OP                0 (+)
+             92 LOAD_CONST               5 ('$')
+             94 BINARY_OP                0 (+)
+
+393          98 LOAD_GLOBAL             13 (NULL + bool)
+            110 LOAD_FAST                0 (data)
+            112 LOAD_ATTR                7 (has_color_total)
+            122 PRECALL                  1
+            126 CALL                     1
+
+394         136 LOAD_GLOBAL             13 (NULL + bool)
+            148 LOAD_FAST                0 (data)
+            150 LOAD_ATTR                8 (has_size_total)
+            160 PRECALL                  1
+            164 CALL                     1
+
+380         174 KW_NAMES                 6
+            176 PRECALL                 11
+            180 CALL                    11
+            190 RETURN_VALUE
+
+==============================================================================
+## <module>.build_candidates  (args=2, locals=30)
+# varnames: pages, data, fingerprint, log, apply_header_anchors, synthesize_field_anchor, _doc_lines, doc, lines, soft, tt, dest_pats, summ, po_anchor, price_anchor, out, total_token, grids, colors, g, layout, sh, cp, splits, dp, sec, color_set, ca, r, why
+398           0 RESUME                   0
+
+401           2 LOAD_CONST               1 (1)
+              4 LOAD_CONST               2 (('apply_header_anchors', 'synthesize_field_anchor', '_doc_lines'))
+              6 IMPORT_NAME              0 (recipe_synth)
+              8 IMPORT_FROM              1 (apply_header_anchors)
+             10 STORE_FAST               4 (apply_header_anchors)
+             12 IMPORT_FROM              2 (synthesize_field_anchor)
+             14 STORE_FAST               5 (synthesize_field_anchor)
+             16 IMPORT_FROM              3 (_doc_lines)
+             18 STORE_FAST               6 (_doc_lines)
+             20 POP_TOP
+
+403          22 LOAD_GLOBAL              9 (NULL + doc_text)
+             34 LOAD_FAST                0 (pages)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 STORE_FAST               7 (doc)
+
+404          52 PUSH_NULL
+             54 LOAD_FAST                6 (_doc_lines)
+             56 LOAD_FAST                7 (doc)
+             58 PRECALL                  1
+             62 CALL                     1
+             72 STORE_FAST               8 (lines)
+
+405          74 LOAD_CONST               3 (<code object <setcomp> at 0x000002BF94A697D0, file "core\matrix_synth.py", line 405>)
+             76 MAKE_FUNCTION            0
+             78 LOAD_FAST                1 (data)
+             80 LOAD_ATTR                5 (header)
+             90 JUMP_IF_TRUE_OR_POP      1 (to 94)
+             92 BUILD_MAP                0
+        >>   94 LOAD_METHOD              6 (values)
+            116 PRECALL                  0
+            120 CALL                     0
+            130 GET_ITER
+            132 PRECALL                  0
+            136 CALL                     0
+            146 STORE_FAST               9 (soft)
+
+406         148 LOAD_FAST                9 (soft)
+            150 LOAD_CONST               4 (<code object <setcomp> at 0x000002BF94AB02A0, file "core\matrix_synth.py", line 406>)
+            152 MAKE_FUNCTION            0
+            154 LOAD_FAST                1 (data)
+            156 LOAD_ATTR                7 (po_nos)
+            166 GET_ITER
+            168 PRECALL                  0
+            172 CALL                     0
+            182 BINARY_OP               20 (|=)
+            186 STORE_FAST               9 (soft)
+
+408         188 LOAD_GLOBAL             17 (NULL + total_token_candidates)
+            200 LOAD_FAST                0 (pages)
+            202 PRECALL                  1
+            206 CALL                     1
+            216 STORE_FAST              10 (tt)
+
+409         218 LOAD_FAST               10 (tt)
+            220 POP_JUMP_FORWARD_IF_TRUE     2 (to 226)
+
+410         222 BUILD_LIST               0
+            224 RETURN_VALUE
+
+412     >>  226 LOAD_GLOBAL             19 (NULL + dest_anchor_candidates)
+            238 LOAD_FAST                7 (doc)
+            240 PRECALL                  1
+            244 CALL                     1
+            254 STORE_FAST              11 (dest_pats)
+
+413         256 LOAD_GLOBAL             21 (NULL + summary_anchor)
+            268 LOAD_FAST                8 (lines)
+            270 PRECALL                  1
+            274 CALL                     1
+            284 STORE_FAST              12 (summ)
+
+414         286 PUSH_NULL
+            288 LOAD_FAST                5 (synthesize_field_anchor)
+            290 LOAD_FAST                8 (lines)
+            292 LOAD_FAST                7 (doc)
+            294 LOAD_FAST                1 (data)
+            296 LOAD_ATTR                7 (po_nos)
+            306 JUMP_IF_TRUE_OR_POP      2 (to 312)
+            308 LOAD_CONST               5 ('')
+            310 BUILD_LIST               1
+        >>  312 LOAD_CONST               6 (0)
+            314 BINARY_SUBSCR
+            324 LOAD_FAST                9 (soft)
+
+415         326 LOAD_CONST               7 (('Order No', 'ORDER NO', 'PO'))
+
+414         328 KW_NAMES                 8
+            330 PRECALL                  5
+            334 CALL                     5
+            344 STORE_FAST              13 (po_anchor)
+
+416         346 LOAD_GLOBAL             23 (NULL + _price_anchor)
+            358 LOAD_FAST                8 (lines)
+            360 LOAD_FAST                7 (doc)
+            362 LOAD_FAST                1 (data)
+            364 LOAD_FAST                9 (soft)
+            366 PRECALL                  4
+            370 CALL                     4
+            380 STORE_FAST              14 (price_anchor)
+
+418         382 BUILD_LIST               0
+            384 STORE_FAST              15 (out)
+
+419         386 LOAD_FAST               10 (tt)
+            388 GET_ITER
+        >>  390 EXTENDED_ARG             1
+            392 FOR_ITER               468 (to 1330)
+            394 UNPACK_SEQUENCE          2
+            398 STORE_FAST              16 (total_token)
+            400 STORE_FAST              17 (grids)
+
+420         402 LOAD_GLOBAL             25 (NULL + sorted)
+            414 LOAD_FAST               17 (grids)
+            416 LOAD_CONST               9 (<code object <lambda> at 0x000002BF94A6E950, file "core\matrix_synth.py", line 420>)
+            418 MAKE_FUNCTION            0
+            420 KW_NAMES                10
+            422 PRECALL                  2
+            426 CALL                     2
+            436 STORE_FAST              17 (grids)
+
+421         438 LOAD_GLOBAL             27 (NULL + color_anchor_candidates)
+            450 LOAD_FAST               17 (grids)
+            452 PRECALL                  1
+            456 CALL                     1
+            466 STORE_FAST              18 (colors)
+
+422         468 LOAD_FAST               17 (grids)
+            470 GET_ITER
+        >>  472 EXTENDED_ARG             1
+            474 FOR_ITER               425 (to 1326)
+            476 STORE_FAST              19 (g)
+
+423         478 LOAD_FAST               19 (g)
+            480 LOAD_ATTR               14 (is_2axis)
+            490 POP_JUMP_FORWARD_IF_FALSE    12 (to 516)
+            492 LOAD_GLOBAL             30 (LayoutType)
+            504 LOAD_ATTR               16 (MATRIX_2AXIS)
+            514 JUMP_FORWARD            11 (to 538)
+        >>  516 LOAD_GLOBAL             30 (LayoutType)
+            528 LOAD_ATTR               17 (MATRIX_1AXIS)
+        >>  538 STORE_FAST              20 (layout)
+
+424         540 LOAD_GLOBAL             37 (NULL + size_header_anchor)
+            552 LOAD_FAST               19 (g)
+            554 LOAD_ATTR               19 (tokens)
+            564 LOAD_FAST               16 (total_token)
+            566 PRECALL                  2
+            570 CALL                     2
+            580 STORE_FAST              21 (sh)
+
+425         582 LOAD_FAST               19 (g)
+            584 LOAD_ATTR               14 (is_2axis)
+            594 POP_JUMP_FORWARD_IF_FALSE     2 (to 600)
+            596 LOAD_CONST               5 ('')
+            598 JUMP_FORWARD            19 (to 638)
+        >>  600 LOAD_GLOBAL             41 (NULL + code_pattern)
+            612 LOAD_FAST               19 (g)
+            614 LOAD_ATTR               21 (code_samples)
+            624 PRECALL                  1
+            628 CALL                     1
+        >>  638 STORE_FAST              22 (cp)
+
+428         640 BUILD_LIST               0
+            642 STORE_FAST              23 (splits)
+
+429         644 LOAD_FAST               11 (dest_pats)
+            646 GET_ITER
+        >>  648 FOR_ITER                44 (to 738)
+            650 STORE_FAST              24 (dp)
+
+430         652 LOAD_GLOBAL             45 (NULL + section_candidates)
+            664 LOAD_FAST                8 (lines)
+            666 LOAD_FAST               24 (dp)
+            668 PRECALL                  2
+            672 CALL                     2
+            682 GET_ITER
+        >>  684 FOR_ITER                25 (to 736)
+            686 STORE_FAST              25 (sec)
+
+431         688 LOAD_FAST               23 (splits)
+            690 LOAD_METHOD             23 (append)
+            712 LOAD_FAST               24 (dp)
+            714 LOAD_FAST               25 (sec)
+            716 BUILD_TUPLE              2
+            718 PRECALL                  1
+            722 CALL                     1
+            732 POP_TOP
+            734 JUMP_BACKWARD           26 (to 684)
+
+430     >>  736 JUMP_BACKWARD           45 (to 648)
+
+432     >>  738 LOAD_FAST               23 (splits)
+            740 LOAD_METHOD             23 (append)
+            762 LOAD_CONST              11 (('', ''))
+            764 PRECALL                  1
+            768 CALL                     1
+            778 POP_TOP
+
+433         780 LOAD_FAST               23 (splits)
+            782 GET_ITER
+        >>  784 EXTENDED_ARG             1
+            786 FOR_ITER               267 (to 1322)
+            788 UNPACK_SEQUENCE          2
+            792 STORE_FAST              24 (dp)
+            794 STORE_FAST              25 (sec)
+
+434         796 LOAD_FAST               20 (layout)
+            798 LOAD_GLOBAL             30 (LayoutType)
+            810 LOAD_ATTR               16 (MATRIX_2AXIS)
+            820 IS_OP                    0
+            822 POP_JUMP_FORWARD_IF_FALSE     2 (to 828)
+            824 LOAD_FAST               18 (colors)
+            826 JUMP_FORWARD            12 (to 852)
+        >>  828 LOAD_GLOBAL             48 (PoRecipe)
+            840 LOAD_ATTR               25 (color_anchor)
+            850 BUILD_LIST               1
+        >>  852 STORE_FAST              26 (color_set)
+
+435         854 LOAD_FAST               26 (color_set)
+            856 GET_ITER
+        >>  858 FOR_ITER               229 (to 1318)
+            860 STORE_FAST              27 (ca)
+
+436         862 LOAD_GLOBAL             53 (NULL + _base_recipe)
+            874 LOAD_FAST                1 (data)
+            876 LOAD_FAST                2 (fingerprint)
+            878 LOAD_FAST               16 (total_token)
+            880 LOAD_FAST               20 (layout)
+            882 PRECALL                  4
+            886 CALL                     4
+            896 STORE_FAST              28 (r)
+
+437         898 LOAD_FAST               21 (sh)
+            900 LOAD_FAST               28 (r)
+            902 STORE_ATTR              18 (size_header_anchor)
+
+438         912 LOAD_CONST               5 ('')
+            914 LOAD_FAST               28 (r)
+            916 STORE_ATTR              27 (size_header_token)
+
+439         926 LOAD_FAST               22 (cp)
+            928 LOAD_FAST               28 (r)
+            930 STORE_ATTR              28 (color_code_pattern)
+
+440         940 LOAD_FAST               24 (dp)
+            942 LOAD_FAST               28 (r)
+            944 STORE_ATTR              29 (destination_anchor)
+
+441         954 LOAD_FAST               25 (sec)
+            956 LOAD_FAST               28 (r)
+            958 STORE_ATTR              30 (section_anchor)
+
+442         968 LOAD_FAST               12 (summ)
+            970 LOAD_FAST               28 (r)
+            972 STORE_ATTR              10 (summary_anchor)
+
+446         982 LOAD_FAST               24 (dp)
+            984 POP_JUMP_FORWARD_IF_FALSE     2 (to 990)
+            986 LOAD_CONST               5 ('')
+            988 JUMP_FORWARD            11 (to 1012)
+        >>  990 LOAD_FAST               11 (dest_pats)
+            992 POP_JUMP_FORWARD_IF_FALSE     8 (to 1010)
+            994 LOAD_FAST               11 (dest_pats)
+            996 LOAD_CONST               6 (0)
+            998 BINARY_SUBSCR
+           1008 JUMP_FORWARD             1 (to 1012)
+        >> 1010 LOAD_CONST               5 ('')
+        >> 1012 LOAD_FAST               28 (r)
+           1014 STORE_ATTR              31 (breakdown_anchor)
+
+447        1024 LOAD_FAST               27 (ca)
+           1026 LOAD_FAST               28 (r)
+           1028 STORE_ATTR              25 (color_anchor)
+
+448        1038 LOAD_FAST               13 (po_anchor)
+           1040 POP_JUMP_FORWARD_IF_FALSE     7 (to 1056)
+
+449        1042 LOAD_FAST               13 (po_anchor)
+           1044 LOAD_FAST               28 (r)
+           1046 STORE_ATTR              32 (po_no_anchor)
+
+450     >> 1056 LOAD_FAST               14 (price_anchor)
+           1058 POP_JUMP_FORWARD_IF_FALSE     7 (to 1074)
+
+451        1060 LOAD_FAST               14 (price_anchor)
+           1062 LOAD_FAST               28 (r)
+           1064 STORE_ATTR              33 (price_anchor)
+
+452     >> 1074 PUSH_NULL
+           1076 LOAD_FAST                4 (apply_header_anchors)
+           1078 LOAD_FAST               28 (r)
+           1080 LOAD_FAST                8 (lines)
+           1082 LOAD_FAST                7 (doc)
+           1084 LOAD_FAST                1 (data)
+           1086 PRECALL                  4
+           1090 CALL                     4
+           1100 POP_TOP
+
+453        1102 LOAD_FAST               20 (layout)
+           1104 LOAD_ATTR               34 (value)
+           1114 FORMAT_VALUE             0
+           1116 LOAD_CONST              12 (' · grid[')
+           1118 LOAD_FAST               19 (g)
+           1120 LOAD_ATTR               35 (header_text)
+           1130 LOAD_CONST              13 (None)
+           1132 LOAD_CONST              14 (38)
+           1134 BUILD_SLICE              2
+           1136 BINARY_SUBSCR
+           1146 FORMAT_VALUE             0
+           1148 LOAD_CONST              15 ('…] · dest=')
+
+454        1150 LOAD_FAST               24 (dp)
+           1152 POP_JUMP_FORWARD_IF_FALSE     2 (to 1158)
+           1154 LOAD_CONST              16 ('yes')
+           1156 JUMP_FORWARD             1 (to 1160)
+        >> 1158 LOAD_CONST              17 ('no')
+
+453     >> 1160 FORMAT_VALUE             0
+           1162 LOAD_CONST              18 (' · sec=')
+
+454        1164 LOAD_FAST               25 (sec)
+           1166 JUMP_IF_TRUE_OR_POP      1 (to 1170)
+           1168 LOAD_CONST              19 ('-')
+
+453     >> 1170 FORMAT_VALUE             0
+           1172 BUILD_STRING             7
+           1174 STORE_FAST              29 (why)
+
+455        1176 LOAD_FAST               15 (out)
+           1178 LOAD_METHOD             23 (append)
+           1200 LOAD_GLOBAL             73 (NULL + MatrixCandidate)
+           1212 LOAD_FAST               28 (r)
+           1214 LOAD_FAST               29 (why)
+           1216 KW_NAMES                20
+           1218 PRECALL                  2
+           1222 CALL                     2
+           1232 PRECALL                  1
+           1236 CALL                     1
+           1246 POP_TOP
+
+456        1248 LOAD_GLOBAL             75 (NULL + len)
+           1260 LOAD_FAST               15 (out)
+           1262 PRECALL                  1
+           1266 CALL                     1
+           1276 LOAD_GLOBAL             76 (MAX_CANDIDATES)
+           1288 COMPARE_OP               5 (>=)
+           1294 POP_JUMP_FORWARD_IF_FALSE    10 (to 1316)
+
+457        1296 LOAD_FAST               15 (out)
+           1298 SWAP                     2
+           1300 POP_TOP
+           1302 SWAP                     2
+           1304 POP_TOP
+           1306 SWAP                     2
+           1308 POP_TOP
+           1310 SWAP                     2
+           1312 POP_TOP
+           1314 RETURN_VALUE
+
+456     >> 1316 JUMP_BACKWARD          230 (to 858)
+
+435     >> 1318 EXTENDED_ARG             1
+           1320 JUMP_BACKWARD          269 (to 784)
+
+433     >> 1322 EXTENDED_ARG             1
+           1324 JUMP_BACKWARD          427 (to 472)
+
+422     >> 1326 EXTENDED_ARG             1
+           1328 JUMP_BACKWARD          470 (to 390)
+
+458     >> 1330 LOAD_FAST               15 (out)
+           1332 RETURN_VALUE
+
+==============================================================================
+## <module>.build_candidates.<setcomp>  (args=1, locals=2)
+# varnames: .0, v
+405           0 RESUME                   0
+              2 BUILD_SET                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                44 (to 96)
+              8 STORE_FAST               1 (v)
+             10 LOAD_FAST                1 (v)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (v)
+             16 LOAD_METHOD              0 (strip)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 POP_JUMP_BACKWARD_IF_FALSE    24 (to 6)
+             54 LOAD_FAST                1 (v)
+             56 LOAD_METHOD              0 (strip)
+             78 PRECALL                  0
+             82 CALL                     0
+             92 SET_ADD                  2
+             94 JUMP_BACKWARD           45 (to 6)
+        >>   96 RETURN_VALUE
+
+==============================================================================
+## <module>.build_candidates.<setcomp>  (args=1, locals=2)
+# varnames: .0, p
+406           0 RESUME                   0
+              2 BUILD_SET                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 6 (to 20)
+              8 STORE_FAST               1 (p)
+             10 LOAD_FAST                1 (p)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (p)
+             16 SET_ADD                  2
+             18 JUMP_BACKWARD            7 (to 6)
+        >>   20 RETURN_VALUE
+
+==============================================================================
+## <module>.build_candidates.<lambda>  (args=1, locals=1)
+# varnames: g
+420           0 RESUME                   0
+              2 LOAD_FAST                0 (g)
+              4 LOAD_ATTR                0 (rows)
+             14 UNARY_NEGATIVE
+             16 LOAD_FAST                0 (g)
+             18 LOAD_ATTR                1 (hits)
+             28 UNARY_NEGATIVE
+             30 BUILD_TUPLE              2
+             32 RETURN_VALUE
+
+==============================================================================
+## <module>._price_anchor  (args=4, locals=16)
+# varnames: lines, doc, data, soft, synthesize_field_anchor, default, price, ln, txt, forms, cand, anchor, tok, head, a, m
+461           0 RESUME                   0
+
+464           2 LOAD_CONST               1 (1)
+              4 LOAD_CONST               2 (('synthesize_field_anchor',))
+              6 IMPORT_NAME              0 (recipe_synth)
+              8 IMPORT_FROM              1 (synthesize_field_anchor)
+             10 STORE_FAST               4 (synthesize_field_anchor)
+             12 POP_TOP
+
+466          14 LOAD_GLOBAL              4 (PoRecipe)
+             26 LOAD_ATTR                3 (price_anchor)
+             36 STORE_FAST               5 (default)
+
+467          38 NOP
+
+468          40 LOAD_GLOBAL              9 (NULL + re)
+             52 LOAD_ATTR                5 (search)
+             62 LOAD_FAST                5 (default)
+             64 LOAD_FAST                1 (doc)
+             66 PRECALL                  2
+             70 CALL                     2
+             80 POP_JUMP_FORWARD_IF_FALSE     2 (to 86)
+
+469          82 LOAD_CONST               3 ('')
+             84 RETURN_VALUE
+
+468     >>   86 JUMP_FORWARD            21 (to 130)
+        >>   88 PUSH_EXC_INFO
+
+470          90 LOAD_GLOBAL              8 (re)
+            102 LOAD_ATTR                6 (error)
+            112 CHECK_EXC_MATCH
+            114 POP_JUMP_FORWARD_IF_FALSE     3 (to 122)
+            116 POP_TOP
+
+471         118 POP_EXCEPT
+            120 JUMP_FORWARD             4 (to 130)
+
+470     >>  122 RERAISE                  0
+        >>  124 COPY                     3
+            126 POP_EXCEPT
+            128 RERAISE                  1
+
+472     >>  130 LOAD_CONST               4 (None)
+            132 STORE_FAST               6 (price)
+
+473         134 LOAD_FAST                2 (data)
+            136 LOAD_METHOD              7 (all_lines)
+            158 PRECALL                  0
+            162 CALL                     0
+            172 GET_ITER
+        >>  174 FOR_ITER                18 (to 212)
+            176 STORE_FAST               7 (ln)
+
+474         178 LOAD_FAST                7 (ln)
+            180 LOAD_ATTR                8 (unit_price)
+            190 POP_JUMP_FORWARD_IF_FALSE     9 (to 210)
+
+475         192 LOAD_FAST                7 (ln)
+            194 LOAD_ATTR                8 (unit_price)
+            204 STORE_FAST               6 (price)
+
+476         206 POP_TOP
+            208 JUMP_FORWARD             1 (to 212)
+
+474     >>  210 JUMP_BACKWARD           19 (to 174)
+
+477     >>  212 LOAD_FAST                6 (price)
+            214 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 220)
+
+478         216 LOAD_CONST               3 ('')
+            218 RETURN_VALUE
+
+479     >>  220 LOAD_CONST               5 ('%f')
+            222 LOAD_FAST                6 (price)
+            224 BINARY_OP                6 (%)
+            228 LOAD_METHOD              9 (rstrip)
+            250 LOAD_CONST               6 ('0')
+            252 PRECALL                  1
+            256 CALL                     1
+            266 LOAD_METHOD              9 (rstrip)
+            288 LOAD_CONST               7 ('.')
+            290 PRECALL                  1
+            294 CALL                     1
+            304 STORE_FAST               8 (txt)
+
+480         306 LOAD_FAST                8 (txt)
+            308 LOAD_FAST                8 (txt)
+            310 LOAD_METHOD             10 (replace)
+            332 LOAD_CONST               7 ('.')
+            334 LOAD_CONST               8 (',')
+            336 PRECALL                  2
+            340 CALL                     2
+            350 LOAD_CONST               9 ('%.2f')
+            352 LOAD_FAST                6 (price)
+            354 BINARY_OP                6 (%)
+
+481         358 LOAD_CONST               9 ('%.2f')
+            360 LOAD_FAST                6 (price)
+            362 BINARY_OP                6 (%)
+            366 LOAD_METHOD             10 (replace)
+            388 LOAD_CONST               7 ('.')
+            390 LOAD_CONST               8 (',')
+            392 PRECALL                  2
+            396 CALL                     2
+
+480         406 BUILD_LIST               4
+            408 STORE_FAST               9 (forms)
+
+482         410 LOAD_FAST                9 (forms)
+            412 GET_ITER
+        >>  414 FOR_ITER                24 (to 464)
+            416 STORE_FAST              10 (cand)
+
+483         418 PUSH_NULL
+            420 LOAD_FAST                4 (synthesize_field_anchor)
+            422 LOAD_FAST                0 (lines)
+            424 LOAD_FAST                1 (doc)
+            426 LOAD_FAST               10 (cand)
+            428 LOAD_FAST                3 (soft)
+
+484         430 LOAD_CONST              10 (('Unit Price', 'UNIT PRICE', 'Price'))
+
+483         432 KW_NAMES                11
+            434 PRECALL                  5
+            438 CALL                     5
+            448 STORE_FAST              11 (anchor)
+
+485         450 LOAD_FAST               11 (anchor)
+            452 POP_JUMP_FORWARD_IF_FALSE     4 (to 462)
+
+486         454 LOAD_FAST               11 (anchor)
+            456 SWAP                     2
+            458 POP_TOP
+            460 RETURN_VALUE
+
+485     >>  462 JUMP_BACKWARD           25 (to 414)
+
+489     >>  464 LOAD_GLOBAL              9 (NULL + re)
+            476 LOAD_ATTR               11 (findall)
+            486 LOAD_CONST              12 ('\\S+')
+            488 LOAD_FAST                1 (doc)
+            490 PRECALL                  2
+            494 CALL                     2
+            504 GET_ITER
+        >>  506 FOR_ITER               180 (to 868)
+            508 STORE_FAST              12 (tok)
+
+490         510 LOAD_FAST                9 (forms)
+            512 GET_ITER
+        >>  514 FOR_ITER               175 (to 866)
+            516 STORE_FAST              10 (cand)
+
+491         518 LOAD_FAST               12 (tok)
+            520 LOAD_METHOD             12 (endswith)
+            542 LOAD_FAST               10 (cand)
+            544 PRECALL                  1
+            548 CALL                     1
+            558 POP_JUMP_FORWARD_IF_FALSE     6 (to 572)
+            560 LOAD_FAST               12 (tok)
+            562 LOAD_FAST               10 (cand)
+            564 COMPARE_OP               2 (==)
+            570 POP_JUMP_FORWARD_IF_FALSE     1 (to 574)
+
+492     >>  572 JUMP_BACKWARD           30 (to 514)
+
+493     >>  574 LOAD_FAST               12 (tok)
+            576 LOAD_CONST               4 (None)
+            578 LOAD_GLOBAL             27 (NULL + len)
+            590 LOAD_FAST               10 (cand)
+            592 PRECALL                  1
+            596 CALL                     1
+            606 UNARY_NEGATIVE
+            608 BUILD_SLICE              2
+            610 BINARY_SUBSCR
+            620 STORE_FAST              13 (head)
+
+494         622 LOAD_FAST               13 (head)
+            624 POP_JUMP_FORWARD_IF_FALSE   119 (to 864)
+            626 LOAD_GLOBAL             29 (NULL + any)
+            638 LOAD_CONST              13 (<code object <genexpr> at 0x000002BF94A2F430, file "core\matrix_synth.py", line 494>)
+            640 MAKE_FUNCTION            0
+            642 LOAD_FAST               13 (head)
+            644 GET_ITER
+            646 PRECALL                  0
+            650 CALL                     0
+            660 PRECALL                  1
+            664 CALL                     1
+            674 POP_JUMP_FORWARD_IF_TRUE    94 (to 864)
+
+495         676 LOAD_GLOBAL              9 (NULL + re)
+            688 LOAD_ATTR               15 (escape)
+            698 LOAD_FAST               13 (head)
+            700 PRECALL                  1
+            704 CALL                     1
+            714 LOAD_CONST              14 ('\\s*([\\d.,]+)')
+            716 BINARY_OP                0 (+)
+            720 STORE_FAST              14 (a)
+
+496         722 LOAD_GLOBAL              9 (NULL + re)
+            734 LOAD_ATTR                5 (search)
+            744 LOAD_FAST               14 (a)
+            746 LOAD_FAST                1 (doc)
+            748 PRECALL                  2
+            752 CALL                     2
+            762 STORE_FAST              15 (m)
+
+497         764 LOAD_FAST               15 (m)
+            766 POP_JUMP_FORWARD_IF_FALSE    48 (to 864)
+            768 LOAD_FAST               15 (m)
+            770 LOAD_METHOD             16 (group)
+            792 LOAD_CONST               1 (1)
+            794 PRECALL                  1
+            798 CALL                     1
+            808 LOAD_METHOD              9 (rstrip)
+            830 LOAD_CONST              15 ('.,')
+            832 PRECALL                  1
+            836 CALL                     1
+            846 LOAD_FAST                9 (forms)
+            848 CONTAINS_OP              0
+            850 POP_JUMP_FORWARD_IF_FALSE     6 (to 864)
+
+498         852 LOAD_FAST               14 (a)
+            854 SWAP                     2
+            856 POP_TOP
+            858 SWAP                     2
+            860 POP_TOP
+            862 RETURN_VALUE
+        >>  864 JUMP_BACKWARD          176 (to 514)
+
+490     >>  866 JUMP_BACKWARD          181 (to 506)
+
+499     >>  868 LOAD_CONST               3 ('')
+            870 RETURN_VALUE
+ExceptionTable:
+  40 to 80 -> 88 [0]
+  88 to 116 -> 124 [1] lasti
+  122 to 122 -> 124 [1] lasti
+
+==============================================================================
+## <module>._price_anchor.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+494           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.synthesize_matrix_recipe  (args=2, locals=17)
+# varnames: pages, data, fingerprint, source_file, log, SynthesisError, verify_recipe, _log, cands, best, passed, i, c, po, rep, flaws, near
+              0 MAKE_CELL                4 (log)
+
+505           2 RESUME                   0
+
+512           4 LOAD_CONST               1 (1)
+              6 LOAD_CONST               2 (('SynthesisError', 'verify_recipe'))
+              8 IMPORT_NAME              0 (recipe_synth)
+             10 IMPORT_FROM              1 (SynthesisError)
+             12 STORE_FAST               5 (SynthesisError)
+             14 IMPORT_FROM              2 (verify_recipe)
+             16 STORE_FAST               6 (verify_recipe)
+             18 POP_TOP
+
+514          20 LOAD_CONST              30 (('m', 'str', 'return', 'None'))
+             22 LOAD_CLOSURE             4 (log)
+             24 BUILD_TUPLE              1
+             26 LOAD_CONST               7 (<code object _log at 0x000002BF94A6EA30, file "core\matrix_synth.py", line 514>)
+             28 MAKE_FUNCTION           12 (annotations, closure)
+             30 STORE_FAST               7 (_log)
+
+518          32 LOAD_GLOBAL              7 (NULL + build_candidates)
+             44 LOAD_FAST                0 (pages)
+             46 LOAD_FAST                1 (data)
+             48 LOAD_FAST                2 (fingerprint)
+             50 LOAD_DEREF               4 (log)
+             52 KW_NAMES                 8
+             54 PRECALL                  4
+             58 CALL                     4
+             68 STORE_FAST               8 (cands)
+
+519          70 LOAD_FAST                8 (cands)
+             72 POP_JUMP_FORWARD_IF_TRUE    11 (to 96)
+
+520          74 PUSH_NULL
+             76 LOAD_FAST                5 (SynthesisError)
+             78 LOAD_CONST               9 ('文档中未找到可识别的尺码网格（无 TOTAL 列表头）。')
+             80 PRECALL                  1
+             84 CALL                     1
+             94 RAISE_VARARGS            1
+
+521     >>   96 PUSH_NULL
+             98 LOAD_FAST                7 (_log)
+            100 LOAD_CONST              10 ('    · 结构探测到 ')
+            102 LOAD_GLOBAL              9 (NULL + len)
+            114 LOAD_FAST                8 (cands)
+            116 PRECALL                  1
+            120 CALL                     1
+            130 FORMAT_VALUE             0
+            132 LOAD_CONST              11 (' 个候选网格方案，开始离线回放筛选…')
+            134 BUILD_STRING             3
+            136 PRECALL                  1
+            140 CALL                     1
+            150 POP_TOP
+
+523         152 LOAD_CONST              12 (None)
+            154 STORE_FAST               9 (best)
+
+524         156 LOAD_CONST              12 (None)
+            158 STORE_FAST              10 (passed)
+
+525         160 LOAD_GLOBAL             11 (NULL + enumerate)
+            172 LOAD_FAST                8 (cands)
+            174 LOAD_CONST               1 (1)
+            176 PRECALL                  2
+            180 CALL                     2
+            190 GET_ITER
+        >>  192 FOR_ITER               163 (to 520)
+            194 UNPACK_SEQUENCE          2
+            198 STORE_FAST              11 (i)
+            200 STORE_FAST              12 (c)
+
+526         202 PUSH_NULL
+            204 LOAD_FAST                6 (verify_recipe)
+            206 LOAD_FAST                0 (pages)
+            208 LOAD_FAST               12 (c)
+            210 LOAD_ATTR                6 (recipe)
+            220 LOAD_FAST                1 (data)
+            222 LOAD_FAST                3 (source_file)
+            224 KW_NAMES                13
+            226 PRECALL                  4
+            230 CALL                     4
+            240 UNPACK_SEQUENCE          2
+            244 STORE_FAST              13 (po)
+            246 STORE_FAST              14 (rep)
+
+527         248 LOAD_FAST               14 (rep)
+            250 LOAD_ATTR                7 (ok)
+            260 POP_JUMP_FORWARD_IF_FALSE    45 (to 352)
+
+528         262 LOAD_GLOBAL             17 (NULL + _flaws)
+            274 LOAD_FAST               13 (po)
+            276 PRECALL                  1
+            280 CALL                     1
+            290 STORE_FAST              15 (flaws)
+
+529         292 LOAD_FAST               10 (passed)
+            294 POP_JUMP_FORWARD_IF_NONE    12 (to 320)
+            296 LOAD_FAST               15 (flaws)
+            298 LOAD_FAST               10 (passed)
+            300 LOAD_CONST              14 (0)
+            302 BINARY_SUBSCR
+            312 COMPARE_OP               0 (<)
+            318 POP_JUMP_FORWARD_IF_FALSE     7 (to 334)
+
+530     >>  320 LOAD_FAST               15 (flaws)
+            322 LOAD_FAST               12 (c)
+            324 LOAD_FAST               13 (po)
+            326 LOAD_FAST               14 (rep)
+            328 LOAD_FAST               11 (i)
+            330 BUILD_TUPLE              5
+            332 STORE_FAST              10 (passed)
+
+531     >>  334 LOAD_FAST               15 (flaws)
+            336 LOAD_CONST              15 ((0, 0))
+            338 COMPARE_OP               2 (==)
+            344 POP_JUMP_FORWARD_IF_FALSE     2 (to 350)
+
+532         346 POP_TOP
+            348 JUMP_FORWARD            85 (to 520)
+
+533     >>  350 JUMP_BACKWARD           80 (to 192)
+
+534     >>  352 LOAD_FAST                9 (best)
+            354 POP_JUMP_FORWARD_IF_NONE    77 (to 510)
+            356 LOAD_FAST               14 (rep)
+            358 LOAD_ATTR                9 (parsed_qty)
+            368 POP_JUMP_FORWARD_IF_FALSE    74 (to 518)
+
+535         370 LOAD_GLOBAL             21 (NULL + abs)
+            382 LOAD_FAST               14 (rep)
+            384 LOAD_ATTR                9 (parsed_qty)
+            394 LOAD_FAST               14 (rep)
+            396 LOAD_ATTR               11 (expected_qty)
+            406 BINARY_OP               10 (-)
+            410 PRECALL                  1
+            414 CALL                     1
+
+536         424 LOAD_GLOBAL             21 (NULL + abs)
+            436 LOAD_FAST                9 (best)
+            438 LOAD_CONST               1 (1)
+            440 BINARY_SUBSCR
+            450 LOAD_ATTR                9 (parsed_qty)
+            460 LOAD_FAST                9 (best)
+            462 LOAD_CONST               1 (1)
+            464 BINARY_SUBSCR
+            474 LOAD_ATTR               11 (expected_qty)
+            484 BINARY_OP               10 (-)
+            488 PRECALL                  1
+            492 CALL                     1
+
+535         502 COMPARE_OP               0 (<)
+            508 POP_JUMP_FORWARD_IF_FALSE     4 (to 518)
+
+537     >>  510 LOAD_FAST               12 (c)
+            512 LOAD_FAST               14 (rep)
+            514 BUILD_TUPLE              2
+            516 STORE_FAST               9 (best)
+        >>  518 JUMP_BACKWARD          164 (to 192)
+
+538     >>  520 LOAD_FAST               10 (passed)
+            522 POP_JUMP_FORWARD_IF_NONE   130 (to 784)
+
+539         524 LOAD_FAST               10 (passed)
+            526 UNPACK_SEQUENCE          5
+            530 STORE_FAST              15 (flaws)
+            532 STORE_FAST              12 (c)
+            534 STORE_FAST              13 (po)
+            536 STORE_FAST              14 (rep)
+            538 STORE_FAST              11 (i)
+
+540         540 PUSH_NULL
+            542 LOAD_FAST                7 (_log)
+            544 LOAD_CONST              16 ('    ✓ 方案 ')
+            546 LOAD_FAST               11 (i)
+            548 FORMAT_VALUE             0
+            550 LOAD_CONST              17 ('/')
+            552 LOAD_GLOBAL              9 (NULL + len)
+            564 LOAD_FAST                8 (cands)
+            566 PRECALL                  1
+            570 CALL                     1
+            580 FORMAT_VALUE             0
+            582 LOAD_CONST              18 (' 通过：')
+            584 LOAD_FAST               12 (c)
+            586 LOAD_ATTR               12 (why)
+            596 FORMAT_VALUE             0
+            598 BUILD_STRING             6
+            600 PRECALL                  1
+            604 CALL                     1
+            614 POP_TOP
+
+541         616 LOAD_GLOBAL             27 (NULL + any)
+            628 LOAD_FAST               15 (flaws)
+            630 PRECALL                  1
+            634 CALL                     1
+            644 POP_JUMP_FORWARD_IF_FALSE    30 (to 706)
+
+542         646 PUSH_NULL
+            648 LOAD_FAST                7 (_log)
+            650 LOAD_CONST              19 ('      （')
+            652 LOAD_FAST               15 (flaws)
+            654 LOAD_CONST              14 (0)
+            656 BINARY_SUBSCR
+            666 FORMAT_VALUE             0
+            668 LOAD_CONST              20 (' 行缺颜色代码、')
+            670 LOAD_FAST               15 (flaws)
+            672 LOAD_CONST               1 (1)
+            674 BINARY_SUBSCR
+            684 FORMAT_VALUE             0
+            686 LOAD_CONST              21 (' 行缺颜色名，已选缺失最少的方案）')
+            688 BUILD_STRING             5
+            690 PRECALL                  1
+            694 CALL                     1
+            704 POP_TOP
+
+543     >>  706 LOAD_CONST              22 ('auto-synth matrix v2.0.2 · ')
+            708 LOAD_FAST               14 (rep)
+            710 LOAD_ATTR               14 (parsed_rows)
+            720 FORMAT_VALUE             0
+            722 LOAD_CONST              23 (' cells / ')
+
+544         724 LOAD_FAST               14 (rep)
+            726 LOAD_ATTR                9 (parsed_qty)
+
+543         736 FORMAT_VALUE             0
+            738 LOAD_CONST              24 (' pcs · verified by offline replay')
+            740 BUILD_STRING             5
+            742 LOAD_FAST               12 (c)
+            744 LOAD_ATTR                6 (recipe)
+            754 STORE_ATTR              15 (note)
+
+545         764 LOAD_FAST               12 (c)
+            766 LOAD_ATTR                6 (recipe)
+            776 LOAD_FAST               13 (po)
+            778 LOAD_FAST               14 (rep)
+            780 BUILD_TUPLE              3
+            782 RETURN_VALUE
+
+546     >>  784 LOAD_CONST              25 ('')
+            786 STORE_FAST              16 (near)
+
+547         788 LOAD_FAST                9 (best)
+            790 POP_JUMP_FORWARD_IF_NONE    43 (to 878)
+
+548         792 LOAD_CONST              26 ('\n最接近的方案：')
+            794 LOAD_FAST                9 (best)
+            796 LOAD_CONST              14 (0)
+            798 BINARY_SUBSCR
+            808 LOAD_ATTR               12 (why)
+            818 FORMAT_VALUE             0
+            820 LOAD_CONST              27 ('\n  ')
+            822 LOAD_FAST                9 (best)
+            824 LOAD_CONST               1 (1)
+            826 BINARY_SUBSCR
+            836 LOAD_METHOD             16 (text)
+            858 PRECALL                  0
+            862 CALL                     0
+            872 FORMAT_VALUE             0
+            874 BUILD_STRING             4
+            876 STORE_FAST              16 (near)
+
+549     >>  878 PUSH_NULL
+            880 LOAD_FAST                5 (SynthesisError)
+
+550         882 LOAD_CONST              28 ('已尝试 ')
+            884 LOAD_GLOBAL              9 (NULL + len)
+            896 LOAD_FAST                8 (cands)
+            898 PRECALL                  1
+            902 CALL                     1
+            912 FORMAT_VALUE             0
+            914 LOAD_CONST              29 (' 种网格解析方案，均无法复现 AI 读到的合计数量。')
+            916 BUILD_STRING             3
+            918 LOAD_FAST               16 (near)
+            920 BINARY_OP                0 (+)
+
+549         924 PRECALL                  1
+            928 CALL                     1
+            938 RAISE_VARARGS            1
+
+==============================================================================
+## <module>.synthesize_matrix_recipe._log  (args=1, locals=1)
+# varnames: m
+              0 COPY_FREE_VARS           1
+
+514           2 RESUME                   0
+
+515           4 LOAD_DEREF               1 (log)
+              6 POP_JUMP_FORWARD_IF_FALSE    13 (to 34)
+
+516           8 PUSH_NULL
+             10 LOAD_DEREF               1 (log)
+             12 LOAD_FAST                0 (m)
+             14 PRECALL                  1
+             18 CALL                     1
+             28 POP_TOP
+             30 LOAD_CONST               0 (None)
+             32 RETURN_VALUE
+
+515     >>   34 LOAD_CONST               0 (None)
+             36 RETURN_VALUE
+
+==============================================================================
+## <module>._flaws  (args=1, locals=5)
+# varnames: po, no_code, no_desc, e, ln
+553           0 RESUME                   0
+
+560           2 LOAD_CONST               1 (0)
+              4 COPY                     1
+              6 STORE_FAST               1 (no_code)
+              8 STORE_FAST               2 (no_desc)
+
+561          10 LOAD_FAST                0 (po)
+             12 LOAD_ATTR                0 (entities)
+             22 GET_ITER
+        >>   24 FOR_ITER                96 (to 218)
+             26 STORE_FAST               3 (e)
+
+562          28 LOAD_FAST                3 (e)
+             30 LOAD_ATTR                1 (lines)
+             40 GET_ITER
+        >>   42 FOR_ITER                86 (to 216)
+             44 STORE_FAST               4 (ln)
+
+563          46 LOAD_GLOBAL              5 (NULL + getattr)
+             58 LOAD_FAST                4 (ln)
+             60 LOAD_CONST               2 ('color_code')
+             62 LOAD_CONST               3 ('')
+             64 PRECALL                  3
+             68 CALL                     3
+             78 JUMP_IF_TRUE_OR_POP      1 (to 82)
+             80 LOAD_CONST               3 ('')
+        >>   82 LOAD_METHOD              3 (strip)
+            104 PRECALL                  0
+            108 CALL                     0
+            118 POP_JUMP_FORWARD_IF_TRUE     5 (to 130)
+
+564         120 LOAD_FAST                1 (no_code)
+            122 LOAD_CONST               4 (1)
+            124 BINARY_OP               13 (+=)
+            128 STORE_FAST               1 (no_code)
+
+565     >>  130 LOAD_GLOBAL              5 (NULL + getattr)
+            142 LOAD_FAST                4 (ln)
+            144 LOAD_CONST               5 ('color_desc')
+            146 LOAD_CONST               3 ('')
+            148 PRECALL                  3
+            152 CALL                     3
+            162 JUMP_IF_TRUE_OR_POP      1 (to 166)
+            164 LOAD_CONST               3 ('')
+        >>  166 LOAD_METHOD              3 (strip)
+            188 PRECALL                  0
+            192 CALL                     0
+            202 POP_JUMP_FORWARD_IF_TRUE     5 (to 214)
+
+566         204 LOAD_FAST                2 (no_desc)
+            206 LOAD_CONST               4 (1)
+            208 BINARY_OP               13 (+=)
+            212 STORE_FAST               2 (no_desc)
+        >>  214 JUMP_BACKWARD           87 (to 42)
+
+562     >>  216 JUMP_BACKWARD           97 (to 24)
+
+567     >>  218 LOAD_FAST                1 (no_code)
+            220 LOAD_FAST                2 (no_desc)
+            222 BUILD_TUPLE              2
+            224 RETURN_VALUE

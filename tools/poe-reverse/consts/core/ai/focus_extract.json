@@ -1,0 +1,218 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "doc_compress",
+   "compress_doc_text",
+   "data_extract",
+   "_chat_online",
+   "load_ai_config",
+   "MAX_INPUT_CHARS",
+   "_extract_json",
+   "_load_json_lenient",
+   "_as_str",
+   "FOCUS_SYSTEM_PROMPT",
+   "_ai_available",
+   "extract_focused_fields",
+   "_parse_focused"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/focus_extract.py - targeted, single-call extraction of a SMALL set\nof fields the cached regex recipe left blank.\n\nThis is the \"AI 自愈\" second call. The first (cached) parse was zero-AI, but if a\nheader / entity field is empty while its human-readable label is clearly in the\ndocument, we ask the model ONCE for just those fields instead of re-reading the\nwhole PO. Reuses the same transport (_chat_online / chat_local) and the same\nthinking-off / input-compression levers as the full read, so it is cheap and\nfast. When no AI is configured (offline, or local model missing) it returns {}\nimmediately - the caller then leaves the value blank, exactly as before.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   1,
+   [
+    "compress_doc_text"
+   ],
+   [
+    "_chat_online",
+    "load_ai_config",
+    "MAX_INPUT_CHARS",
+    "_extract_json",
+    "_load_json_lenient",
+    "_as_str"
+   ],
+   "You are a purchase-order field FILLER. The document was\nalready parsed by a rule engine, but a few specific fields came back blank. Your\njob is to read ONLY the document text below and return those fields. Do NOT\nre-list order lines or totals. Output ONE compact JSON object, no prose, no\nmarkdown outside the JSON.\n\nSchema:\n{\n  \"header\": {\n    \"customer\": \"\", \"season\": \"\", \"currency\": \"\", \"price_term\": \"\", \"payment_terms\": \"\",\n    \"port_loading\": \"\", \"port_discharge\": \"\", \"ship_mode\": \"\",\n    \"vendor_name\": \"\", \"agent_name\": \"\", \"product_desc\": \"\", \"style_no\": \"\",\n    \"import_po_no\": \"\", \"reference_no\": \"\", \"cir_no\": \"\",\n    \"freight_terms\": \"\", \"country_of_origin\": \"\", \"dc_address\": \"\"\n  },\n  \"orders\": [\n    {\"po_no\": \"\", \"delivery_date\": \"YYYY-MM-DD\"}\n  ]\n}\n\nRules:\n1. Only fill a field if you can SEE it in the document text. Use \"\" otherwise.\n   NEVER invent a value.\n2. For delivery_date, report it per order (po_no). If the whole document shares\n   one shipment / delivery date, repeat it under every po_no you can identify.\n3. European number format: a DOT is thousands, a COMMA is decimal. Only relevant\n   if a field carries a number.\n4. Season / style / vendor strings: copy exactly as printed.\n5. Output valid JSON only.",
+   "cfg",
+   "dict",
+   "return",
+   "bool",
+   "doc_text",
+   "str",
+   "fields",
+   "List[str]",
+   "dict | None",
+   "content",
+   [
+    "cfg",
+    "dict",
+    "return",
+    "bool"
+   ],
+   [
+    null,
+    null
+   ],
+   [
+    "doc_text",
+    "str",
+    "fields",
+    "List[str]",
+    "cfg",
+    "dict | None",
+    "return",
+    "dict"
+   ],
+   [
+    "content",
+    "str",
+    "fields",
+    "List[str]",
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 63
+ },
+ "<module>._ai_available": {
+  "names": [
+   "get",
+   "bool",
+   "os",
+   "path",
+   "exists"
+  ],
+  "varnames": [
+   "cfg",
+   "p"
+  ],
+  "consts": [
+   "True only when a usable engine is configured, so we never attempt a\n    pointless network / model call on an offline workstation.",
+   "infer_engine",
+   "local",
+   "local_model_path",
+   "",
+   "api_key",
+   "base_url"
+  ],
+  "n_instructions": 44
+ },
+ "<module>.extract_focused_fields": {
+  "names": [
+   "load_ai_config",
+   "_ai_available",
+   "get",
+   "compress_doc_text",
+   "len",
+   "MAX_INPUT_CHARS",
+   "join",
+   "local_infer",
+   "chat_local",
+   "FOCUS_SYSTEM_PROMPT",
+   "_chat_online",
+   "Exception",
+   "_parse_focused"
+  ],
+  "varnames": [
+   "doc_text",
+   "fields",
+   "cfg",
+   "log",
+   "text",
+   "wanted",
+   "user",
+   "chat_local",
+   "content",
+   "e"
+  ],
+  "consts": [
+   "Ask the model for only ``fields`` (a subset of the FOCUS schema keys).\n\n    Returns {\"header\": {key: value}, \"orders\": [{po_no, delivery_date}]}. Never\n    raises: on any failure (offline, bad JSON, timeout) it returns {} so the\n    caller simply leaves the field blank.\n    ",
+   "  [自愈] 未配置可用 AI（离线 / 本地模型缺失），跳过定向补抓",
+   "compress_input",
+   true,
+   null,
+   ", ",
+   "Fill ONLY these fields if present (use '' if not): ",
+   "\n\nPurchase-order text, one visual line per line:\n----\n",
+   "\n----\n",
+   "infer_engine",
+   "local",
+   1,
+   [
+    "chat_local"
+   ],
+   [
+    "cfg"
+   ],
+   "  [自愈] 定向补抓 AI 调用失败（忽略，保持空白）："
+  ],
+  "n_instructions": 135
+ },
+ "<module>._parse_focused": {
+  "names": [
+   "_load_json_lenient",
+   "_extract_json",
+   "Exception",
+   "isinstance",
+   "dict",
+   "get",
+   "append",
+   "_as_str"
+  ],
+  "varnames": [
+   "content",
+   "fields",
+   "d",
+   "header",
+   "orders",
+   "o"
+  ],
+  "consts": [
+   null,
+   "header",
+   "orders",
+   "po_no",
+   "delivery_date",
+   [
+    "po_no",
+    "delivery_date"
+   ],
+   [
+    "header",
+    "orders"
+   ]
+  ],
+  "n_instructions": 108
+ },
+ "<module>._parse_focused.<dictcomp>": {
+  "names": [
+   "_as_str",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [
+   "delivery_date",
+   ""
+  ],
+  "n_instructions": 23
+ }
+}

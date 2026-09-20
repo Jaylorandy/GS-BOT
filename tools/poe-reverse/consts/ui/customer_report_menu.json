@@ -1,0 +1,553 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "tkinter",
+   "tk",
+   "CUSTOMER_REPORTS",
+   "path",
+   "normpath",
+   "join",
+   "dirname",
+   "__file__",
+   "_SPECIAL_DIR",
+   "ask_customer_report"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/customer_report_menu.py - 客户指定报表菜单（模板 C 入口）。\n\n严格对照设计稿（SVG A）实现：\n- 深石墨灰窗口，标题栏「C」圆形图标 + 「客户指定报表」+ 关闭 ×。\n- 列表容器内的客户卡片：左侧金色圆形头像 + 下划线客户名 + 副标题 +\n  右侧「打开」按钮；启用项高亮，禁用项灰显。\n- 五个预留客户位占位行（未配置）。\n- 底部「管理客户报表模板…」链接 + 提示，底栏说明 + 取消按钮。\n- 点击卡片任意位置或「打开」按钮即选中该客户。\n\n首个客户固定为 ANF Special Report（Abercrombie & Fitch）。未配置的客户灰显。\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   "anf",
+   "ANF Special Report",
+   "Abercrombie & Fitch · POChart / POList / RawData（需 PO + Commitment PDF 各一份）",
+   "special_templates/OSR-ANF-Special.xlsx",
+   true,
+   [
+    "id",
+    "name",
+    "subtitle",
+    "template",
+    "enabled"
+   ],
+   "pending2",
+   "（预留客户位 2）",
+   "尚未配置",
+   "",
+   false,
+   "pending3",
+   "（预留客户位 3）",
+   "pending4",
+   "（预留客户位 4）",
+   "pending5",
+   "（预留客户位 5）",
+   "pending6",
+   "（预留客户位 6）",
+   "special_templates",
+   "return",
+   "'str | None'",
+   [
+    "return",
+    "'str | None'"
+   ]
+  ],
+  "n_instructions": 90
+ },
+ "<module>.ask_customer_report": {
+  "names": [
+   "theme_glass",
+   "COL",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "grab_set",
+   "resizable",
+   "configure",
+   "bind",
+   "Frame",
+   "pack",
+   "Canvas",
+   "create_rectangle",
+   "create_text",
+   "_SANS",
+   "Label",
+   "CUSTOMER_REPORTS",
+   "get",
+   "minsize",
+   "update_idletasks",
+   "winfo_width",
+   "winfo_height",
+   "winfo_rootx",
+   "winfo_rooty",
+   "winfo_screenwidth",
+   "winfo_screenheight",
+   "geometry",
+   "max",
+   "deiconify",
+   "update",
+   "wait_window"
+  ],
+  "varnames": [
+   "parent",
+   "title_bar",
+   "icon",
+   "bottom_block",
+   "_make_card",
+   "cust",
+   "foot",
+   "_open_templates",
+   "bottom",
+   "W",
+   "H",
+   "pw",
+   "ph",
+   "px",
+   "py"
+  ],
+  "consts": [
+   "弹出客户列表，返回所选客户 id；取消返回 None。窗口尺寸 816x760。",
+   0,
+   null,
+   "v",
+   "客户指定报表",
+   false,
+   "gap",
+   [
+    "bg"
+   ],
+   "<Escape>",
+   "x",
+   16,
+   [
+    14,
+    0
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   22,
+   [
+    "width",
+    "height",
+    "bg",
+    "highlightthickness"
+   ],
+   1,
+   21,
+   "#343841",
+   "#444b57",
+   [
+    "fill",
+    "outline",
+    "width"
+   ],
+   11,
+   12,
+   "C",
+   "ink",
+   "bold",
+   [
+    "text",
+    "fill",
+    "font"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   15,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   [
+    8,
+    0
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "×",
+   "ink_3",
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "cursor"
+   ],
+   "right",
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   "点击下方客户名称，打开对应的专属报表模板",
+   "ink_2",
+   "w",
+   24,
+   [
+    8,
+    14
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "field",
+   "panel_border",
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   "both",
+   true,
+   [
+    0,
+    10
+   ],
+   [
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   "enabled",
+   [
+    0,
+    6
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   [
+    "bg",
+    "height"
+   ],
+   [
+    0,
+    8
+   ],
+   "管理客户报表模板…",
+   [
+    "anchor"
+   ],
+   "模板文件存放在输出目录 /special_templates/ 下",
+   "#5F5E5A",
+   [
+    2,
+    0
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    6,
+    0
+   ],
+   "bottom",
+   [
+    0,
+    16
+   ],
+   [
+    "side",
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "选择后将直接生成并打开对应 .xlsx",
+   [
+    "side",
+    "pady"
+   ],
+   "取消",
+   "accent",
+   "select_fg",
+   13,
+   20,
+   7,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   [
+    816,
+    912
+   ],
+   200,
+   [
+    0,
+    0
+   ],
+   "+",
+   2,
+   [
+    null
+   ]
+  ],
+  "n_instructions": 655
+ },
+ "<module>.ask_customer_report.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "accent",
+   [
+    "bg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>.ask_customer_report.pick": {
+  "names": [
+   "destroy"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null,
+   "v"
+  ],
+  "n_instructions": 13
+ },
+ "<module>.ask_customer_report._make_card": {
+  "names": [
+   "tk",
+   "Frame",
+   "pack",
+   "Canvas",
+   "create_oval",
+   "create_text",
+   "_SANS",
+   "Label",
+   "bind"
+  ],
+  "varnames": [
+   "cust",
+   "enabled",
+   "h",
+   "card",
+   "av",
+   "mid",
+   "name_font",
+   "name_fg",
+   "ul",
+   "btn_w",
+   "_fire",
+   "w"
+  ],
+  "consts": [
+   null,
+   70,
+   "hair",
+   "field",
+   "panel_border",
+   1,
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   "x",
+   10,
+   0,
+   [
+    "fill",
+    "pady"
+   ],
+   32,
+   "bg",
+   [
+    "width",
+    "height",
+    "bg",
+    "highlightthickness"
+   ],
+   "left",
+   [
+    20,
+    16
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "accent",
+   [
+    "fill",
+    "outline"
+   ],
+   16,
+   17,
+   "A",
+   "select_fg",
+   13,
+   "bold",
+   [
+    "text",
+    "fill",
+    "font"
+   ],
+   "#444b57",
+   "?",
+   "ink_2",
+   [
+    "bg"
+   ],
+   "both",
+   true,
+   [
+    "side",
+    "fill",
+    "expand"
+   ],
+   14,
+   "name",
+   "hand2",
+   "arrow",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "cursor",
+    "justify"
+   ],
+   "w",
+   [
+    6,
+    2
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    "bg",
+    "height"
+   ],
+   false,
+   [
+    "anchor",
+    "fill",
+    "expand"
+   ],
+   "subtitle",
+   "ink_3",
+   11,
+   [
+    2,
+    6
+   ],
+   84,
+   "打开",
+   12,
+   8,
+   6,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "width",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   "#5F5E5A",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "width",
+    "padx",
+    "pady",
+    "cursor",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   "<Enter>",
+   "<Leave>",
+   "<Button-1>",
+   "right",
+   [
+    0,
+    16
+   ],
+   [
+    null
+   ]
+  ],
+  "n_instructions": 401
+ },
+ "<module>.ask_customer_report._make_card._fire": {
+  "names": [],
+  "varnames": [
+   "_"
+  ],
+  "consts": [
+   null,
+   "id"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.ask_customer_report._make_card.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "accent",
+   [
+    "bg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>.ask_customer_report._open_templates": {
+  "names": [
+   "os",
+   "startfile",
+   "_SPECIAL_DIR",
+   "Exception"
+  ],
+  "varnames": [
+   "_"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 22
+ }
+}

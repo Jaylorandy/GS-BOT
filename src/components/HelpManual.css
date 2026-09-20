@@ -1,0 +1,233 @@
+.help-manual-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: color-mix(in srgb, rgba(12, 14, 18, 0.82) 88%, transparent);
+  backdrop-filter: var(--glass-refraction, blur(40px) saturate(180%));
+  -webkit-backdrop-filter: var(--glass-refraction, blur(40px) saturate(180%));
+  /* The main window's draggable header swallows clicks over overlapping
+     elements on macOS regardless of z-index; mark the overlay no-drag. */
+  -webkit-app-region: no-drag;
+}
+
+.help-manual-panel {
+  width: min(1180px, 100%);
+  max-height: min(88vh, 980px);
+  overflow: auto;
+  border-radius: 28px;
+  border: 1px solid var(--surface-border);
+  background:
+    var(--glass-sheen, linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 40%)),
+    linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  box-shadow: var(--surface-shadow), var(--glass-edge-highlight), var(--glass-edge-shadow);
+}
+
+.help-manual-header {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 28px 30px 20px;
+  border-bottom: 1px solid var(--surface-border);
+  background: color-mix(in srgb, var(--surface-2) 94%, transparent);
+  backdrop-filter: none;
+}
+
+.help-manual-kicker {
+  display: inline-flex;
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.help-manual-header h1 {
+  margin: 0;
+  font-size: clamp(28px, 3vw, 40px);
+  line-height: 1.05;
+  color: var(--text-primary);
+}
+
+.help-manual-header p {
+  margin: 10px 0 0;
+  max-width: 720px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.help-manual-close {
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #ff934f, #ff5f6d 50%, #7f56d9);
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(127, 86, 217, 0.22);
+}
+
+.help-manual-close:hover {
+  filter: brightness(1.04);
+}
+
+.help-manual-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 18px 30px 0;
+}
+
+.help-manual-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--surface-1) 88%, transparent);
+  border: 1px solid var(--surface-border);
+  transition: background var(--motion-fast) ease, border-color var(--motion-fast) ease, transform var(--motion-fast) ease;
+}
+
+.help-manual-chip:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--glass-bg-hover) 100%, var(--surface-1));
+  border-color: var(--surface-border-strong);
+}
+
+.help-manual-content {
+  display: grid;
+  gap: 18px;
+  padding: 18px 30px 30px;
+}
+
+.help-manual-card {
+  border-radius: 24px;
+  padding: 22px;
+  background: linear-gradient(180deg, var(--card-surface-start), var(--card-surface-end));
+  border: 1px solid var(--card-surface-border);
+  box-shadow: inset 0 1px 0 var(--card-surface-inset);
+}
+
+.help-manual-card-top h2 {
+  margin: 0;
+  font-size: 22px;
+  color: var(--text-primary);
+}
+
+.help-manual-card-top p {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+.help-manual-block {
+  margin-top: 18px;
+}
+
+.help-manual-block h3 {
+  margin: 0 0 10px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.help-manual-block ul {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.help-manual-block li {
+  line-height: 1.6;
+}
+
+.help-manual-option-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.help-manual-option-card {
+  border-radius: 18px;
+  padding: 15px 16px;
+  background: color-mix(in srgb, var(--surface-0) 92%, transparent);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--surface-shadow-soft);
+}
+
+.help-manual-option-card strong {
+  display: block;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.help-manual-option-card span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.help-manual-option-card p {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 900px) {
+  .help-manual-overlay {
+    padding: 14px;
+  }
+
+  .help-manual-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px 20px 16px;
+  }
+
+  .help-manual-nav,
+  .help-manual-content {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+@media (max-height: 760px) {
+  .help-manual-panel {
+    max-height: 94vh;
+  }
+
+  .help-manual-header {
+    padding-top: 18px;
+    padding-bottom: 14px;
+  }
+
+  .help-manual-nav {
+    gap: 8px;
+  }
+
+  .help-manual-chip {
+    padding: 8px 12px;
+  }
+}

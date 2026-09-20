@@ -1,0 +1,582 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "ctypes",
+   "os",
+   "sys",
+   "models",
+   "PoRecipe",
+   "recipe_infer",
+   "build_recipe_prompt",
+   "parse_recipe_response",
+   "_ensure_stdio",
+   "_noop_log_callback_installed",
+   "_noop_log_callback_ref",
+   "_install_noop_log_callback",
+   "_patch_llama_utils_utf8",
+   "_sanitize_llama_params",
+   "_setup_llama_runtime",
+   "_fit_prompt_to_ctx",
+   "_LOCAL_MISSING_MSG",
+   "_chat_local_impl",
+   "_infer_recipe_local_impl",
+   "chat_local",
+   "is_local_engine_available",
+   "infer_recipe_local",
+   "load_local_model_headless"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/local_infer.py - local GGUF inference via llama-cpp-python (lazy import).\n\nThis module is the **local** branch of the recipe-inference engine. It mirrors\n``recipe_infer.infer_recipe`` but runs entirely offline against a user-supplied\nGGUF model (no API key, no network).\n\nllama-cpp-python IS bundled in the V.2.0.0 installer (spec uses collect_all and\ndrops the old excludes=['llama_cpp']). The import stays lazy so a missing engine\nstill raises a clear, actionable error instead of crashing at import time.\n\nFour layered defences against the\n\"access violation reading 0x0000000000000000\" crash\n---------------------------------------------------\nThe crash is the ctypes surface for *any* exception raised inside the C log\ncallback registered by ``llama_cpp._logger`` at import time. We now block\nevery known trigger:\n\n  1. ``sys.stdout`` / ``sys.stderr`` are None in a frozen windowed build.\n     ``_ensure_stdio`` redirects them to utf-8 devnull.\n  2. The default log callback does ``text.decode(\"utf-8\")`` *before* writing.\n     If the backend emits bytes that aren't valid UTF-8 (locale-formatted\n     numbers, Windows error strings, etc.) this raises UnicodeDecodeError\n     inside the C callback. ``_install_noop_log_callback`` replaces the\n     default callback with a module-level no-op kept alive so ctypes cannot\n     collect it.\n  3. ``verbose=False`` swaps sys.stderr for ``llama_cpp._utils.errnull_file``\n     which is opened at import time with the system default encoding (gbk on\n     Chinese Windows). Even though the no-op callback swallows logs, we\n     still patch these files to utf-8 as defence in depth\n     (``_patch_llama_utils_utf8``).\n  4. ``Llama(...)`` is always invoked with ``verbose=False`` to match the\n     proven-working OfflineDocAI release (Jul 29).\n\nThe proven OfflineDocAI release avoids all of this because its model lives\nunder ``models/`` (ASCII path) and the default callback never sees non-ASCII.\nWe replicate that *and* harden it so Chinese paths in the model directory\nalso work.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "PoRecipe"
+   ],
+   1,
+   [
+    "build_recipe_prompt",
+    "parse_recipe_response"
+   ],
+   "return",
+   "None",
+   false,
+   "cfg",
+   "dict",
+   "system",
+   "str",
+   "user",
+   "n_ctx",
+   "int",
+   "max_tokens",
+   "本地推理引擎（llama-cpp-python）尚未打包进本程序。\n请在开发环境执行 `py -3.11 -m pip install llama-cpp-python`，\n并把 core.ai.local_infer 加入打包隐藏导入后重打安装包。",
+   "",
+   [
+    "customer",
+    "extra_hint"
+   ],
+   "raw_text",
+   "customer",
+   "extra_hint",
+   "PoRecipe",
+   [
+    "cfg"
+   ],
+   "dict | None",
+   "bool",
+   [
+    "customer",
+    "cfg",
+    "extra_hint"
+   ],
+   [
+    "return",
+    "None"
+   ],
+   [
+    "cfg",
+    "dict",
+    "return",
+    "dict"
+   ],
+   [
+    "system",
+    "str",
+    "user",
+    "str",
+    "n_ctx",
+    "int",
+    "max_tokens",
+    "int"
+   ],
+   [
+    "system",
+    "str",
+    "user",
+    "str",
+    "cfg",
+    "dict",
+    "return",
+    "str"
+   ],
+   [
+    "raw_text",
+    "str",
+    "customer",
+    "str",
+    "cfg",
+    "dict",
+    "extra_hint",
+    "str",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "system",
+    "str",
+    "user",
+    "str",
+    "cfg",
+    "dict | None",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "raw_text",
+    "str",
+    "customer",
+    "str",
+    "cfg",
+    "dict | None",
+    "extra_hint",
+    "str",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "cfg",
+    "dict",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 103
+ },
+ "<module>._ensure_stdio": {
+  "names": [
+   "sys",
+   "stdout",
+   "open",
+   "os",
+   "devnull",
+   "stderr",
+   "Exception"
+  ],
+  "varnames": [],
+  "consts": [
+   "In a PyInstaller windowed build sys.stdout/sys.stderr are None.\n\n    llama-cpp-python's ``_logger.py`` registers a ctypes log callback at import\n    time which calls ``print(..., file=sys.stderr)``. A None stderr inside a C\n    callback causes an access-violation on Windows. Redirect missing stdio to\n    os.devnull so the callback stays safe.\n    ",
+   null,
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 44
+ },
+ "<module>._install_noop_log_callback": {
+  "names": [
+   "_noop_log_callback_installed",
+   "llama_cpp",
+   "llama_log_callback",
+   "_noop_log_callback_ref",
+   "llama_log_set",
+   "ctypes",
+   "c_void_p",
+   "Exception"
+  ],
+  "varnames": [
+   "llama_cpp",
+   "_noop"
+  ],
+  "consts": [
+   "Replace llama-cpp-python's default log callback with a no-op.\n\n    The default callback (in ``llama_cpp/_logger.py``) does:\n        print(text.decode(\"utf-8\"), end=\"\", flush=True, file=sys.stderr)\n    Any exception inside this callback (UnicodeDecodeError if the backend\n    emits non-UTF-8 bytes; AttributeError if stderr is None) is converted by\n    ctypes into ``OSError: access violation reading 0x0000000000000000``.\n    A no-op callback eliminates the entire failure class.\n\n    This is the load-bearing defence: the UTF-8 file patch alone is NOT\n    enough because the decode happens in Python before the write.\n    ",
+   null,
+   0,
+   "level",
+   "int",
+   "text",
+   "bytes",
+   "user_data",
+   "ctypes.c_void_p",
+   "return",
+   "None",
+   true,
+   [
+    "level",
+    "int",
+    "text",
+    "bytes",
+    "user_data",
+    "ctypes.c_void_p",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 47
+ },
+ "<module>._install_noop_log_callback._noop": {
+  "names": [],
+  "varnames": [
+   "level",
+   "text",
+   "user_data"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 3
+ },
+ "<module>._patch_llama_utils_utf8": {
+  "names": [
+   "llama_cpp._utils",
+   "_utils",
+   "getattr",
+   "open",
+   "os",
+   "devnull",
+   "outnull_file",
+   "errnull_file",
+   "_v2_utf8_patched",
+   "Exception"
+  ],
+  "varnames": [
+   "_utils"
+  ],
+  "consts": [
+   "Reopen llama_cpp._utils.{outnull,errnull}_file with UTF-8.\n\n    These files are opened at import time with the system default encoding\n    (gbk on Chinese Windows). Even with the no-op log callback installed,\n    we still patch them so that any third-party code that bypasses our\n    callback and writes directly to them won't trip a UnicodeEncodeError.\n    ",
+   0,
+   null,
+   "_v2_utf8_patched",
+   false,
+   "w",
+   "utf-8",
+   "ignore",
+   [
+    "encoding",
+    "errors"
+   ],
+   true
+  ],
+  "n_instructions": 56
+ },
+ "<module>._sanitize_llama_params": {
+  "names": [
+   "int",
+   "get",
+   "max",
+   "os",
+   "cpu_count"
+  ],
+  "varnames": [
+   "cfg",
+   "params"
+  ],
+  "consts": [
+   "Normalize llama.cpp params to avoid values that crash the backend.",
+   "local_n_ctx",
+   4096,
+   "local_n_threads",
+   0,
+   "local_n_gpu_layers",
+   "local_n_batch",
+   512,
+   [
+    "n_ctx",
+    "n_threads",
+    "n_gpu_layers",
+    "n_batch"
+   ],
+   "n_threads",
+   1,
+   "n_batch",
+   "n_ctx"
+  ],
+  "n_instructions": 81
+ },
+ "<module>._setup_llama_runtime": {
+  "names": [
+   "_ensure_stdio",
+   "_install_noop_log_callback",
+   "_patch_llama_utils_utf8"
+  ],
+  "varnames": [],
+  "consts": [
+   "Run all three layers of protection. Idempotent and safe to call early.\n\n    Order matters slightly:\n      * stdio first (so import of llama_cpp doesn't blow up on None stderr),\n      * then no-op callback (replaces default before any backend log fires),\n      * then UTF-8 patch (defence in depth for direct writes to devnull).\n    ",
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>._fit_prompt_to_ctx": {
+  "names": [
+   "tokenize",
+   "encode",
+   "Exception",
+   "len",
+   "min",
+   "max",
+   "detokenize",
+   "decode",
+   "int"
+  ],
+  "varnames": [
+   "llm",
+   "system",
+   "user",
+   "n_ctx",
+   "max_tokens",
+   "reserve",
+   "sys_tok",
+   "usr_tok",
+   "prompt_tokens",
+   "room",
+   "budget",
+   "lo",
+   "hi",
+   "mid",
+   "ratio"
+  ],
+  "consts": [
+   "Clamp ``max_tokens`` so prompt+max_tokens fits ``n_ctx``, and truncate the\n    user text if the prompt alone would overflow the context window.\n\n    This is the defence against llama-cpp-python raising\n    ``ValueError: Requested tokens (N) exceed context window of M`` when the PO\n    text is long and ``local_n_ctx`` is left at its 4096 default. Without it the\n    whole batch aborts (the first-PO recipe inference is a cache miss).\n    ",
+   64,
+   "utf-8",
+   false,
+   [
+    "add_bos"
+   ],
+   3,
+   0,
+   1,
+   2,
+   null,
+   "ignore",
+   [
+    "errors"
+   ]
+  ],
+  "n_instructions": 243
+ },
+ "<module>._chat_local_impl": {
+  "names": [
+   "llama_cpp",
+   "Llama",
+   "Exception",
+   "RuntimeError",
+   "_setup_llama_runtime",
+   "get",
+   "os",
+   "path",
+   "exists",
+   "_sanitize_llama_params",
+   "int",
+   "_fit_prompt_to_ctx",
+   "create_chat_completion",
+   "float",
+   "close"
+  ],
+  "varnames": [
+   "system",
+   "user",
+   "cfg",
+   "llama_cpp",
+   "Llama",
+   "e",
+   "model_path",
+   "lp",
+   "llm",
+   "max_tokens",
+   "resp"
+  ],
+  "consts": [
+   "One local chat round-trip; returns the raw assistant content.\n\n    Shared by recipe inference and by ``core.ai.data_extract`` so the frozen-app\n    crash guards (stdio redirect, no-op log callback, verbose=True) are applied\n    in exactly one place. Caller guarantees llama_cpp is importable.\n    ",
+   0,
+   null,
+   [
+    "Llama"
+   ],
+   "本地推理引擎（llama-cpp-python）尚未打包进本程序。\n请在开发环境执行:\n  py -3.11 -m pip install llama-cpp-python\n并把 core.ai.local_infer 加入打包隐藏导入后重打安装包。\n（原始错误: ",
+   "）",
+   "local_model_path",
+   "",
+   "本地模型文件不存在: ",
+   "n_ctx",
+   "n_threads",
+   "n_gpu_layers",
+   "n_batch",
+   true,
+   [
+    "model_path",
+    "n_ctx",
+    "n_threads",
+    "n_gpu_layers",
+    "n_batch",
+    "verbose"
+   ],
+   "local_max_tokens",
+   2048,
+   "system",
+   [
+    "role",
+    "content"
+   ],
+   "user",
+   "local_temperature",
+   0.1,
+   "local_top_p",
+   0.9,
+   [
+    "messages",
+    "temperature",
+    "top_p",
+    "max_tokens"
+   ],
+   "choices",
+   "message",
+   "content"
+  ],
+  "n_instructions": 198
+ },
+ "<module>._infer_recipe_local_impl": {
+  "names": [
+   "build_recipe_prompt",
+   "_chat_local_impl",
+   "parse_recipe_response"
+  ],
+  "varnames": [
+   "raw_text",
+   "customer",
+   "cfg",
+   "extra_hint",
+   "system",
+   "user",
+   "content"
+  ],
+  "consts": [
+   "Legacy path: ask the local model to author a recipe. Kept for matrix\n    layouts, which ``recipe_synth`` cannot synthesize from sample rows yet.",
+   [
+    "customer"
+   ]
+  ],
+  "n_instructions": 24
+ },
+ "<module>.chat_local": {
+  "names": [
+   "is_local_engine_available",
+   "RuntimeError",
+   "_LOCAL_MISSING_MSG",
+   "_chat_local_impl"
+  ],
+  "varnames": [
+   "system",
+   "user",
+   "cfg"
+  ],
+  "consts": [
+   "Public local chat entry point used by ``core.ai.data_extract``."
+  ],
+  "n_instructions": 21
+ },
+ "<module>.is_local_engine_available": {
+  "names": [
+   "_setup_llama_runtime",
+   "llama_cpp",
+   "Exception"
+  ],
+  "varnames": [
+   "llama_cpp"
+  ],
+  "consts": [
+   "True if llama-cpp-python can be imported (engine bundled).",
+   0,
+   null,
+   true,
+   false
+  ],
+  "n_instructions": 24
+ },
+ "<module>.infer_recipe_local": {
+  "names": [
+   "is_local_engine_available",
+   "_infer_recipe_local_impl",
+   "RuntimeError",
+   "_LOCAL_MISSING_MSG"
+  ],
+  "varnames": [
+   "raw_text",
+   "customer",
+   "cfg",
+   "extra_hint"
+  ],
+  "consts": [
+   null,
+   [
+    "customer",
+    "cfg",
+    "extra_hint"
+   ]
+  ],
+  "n_instructions": 23
+ },
+ "<module>.load_local_model_headless": {
+  "names": [
+   "get",
+   "os",
+   "path",
+   "exists",
+   "RuntimeError",
+   "getsize",
+   "is_local_engine_available",
+   "llama_cpp",
+   "Llama",
+   "_setup_llama_runtime",
+   "_sanitize_llama_params",
+   "close",
+   "Exception",
+   "str"
+  ],
+  "varnames": [
+   "cfg",
+   "model_path",
+   "size_mb",
+   "Llama",
+   "lp",
+   "llm",
+   "e",
+   "msg"
+  ],
+  "consts": [
+   "Validate + optionally load the model headlessly (used by 「测试加载」).\n\n    Returns a human-readable status string. Raises RuntimeError on hard failure.\n    ",
+   "local_model_path",
+   "",
+   "本地模型文件不存在: ",
+   1048576,
+   "文件 OK（",
+   ".0f",
+   " MB），但本地引擎未打包",
+   0,
+   [
+    "Llama"
+   ],
+   "n_ctx",
+   "n_threads",
+   "n_gpu_layers",
+   "n_batch",
+   true,
+   [
+    "model_path",
+    "n_ctx",
+    "n_threads",
+    "n_gpu_layers",
+    "n_batch",
+    "verbose"
+   ],
+   "模型加载失败: ",
+   null,
+   "已加载（",
+   " MB，线程数 ",
+   "）"
+  ],
+  "n_instructions": 140
+ }
+}

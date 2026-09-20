@@ -1,0 +1,102 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "os",
+   "sys",
+   "typing",
+   "Optional",
+   "ctypes",
+   "wintypes",
+   "windll",
+   "kernel32",
+   "_kernel32",
+   "LPCWSTR",
+   "LPWSTR",
+   "DWORD",
+   "GetShortPathNameW",
+   "argtypes",
+   "restype",
+   "str",
+   "_get_short_path",
+   "Exception",
+   "file_url_for_excel",
+   "excel_hyperlink_formula"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/winpath.py - Windows path helpers for reliable Excel file hyperlinks.\n\nExcel's file:// URI handling is fragile with long paths, Unicode, spaces, and\nespecially the '#' character (which Excel treats as a sheet anchor even when\npercent-encoded).  The Windows 8.3 short name is ASCII, has no spaces, and is\nshort enough to stay under Excel's URL limits, so we use it whenever possible.\n",
+   0,
+   null,
+   [
+    "Optional"
+   ],
+   [
+    "wintypes"
+   ],
+   "long_path",
+   "return",
+   "full_path",
+   "label"
+  ],
+  "n_instructions": 99
+ },
+ "<module>._get_short_path": {
+  "names": [],
+  "varnames": [
+   "long_path"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 3
+ },
+ "<module>.file_url_for_excel": {
+  "names": [
+   "os",
+   "path",
+   "exists",
+   "_get_short_path",
+   "replace"
+  ],
+  "varnames": [
+   "full_path",
+   "path",
+   "short",
+   "url"
+  ],
+  "consts": [
+   "Convert a local file path to a file:// URL that Excel can open.\n\n    Uses the 8.3 short path when available; falls back to percent-encoding\n    only '#' and spaces if short-path generation fails.\n    ",
+   "",
+   "file:///",
+   "\\",
+   "/",
+   "#",
+   "%23",
+   " ",
+   "%20"
+  ],
+  "n_instructions": 53
+ },
+ "<module>.excel_hyperlink_formula": {
+  "names": [
+   "replace",
+   "file_url_for_excel"
+  ],
+  "varnames": [
+   "full_path",
+   "label",
+   "url"
+  ],
+  "consts": [
+   "Return an Excel HYPERLINK formula string, or plain label if no path.",
+   "",
+   "\"",
+   "\"\"",
+   "=HYPERLINK(\"",
+   "\", \"",
+   "\")"
+  ],
+  "n_instructions": 28
+ }
+}

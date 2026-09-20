@@ -1,0 +1,258 @@
+{
+  "name": "zara-scraper-pro",
+  "private": true,
+  "version": "2.0.1",
+  "main": "main.js",
+  "description": "GS Bot - 本地服装净图、整理与工作流工具",
+  "author": "Jaylor Andy",
+  "scripts": {
+    "dev": "vite",
+    "lint": "eslint .",
+    "postinstall": "node scripts/patch-electron-builder.js",
+    "build": "node scripts/build-frontend.js",
+    "dist": "node scripts/build-mac-distribution.js",
+    "dist:mac": "node scripts/build-mac-distribution.js",
+    "mac:local": "node scripts/run-mac-local.js",
+    "prepare:win-runtime": "node scripts/prepare-windows-runtime.js",
+    "dist:win": "node scripts/build-windows-installer.js",
+    "dist:win:light": "GSBOT_WINDOWS_CUTOUT_VARIANT=light node scripts/build-windows-installer.js",
+    "repro:win-asar": "node scripts/repro-win-asar-integrity.js",
+    "verify:onnx-load": "node scripts/verify-onnxruntime-model-load.js",
+    "test:regression": "node scripts/run-regression-tests.js",
+    "license:generate": "node scripts/generate-license.js",
+    "license:gui": "electron license-generator-app/main.js",
+    "license:gui:dist:mac": "node scripts/build-license-generator-mac.js",
+    "license:gui:dist:win": "node scripts/build-license-generator-win.js"
+  },
+  "dependencies": {
+    "@gutenye/ocr-node": "^1.4.8",
+    "docx": "^9.6.1",
+    "electron-updater": "^6.8.9",
+    "exceljs": "^4.4.0",
+    "jszip": "^3.10.1",
+    "onnxruntime-node": "1.20.1",
+    "pdf-parse": "^1.1.1",
+    "puppeteer-core": "^24.39.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "smb2": "^0.2.11",
+    "xlsx": "^0.18.5"
+  },
+  "build": {
+    "appId": "com.gsrd.gsbot",
+    "productName": "GS Bot",
+    "publish": {
+      "provider": "github",
+      "owner": "Jaylorandy",
+      "repo": "GS-BOT"
+    },
+    "electronLanguages": [
+      "en-US",
+      "zh-CN",
+      "zh-TW"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "afterPack": "scripts/clean-windows-after-pack.js",
+    "files": [
+      "!**/._*",
+      "!**/.DS_Store",
+      "dist/**/*",
+      "icon.png",
+      "src/shared/labelOcrDefaults.json",
+      "main.js",
+      "preload.js",
+      "firecrawl-service.js",
+      "firecrawl-fallback.js",
+      "pdf-squeezer-handlers.js",
+      "license-service.js",
+      "annotate_excel.js",
+      "anti-detection.js",
+      "image-url-generator.js",
+      "generate_slides.py",
+      "pdf_squeezer.py",
+      "pdf_visual_extract.py",
+      "slides_scan_utils.py",
+      "slides_render_utils.py",
+      "python_vendor/**/*",
+      "label-ocr-worker.js",
+      "label-ocr-profile.js",
+      "ocr-engine-config.js",
+      "templates/**/*",
+      "label-ocr-engine.js",
+      "processing-cache.js",
+      "slides-analysis-handlers.js",
+      "slides-preprocessor.js",
+      "slides-source-utils.js",
+      "style-organizer.js",
+      "product-analysis-visual-context.js",
+      "product-parser.js",
+      "attachment-parser.js",
+      "report-generator.js",
+      "bestseller-report.js",
+      "runtime-resolver.js",
+      "skill-pack-manager.js",
+      "task-manager.js",
+      "web-search.js",
+      "llm-client.js",
+      "llm-config.js",
+      "apparel-vision-service.js",
+      "ollama-manager.js",
+      "ocr-model-registry.js",
+      "node_modules/puppeteer-core/**/*",
+      "paddleocr-service.js",
+      "node_modules/puppeteer-core/node_modules/**/*",
+      "node_modules/docx/**/*",
+      "node_modules/jszip/**/*",
+      "node_modules/pdf-parse/**/*",
+      "node_modules/@gutenye/ocr-node/**/*",
+      "node_modules/@gutenye/ocr-common/**/*",
+      "node_modules/@gutenye/ocr-models/**/*",
+      "node_modules/tiny-invariant/**/*",
+      "node_modules/js-clipper/**/*",
+      "node_modules/@techstark/opencv-js/**/*",
+      "node_modules/onnxruntime-node/**/*",
+      "node_modules/onnxruntime-common/**/*",
+      "node_modules/sharp/**/*",
+      "node_modules/detect-libc/**/*",
+      "node_modules/semver/**/*",
+      "node_modules/color/**/*",
+      "node_modules/color-string/**/*",
+      "node_modules/color-convert/**/*",
+      "node_modules/color-name/**/*",
+      "node_modules/simple-swizzle/**/*",
+      "node_modules/is-arrayish/**/*",
+      "node_modules/@img/**/*",
+      "node_modules/regenerator-runtime/**/*",
+      "node_modules/**/*.{json,js}"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/puppeteer-core/**",
+      "node_modules/puppeteer-core/node_modules/**",
+      "node_modules/@gutenye/ocr-node/**",
+      "node_modules/@gutenye/ocr-common/**",
+      "node_modules/@gutenye/ocr-models/**",
+      "node_modules/tiny-invariant/**",
+      "node_modules/js-clipper/**",
+      "node_modules/@techstark/opencv-js/**",
+      "node_modules/onnxruntime-node/**",
+      "node_modules/onnxruntime-common/**",
+      "node_modules/sharp/**",
+      "node_modules/detect-libc/**",
+      "node_modules/semver/**",
+      "node_modules/color/**",
+      "node_modules/color-string/**",
+      "node_modules/color-convert/**",
+      "node_modules/color-name/**",
+      "node_modules/simple-swizzle/**",
+      "node_modules/is-arrayish/**",
+      "node_modules/@img/**",
+      "node_modules/regenerator-runtime/**",
+      "label-ocr-worker.js",
+      "label-ocr-engine.js",
+      "label-ocr-profile.js",
+      "llm-client.js",
+      "llm-config.js",
+      "apparel-vision-service.js",
+      "runtime-resolver.js",
+      "ocr-engine-config.js",
+      "processing-cache.js",
+      "src/shared/labelOcrDefaults.json",
+      "generate_slides.py",
+      "pdf_squeezer.py",
+      "pdf_visual_extract.py",
+      "python_vendor/**",
+      "slides_scan_utils.py",
+      "slides_render_utils.py"
+    ],
+    "extraMetadata": {
+      "main": "main.js"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.icns",
+      "darkModeSupport": true,
+      "extraResources": [
+        {
+          "from": "vendor/mac/node",
+          "to": "runtime/mac/node"
+        }
+      ]
+    },
+    "win": {
+      "signAndEditExecutable": true,
+      "icon": "icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "vendor/windows/python",
+          "to": "runtime/windows/python"
+        },
+        {
+          "from": "vendor/windows/node",
+          "to": "runtime/windows/node"
+        },
+        {
+          "from": "vendor/windows/crt",
+          "to": "runtime/windows/crt"
+        },
+        {
+          "from": "vendor/windows/chromium",
+          "to": "runtime/windows/chromium"
+        },
+        {
+          "from": "vendor/windows/paddleocr-vl",
+          "to": "runtime/windows/paddleocr-vl"
+        },
+        {
+          "from": "vendor/windows/label-detector",
+          "to": "runtime/windows/label-detector"
+        }
+      ]
+    },
+    "nsis": {
+      "useZip": true,
+      "differentialPackage": false,
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "installerHeaderIcon": "icon.ico"
+    }
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@tailwindcss/postcss": "^4.2.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.27",
+    "electron": "^41.0.1",
+    "electron-builder": "^26.8.1",
+    "eslint": "^9.13.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14",
+    "globals": "^15.11.0",
+    "postcss": "^8.5.8",
+    "puppeteer": "^24.39.0",
+    "tailwindcss": "^4.2.1",
+    "vite": "^6.2.6"
+  }
+}

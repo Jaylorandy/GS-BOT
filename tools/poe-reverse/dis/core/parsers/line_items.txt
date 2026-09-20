@@ -1,0 +1,2067 @@
+# module: core.parsers.line_items
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\line_items.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/line_items.py - one row per (style/color/size) with qty.\n\nCovers LPP SA (637JO, XL901): each order line is\n    ``637JO-80X-S PACK 2 372``\nThe Index No (``637JO-80X-S``) embeds style-color-size, so color_code (2nd\ndash-segment) and size (3rd dash-segment) are DERIVED from it; the unit is read\nfrom the line (LPP uses PACK, not PCS) and compared to recipe.order_unit; qty\nfrom the trailing integer. Named groups in recipe.line_pattern are all OPTIONAL\nexcept style/unit/qty -- the engine degrades gracefully when a group is absent.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 11           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 13          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 14          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 15          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (LayoutType)
+             42 STORE_NAME               6 (LayoutType)
+             44 IMPORT_FROM              7 (OrderEntity)
+             46 STORE_NAME               7 (OrderEntity)
+             48 IMPORT_FROM              8 (OrderLine)
+             50 STORE_NAME               8 (OrderLine)
+             52 IMPORT_FROM              9 (PurchaseOrder)
+             54 STORE_NAME               9 (PurchaseOrder)
+             56 IMPORT_FROM             10 (SizeQty)
+             58 STORE_NAME              10 (SizeQty)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 POP_TOP
+
+ 16          66 LOAD_CONST               6 (1)
+             68 LOAD_CONST               7 (('BaseParser', 'doc_text', '_norm_ship', '_min_date', 'merge_wrapped_rows', '_looks_like_style', 'SIZE_TOKEN'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (doc_text)
+             78 STORE_NAME              14 (doc_text)
+             80 IMPORT_FROM             15 (_norm_ship)
+             82 STORE_NAME              15 (_norm_ship)
+             84 IMPORT_FROM             16 (_min_date)
+             86 STORE_NAME              16 (_min_date)
+             88 IMPORT_FROM             17 (merge_wrapped_rows)
+             90 STORE_NAME              17 (merge_wrapped_rows)
+             92 IMPORT_FROM             18 (_looks_like_style)
+             94 STORE_NAME              18 (_looks_like_style)
+             96 IMPORT_FROM             19 (SIZE_TOKEN)
+             98 STORE_NAME              19 (SIZE_TOKEN)
+            100 POP_TOP
+
+ 20         102 PUSH_NULL
+            104 LOAD_BUILD_CLASS
+            106 LOAD_CONST               8 (<code object LineItemsParser at 0x000002BF9473D7F0, file "core\parsers\line_items.py", line 20>)
+            108 MAKE_FUNCTION            0
+            110 LOAD_CONST               9 ('LineItemsParser')
+            112 LOAD_NAME               13 (BaseParser)
+            114 PRECALL                  3
+            118 CALL                     3
+            128 STORE_NAME              20 (LineItemsParser)
+
+173         130 LOAD_CONST              28 (('style', 'str', 'line', 'str', 'return', 'str'))
+            132 LOAD_CONST              14 (<code object _recover_style_from_line at 0x000002BF943828D0, file "core\parsers\line_items.py", line 173>)
+            134 MAKE_FUNCTION            4 (annotations)
+            136 STORE_NAME              21 (_recover_style_from_line)
+
+200         138 LOAD_CONST              29 (('line', 'str', 'line_qty', 'int', 'return', 'List[SizeQty]'))
+            140 LOAD_CONST              18 (<code object _parse_size_breakdown at 0x000002BF9444BF60, file "core\parsers\line_items.py", line 200>)
+            142 MAKE_FUNCTION            4 (annotations)
+            144 STORE_NAME              22 (_parse_size_breakdown)
+
+255         146 LOAD_CONST              30 (('return', 'str'))
+            148 LOAD_CONST              19 (<code object _pick_po_no at 0x000002BF940C7DD0, file "core\parsers\line_items.py", line 255>)
+            150 MAKE_FUNCTION            4 (annotations)
+            152 STORE_NAME              23 (_pick_po_no)
+
+276         154 LOAD_CONST              30 (('return', 'str'))
+            156 LOAD_CONST              20 (<code object _clean at 0x000002BF946C5A10, file "core\parsers\line_items.py", line 276>)
+            158 MAKE_FUNCTION            4 (annotations)
+            160 STORE_NAME              24 (_clean)
+
+282         162 LOAD_CONST              31 (('middle', 'str', 'return', 'str'))
+            164 LOAD_CONST              22 (<code object _color_desc_from at 0x000002BF940D76D0, file "core\parsers\line_items.py", line 282>)
+            166 MAKE_FUNCTION            4 (annotations)
+            168 STORE_NAME              25 (_color_desc_from)
+
+334         170 LOAD_CONST              32 (('return', 'int'))
+            172 LOAD_CONST              23 (<code object _to_int at 0x000002BF94464810, file "core\parsers\line_items.py", line 334>)
+            174 MAKE_FUNCTION            4 (annotations)
+            176 STORE_NAME              26 (_to_int)
+
+350         178 LOAD_CONST              24 (<code object _to_float at 0x000002BF946925B0, file "core\parsers\line_items.py", line 350>)
+            180 MAKE_FUNCTION            0
+            182 STORE_NAME              27 (_to_float)
+
+366         184 LOAD_CONST              33 (('lines', 'List[OrderLine]', 'return', 'List[OrderLine]'))
+            186 LOAD_CONST              27 (<code object _dedup_entity_lines at 0x000002BF949EE250, file "core\parsers\line_items.py", line 366>)
+            188 MAKE_FUNCTION            4 (annotations)
+            190 STORE_NAME              28 (_dedup_entity_lines)
+            192 LOAD_CONST               3 (None)
+            194 RETURN_VALUE
+
+==============================================================================
+## <module>.LineItemsParser  (args=0, locals=0)
+ 20           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('LineItemsParser')
+              8 STORE_NAME               2 (__qualname__)
+
+ 21          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (LINE_ITEMS)
+             22 STORE_NAME               5 (layout_type)
+
+ 25          24 PUSH_NULL
+             26 LOAD_NAME                6 (re)
+             28 LOAD_ATTR                7 (compile)
+             38 LOAD_CONST               1 ('^([A-Za-z]{1,4}|\\d{1,3}(?:[./-]\\d{1,3})?):(\\d+)$')
+             40 PRECALL                  1
+             44 CALL                     1
+             54 STORE_NAME               8 (_SIZE_TOKEN)
+
+ 27          56 LOAD_CONST               2 ('')
+             58 LOAD_CONST               3 (('source_file',))
+             60 BUILD_CONST_KEY_MAP      1
+             62 LOAD_CONST              20 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             64 LOAD_CONST              10 (<code object parse at 0x000002BF94461590, file "core\parsers\line_items.py", line 27>)
+             66 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             68 STORE_NAME               9 (parse)
+
+121          70 LOAD_NAME               10 (staticmethod)
+
+122          72 LOAD_CONST              21 (('anchor', 'str', 'seg', 'str', 'doc', 'str'))
+             74 LOAD_CONST              14 (<code object _scoped at 0x000002BF9474A3A0, file "core\parsers\line_items.py", line 121>)
+             76 MAKE_FUNCTION            4 (annotations)
+
+121          78 PRECALL                  0
+             82 CALL                     0
+
+122          92 STORE_NAME              11 (_scoped)
+
+138          94 LOAD_NAME               12 (classmethod)
+
+140          96 NOP
+
+139          98 LOAD_CONST              22 (('',))
+            100 LOAD_CONST              23 (('recipe', 'PoRecipe', 'seg', 'str', 'po_no', 'str', 'chan', 'str', 'doc', 'str', 'return', 'OrderEntity'))
+            102 LOAD_CONST              18 (<code object _build_entity at 0x000002BF940DDE80, file "core\parsers\line_items.py", line 138>)
+            104 MAKE_FUNCTION            5 (defaults, annotations)
+
+138         106 PRECALL                  0
+            110 CALL                     0
+
+139         120 STORE_NAME              13 (_build_entity)
+            122 LOAD_CONST              19 (None)
+            124 RETURN_VALUE
+
+==============================================================================
+## <module>.LineItemsParser.parse  (args=3, locals=29)
+# varnames: self, pages, recipe, source_file, text, po, segments, ms, i, m, start, end, po_no, chan, seg, ent, line, gd, style, unit, qty, color_code, size, parts, middle, color_desc, unit_price, sizes, parsed
+ 27           0 RESUME                   0
+
+ 28           2 LOAD_FAST                2 (recipe)
+              4 LOAD_ATTR                0 (line_pattern)
+             14 POP_JUMP_FORWARD_IF_TRUE    15 (to 46)
+
+ 29          16 LOAD_GLOBAL              3 (NULL + ValueError)
+             28 LOAD_CONST               1 ('line_items parser requires recipe.line_pattern')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 RAISE_VARARGS            1
+
+ 30     >>   46 LOAD_GLOBAL              5 (NULL + doc_text)
+             58 LOAD_FAST                1 (pages)
+             60 PRECALL                  1
+             64 CALL                     1
+             74 STORE_FAST               4 (text)
+
+ 31          76 LOAD_GLOBAL              7 (NULL + PurchaseOrder)
+
+ 32          88 LOAD_FAST                2 (recipe)
+             90 LOAD_ATTR                4 (customer)
+
+ 33         100 LOAD_FAST                3 (source_file)
+            102 POP_JUMP_FORWARD_IF_FALSE    31 (to 166)
+            104 LOAD_GLOBAL             10 (os)
+            116 LOAD_ATTR                6 (path)
+            126 LOAD_METHOD              7 (basename)
+            148 LOAD_FAST                3 (source_file)
+            150 PRECALL                  1
+            154 CALL                     1
+            164 JUMP_FORWARD             1 (to 168)
+        >>  166 LOAD_CONST               2 ('')
+
+ 34     >>  168 LOAD_FAST                3 (source_file)
+
+ 31         170 KW_NAMES                 3
+            172 PRECALL                  3
+            176 CALL                     3
+            186 STORE_FAST               5 (po)
+
+ 38         188 BUILD_LIST               0
+            190 STORE_FAST               6 (segments)
+
+ 39         192 LOAD_FAST                2 (recipe)
+            194 LOAD_ATTR                8 (entity_anchor)
+            204 POP_JUMP_FORWARD_IF_FALSE   254 (to 714)
+
+ 40         206 LOAD_GLOBAL             19 (NULL + list)
+            218 LOAD_GLOBAL             21 (NULL + re)
+            230 LOAD_ATTR               11 (finditer)
+            240 LOAD_FAST                2 (recipe)
+            242 LOAD_ATTR                8 (entity_anchor)
+            252 LOAD_FAST                4 (text)
+            254 PRECALL                  2
+            258 CALL                     2
+            268 PRECALL                  1
+            272 CALL                     1
+            282 STORE_FAST               7 (ms)
+
+ 41         284 LOAD_GLOBAL             25 (NULL + enumerate)
+            296 LOAD_FAST                7 (ms)
+            298 PRECALL                  1
+            302 CALL                     1
+            312 GET_ITER
+        >>  314 FOR_ITER               199 (to 714)
+            316 UNPACK_SEQUENCE          2
+            320 STORE_FAST               8 (i)
+            322 STORE_FAST               9 (m)
+
+ 42         324 LOAD_FAST                9 (m)
+            326 LOAD_METHOD             13 (start)
+            348 PRECALL                  0
+            352 CALL                     0
+            362 STORE_FAST              10 (start)
+
+ 43         364 LOAD_FAST                8 (i)
+            366 LOAD_CONST               4 (1)
+            368 BINARY_OP                0 (+)
+            372 LOAD_GLOBAL             29 (NULL + len)
+            384 LOAD_FAST                7 (ms)
+            386 PRECALL                  1
+            390 CALL                     1
+            400 COMPARE_OP               0 (<)
+            406 POP_JUMP_FORWARD_IF_FALSE    29 (to 466)
+            408 LOAD_FAST                7 (ms)
+            410 LOAD_FAST                8 (i)
+            412 LOAD_CONST               4 (1)
+            414 BINARY_OP                0 (+)
+            418 BINARY_SUBSCR
+            428 LOAD_METHOD             13 (start)
+            450 PRECALL                  0
+            454 CALL                     0
+            464 JUMP_FORWARD            14 (to 494)
+        >>  466 LOAD_GLOBAL             29 (NULL + len)
+            478 LOAD_FAST                4 (text)
+            480 PRECALL                  1
+            484 CALL                     1
+        >>  494 STORE_FAST              11 (end)
+
+ 44         496 LOAD_GLOBAL             31 (NULL + _pick_po_no)
+            508 LOAD_FAST                9 (m)
+            510 PRECALL                  1
+            514 CALL                     1
+            524 STORE_FAST              12 (po_no)
+
+ 45         526 LOAD_FAST                2 (recipe)
+            528 LOAD_ATTR               16 (channel_anchor)
+            538 POP_JUMP_FORWARD_IF_FALSE    47 (to 634)
+
+ 46         540 LOAD_GLOBAL             21 (NULL + re)
+            552 LOAD_ATTR               17 (search)
+            562 LOAD_FAST                2 (recipe)
+            564 LOAD_ATTR               16 (channel_anchor)
+            574 LOAD_FAST                9 (m)
+            576 LOAD_METHOD             18 (group)
+            598 LOAD_CONST               5 (0)
+            600 PRECALL                  1
+            604 CALL                     1
+            614 PRECALL                  2
+            618 CALL                     2
+
+ 45         628 POP_JUMP_FORWARD_IF_FALSE     2 (to 634)
+            630 LOAD_CONST               6 ('E-COMM')
+            632 JUMP_FORWARD             6 (to 646)
+
+ 47     >>  634 LOAD_FAST                2 (recipe)
+            636 LOAD_ATTR               19 (channel_value)
+
+ 45     >>  646 STORE_FAST              13 (chan)
+
+ 48         648 LOAD_FAST                6 (segments)
+            650 LOAD_METHOD             20 (append)
+            672 LOAD_FAST               12 (po_no)
+            674 LOAD_FAST               13 (chan)
+            676 LOAD_FAST                4 (text)
+            678 LOAD_FAST               10 (start)
+            680 LOAD_FAST               11 (end)
+            682 BUILD_SLICE              2
+            684 BINARY_SUBSCR
+            694 BUILD_TUPLE              3
+            696 PRECALL                  1
+            700 CALL                     1
+            710 POP_TOP
+            712 JUMP_BACKWARD          200 (to 314)
+
+ 49     >>  714 LOAD_FAST                6 (segments)
+            716 POP_JUMP_FORWARD_IF_TRUE    38 (to 794)
+
+ 50         718 LOAD_FAST                0 (self)
+            720 LOAD_METHOD             21 (_first)
+            742 LOAD_FAST                2 (recipe)
+            744 LOAD_ATTR               22 (po_no_anchor)
+            754 LOAD_FAST                4 (text)
+            756 PRECALL                  2
+            760 CALL                     2
+            770 STORE_FAST              12 (po_no)
+
+ 51         772 LOAD_FAST               12 (po_no)
+            774 LOAD_FAST                2 (recipe)
+            776 LOAD_ATTR               19 (channel_value)
+            786 LOAD_FAST                4 (text)
+            788 BUILD_TUPLE              3
+            790 BUILD_LIST               1
+            792 STORE_FAST               6 (segments)
+
+ 53     >>  794 LOAD_FAST                6 (segments)
+            796 GET_ITER
+        >>  798 EXTENDED_ARG             3
+            800 FOR_ITER               823 (to 2448)
+            802 UNPACK_SEQUENCE          3
+            806 STORE_FAST              12 (po_no)
+            808 STORE_FAST              13 (chan)
+            810 STORE_FAST              14 (seg)
+
+ 54         812 LOAD_FAST                0 (self)
+            814 LOAD_METHOD             23 (_build_entity)
+            836 LOAD_FAST                2 (recipe)
+            838 LOAD_FAST               14 (seg)
+            840 LOAD_FAST               12 (po_no)
+            842 LOAD_FAST               13 (chan)
+            844 LOAD_FAST                4 (text)
+            846 PRECALL                  5
+            850 CALL                     5
+            860 STORE_FAST              15 (ent)
+
+ 55         862 LOAD_GLOBAL             49 (NULL + merge_wrapped_rows)
+            874 LOAD_FAST               14 (seg)
+            876 PRECALL                  1
+            880 CALL                     1
+            890 GET_ITER
+        >>  892 EXTENDED_ARG             2
+            894 FOR_ITER               709 (to 2314)
+            896 STORE_FAST              16 (line)
+
+ 56         898 LOAD_FAST               16 (line)
+            900 LOAD_METHOD             25 (strip)
+            922 PRECALL                  0
+            926 CALL                     0
+            936 STORE_FAST              16 (line)
+
+ 57         938 LOAD_FAST               16 (line)
+            940 POP_JUMP_FORWARD_IF_TRUE     1 (to 944)
+
+ 58         942 JUMP_BACKWARD           26 (to 892)
+
+ 59     >>  944 LOAD_GLOBAL             21 (NULL + re)
+            956 LOAD_ATTR               26 (match)
+            966 LOAD_FAST                2 (recipe)
+            968 LOAD_ATTR                0 (line_pattern)
+            978 LOAD_FAST               16 (line)
+            980 PRECALL                  2
+            984 CALL                     2
+            994 STORE_FAST               9 (m)
+
+ 60         996 LOAD_FAST                9 (m)
+            998 POP_JUMP_FORWARD_IF_TRUE     1 (to 1002)
+
+ 61        1000 JUMP_BACKWARD           55 (to 892)
+
+ 62     >> 1002 LOAD_FAST                9 (m)
+           1004 LOAD_METHOD             27 (groupdict)
+           1026 PRECALL                  0
+           1030 CALL                     0
+           1040 STORE_FAST              17 (gd)
+
+ 63        1042 LOAD_FAST               17 (gd)
+           1044 LOAD_METHOD             28 (get)
+           1066 LOAD_CONST               7 ('style')
+           1068 PRECALL                  1
+           1072 CALL                     1
+           1082 JUMP_IF_TRUE_OR_POP      1 (to 1086)
+           1084 LOAD_CONST               2 ('')
+        >> 1086 LOAD_METHOD             25 (strip)
+           1108 PRECALL                  0
+           1112 CALL                     0
+           1122 STORE_FAST              18 (style)
+
+ 67        1124 LOAD_GLOBAL             59 (NULL + _recover_style_from_line)
+           1136 LOAD_FAST               18 (style)
+           1138 LOAD_FAST               16 (line)
+           1140 PRECALL                  2
+           1144 CALL                     2
+           1154 STORE_FAST              18 (style)
+
+ 68        1156 LOAD_FAST               17 (gd)
+           1158 LOAD_METHOD             28 (get)
+           1180 LOAD_CONST               8 ('unit')
+           1182 PRECALL                  1
+           1186 CALL                     1
+           1196 JUMP_IF_TRUE_OR_POP      1 (to 1200)
+           1198 LOAD_CONST               2 ('')
+        >> 1200 LOAD_METHOD             25 (strip)
+           1222 PRECALL                  0
+           1226 CALL                     0
+           1236 STORE_FAST              19 (unit)
+
+ 72        1238 LOAD_FAST               17 (gd)
+           1240 LOAD_METHOD             28 (get)
+           1262 LOAD_CONST               8 ('unit')
+           1264 PRECALL                  1
+           1268 CALL                     1
+           1278 POP_JUMP_FORWARD_IF_NONE    12 (to 1304)
+           1280 LOAD_FAST               19 (unit)
+           1282 LOAD_FAST                2 (recipe)
+           1284 LOAD_ATTR               30 (order_unit)
+           1294 COMPARE_OP               3 (!=)
+           1300 POP_JUMP_FORWARD_IF_FALSE     1 (to 1304)
+
+ 73        1302 JUMP_BACKWARD          206 (to 892)
+
+ 74     >> 1304 LOAD_GLOBAL             63 (NULL + _to_int)
+           1316 LOAD_FAST               17 (gd)
+           1318 LOAD_METHOD             28 (get)
+           1340 LOAD_CONST               9 ('qty')
+           1342 PRECALL                  1
+           1346 CALL                     1
+           1356 PRECALL                  1
+           1360 CALL                     1
+           1370 STORE_FAST              20 (qty)
+
+ 75        1372 LOAD_FAST               20 (qty)
+           1374 LOAD_CONST               5 (0)
+           1376 COMPARE_OP               1 (<=)
+           1382 POP_JUMP_FORWARD_IF_FALSE     1 (to 1386)
+
+ 76        1384 JUMP_BACKWARD          247 (to 892)
+
+ 79     >> 1386 LOAD_FAST               17 (gd)
+           1388 LOAD_METHOD             28 (get)
+           1410 LOAD_CONST              10 ('color_code')
+           1412 PRECALL                  1
+           1416 CALL                     1
+           1426 JUMP_IF_TRUE_OR_POP      1 (to 1430)
+           1428 LOAD_CONST               2 ('')
+        >> 1430 LOAD_METHOD             25 (strip)
+           1452 PRECALL                  0
+           1456 CALL                     0
+           1466 STORE_FAST              21 (color_code)
+
+ 80        1468 LOAD_FAST               17 (gd)
+           1470 LOAD_METHOD             28 (get)
+           1492 LOAD_CONST              11 ('size')
+           1494 PRECALL                  1
+           1498 CALL                     1
+           1508 JUMP_IF_TRUE_OR_POP      1 (to 1512)
+           1510 LOAD_CONST               2 ('')
+        >> 1512 LOAD_METHOD             25 (strip)
+           1534 PRECALL                  0
+           1538 CALL                     0
+           1548 STORE_FAST              22 (size)
+
+ 81        1550 LOAD_CONST              12 (<code object <listcomp> at 0x000002BF94AB0850, file "core\parsers\line_items.py", line 81>)
+           1552 MAKE_FUNCTION            0
+           1554 LOAD_FAST               18 (style)
+           1556 LOAD_METHOD             32 (split)
+           1578 LOAD_CONST              13 ('-')
+           1580 PRECALL                  1
+           1584 CALL                     1
+           1594 GET_ITER
+           1596 PRECALL                  0
+           1600 CALL                     0
+           1610 STORE_FAST              23 (parts)
+
+ 82        1612 LOAD_FAST               21 (color_code)
+           1614 POP_JUMP_FORWARD_IF_TRUE    27 (to 1670)
+           1616 LOAD_GLOBAL             29 (NULL + len)
+           1628 LOAD_FAST               23 (parts)
+           1630 PRECALL                  1
+           1634 CALL                     1
+           1644 LOAD_CONST              14 (2)
+           1646 COMPARE_OP               5 (>=)
+           1652 POP_JUMP_FORWARD_IF_FALSE     8 (to 1670)
+
+ 83        1654 LOAD_FAST               23 (parts)
+           1656 LOAD_CONST               4 (1)
+           1658 BINARY_SUBSCR
+           1668 STORE_FAST              21 (color_code)
+
+ 84     >> 1670 LOAD_FAST               22 (size)
+           1672 POP_JUMP_FORWARD_IF_TRUE    27 (to 1728)
+           1674 LOAD_GLOBAL             29 (NULL + len)
+           1686 LOAD_FAST               23 (parts)
+           1688 PRECALL                  1
+           1692 CALL                     1
+           1702 LOAD_CONST              15 (3)
+           1704 COMPARE_OP               5 (>=)
+           1710 POP_JUMP_FORWARD_IF_FALSE     8 (to 1728)
+
+ 85        1712 LOAD_FAST               23 (parts)
+           1714 LOAD_CONST              14 (2)
+           1716 BINARY_SUBSCR
+           1726 STORE_FAST              22 (size)
+
+ 89     >> 1728 LOAD_GLOBAL             29 (NULL + len)
+           1740 LOAD_FAST               23 (parts)
+           1742 PRECALL                  1
+           1746 CALL                     1
+           1756 LOAD_CONST              15 (3)
+           1758 COMPARE_OP               5 (>=)
+           1764 POP_JUMP_FORWARD_IF_FALSE    55 (to 1876)
+           1766 LOAD_GLOBAL             67 (NULL + _looks_like_style)
+           1778 LOAD_FAST               23 (parts)
+           1780 LOAD_CONST               5 (0)
+           1782 BINARY_SUBSCR
+           1792 PRECALL                  1
+           1796 CALL                     1
+           1806 POP_JUMP_FORWARD_IF_FALSE    34 (to 1876)
+
+ 90        1808 LOAD_GLOBAL             69 (NULL + SIZE_TOKEN)
+           1820 LOAD_ATTR               26 (match)
+           1830 LOAD_FAST               23 (parts)
+           1832 LOAD_CONST              14 (2)
+           1834 BINARY_SUBSCR
+           1844 PRECALL                  1
+           1848 CALL                     1
+           1858 POP_JUMP_FORWARD_IF_FALSE     8 (to 1876)
+
+ 91        1860 LOAD_FAST               23 (parts)
+           1862 LOAD_CONST               5 (0)
+           1864 BINARY_SUBSCR
+           1874 STORE_FAST              18 (style)
+
+ 92     >> 1876 LOAD_FAST               17 (gd)
+           1878 LOAD_METHOD             28 (get)
+           1900 LOAD_CONST              16 ('middle')
+           1902 PRECALL                  1
+           1906 CALL                     1
+           1916 STORE_FAST              24 (middle)
+
+ 93        1918 LOAD_FAST               24 (middle)
+           1920 POP_JUMP_FORWARD_IF_FALSE    15 (to 1952)
+           1922 LOAD_GLOBAL             71 (NULL + _color_desc_from)
+           1934 LOAD_FAST               24 (middle)
+           1936 PRECALL                  1
+           1940 CALL                     1
+           1950 JUMP_FORWARD             1 (to 1954)
+        >> 1952 LOAD_CONST               2 ('')
+        >> 1954 STORE_FAST              25 (color_desc)
+
+ 94        1956 LOAD_GLOBAL             73 (NULL + _to_float)
+           1968 LOAD_FAST               17 (gd)
+           1970 LOAD_METHOD             28 (get)
+           1992 LOAD_CONST              17 ('unit_price')
+           1994 PRECALL                  1
+           1998 CALL                     1
+           2008 PRECALL                  1
+           2012 CALL                     1
+           2022 STORE_FAST              26 (unit_price)
+
+ 98        2024 LOAD_FAST               26 (unit_price)
+           2026 POP_JUMP_FORWARD_IF_NOT_NONE    40 (to 2108)
+
+ 99        2028 LOAD_GLOBAL             73 (NULL + _to_float)
+           2040 LOAD_FAST                0 (self)
+           2042 LOAD_METHOD             21 (_first)
+           2064 LOAD_FAST                2 (recipe)
+           2066 LOAD_ATTR               37 (price_anchor)
+           2076 LOAD_FAST                4 (text)
+           2078 PRECALL                  2
+           2082 CALL                     2
+           2092 PRECALL                  1
+           2096 CALL                     1
+           2106 STORE_FAST              26 (unit_price)
+
+100     >> 2108 LOAD_GLOBAL             77 (NULL + SizeQty)
+           2120 LOAD_FAST               22 (size)
+           2122 LOAD_FAST               20 (qty)
+           2124 KW_NAMES                18
+           2126 PRECALL                  2
+           2130 CALL                     2
+           2140 BUILD_LIST               1
+           2142 STORE_FAST              27 (sizes)
+
+103        2144 LOAD_FAST                2 (recipe)
+           2146 LOAD_ATTR               39 (size_encoding)
+           2156 LOAD_CONST              19 ('ratio_units')
+           2158 COMPARE_OP               2 (==)
+           2164 POP_JUMP_FORWARD_IF_FALSE    20 (to 2206)
+
+104        2166 LOAD_GLOBAL             81 (NULL + _parse_size_breakdown)
+           2178 LOAD_FAST               16 (line)
+           2180 LOAD_FAST               20 (qty)
+           2182 PRECALL                  2
+           2186 CALL                     2
+           2196 STORE_FAST              28 (parsed)
+
+105        2198 LOAD_FAST               28 (parsed)
+           2200 POP_JUMP_FORWARD_IF_FALSE     2 (to 2206)
+
+106        2202 LOAD_FAST               28 (parsed)
+           2204 STORE_FAST              27 (sizes)
+
+107     >> 2206 LOAD_FAST               15 (ent)
+           2208 LOAD_ATTR               41 (lines)
+           2218 LOAD_METHOD             20 (append)
+           2240 LOAD_GLOBAL             85 (NULL + OrderLine)
+
+108        2252 LOAD_FAST               18 (style)
+
+109        2254 LOAD_FAST               21 (color_code)
+
+110        2256 LOAD_FAST               25 (color_desc)
+
+111        2258 LOAD_FAST               26 (unit_price)
+
+112        2260 LOAD_FAST               19 (unit)
+           2262 JUMP_IF_TRUE_OR_POP      6 (to 2276)
+           2264 LOAD_FAST                2 (recipe)
+           2266 LOAD_ATTR               30 (order_unit)
+
+113     >> 2276 LOAD_FAST               27 (sizes)
+
+107        2278 KW_NAMES                20
+           2280 PRECALL                  6
+           2284 CALL                     6
+           2294 PRECALL                  1
+           2298 CALL                     1
+           2308 POP_TOP
+           2310 EXTENDED_ARG             2
+           2312 JUMP_BACKWARD          711 (to 892)
+
+115     >> 2314 LOAD_FAST               15 (ent)
+           2316 LOAD_ATTR               41 (lines)
+           2326 POP_JUMP_FORWARD_IF_FALSE    58 (to 2444)
+
+116        2328 LOAD_FAST                2 (recipe)
+           2330 LOAD_ATTR               43 (dedup_style_size)
+           2340 POP_JUMP_FORWARD_IF_FALSE    25 (to 2392)
+
+117        2342 LOAD_GLOBAL             89 (NULL + _dedup_entity_lines)
+           2354 LOAD_FAST               15 (ent)
+           2356 LOAD_ATTR               41 (lines)
+           2366 PRECALL                  1
+           2370 CALL                     1
+           2380 LOAD_FAST               15 (ent)
+           2382 STORE_ATTR              41 (lines)
+
+118     >> 2392 LOAD_FAST                5 (po)
+           2394 LOAD_ATTR               45 (entities)
+           2404 LOAD_METHOD             20 (append)
+           2426 LOAD_FAST               15 (ent)
+           2428 PRECALL                  1
+           2432 CALL                     1
+           2442 POP_TOP
+        >> 2444 EXTENDED_ARG             3
+           2446 JUMP_BACKWARD          825 (to 798)
+
+119     >> 2448 LOAD_FAST                5 (po)
+           2450 RETURN_VALUE
+
+==============================================================================
+## <module>.LineItemsParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, p
+ 81           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 6 (to 20)
+              8 STORE_FAST               1 (p)
+             10 LOAD_FAST                1 (p)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (p)
+             16 LIST_APPEND              2
+             18 JUMP_BACKWARD            7 (to 6)
+        >>   20 RETURN_VALUE
+
+==============================================================================
+## <module>.LineItemsParser._scoped  (args=3, locals=3)
+# varnames: anchor, seg, doc
+121           0 RESUME                   0
+
+131           2 LOAD_FAST                0 (anchor)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+132           6 LOAD_CONST               1 (None)
+              8 RETURN_VALUE
+
+133     >>   10 NOP
+
+134          12 LOAD_GLOBAL              1 (NULL + re)
+             24 LOAD_ATTR                1 (search)
+             34 LOAD_FAST                0 (anchor)
+             36 LOAD_FAST                1 (seg)
+             38 PRECALL                  2
+             42 CALL                     2
+             52 JUMP_IF_TRUE_OR_POP     20 (to 94)
+             54 LOAD_GLOBAL              1 (NULL + re)
+             66 LOAD_ATTR                1 (search)
+             76 LOAD_FAST                0 (anchor)
+             78 LOAD_FAST                2 (doc)
+             80 PRECALL                  2
+             84 CALL                     2
+        >>   94 RETURN_VALUE
+        >>   96 PUSH_EXC_INFO
+
+135          98 LOAD_GLOBAL              0 (re)
+            110 LOAD_ATTR                2 (error)
+            120 CHECK_EXC_MATCH
+            122 POP_JUMP_FORWARD_IF_FALSE     4 (to 132)
+            124 POP_TOP
+
+136         126 POP_EXCEPT
+            128 LOAD_CONST               1 (None)
+            130 RETURN_VALUE
+
+135     >>  132 RERAISE                  0
+        >>  134 COPY                     3
+            136 POP_EXCEPT
+            138 RERAISE                  1
+ExceptionTable:
+  12 to 92 -> 96 [0]
+  96 to 124 -> 134 [1] lasti
+  132 to 132 -> 134 [1] lasti
+
+==============================================================================
+## <module>.LineItemsParser._build_entity  (args=6, locals=8)
+# varnames: cls, recipe, seg, po_no, chan, doc, port_loading, pm
+138           0 RESUME                   0
+
+141           2 LOAD_FAST                5 (doc)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_FAST                2 (seg)
+        >>    8 STORE_FAST               5 (doc)
+
+142          10 LOAD_CONST               1 ('')
+             12 STORE_FAST               6 (port_loading)
+
+143          14 LOAD_FAST                0 (cls)
+             16 LOAD_METHOD              0 (_scoped)
+             38 LOAD_FAST                1 (recipe)
+             40 LOAD_ATTR                1 (port_loading_anchor)
+             50 LOAD_FAST                2 (seg)
+             52 LOAD_FAST                5 (doc)
+             54 PRECALL                  3
+             58 CALL                     3
+             68 STORE_FAST               7 (pm)
+
+144          70 LOAD_FAST                7 (pm)
+             72 POP_JUMP_FORWARD_IF_FALSE    98 (to 270)
+             74 LOAD_FAST                7 (pm)
+             76 LOAD_METHOD              2 (groups)
+             98 PRECALL                  0
+            102 CALL                     0
+            112 POP_JUMP_FORWARD_IF_FALSE    78 (to 270)
+
+145         114 LOAD_FAST                7 (pm)
+            116 LOAD_ATTR                3 (lastindex)
+            126 POP_JUMP_FORWARD_IF_FALSE    32 (to 192)
+            128 LOAD_FAST                7 (pm)
+            130 LOAD_ATTR                3 (lastindex)
+            140 LOAD_CONST               2 (2)
+            142 COMPARE_OP               5 (>=)
+            148 POP_JUMP_FORWARD_IF_FALSE    21 (to 192)
+            150 LOAD_FAST                7 (pm)
+            152 LOAD_METHOD              4 (group)
+            174 LOAD_CONST               2 (2)
+            176 PRECALL                  1
+            180 CALL                     1
+            190 JUMP_FORWARD            20 (to 232)
+
+146     >>  192 LOAD_FAST                7 (pm)
+            194 LOAD_METHOD              4 (group)
+            216 LOAD_CONST               3 (1)
+            218 PRECALL                  1
+            222 CALL                     1
+        >>  232 LOAD_METHOD              5 (strip)
+            254 PRECALL                  0
+            258 CALL                     0
+
+145         268 STORE_FAST               6 (port_loading)
+
+147     >>  270 LOAD_GLOBAL             13 (NULL + OrderEntity)
+            282 LOAD_CONST              25 (())
+            284 BUILD_MAP                0
+            286 LOAD_CONST               4 ('po_no')
+
+148         288 LOAD_FAST                3 (po_no)
+            290 MAP_ADD                  1
+
+147         292 LOAD_CONST               5 ('channel')
+
+149         294 LOAD_FAST                4 (chan)
+            296 MAP_ADD                  1
+
+147         298 LOAD_CONST               6 ('season')
+
+150         300 LOAD_GLOBAL             15 (NULL + _clean)
+            312 LOAD_FAST                0 (cls)
+            314 LOAD_METHOD              0 (_scoped)
+            336 LOAD_FAST                1 (recipe)
+            338 LOAD_ATTR                8 (season_anchor)
+            348 LOAD_FAST                2 (seg)
+            350 LOAD_FAST                5 (doc)
+            352 PRECALL                  3
+            356 CALL                     3
+            366 PRECALL                  1
+            370 CALL                     1
+            380 MAP_ADD                  1
+
+147         382 LOAD_CONST               7 ('delivery_date')
+
+151         384 LOAD_GLOBAL             19 (NULL + _min_date)
+            396 LOAD_FAST                1 (recipe)
+            398 LOAD_FAST                2 (seg)
+            400 PRECALL                  2
+            404 CALL                     2
+            414 JUMP_IF_TRUE_OR_POP     15 (to 446)
+            416 LOAD_GLOBAL             19 (NULL + _min_date)
+            428 LOAD_FAST                1 (recipe)
+            430 LOAD_FAST                5 (doc)
+            432 PRECALL                  2
+            436 CALL                     2
+        >>  446 MAP_ADD                  1
+
+147         448 LOAD_CONST               8 ('currency')
+
+152         450 LOAD_GLOBAL             15 (NULL + _clean)
+            462 LOAD_FAST                0 (cls)
+            464 LOAD_METHOD              0 (_scoped)
+            486 LOAD_FAST                1 (recipe)
+            488 LOAD_ATTR               10 (currency_anchor)
+            498 LOAD_FAST                2 (seg)
+            500 LOAD_FAST                5 (doc)
+            502 PRECALL                  3
+            506 CALL                     3
+            516 PRECALL                  1
+            520 CALL                     1
+            530 MAP_ADD                  1
+
+147         532 LOAD_CONST               9 ('price_term')
+
+153         534 LOAD_GLOBAL             15 (NULL + _clean)
+            546 LOAD_FAST                0 (cls)
+            548 LOAD_METHOD              0 (_scoped)
+            570 LOAD_FAST                1 (recipe)
+            572 LOAD_ATTR               11 (price_term_anchor)
+            582 LOAD_FAST                2 (seg)
+            584 LOAD_FAST                5 (doc)
+            586 PRECALL                  3
+            590 CALL                     3
+            600 PRECALL                  1
+            604 CALL                     1
+            614 MAP_ADD                  1
+
+147         616 LOAD_CONST              10 ('payment_terms')
+
+154         618 LOAD_GLOBAL             15 (NULL + _clean)
+            630 LOAD_FAST                0 (cls)
+            632 LOAD_METHOD              0 (_scoped)
+            654 LOAD_FAST                1 (recipe)
+            656 LOAD_ATTR               12 (payment_terms_anchor)
+            666 LOAD_FAST                2 (seg)
+            668 LOAD_FAST                5 (doc)
+            670 PRECALL                  3
+            674 CALL                     3
+            684 PRECALL                  1
+            688 CALL                     1
+            698 MAP_ADD                  1
+
+147         700 LOAD_CONST              11 ('product_desc')
+
+155         702 LOAD_GLOBAL             15 (NULL + _clean)
+            714 LOAD_FAST                0 (cls)
+            716 LOAD_METHOD              0 (_scoped)
+            738 LOAD_FAST                1 (recipe)
+            740 LOAD_ATTR               13 (style_anchor)
+            750 LOAD_FAST                2 (seg)
+            752 LOAD_FAST                5 (doc)
+            754 PRECALL                  3
+            758 CALL                     3
+            768 PRECALL                  1
+            772 CALL                     1
+            782 MAP_ADD                  1
+
+147         784 LOAD_CONST              12 ('port_discharge')
+
+156         786 LOAD_GLOBAL             15 (NULL + _clean)
+            798 LOAD_FAST                0 (cls)
+            800 LOAD_METHOD              0 (_scoped)
+            822 LOAD_FAST                1 (recipe)
+            824 LOAD_ATTR               14 (port_discharge_anchor)
+            834 LOAD_FAST                2 (seg)
+            836 LOAD_FAST                5 (doc)
+            838 PRECALL                  3
+            842 CALL                     3
+            852 PRECALL                  1
+            856 CALL                     1
+            866 MAP_ADD                  1
+
+147         868 LOAD_CONST              13 ('port_loading')
+
+157         870 LOAD_FAST                6 (port_loading)
+            872 MAP_ADD                  1
+
+147         874 LOAD_CONST              14 ('ship_mode')
+
+158         876 LOAD_GLOBAL             31 (NULL + _norm_ship)
+            888 LOAD_GLOBAL             15 (NULL + _clean)
+            900 LOAD_FAST                0 (cls)
+            902 LOAD_METHOD              0 (_scoped)
+            924 LOAD_FAST                1 (recipe)
+            926 LOAD_ATTR               16 (ship_mode_anchor)
+            936 LOAD_FAST                2 (seg)
+            938 LOAD_FAST                5 (doc)
+            940 PRECALL                  3
+            944 CALL                     3
+            954 PRECALL                  1
+            958 CALL                     1
+            968 PRECALL                  1
+            972 CALL                     1
+            982 MAP_ADD                  1
+
+147         984 LOAD_CONST              15 ('agent_name')
+
+159         986 LOAD_GLOBAL             15 (NULL + _clean)
+            998 LOAD_FAST                0 (cls)
+           1000 LOAD_METHOD              0 (_scoped)
+           1022 LOAD_FAST                1 (recipe)
+           1024 LOAD_ATTR               17 (agent_anchor)
+           1034 LOAD_FAST                2 (seg)
+           1036 LOAD_FAST                5 (doc)
+           1038 PRECALL                  3
+           1042 CALL                     3
+           1052 PRECALL                  1
+           1056 CALL                     1
+           1066 MAP_ADD                  1
+
+147        1068 LOAD_CONST              16 ('vendor_name')
+
+160        1070 LOAD_GLOBAL             15 (NULL + _clean)
+           1082 LOAD_FAST                0 (cls)
+           1084 LOAD_METHOD              0 (_scoped)
+           1106 LOAD_FAST                1 (recipe)
+           1108 LOAD_ATTR               18 (vendor_anchor)
+           1118 LOAD_FAST                2 (seg)
+           1120 LOAD_FAST                5 (doc)
+           1122 PRECALL                  3
+           1126 CALL                     3
+           1136 PRECALL                  1
+           1140 CALL                     1
+           1150 MAP_ADD                  1
+
+147        1152 LOAD_CONST              17 ('import_po_no')
+
+162        1154 LOAD_GLOBAL             15 (NULL + _clean)
+           1166 LOAD_FAST                0 (cls)
+           1168 LOAD_METHOD              0 (_scoped)
+           1190 LOAD_FAST                1 (recipe)
+           1192 LOAD_ATTR               19 (import_po_no_anchor)
+           1202 LOAD_FAST                2 (seg)
+           1204 LOAD_FAST                5 (doc)
+           1206 PRECALL                  3
+           1210 CALL                     3
+           1220 PRECALL                  1
+           1224 CALL                     1
+           1234 MAP_ADD                  1
+
+147        1236 LOAD_CONST              18 ('reference_no')
+
+163        1238 LOAD_GLOBAL             15 (NULL + _clean)
+           1250 LOAD_FAST                0 (cls)
+           1252 LOAD_METHOD              0 (_scoped)
+           1274 LOAD_FAST                1 (recipe)
+           1276 LOAD_ATTR               20 (reference_no_anchor)
+           1286 LOAD_FAST                2 (seg)
+           1288 LOAD_FAST                5 (doc)
+           1290 PRECALL                  3
+           1294 CALL                     3
+           1304 PRECALL                  1
+           1308 CALL                     1
+           1318 MAP_ADD                  1
+
+147        1320 LOAD_CONST              19 ('cir_no')
+
+164        1322 LOAD_GLOBAL             15 (NULL + _clean)
+           1334 LOAD_FAST                0 (cls)
+           1336 LOAD_METHOD              0 (_scoped)
+           1358 LOAD_FAST                1 (recipe)
+           1360 LOAD_ATTR               21 (cir_no_anchor)
+           1370 LOAD_FAST                2 (seg)
+           1372 LOAD_FAST                5 (doc)
+           1374 PRECALL                  3
+           1378 CALL                     3
+           1388 PRECALL                  1
+           1392 CALL                     1
+           1402 MAP_ADD                  1
+
+147        1404 LOAD_CONST              20 ('freight_terms')
+
+165        1406 LOAD_GLOBAL             15 (NULL + _clean)
+           1418 LOAD_FAST                0 (cls)
+           1420 LOAD_METHOD              0 (_scoped)
+           1442 LOAD_FAST                1 (recipe)
+           1444 LOAD_ATTR               22 (freight_terms_anchor)
+           1454 LOAD_FAST                2 (seg)
+           1456 LOAD_FAST                5 (doc)
+           1458 PRECALL                  3
+           1462 CALL                     3
+           1472 PRECALL                  1
+           1476 CALL                     1
+           1486 MAP_ADD                  1
+
+147        1488 LOAD_CONST              21 ('country_of_origin')
+
+166        1490 LOAD_GLOBAL             15 (NULL + _clean)
+           1502 LOAD_FAST                0 (cls)
+           1504 LOAD_METHOD              0 (_scoped)
+           1526 LOAD_FAST                1 (recipe)
+           1528 LOAD_ATTR               23 (country_of_origin_anchor)
+           1538 LOAD_FAST                2 (seg)
+           1540 LOAD_FAST                5 (doc)
+           1542 PRECALL                  3
+           1546 CALL                     3
+           1556 PRECALL                  1
+           1560 CALL                     1
+           1570 MAP_ADD                  1
+
+147        1572 LOAD_CONST              22 ('dc_address')
+
+167        1574 LOAD_GLOBAL             15 (NULL + _clean)
+           1586 LOAD_FAST                0 (cls)
+           1588 LOAD_METHOD              0 (_scoped)
+           1610 LOAD_FAST                1 (recipe)
+           1612 LOAD_ATTR               24 (dc_address_anchor)
+           1622 LOAD_FAST                2 (seg)
+           1624 LOAD_FAST                5 (doc)
+           1626 PRECALL                  3
+           1630 CALL                     3
+           1640 PRECALL                  1
+           1644 CALL                     1
+           1654 MAP_ADD                  1
+
+147        1656 LOAD_CONST              23 ('packing_method')
+
+168        1658 LOAD_FAST                1 (recipe)
+           1660 LOAD_ATTR               25 (packing_method)
+           1670 JUMP_IF_TRUE_OR_POP     36 (to 1744)
+           1672 LOAD_FAST                1 (recipe)
+           1674 LOAD_ATTR               26 (packing_anchor)
+           1684 POP_JUMP_FORWARD_IF_FALSE    28 (to 1742)
+
+169        1686 LOAD_GLOBAL             55 (NULL + re)
+           1698 LOAD_ATTR               28 (search)
+           1708 LOAD_FAST                1 (recipe)
+           1710 LOAD_ATTR               26 (packing_anchor)
+           1720 LOAD_FAST                2 (seg)
+           1722 PRECALL                  2
+           1726 CALL                     2
+
+168        1736 POP_JUMP_FORWARD_IF_FALSE     2 (to 1742)
+           1738 LOAD_CONST              24 ('MULTIPACK')
+           1740 JUMP_FORWARD             1 (to 1744)
+
+169     >> 1742 LOAD_CONST               1 ('')
+        >> 1744 MAP_ADD                  1
+
+147        1746 CALL_FUNCTION_EX         1
+           1748 RETURN_VALUE
+
+==============================================================================
+## <module>._recover_style_from_line  (args=2, locals=5)
+# varnames: style, line, candidates, tok, c
+173           0 RESUME                   0
+
+181           2 LOAD_GLOBAL              1 (NULL + _looks_like_style)
+             14 LOAD_FAST                0 (style)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 POP_JUMP_FORWARD_IF_FALSE     2 (to 36)
+
+182          32 LOAD_FAST                0 (style)
+             34 RETURN_VALUE
+
+183     >>   36 BUILD_LIST               0
+             38 STORE_FAST               2 (candidates)
+
+184          40 LOAD_GLOBAL              3 (NULL + re)
+             52 LOAD_ATTR                2 (findall)
+             62 LOAD_CONST               1 ('\\S+')
+             64 LOAD_FAST                1 (line)
+             66 PRECALL                  2
+             70 CALL                     2
+             80 GET_ITER
+        >>   82 FOR_ITER                67 (to 218)
+             84 STORE_FAST               3 (tok)
+
+185          86 LOAD_FAST                3 (tok)
+             88 LOAD_FAST                0 (style)
+             90 COMPARE_OP               2 (==)
+             96 POP_JUMP_FORWARD_IF_FALSE     1 (to 100)
+
+186          98 JUMP_BACKWARD            9 (to 82)
+
+187     >>  100 LOAD_GLOBAL              3 (NULL + re)
+            112 LOAD_ATTR                3 (fullmatch)
+            122 LOAD_CONST               2 ('\\d[\\d.,]*')
+            124 LOAD_FAST                3 (tok)
+            126 PRECALL                  2
+            130 CALL                     2
+            140 POP_JUMP_FORWARD_IF_FALSE     1 (to 144)
+
+188         142 JUMP_BACKWARD           31 (to 82)
+
+189     >>  144 LOAD_GLOBAL              1 (NULL + _looks_like_style)
+            156 LOAD_FAST                3 (tok)
+            158 PRECALL                  1
+            162 CALL                     1
+            172 POP_JUMP_FORWARD_IF_FALSE    21 (to 216)
+
+190         174 LOAD_FAST                2 (candidates)
+            176 LOAD_METHOD              4 (append)
+            198 LOAD_FAST                3 (tok)
+            200 PRECALL                  1
+            204 CALL                     1
+            214 POP_TOP
+        >>  216 JUMP_BACKWARD           68 (to 82)
+
+194     >>  218 LOAD_FAST                2 (candidates)
+            220 GET_ITER
+        >>  222 FOR_ITER                56 (to 336)
+            224 STORE_FAST               4 (c)
+
+195         226 LOAD_GLOBAL             11 (NULL + any)
+            238 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A2F430, file "core\parsers\line_items.py", line 195>)
+            240 MAKE_FUNCTION            0
+            242 LOAD_FAST                4 (c)
+            244 GET_ITER
+            246 PRECALL                  0
+            250 CALL                     0
+            260 PRECALL                  1
+            264 CALL                     1
+            274 POP_JUMP_FORWARD_IF_FALSE    29 (to 334)
+            276 LOAD_GLOBAL             11 (NULL + any)
+            288 LOAD_CONST               4 (<code object <genexpr> at 0x000002BF94A2F130, file "core\parsers\line_items.py", line 195>)
+            290 MAKE_FUNCTION            0
+            292 LOAD_FAST                4 (c)
+            294 GET_ITER
+            296 PRECALL                  0
+            300 CALL                     0
+            310 PRECALL                  1
+            314 CALL                     1
+            324 POP_JUMP_FORWARD_IF_FALSE     4 (to 334)
+
+196         326 LOAD_FAST                4 (c)
+            328 SWAP                     2
+            330 POP_TOP
+            332 RETURN_VALUE
+        >>  334 JUMP_BACKWARD           57 (to 222)
+
+197     >>  336 LOAD_FAST                0 (style)
+            338 RETURN_VALUE
+
+==============================================================================
+## <module>._recover_style_from_line.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+195           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isalpha)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._recover_style_from_line.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+195           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_size_breakdown  (args=2, locals=13)
+# varnames: line, line_qty, toks, blocks, cur, seen, t, m, label, val, chosen, b, s
+              0 MAKE_CELL               13 (k)
+
+200           2 RESUME                   0
+
+217           4 LOAD_GLOBAL              1 (NULL + re)
+             16 LOAD_ATTR                1 (split)
+             26 LOAD_CONST               1 ('[,\\s]+')
+             28 LOAD_FAST                0 (line)
+             30 LOAD_METHOD              2 (strip)
+             52 PRECALL                  0
+             56 CALL                     0
+             66 PRECALL                  2
+             70 CALL                     2
+             80 STORE_FAST               2 (toks)
+
+218          82 BUILD_LIST               0
+             84 STORE_FAST               3 (blocks)
+
+219          86 BUILD_LIST               0
+             88 STORE_FAST               4 (cur)
+
+220          90 LOAD_GLOBAL              7 (NULL + set)
+            102 PRECALL                  0
+            106 CALL                     0
+            116 STORE_FAST               5 (seen)
+
+221         118 LOAD_FAST                2 (toks)
+            120 GET_ITER
+        >>  122 FOR_ITER               178 (to 480)
+            124 STORE_FAST               6 (t)
+
+222         126 LOAD_GLOBAL              8 (LineItemsParser)
+            138 LOAD_ATTR                5 (_SIZE_TOKEN)
+            148 LOAD_METHOD              6 (match)
+            170 LOAD_FAST                6 (t)
+            172 PRECALL                  1
+            176 CALL                     1
+            186 STORE_FAST               7 (m)
+
+223         188 LOAD_FAST                7 (m)
+            190 POP_JUMP_FORWARD_IF_TRUE     1 (to 194)
+
+224         192 JUMP_BACKWARD           36 (to 122)
+
+225     >>  194 LOAD_FAST                7 (m)
+            196 LOAD_METHOD              7 (group)
+            218 LOAD_CONST               2 (1)
+            220 PRECALL                  1
+            224 CALL                     1
+            234 STORE_FAST               8 (label)
+
+226         236 LOAD_GLOBAL             17 (NULL + int)
+            248 LOAD_FAST                7 (m)
+            250 LOAD_METHOD              7 (group)
+            272 LOAD_CONST               3 (2)
+            274 PRECALL                  1
+            278 CALL                     1
+            288 PRECALL                  1
+            292 CALL                     1
+            302 STORE_FAST               9 (val)
+
+227         304 LOAD_FAST                4 (cur)
+            306 POP_JUMP_FORWARD_IF_FALSE    41 (to 390)
+            308 LOAD_FAST                8 (label)
+            310 LOAD_FAST                5 (seen)
+            312 CONTAINS_OP              0
+            314 POP_JUMP_FORWARD_IF_FALSE    37 (to 390)
+
+228         316 LOAD_FAST                3 (blocks)
+            318 LOAD_METHOD              9 (append)
+            340 LOAD_FAST                4 (cur)
+            342 PRECALL                  1
+            346 CALL                     1
+            356 POP_TOP
+
+229         358 BUILD_LIST               0
+            360 STORE_FAST               4 (cur)
+
+230         362 LOAD_GLOBAL              7 (NULL + set)
+            374 PRECALL                  0
+            378 CALL                     0
+            388 STORE_FAST               5 (seen)
+
+231     >>  390 LOAD_FAST                4 (cur)
+            392 LOAD_METHOD              9 (append)
+            414 LOAD_FAST                8 (label)
+            416 LOAD_FAST                9 (val)
+            418 BUILD_TUPLE              2
+            420 PRECALL                  1
+            424 CALL                     1
+            434 POP_TOP
+
+232         436 LOAD_FAST                5 (seen)
+            438 LOAD_METHOD             10 (add)
+            460 LOAD_FAST                8 (label)
+            462 PRECALL                  1
+            466 CALL                     1
+            476 POP_TOP
+            478 JUMP_BACKWARD          179 (to 122)
+
+233     >>  480 LOAD_FAST                4 (cur)
+            482 POP_JUMP_FORWARD_IF_FALSE    21 (to 526)
+
+234         484 LOAD_FAST                3 (blocks)
+            486 LOAD_METHOD              9 (append)
+            508 LOAD_FAST                4 (cur)
+            510 PRECALL                  1
+            514 CALL                     1
+            524 POP_TOP
+
+235     >>  526 LOAD_FAST                3 (blocks)
+            528 POP_JUMP_FORWARD_IF_TRUE     2 (to 534)
+
+236         530 BUILD_LIST               0
+            532 RETURN_VALUE
+
+238     >>  534 LOAD_CONST               4 (None)
+            536 STORE_FAST              10 (chosen)
+
+239         538 LOAD_FAST                3 (blocks)
+            540 GET_ITER
+        >>  542 FOR_ITER                37 (to 618)
+            544 STORE_FAST              11 (b)
+
+240         546 LOAD_FAST                1 (line_qty)
+            548 POP_JUMP_FORWARD_IF_FALSE    33 (to 616)
+            550 LOAD_GLOBAL             23 (NULL + sum)
+            562 LOAD_CONST               5 (<code object <genexpr> at 0x000002BF94A6EB10, file "core\parsers\line_items.py", line 240>)
+            564 MAKE_FUNCTION            0
+            566 LOAD_FAST               11 (b)
+            568 GET_ITER
+            570 PRECALL                  0
+            574 CALL                     0
+            584 PRECALL                  1
+            588 CALL                     1
+            598 LOAD_FAST                1 (line_qty)
+            600 COMPARE_OP               2 (==)
+            606 POP_JUMP_FORWARD_IF_FALSE     4 (to 616)
+
+241         608 LOAD_FAST               11 (b)
+            610 STORE_FAST              10 (chosen)
+
+242         612 POP_TOP
+            614 JUMP_FORWARD             1 (to 618)
+        >>  616 JUMP_BACKWARD           38 (to 542)
+
+243     >>  618 LOAD_FAST               10 (chosen)
+            620 POP_JUMP_FORWARD_IF_NOT_NONE    68 (to 758)
+
+244         622 LOAD_FAST                3 (blocks)
+            624 GET_ITER
+        >>  626 FOR_ITER                65 (to 758)
+            628 STORE_FAST              11 (b)
+
+245         630 LOAD_GLOBAL             23 (NULL + sum)
+            642 LOAD_CONST               6 (<code object <genexpr> at 0x000002BF94A6EE90, file "core\parsers\line_items.py", line 245>)
+            644 MAKE_FUNCTION            0
+            646 LOAD_FAST               11 (b)
+            648 GET_ITER
+            650 PRECALL                  0
+            654 CALL                     0
+            664 PRECALL                  1
+            668 CALL                     1
+            678 STORE_FAST              12 (s)
+
+246         680 LOAD_FAST                1 (line_qty)
+            682 POP_JUMP_FORWARD_IF_FALSE    36 (to 756)
+            684 LOAD_FAST               12 (s)
+            686 LOAD_CONST               7 (0)
+            688 COMPARE_OP               4 (>)
+            694 POP_JUMP_FORWARD_IF_FALSE    30 (to 756)
+            696 LOAD_FAST                1 (line_qty)
+            698 LOAD_FAST               12 (s)
+            700 BINARY_OP                6 (%)
+            704 LOAD_CONST               7 (0)
+            706 COMPARE_OP               2 (==)
+            712 POP_JUMP_FORWARD_IF_FALSE    21 (to 756)
+
+247         714 LOAD_FAST                1 (line_qty)
+            716 LOAD_FAST               12 (s)
+            718 BINARY_OP                2 (//)
+            722 STORE_DEREF             13 (k)
+
+248         724 LOAD_CLOSURE            13 (k)
+            726 BUILD_TUPLE              1
+            728 LOAD_CONST               8 (<code object <listcomp> at 0x000002BF94A6E950, file "core\parsers\line_items.py", line 248>)
+            730 MAKE_FUNCTION            8 (closure)
+            732 LOAD_FAST               11 (b)
+            734 GET_ITER
+            736 PRECALL                  0
+            740 CALL                     0
+            750 STORE_FAST              10 (chosen)
+
+249         752 POP_TOP
+            754 JUMP_FORWARD             1 (to 758)
+        >>  756 JUMP_BACKWARD           66 (to 626)
+
+250     >>  758 LOAD_FAST               10 (chosen)
+            760 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 766)
+
+251         762 BUILD_LIST               0
+            764 RETURN_VALUE
+
+252     >>  766 LOAD_CONST               9 (<code object <listcomp> at 0x000002BF94AA95C0, file "core\parsers\line_items.py", line 252>)
+            768 MAKE_FUNCTION            0
+            770 LOAD_FAST               10 (chosen)
+            772 GET_ITER
+            774 PRECALL                  0
+            778 CALL                     0
+            788 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_size_breakdown.<genexpr>  (args=1, locals=3)
+# varnames: .0, _, q
+240           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                 9 (to 28)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (_)
+             16 STORE_FAST               2 (q)
+             18 LOAD_FAST                2 (q)
+             20 YIELD_VALUE
+             22 RESUME                   1
+             24 POP_TOP
+             26 JUMP_BACKWARD           10 (to 8)
+        >>   28 LOAD_CONST               0 (None)
+             30 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_size_breakdown.<genexpr>  (args=1, locals=3)
+# varnames: .0, _, q
+245           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                 9 (to 28)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (_)
+             16 STORE_FAST               2 (q)
+             18 LOAD_FAST                2 (q)
+             20 YIELD_VALUE
+             22 RESUME                   1
+             24 POP_TOP
+             26 JUMP_BACKWARD           10 (to 8)
+        >>   28 LOAD_CONST               0 (None)
+             30 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_size_breakdown.<listcomp>  (args=1, locals=3)
+# varnames: .0, sz, q
+              0 COPY_FREE_VARS           1
+
+248           2 RESUME                   0
+              4 BUILD_LIST               0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                12 (to 34)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (sz)
+             16 STORE_FAST               2 (q)
+             18 LOAD_FAST                1 (sz)
+             20 LOAD_FAST                2 (q)
+             22 LOAD_DEREF               3 (k)
+             24 BINARY_OP                5 (*)
+             28 BUILD_TUPLE              2
+             30 LIST_APPEND              2
+             32 JUMP_BACKWARD           13 (to 8)
+        >>   34 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_size_breakdown.<listcomp>  (args=1, locals=3)
+# varnames: .0, sz, q
+252           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 UNPACK_SEQUENCE          2
+             12 STORE_FAST               1 (sz)
+             14 STORE_FAST               2 (q)
+             16 LOAD_GLOBAL              1 (NULL + SizeQty)
+             28 LOAD_FAST                1 (sz)
+             30 LOAD_FAST                2 (q)
+             32 KW_NAMES                 0
+             34 PRECALL                  2
+             38 CALL                     2
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._pick_po_no  (args=1, locals=5)
+# varnames: m, named, groups, val, longer
+255           0 RESUME                   0
+
+264           2 LOAD_FAST                0 (m)
+              4 LOAD_METHOD              0 (groupdict)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 LOAD_METHOD              1 (get)
+             62 LOAD_CONST               1 ('po_no')
+             64 PRECALL                  1
+             68 CALL                     1
+             78 JUMP_IF_TRUE_OR_POP      1 (to 82)
+             80 LOAD_CONST               2 ('')
+        >>   82 LOAD_METHOD              2 (strip)
+            104 PRECALL                  0
+            108 CALL                     0
+            118 STORE_FAST               1 (named)
+
+265         120 LOAD_FAST                1 (named)
+            122 POP_JUMP_FORWARD_IF_FALSE     2 (to 128)
+
+266         124 LOAD_FAST                1 (named)
+            126 RETURN_VALUE
+
+267     >>  128 LOAD_CONST               3 (<code object <listcomp> at 0x000002BF94AB0370, file "core\parsers\line_items.py", line 267>)
+            130 MAKE_FUNCTION            0
+            132 LOAD_FAST                0 (m)
+            134 LOAD_METHOD              3 (groups)
+            156 PRECALL                  0
+            160 CALL                     0
+            170 JUMP_IF_TRUE_OR_POP      1 (to 174)
+            172 LOAD_CONST               4 (())
+        >>  174 GET_ITER
+            176 PRECALL                  0
+            180 CALL                     0
+            190 STORE_FAST               2 (groups)
+
+268         192 LOAD_FAST                2 (groups)
+            194 POP_JUMP_FORWARD_IF_FALSE    26 (to 248)
+            196 LOAD_FAST                2 (groups)
+            198 LOAD_CONST               5 (0)
+            200 BINARY_SUBSCR
+            210 LOAD_METHOD              2 (strip)
+            232 PRECALL                  0
+            236 CALL                     0
+            246 JUMP_FORWARD             1 (to 250)
+        >>  248 LOAD_CONST               2 ('')
+        >>  250 STORE_FAST               3 (val)
+
+269         252 LOAD_FAST                3 (val)
+            254 LOAD_METHOD              4 (isdigit)
+            276 PRECALL                  0
+            280 CALL                     0
+            290 POP_JUMP_FORWARD_IF_FALSE    69 (to 430)
+            292 LOAD_GLOBAL             11 (NULL + len)
+            304 LOAD_FAST                3 (val)
+            306 PRECALL                  1
+            310 CALL                     1
+            320 LOAD_CONST               6 (2)
+            322 COMPARE_OP               1 (<=)
+            328 POP_JUMP_FORWARD_IF_FALSE    50 (to 430)
+
+270         330 LOAD_GLOBAL             13 (NULL + re)
+            342 LOAD_ATTR                7 (findall)
+            352 LOAD_CONST               7 ('\\d{4,}')
+            354 LOAD_FAST                0 (m)
+            356 LOAD_METHOD              8 (group)
+            378 LOAD_CONST               5 (0)
+            380 PRECALL                  1
+            384 CALL                     1
+            394 PRECALL                  2
+            398 CALL                     2
+            408 STORE_FAST               4 (longer)
+
+271         410 LOAD_FAST                4 (longer)
+            412 POP_JUMP_FORWARD_IF_FALSE     8 (to 430)
+
+272         414 LOAD_FAST                4 (longer)
+            416 LOAD_CONST               5 (0)
+            418 BINARY_SUBSCR
+            428 RETURN_VALUE
+
+273     >>  430 LOAD_FAST                3 (val)
+            432 RETURN_VALUE
+
+==============================================================================
+## <module>._pick_po_no.<listcomp>  (args=1, locals=2)
+# varnames: .0, g
+267           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 6 (to 20)
+              8 STORE_FAST               1 (g)
+             10 LOAD_FAST                1 (g)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (g)
+             16 LIST_APPEND              2
+             18 JUMP_BACKWARD            7 (to 6)
+        >>   20 RETURN_VALUE
+
+==============================================================================
+## <module>._clean  (args=1, locals=1)
+# varnames: m
+276           0 RESUME                   0
+
+277           2 LOAD_FAST                0 (m)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+278           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+279     >>   10 LOAD_FAST                0 (m)
+             12 LOAD_METHOD              0 (groups)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_FORWARD_IF_FALSE    21 (to 92)
+             50 LOAD_FAST                0 (m)
+             52 LOAD_METHOD              1 (group)
+             74 LOAD_CONST               2 (1)
+             76 PRECALL                  1
+             80 CALL                     1
+             90 JUMP_FORWARD            20 (to 132)
+        >>   92 LOAD_FAST                0 (m)
+             94 LOAD_METHOD              1 (group)
+            116 LOAD_CONST               3 (0)
+            118 PRECALL                  1
+            122 CALL                     1
+        >>  132 LOAD_METHOD              2 (strip)
+            154 PRECALL                  0
+            158 CALL                     0
+            168 RETURN_VALUE
+
+==============================================================================
+## <module>._color_desc_from  (args=1, locals=8)
+# varnames: middle, tokens, desc, tok, candidate, extract_color_from_combined, smart, w
+282           0 RESUME                   0
+
+297           2 LOAD_FAST                0 (middle)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+298           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+299     >>   10 LOAD_FAST                0 (middle)
+             12 LOAD_METHOD              0 (strip)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 LOAD_METHOD              1 (split)
+             70 PRECALL                  0
+             74 CALL                     0
+             84 STORE_FAST               1 (tokens)
+
+301          86 BUILD_LIST               0
+             88 STORE_FAST               2 (desc)
+
+302          90 LOAD_GLOBAL              5 (NULL + reversed)
+            102 LOAD_FAST                1 (tokens)
+            104 PRECALL                  1
+            108 CALL                     1
+            118 GET_ITER
+        >>  120 FOR_ITER                45 (to 212)
+            122 STORE_FAST               3 (tok)
+
+303         124 LOAD_FAST                3 (tok)
+            126 LOAD_METHOD              3 (isalpha)
+            148 PRECALL                  0
+            152 CALL                     0
+            162 POP_JUMP_FORWARD_IF_FALSE    23 (to 210)
+
+304         164 LOAD_FAST                2 (desc)
+            166 LOAD_METHOD              4 (insert)
+            188 LOAD_CONST               2 (0)
+            190 LOAD_FAST                3 (tok)
+            192 PRECALL                  2
+            196 CALL                     2
+            206 POP_TOP
+            208 JUMP_BACKWARD           45 (to 120)
+
+306     >>  210 POP_TOP
+
+307     >>  212 LOAD_CONST               3 (' ')
+            214 LOAD_METHOD              5 (join)
+            236 LOAD_FAST                2 (desc)
+            238 PRECALL                  1
+            242 CALL                     1
+            252 LOAD_METHOD              0 (strip)
+            274 PRECALL                  0
+            278 CALL                     0
+            288 STORE_FAST               4 (candidate)
+
+308         290 LOAD_FAST                4 (candidate)
+            292 POP_JUMP_FORWARD_IF_FALSE     2 (to 298)
+
+309         294 LOAD_FAST                4 (candidate)
+            296 RETURN_VALUE
+
+311     >>  298 BUILD_LIST               0
+            300 STORE_FAST               2 (desc)
+
+312         302 LOAD_FAST                1 (tokens)
+            304 GET_ITER
+        >>  306 FOR_ITER                44 (to 396)
+            308 STORE_FAST               3 (tok)
+
+313         310 LOAD_FAST                3 (tok)
+            312 LOAD_METHOD              3 (isalpha)
+            334 PRECALL                  0
+            338 CALL                     0
+            348 POP_JUMP_FORWARD_IF_FALSE    22 (to 394)
+
+314         350 LOAD_FAST                2 (desc)
+            352 LOAD_METHOD              6 (append)
+            374 LOAD_FAST                3 (tok)
+            376 PRECALL                  1
+            380 CALL                     1
+            390 POP_TOP
+            392 JUMP_BACKWARD           44 (to 306)
+
+316     >>  394 POP_TOP
+
+317     >>  396 LOAD_CONST               3 (' ')
+            398 LOAD_METHOD              5 (join)
+            420 LOAD_FAST                2 (desc)
+            422 PRECALL                  1
+            426 CALL                     1
+            436 LOAD_METHOD              0 (strip)
+            458 PRECALL                  0
+            462 CALL                     0
+            472 STORE_FAST               4 (candidate)
+
+318         474 LOAD_FAST                4 (candidate)
+            476 POP_JUMP_FORWARD_IF_FALSE     2 (to 482)
+
+319         478 LOAD_FAST                4 (candidate)
+            480 RETURN_VALUE
+
+320     >>  482 LOAD_CONST               4 (1)
+            484 LOAD_CONST               5 (('extract_color_from_combined',))
+            486 IMPORT_NAME              7 (base)
+            488 IMPORT_FROM              8 (extract_color_from_combined)
+            490 STORE_FAST               5 (extract_color_from_combined)
+            492 POP_TOP
+
+321         494 PUSH_NULL
+            496 LOAD_FAST                5 (extract_color_from_combined)
+            498 LOAD_FAST                0 (middle)
+            500 PRECALL                  1
+            504 CALL                     1
+            514 STORE_FAST               6 (smart)
+
+322         516 LOAD_FAST                6 (smart)
+            518 POP_JUMP_FORWARD_IF_FALSE     2 (to 524)
+
+323         520 LOAD_FAST                6 (smart)
+            522 RETURN_VALUE
+
+325     >>  524 BUILD_LIST               0
+            526 STORE_FAST               2 (desc)
+
+326         528 LOAD_GLOBAL              5 (NULL + reversed)
+            540 LOAD_FAST                0 (middle)
+            542 LOAD_METHOD              1 (split)
+            564 PRECALL                  0
+            568 CALL                     0
+            578 PRECALL                  1
+            582 CALL                     1
+            592 GET_ITER
+        >>  594 FOR_ITER                45 (to 686)
+            596 STORE_FAST               7 (w)
+
+327         598 LOAD_FAST                7 (w)
+            600 LOAD_METHOD              3 (isalpha)
+            622 PRECALL                  0
+            626 CALL                     0
+            636 POP_JUMP_FORWARD_IF_FALSE    23 (to 684)
+
+328         638 LOAD_FAST                2 (desc)
+            640 LOAD_METHOD              4 (insert)
+            662 LOAD_CONST               2 (0)
+            664 LOAD_FAST                7 (w)
+            666 PRECALL                  2
+            670 CALL                     2
+            680 POP_TOP
+            682 JUMP_BACKWARD           45 (to 594)
+
+330     >>  684 POP_TOP
+
+331     >>  686 LOAD_CONST               3 (' ')
+            688 LOAD_METHOD              5 (join)
+            710 LOAD_FAST                2 (desc)
+            712 PRECALL                  1
+            716 CALL                     1
+            726 LOAD_METHOD              0 (strip)
+            748 PRECALL                  0
+            752 CALL                     0
+            762 RETURN_VALUE
+
+==============================================================================
+## <module>._to_int  (args=1, locals=3)
+# varnames: s, a, b
+334           0 RESUME                   0
+
+335           2 LOAD_FAST                0 (s)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 10)
+
+336           6 LOAD_CONST               1 (0)
+              8 RETURN_VALUE
+
+337     >>   10 LOAD_GLOBAL              1 (NULL + str)
+             22 LOAD_FAST                0 (s)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 LOAD_METHOD              1 (strip)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 LOAD_METHOD              2 (replace)
+             96 LOAD_CONST               2 (',')
+             98 LOAD_CONST               3 ('')
+            100 PRECALL                  2
+            104 CALL                     2
+            114 STORE_FAST               0 (s)
+
+338         116 LOAD_CONST               4 ('.')
+            118 LOAD_FAST                0 (s)
+            120 CONTAINS_OP              0
+            122 POP_JUMP_FORWARD_IF_FALSE    92 (to 308)
+
+339         124 LOAD_FAST                0 (s)
+            126 LOAD_METHOD              3 (split)
+            148 LOAD_CONST               4 ('.')
+            150 LOAD_CONST               5 (1)
+            152 PRECALL                  2
+            156 CALL                     2
+            166 UNPACK_SEQUENCE          2
+            170 STORE_FAST               1 (a)
+            172 STORE_FAST               2 (b)
+
+340         174 LOAD_FAST                2 (b)
+            176 LOAD_METHOD              4 (isdigit)
+            198 PRECALL                  0
+            202 CALL                     0
+            212 POP_JUMP_FORWARD_IF_FALSE    45 (to 304)
+            214 LOAD_GLOBAL             11 (NULL + len)
+            226 LOAD_FAST                2 (b)
+            228 PRECALL                  1
+            232 CALL                     1
+            242 LOAD_CONST               6 (3)
+            244 COMPARE_OP               2 (==)
+            250 POP_JUMP_FORWARD_IF_FALSE    26 (to 304)
+            252 LOAD_FAST                1 (a)
+            254 LOAD_METHOD              4 (isdigit)
+            276 PRECALL                  0
+            280 CALL                     0
+            290 POP_JUMP_FORWARD_IF_FALSE     6 (to 304)
+
+341         292 LOAD_FAST                1 (a)
+            294 LOAD_FAST                2 (b)
+            296 BINARY_OP                0 (+)
+            300 STORE_FAST               0 (s)
+            302 JUMP_FORWARD             2 (to 308)
+
+343     >>  304 LOAD_FAST                1 (a)
+            306 STORE_FAST               0 (s)
+
+344     >>  308 NOP
+
+345         310 LOAD_GLOBAL             13 (NULL + int)
+            322 LOAD_GLOBAL             15 (NULL + float)
+            334 LOAD_FAST                0 (s)
+            336 PRECALL                  1
+            340 CALL                     1
+            350 PRECALL                  1
+            354 CALL                     1
+            364 RETURN_VALUE
+        >>  366 PUSH_EXC_INFO
+
+346         368 LOAD_GLOBAL             16 (TypeError)
+            380 LOAD_GLOBAL             18 (ValueError)
+            392 BUILD_TUPLE              2
+            394 CHECK_EXC_MATCH
+            396 POP_JUMP_FORWARD_IF_FALSE     4 (to 406)
+            398 POP_TOP
+
+347         400 POP_EXCEPT
+            402 LOAD_CONST               1 (0)
+            404 RETURN_VALUE
+
+346     >>  406 RERAISE                  0
+        >>  408 COPY                     3
+            410 POP_EXCEPT
+            412 RERAISE                  1
+ExceptionTable:
+  310 to 362 -> 366 [0]
+  366 to 398 -> 408 [1] lasti
+  406 to 406 -> 408 [1] lasti
+
+==============================================================================
+## <module>._to_float  (args=1, locals=1)
+# varnames: s
+350           0 RESUME                   0
+
+351           2 LOAD_FAST                0 (s)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 10)
+
+352           6 LOAD_CONST               0 (None)
+              8 RETURN_VALUE
+
+353     >>   10 LOAD_GLOBAL              1 (NULL + str)
+             22 LOAD_FAST                0 (s)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 LOAD_METHOD              1 (strip)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 STORE_FAST               0 (s)
+
+354          76 LOAD_FAST                0 (s)
+             78 POP_JUMP_FORWARD_IF_TRUE     2 (to 84)
+
+355          80 LOAD_CONST               0 (None)
+             82 RETURN_VALUE
+
+356     >>   84 LOAD_CONST               1 (',')
+             86 LOAD_FAST                0 (s)
+             88 CONTAINS_OP              0
+             90 POP_JUMP_FORWARD_IF_FALSE    27 (to 146)
+             92 LOAD_CONST               2 ('.')
+             94 LOAD_FAST                0 (s)
+             96 CONTAINS_OP              1
+             98 POP_JUMP_FORWARD_IF_FALSE    23 (to 146)
+
+357         100 LOAD_FAST                0 (s)
+            102 LOAD_METHOD              2 (replace)
+            124 LOAD_CONST               1 (',')
+            126 LOAD_CONST               2 ('.')
+            128 PRECALL                  2
+            132 CALL                     2
+            142 STORE_FAST               0 (s)
+            144 JUMP_FORWARD            30 (to 206)
+
+358     >>  146 LOAD_CONST               1 (',')
+            148 LOAD_FAST                0 (s)
+            150 CONTAINS_OP              0
+            152 POP_JUMP_FORWARD_IF_FALSE    26 (to 206)
+            154 LOAD_CONST               2 ('.')
+            156 LOAD_FAST                0 (s)
+            158 CONTAINS_OP              0
+            160 POP_JUMP_FORWARD_IF_FALSE    22 (to 206)
+
+359         162 LOAD_FAST                0 (s)
+            164 LOAD_METHOD              2 (replace)
+            186 LOAD_CONST               1 (',')
+            188 LOAD_CONST               3 ('')
+            190 PRECALL                  2
+            194 CALL                     2
+            204 STORE_FAST               0 (s)
+
+360     >>  206 NOP
+
+361         208 LOAD_GLOBAL              7 (NULL + float)
+            220 LOAD_FAST                0 (s)
+            222 PRECALL                  1
+            226 CALL                     1
+            236 RETURN_VALUE
+        >>  238 PUSH_EXC_INFO
+
+362         240 LOAD_GLOBAL              8 (TypeError)
+            252 LOAD_GLOBAL             10 (ValueError)
+            264 BUILD_TUPLE              2
+            266 CHECK_EXC_MATCH
+            268 POP_JUMP_FORWARD_IF_FALSE     4 (to 278)
+            270 POP_TOP
+
+363         272 POP_EXCEPT
+            274 LOAD_CONST               0 (None)
+            276 RETURN_VALUE
+
+362     >>  278 RERAISE                  0
+        >>  280 COPY                     3
+            282 POP_EXCEPT
+            284 RERAISE                  1
+ExceptionTable:
+  208 to 234 -> 238 [0]
+  238 to 270 -> 280 [1] lasti
+  278 to 278 -> 280 [1] lasti
+
+==============================================================================
+## <module>._dedup_entity_lines  (args=1, locals=5)
+# varnames: lines, seen, out, ln, key
+366           0 RESUME                   0
+
+374           2 LOAD_GLOBAL              1 (NULL + set)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 STORE_FAST               1 (seen)
+
+375          30 BUILD_LIST               0
+             32 STORE_FAST               2 (out)
+
+376          34 LOAD_FAST                0 (lines)
+             36 GET_ITER
+        >>   38 FOR_ITER                89 (to 218)
+             40 STORE_FAST               3 (ln)
+
+377          42 LOAD_FAST                3 (ln)
+             44 LOAD_ATTR                1 (style_no)
+             54 LOAD_FAST                3 (ln)
+             56 LOAD_ATTR                2 (color_code)
+
+378          66 LOAD_FAST                3 (ln)
+             68 LOAD_ATTR                3 (sizes)
+             78 POP_JUMP_FORWARD_IF_FALSE    18 (to 116)
+             80 LOAD_FAST                3 (ln)
+             82 LOAD_ATTR                3 (sizes)
+             92 LOAD_CONST               1 (0)
+             94 BINARY_SUBSCR
+            104 LOAD_ATTR                4 (size)
+            114 JUMP_FORWARD             1 (to 118)
+        >>  116 LOAD_CONST               2 ('')
+
+377     >>  118 BUILD_TUPLE              3
+            120 STORE_FAST               4 (key)
+
+379         122 LOAD_FAST                4 (key)
+            124 LOAD_FAST                1 (seen)
+            126 CONTAINS_OP              0
+            128 POP_JUMP_FORWARD_IF_FALSE     1 (to 132)
+
+380         130 JUMP_BACKWARD           47 (to 38)
+
+381     >>  132 LOAD_FAST                1 (seen)
+            134 LOAD_METHOD              5 (add)
+            156 LOAD_FAST                4 (key)
+            158 PRECALL                  1
+            162 CALL                     1
+            172 POP_TOP
+
+382         174 LOAD_FAST                2 (out)
+            176 LOAD_METHOD              6 (append)
+            198 LOAD_FAST                3 (ln)
+            200 PRECALL                  1
+            204 CALL                     1
+            214 POP_TOP
+            216 JUMP_BACKWARD           90 (to 38)
+
+383     >>  218 LOAD_FAST                2 (out)
+            220 RETURN_VALUE

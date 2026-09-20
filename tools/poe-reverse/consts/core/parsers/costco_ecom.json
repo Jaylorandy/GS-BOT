@@ -1,0 +1,371 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "costco_hybrid",
+   "_extract_costco_header",
+   "compile",
+   "_ITEM_ROW",
+   "_to_float",
+   "_SIZE_HEADER_RE",
+   "_build_dimpk_size_map",
+   "_extract_ecom_totals",
+   "CostcoEcomParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/costco_ecom.py - Costco US .com PO (Wrangler, 9 pages).\n\nThe .com PO (72000167) prints ONE line-item per (colour x label-code) across\npages 1-5 (``1662 BLU BLUE CINT26 ELP 3 19 1,560 $5.34 $8,330.40``) plus a\ncolour x label-code summary grid on page 6. There are no XS..XL sizes on this\nPO — instead pages 7-8 print a \"size-run\" block per label code, each mapping\nthat DM-PK label code to exactly ONE numeric OWA size (``IWO->2 ELO->4 ELP->6\nELQ->8 ELR->10 ELS->12 ELT->14 ELU->16``). The OSR ``Size`` column therefore\ncarries the numeric size, resolved from those blocks; when a code is missing\nfrom the size-run blocks it falls back to the raw label code (no regression).\n\nHeader block is identical to costco_hybrid (same 5 STAR APPAREL template), so\n``_extract_costco_header`` is shared. ISOLATED: only the line-item extraction is\nnew; costco_hybrid / line_items / matrix_* are untouched.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   [
+    "_extract_costco_header"
+   ],
+   "^(?P<style>\\d+)\\s+(?P<color_code>[A-Z]{3})\\s+(?P<color_desc>[A-Z][A-Z ]*?)\\s+(?P<label>[A-Z0-9]+)\\s+(?P<dimpk>[A-Z]{3})\\s+\\d+\\s+\\d+\\s+(?P<units>[\\d,]+)\\s+\\$(?P<unit_price>\\d+\\.\\d{2})",
+   "^\\s*OWA\\s+((?:\\d+\\s+)+)TTL\\s+Units\\s*$",
+   "text",
+   "str",
+   "return",
+   "dict",
+   "dimpk_size",
+   "CostcoEcomParser",
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ],
+   [
+    "text",
+    "str",
+    "dimpk_size",
+    "dict"
+   ]
+  ],
+  "n_instructions": 83
+ },
+ "<module>._to_float": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ""
+  ],
+  "n_instructions": 38
+ },
+ "<module>._build_dimpk_size_map": {
+  "names": [
+   "split",
+   "enumerate",
+   "range",
+   "min",
+   "len",
+   "_SIZE_HEADER_RE",
+   "match",
+   "group",
+   "int",
+   "ValueError",
+   "IndexError"
+  ],
+  "varnames": [
+   "text",
+   "dimpk_codes",
+   "lines",
+   "mapping",
+   "_WINDOW",
+   "i",
+   "ln",
+   "code",
+   "j",
+   "m",
+   "sizes",
+   "vals",
+   "k",
+   "size"
+  ],
+  "consts": [
+   "Map each DM-PK label code to its single numeric OWA size.\n\n    Pages 7-8 print one block per label code; each block has exactly one\n    non-zero column in the size sequence:\n\n        ELO\n        OWA 2 4 6 8 10 12 14 16 TTL Units\n        0 1 0 0 0 0 0 0 1        <- size \"4\" is the non-zero column\n        TTL PPK: 1\n\n    ``dimpk_codes`` is the set of label codes seen in the line-items (the only\n    codes we care about). A block may straddle a page boundary (the code line\n    sits at the bottom of page 7 while its ``OWA`` header starts page 8), so we\n    anchor on each code line and scan *forward* a bounded window rather than\n    assuming the header immediately follows it.\n\n    Returns ``{label_code: size_str}``; codes with no resolvable size are\n    omitted so the caller can fall back to the raw code.\n    ",
+   "\n",
+   40,
+   1,
+   0
+  ],
+  "n_instructions": 154
+ },
+ "<module>._build_dimpk_size_map.<listcomp>": {
+  "names": [
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._extract_ecom_totals": {
+  "names": [
+   "split",
+   "any",
+   "startswith",
+   "replace",
+   "len",
+   "int",
+   "zip",
+   "get",
+   "re",
+   "search",
+   "float",
+   "group"
+  ],
+  "varnames": [
+   "text",
+   "dimpk_size",
+   "lines",
+   "labels",
+   "ln",
+   "toks",
+   "size_totals",
+   "grand_qty",
+   "lbl",
+   "v",
+   "size",
+   "amount",
+   "m"
+  ],
+  "consts": [
+   "Parse the page-6 colour x label summary grid into self-check anchors.\n\n    Returns ``(printed_size_totals, printed_total_qty, printed_total_amount)``:\n\n      * the ``TOTAL:`` row carries the per-label (per-size) totals — the only\n        genuinely independent source vs the page-1-5 line items;\n      * ``TOTAL: <grand>`` gives the grand quantity;\n      * ``Total $...`` gives the grand amount.\n    ",
+   "\n",
+   null,
+   "TOTAL",
+   "TOTAL:",
+   "",
+   2,
+   0,
+   ",",
+   1,
+   "Total\\s+\\$([\\d,]+\\.\\d{2})"
+  ],
+  "n_instructions": 180
+ },
+ "<module>._extract_ecom_totals.<listcomp>": {
+  "names": [
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   "\""
+  ],
+  "n_instructions": 22
+ },
+ "<module>._extract_ecom_totals.<genexpr>": {
+  "names": [
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   "\"",
+   null
+  ],
+  "n_instructions": 20
+ },
+ "<module>.CostcoEcomParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "COSTCO_ECOM",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "CostcoEcomParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.CostcoEcomParser.parse": {
+  "names": [
+   "doc_text",
+   "_extract_costco_header",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "set",
+   "split",
+   "strip",
+   "_ITEM_ROW",
+   "match",
+   "groupdict",
+   "get",
+   "int",
+   "replace",
+   "_to_float",
+   "add",
+   "append",
+   "_build_dimpk_size_map",
+   "lines",
+   "OrderLine",
+   "SizeQty",
+   "_extract_ecom_totals",
+   "printed_size_totals",
+   "printed_total_qty",
+   "printed_total_amount",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "hdr",
+   "po",
+   "ent",
+   "items",
+   "dimpk_codes",
+   "seen",
+   "line",
+   "m",
+   "gd",
+   "style",
+   "color_code",
+   "color_desc",
+   "dimpk",
+   "units",
+   "unit_price",
+   "key",
+   "dimpk_size",
+   "size"
+  ],
+  "consts": [
+   null,
+   false,
+   [
+    "crop_footer"
+   ],
+   "customer",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "ship_date",
+   "port_loading",
+   "ship_mode",
+   "destination",
+   "country_of_origin",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "port_loading",
+    "ship_mode",
+    "destination_code",
+    "country_of_origin"
+   ],
+   "\n",
+   "style",
+   "color_code",
+   "color_desc",
+   "dimpk",
+   "units",
+   "0",
+   ",",
+   0,
+   "unit_price",
+   "PCS",
+   [
+    "size",
+    "qty"
+   ],
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 289
+ }
+}

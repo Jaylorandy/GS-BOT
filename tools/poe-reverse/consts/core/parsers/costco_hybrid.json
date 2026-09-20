@@ -1,0 +1,379 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "_MONTHS",
+   "_us_date",
+   "compile",
+   "_COLOR_ROW",
+   "_extract_costco_header",
+   "CostcoHybridParser",
+   "_to_float"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/costco_hybrid.py - Costco US 3-page PO (Wrangler).\n\nLayout (72000164/72000165/72000166):\n  page 0  - header block (PO Number / Season / Ship Date / port row / ...) +\n            a single summary line (Units / Cost / Total) + per-size OWA totals.\n  page 1  - a colour x size grid where the size columns are UNITS PER CARTON\n            (``LGB ... 13 2 2 2 2 2 2 1`` = colour total 13, sizes per carton).\n  page 2  - TTL/OWA cross-check.\n\nThe size columns print per-carton quantities; the real order total = per-carton\nx number-of-cartons (printed as ``Total NNN,NNN units of M,MMM cartons``). This\nmirrors FRANKIE's per-carton semantics but with NUMERIC sizes (4..16) instead of\nXS..XXL, so it is its own isolated layout.\n\nISOLATED: self-contained; does not touch matrix_* / line_items / control_sheet.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec"
+   ],
+   "s",
+   "str",
+   "return",
+   "^(?P<dim>[A-Z]{3})\\s+(?P<desc>.+?)\\s+(?P<color_code>[A-Z]{3})\\s+(?P<total>\\d+)\\s+(?P<sizes>\\d+(?:\\s+\\d+){5,8})$",
+   "text",
+   "dict",
+   "CostcoHybridParser",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 85
+ },
+ "<module>._us_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "int",
+   "group",
+   "len"
+  ],
+  "varnames": [
+   "s",
+   "m",
+   "mo",
+   "d",
+   "y"
+  ],
+  "consts": [
+   "``12/07/25`` -> ``2025-12-07`` (US MM/DD/YY).",
+   "",
+   "(\\d{1,2})/(\\d{1,2})/(\\d{2,4})$",
+   1,
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d"
+  ],
+  "n_instructions": 72
+ },
+ "<module>._extract_costco_header": {
+  "names": [
+   "re",
+   "search",
+   "group",
+   "find",
+   "max",
+   "_us_date",
+   "capitalize",
+   "int",
+   "replace",
+   "M",
+   "_to_float"
+  ],
+  "varnames": [
+   "text",
+   "h",
+   "m",
+   "i",
+   "w",
+   "m2"
+  ],
+  "consts": [
+   null,
+   "(5\\s*STAR\\s*APPAREL\\s*LLC)",
+   1,
+   "",
+   "customer",
+   "PO\\s*Number\\s+(\\d+)",
+   "po_no",
+   "PO Number",
+   0,
+   40,
+   "(\\d{6,9})",
+   "Season\\s+([A-Z]+\\s+\\d{4})",
+   "season",
+   "Item\\s*#\\s*(\\d+)",
+   "Style\\s*#\\s*(\\d+)",
+   "style_no",
+   "(\\d{1,2}/\\d{1,2}/\\d{2,4})\\s+CAMBODIA\\s+(SEA\\s+SHIPMENT|AIR\\s+SHIPMENT|OCEAN)\\s+(\\d+\\s*DAYS?\\s*from\\s+\\S+)",
+   "ship_date",
+   2,
+   "ship_mode",
+   3,
+   "payment_terms",
+   "CAMBODIA",
+   "country_of_origin",
+   "\\bFOB\\b",
+   "FOB",
+   "price_term",
+   "FREIGHT\\s+ON\\s+BOARD\\s+(\\S+)",
+   "port_loading",
+   "Ship\\s+To\\s+[A-Z0-9 ()\\-]*(CDC\\s+RIALTO(?:\\s*\\([^)]*\\))?)",
+   "destination",
+   "CDC\\s+RIALTO",
+   "USD",
+   "$",
+   "currency",
+   "Units\\s+[\\d,]+\\s+(?:Cost\\s+)?[\\d,.]+\\s*\\$?([\\d.]+)\\s*",
+   "unit_price",
+   "\\$(\\d+\\.\\d{2})\\s+\\$[\\d,.]+",
+   "(\\d[\\d,]*)\\s+cartons",
+   ",",
+   "cartons",
+   "Total\\s+([\\d,]+)\\s+units",
+   "total_qty",
+   "Total\\s+([\\d,]+\\.\\d{2})\\s*$",
+   "total_amount"
+  ],
+  "n_instructions": 380
+ },
+ "<module>.CostcoHybridParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "COSTCO_HYBRID",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "CostcoHybridParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.CostcoHybridParser.parse": {
+  "names": [
+   "doc_text",
+   "_extract_costco_header",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "get",
+   "printed_total_qty",
+   "printed_total_amount",
+   "_to_float",
+   "split",
+   "strip",
+   "index",
+   "ValueError",
+   "_COLOR_ROW",
+   "match",
+   "groupdict",
+   "len",
+   "zip",
+   "lines",
+   "append",
+   "OrderLine",
+   "SizeQty",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "hdr",
+   "po",
+   "ent",
+   "cartons",
+   "unit_price",
+   "style_no",
+   "sizes_header",
+   "line",
+   "toks",
+   "qi",
+   "m",
+   "gd",
+   "color_code",
+   "color_desc",
+   "size_ints",
+   "sz_label",
+   "per_carton",
+   "qty"
+  ],
+  "consts": [
+   null,
+   false,
+   [
+    "crop_footer"
+   ],
+   "customer",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "ship_date",
+   "port_loading",
+   "ship_mode",
+   "destination",
+   "country_of_origin",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "port_loading",
+    "ship_mode",
+    "destination_code",
+    "country_of_origin"
+   ],
+   "total_qty",
+   "total_amount",
+   "cartons",
+   "unit_price",
+   "style_no",
+   "\n",
+   "COLOR DESC",
+   "COLOR CODE",
+   "QTY",
+   1,
+   "color_code",
+   "desc",
+   "sizes",
+   "PCS",
+   [
+    "size",
+    "qty"
+   ],
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 284
+ },
+ "<module>.CostcoHybridParser.parse.<listcomp>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "x"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._to_float": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ""
+  ],
+  "n_instructions": 38
+ }
+}

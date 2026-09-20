@@ -1,0 +1,1635 @@
+# module: ui.customer_report_menu
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\customer_report_menu.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/customer_report_menu.py - 客户指定报表菜单（模板 C 入口）。\n\n严格对照设计稿（SVG A）实现：\n- 深石墨灰窗口，标题栏「C」圆形图标 + 「客户指定报表」+ 关闭 ×。\n- 列表容器内的客户卡片：左侧金色圆形头像 + 下划线客户名 + 副标题 +\n  右侧「打开」按钮；启用项高亮，禁用项灰显。\n- 五个预留客户位占位行（未配置）。\n- 底部「管理客户报表模板…」链接 + 提示，底栏说明 + 取消按钮。\n- 点击卡片任意位置或「打开」按钮即选中该客户。\n\n首个客户固定为 ANF Special Report（Abercrombie & Fitch）。未配置的客户灰显。\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 13           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 15          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 17          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (tkinter)
+             32 STORE_NAME               5 (tk)
+
+ 22          34 LOAD_CONST               4 ('anf')
+
+ 23          36 LOAD_CONST               5 ('ANF Special Report')
+
+ 24          38 LOAD_CONST               6 ('Abercrombie & Fitch · POChart / POList / RawData（需 PO + Commitment PDF 各一份）')
+
+ 25          40 LOAD_CONST               7 ('special_templates/OSR-ANF-Special.xlsx')
+
+ 26          42 LOAD_CONST               8 (True)
+
+ 21          44 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+             46 BUILD_CONST_KEY_MAP      5
+
+ 29          48 LOAD_CONST              10 ('pending2')
+
+ 30          50 LOAD_CONST              11 ('（预留客户位 2）')
+
+ 31          52 LOAD_CONST              12 ('尚未配置')
+
+ 32          54 LOAD_CONST              13 ('')
+
+ 33          56 LOAD_CONST              14 (False)
+
+ 28          58 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+             60 BUILD_CONST_KEY_MAP      5
+
+ 36          62 LOAD_CONST              15 ('pending3')
+
+ 37          64 LOAD_CONST              16 ('（预留客户位 3）')
+
+ 38          66 LOAD_CONST              12 ('尚未配置')
+
+ 39          68 LOAD_CONST              13 ('')
+
+ 40          70 LOAD_CONST              14 (False)
+
+ 35          72 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+             74 BUILD_CONST_KEY_MAP      5
+
+ 43          76 LOAD_CONST              17 ('pending4')
+
+ 44          78 LOAD_CONST              18 ('（预留客户位 4）')
+
+ 45          80 LOAD_CONST              12 ('尚未配置')
+
+ 46          82 LOAD_CONST              13 ('')
+
+ 47          84 LOAD_CONST              14 (False)
+
+ 42          86 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+             88 BUILD_CONST_KEY_MAP      5
+
+ 50          90 LOAD_CONST              19 ('pending5')
+
+ 51          92 LOAD_CONST              20 ('（预留客户位 5）')
+
+ 52          94 LOAD_CONST              12 ('尚未配置')
+
+ 53          96 LOAD_CONST              13 ('')
+
+ 54          98 LOAD_CONST              14 (False)
+
+ 49         100 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+            102 BUILD_CONST_KEY_MAP      5
+
+ 57         104 LOAD_CONST              21 ('pending6')
+
+ 58         106 LOAD_CONST              22 ('（预留客户位 6）')
+
+ 59         108 LOAD_CONST              12 ('尚未配置')
+
+ 60         110 LOAD_CONST              13 ('')
+
+ 61         112 LOAD_CONST              14 (False)
+
+ 56         114 LOAD_CONST               9 (('id', 'name', 'subtitle', 'template', 'enabled'))
+            116 BUILD_CONST_KEY_MAP      5
+
+ 20         118 BUILD_LIST               6
+            120 STORE_NAME               6 (CUSTOMER_REPORTS)
+
+ 65         122 LOAD_NAME                3 (os)
+            124 LOAD_ATTR                7 (path)
+            134 LOAD_METHOD              8 (normpath)
+
+ 66         156 LOAD_NAME                3 (os)
+            158 LOAD_ATTR                7 (path)
+            168 LOAD_METHOD              9 (join)
+            190 LOAD_NAME                3 (os)
+            192 LOAD_ATTR                7 (path)
+            202 LOAD_METHOD             10 (dirname)
+            224 LOAD_NAME                3 (os)
+            226 LOAD_ATTR                7 (path)
+            236 LOAD_METHOD             10 (dirname)
+            258 LOAD_NAME               11 (__file__)
+            260 PRECALL                  1
+            264 CALL                     1
+            274 PRECALL                  1
+            278 CALL                     1
+            288 LOAD_CONST              23 ('special_templates')
+            290 PRECALL                  2
+            294 CALL                     2
+
+ 65         304 PRECALL                  1
+            308 CALL                     1
+            318 STORE_NAME              12 (_SPECIAL_DIR)
+
+ 70         320 LOAD_CONST              27 (('return', "'str | None'"))
+            322 LOAD_CONST              26 (<code object ask_customer_report at 0x000002BF940D48A0, file "ui\customer_report_menu.py", line 70>)
+            324 MAKE_FUNCTION            4 (annotations)
+            326 STORE_NAME              13 (ask_customer_report)
+            328 LOAD_CONST               3 (None)
+            330 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report  (args=1, locals=15)
+# varnames: parent, title_bar, icon, bottom_block, _make_card, cust, foot, _open_templates, bottom, W, H, pw, ph, px, py
+              0 MAKE_CELL               15 (COL)
+              2 MAKE_CELL               16 (body)
+              4 MAKE_CELL               17 (cancel)
+              6 MAKE_CELL               18 (choice)
+              8 MAKE_CELL               19 (close)
+             10 MAKE_CELL               20 (link)
+             12 MAKE_CELL               21 (pick)
+             14 MAKE_CELL               22 (tg)
+             16 MAKE_CELL               23 (win)
+
+ 70          18 RESUME                   0
+
+ 72          20 LOAD_CONST               1 (0)
+             22 LOAD_CONST               2 (None)
+             24 IMPORT_NAME              0 (theme_glass)
+             26 STORE_DEREF             22 (tg)
+
+ 74          28 LOAD_DEREF              22 (tg)
+             30 LOAD_ATTR                1 (COL)
+             40 STORE_DEREF             15 (COL)
+
+ 75          42 LOAD_CONST               3 ('v')
+             44 LOAD_CONST               2 (None)
+             46 BUILD_MAP                1
+             48 STORE_DEREF             18 (choice)
+
+ 77          50 LOAD_GLOBAL              5 (NULL + tk)
+             62 LOAD_ATTR                3 (Toplevel)
+             72 LOAD_FAST                0 (parent)
+             74 PRECALL                  1
+             78 CALL                     1
+             88 STORE_DEREF             23 (win)
+
+ 78          90 LOAD_DEREF              23 (win)
+             92 LOAD_METHOD              4 (title)
+            114 LOAD_CONST               4 ('客户指定报表')
+            116 PRECALL                  1
+            120 CALL                     1
+            130 POP_TOP
+
+ 79         132 LOAD_DEREF              23 (win)
+            134 LOAD_METHOD              5 (transient)
+            156 LOAD_FAST                0 (parent)
+            158 PRECALL                  1
+            162 CALL                     1
+            172 POP_TOP
+
+ 80         174 LOAD_DEREF              23 (win)
+            176 LOAD_METHOD              6 (grab_set)
+            198 PRECALL                  0
+            202 CALL                     0
+            212 POP_TOP
+
+ 81         214 LOAD_DEREF              23 (win)
+            216 LOAD_METHOD              7 (resizable)
+            238 LOAD_CONST               5 (False)
+            240 LOAD_CONST               5 (False)
+            242 PRECALL                  2
+            246 CALL                     2
+            256 POP_TOP
+
+ 82         258 LOAD_DEREF              23 (win)
+            260 LOAD_METHOD              8 (configure)
+            282 LOAD_DEREF              15 (COL)
+            284 LOAD_CONST               6 ('gap')
+            286 BINARY_SUBSCR
+            296 KW_NAMES                 7
+            298 PRECALL                  1
+            302 CALL                     1
+            312 POP_TOP
+
+ 83         314 LOAD_DEREF              23 (win)
+            316 LOAD_METHOD              9 (bind)
+            338 LOAD_CONST               8 ('<Escape>')
+            340 LOAD_CLOSURE            23 (win)
+            342 BUILD_TUPLE              1
+            344 LOAD_CONST               9 (<code object <lambda> at 0x000002BF94A2BF00, file "ui\customer_report_menu.py", line 83>)
+            346 MAKE_FUNCTION            8 (closure)
+            348 PRECALL                  2
+            352 CALL                     2
+            362 POP_TOP
+
+ 85         364 LOAD_CLOSURE            18 (choice)
+            366 LOAD_CLOSURE            23 (win)
+            368 BUILD_TUPLE              2
+            370 LOAD_CONST              10 (<code object pick at 0x000002BF94A2EF30, file "ui\customer_report_menu.py", line 85>)
+            372 MAKE_FUNCTION            8 (closure)
+            374 STORE_DEREF             21 (pick)
+
+ 90         376 LOAD_GLOBAL              5 (NULL + tk)
+            388 LOAD_ATTR               10 (Frame)
+            398 LOAD_DEREF              23 (win)
+            400 LOAD_DEREF              15 (COL)
+            402 LOAD_CONST               6 ('gap')
+            404 BINARY_SUBSCR
+            414 KW_NAMES                 7
+            416 PRECALL                  2
+            420 CALL                     2
+            430 STORE_FAST               1 (title_bar)
+
+ 91         432 LOAD_FAST                1 (title_bar)
+            434 LOAD_METHOD             11 (pack)
+            456 LOAD_CONST              11 ('x')
+            458 LOAD_CONST              12 (16)
+            460 LOAD_CONST              13 ((14, 0))
+            462 KW_NAMES                14
+            464 PRECALL                  3
+            468 CALL                     3
+            478 POP_TOP
+
+ 92         480 LOAD_GLOBAL              5 (NULL + tk)
+            492 LOAD_ATTR               12 (Canvas)
+            502 LOAD_FAST                1 (title_bar)
+            504 LOAD_CONST              15 (22)
+            506 LOAD_CONST              15 (22)
+            508 LOAD_DEREF              15 (COL)
+            510 LOAD_CONST               6 ('gap')
+            512 BINARY_SUBSCR
+
+ 93         522 LOAD_CONST               1 (0)
+
+ 92         524 KW_NAMES                16
+            526 PRECALL                  5
+            530 CALL                     5
+            540 STORE_FAST               2 (icon)
+
+ 94         542 LOAD_FAST                2 (icon)
+            544 LOAD_METHOD             13 (create_rectangle)
+            566 LOAD_CONST              17 (1)
+            568 LOAD_CONST              17 (1)
+            570 LOAD_CONST              18 (21)
+            572 LOAD_CONST              18 (21)
+            574 LOAD_CONST              19 ('#343841')
+            576 LOAD_CONST              20 ('#444b57')
+            578 LOAD_CONST              17 (1)
+            580 KW_NAMES                21
+            582 PRECALL                  7
+            586 CALL                     7
+            596 POP_TOP
+
+ 95         598 LOAD_FAST                2 (icon)
+            600 LOAD_METHOD             14 (create_text)
+            622 LOAD_CONST              22 (11)
+            624 LOAD_CONST              23 (12)
+            626 LOAD_CONST              24 ('C')
+            628 LOAD_DEREF              15 (COL)
+            630 LOAD_CONST              25 ('ink')
+            632 BINARY_SUBSCR
+
+ 96         642 LOAD_DEREF              22 (tg)
+            644 LOAD_ATTR               15 (_SANS)
+            654 LOAD_CONST              23 (12)
+            656 LOAD_CONST              26 ('bold')
+            658 BUILD_TUPLE              3
+
+ 95         660 KW_NAMES                27
+            662 PRECALL                  5
+            666 CALL                     5
+            676 POP_TOP
+
+ 97         678 LOAD_FAST                2 (icon)
+            680 LOAD_METHOD             11 (pack)
+            702 LOAD_CONST              28 ('left')
+            704 KW_NAMES                29
+            706 PRECALL                  1
+            710 CALL                     1
+            720 POP_TOP
+
+ 98         722 LOAD_GLOBAL              5 (NULL + tk)
+            734 LOAD_ATTR               16 (Label)
+            744 LOAD_FAST                1 (title_bar)
+            746 LOAD_CONST               4 ('客户指定报表')
+            748 LOAD_DEREF              15 (COL)
+            750 LOAD_CONST               6 ('gap')
+            752 BINARY_SUBSCR
+            762 LOAD_DEREF              15 (COL)
+            764 LOAD_CONST              25 ('ink')
+            766 BINARY_SUBSCR
+
+ 99         776 LOAD_DEREF              22 (tg)
+            778 LOAD_ATTR               15 (_SANS)
+            788 LOAD_CONST              30 (15)
+            790 LOAD_CONST              26 ('bold')
+            792 BUILD_TUPLE              3
+
+ 98         794 KW_NAMES                31
+            796 PRECALL                  5
+            800 CALL                     5
+
+ 99         810 LOAD_METHOD             11 (pack)
+            832 LOAD_CONST              28 ('left')
+            834 LOAD_CONST              32 ((8, 0))
+            836 KW_NAMES                33
+            838 PRECALL                  2
+            842 CALL                     2
+            852 POP_TOP
+
+100         854 LOAD_GLOBAL              5 (NULL + tk)
+            866 LOAD_ATTR               16 (Label)
+            876 LOAD_FAST                1 (title_bar)
+            878 LOAD_CONST              34 ('×')
+            880 LOAD_DEREF              15 (COL)
+            882 LOAD_CONST               6 ('gap')
+            884 BINARY_SUBSCR
+            894 LOAD_DEREF              15 (COL)
+            896 LOAD_CONST              35 ('ink_3')
+            898 BINARY_SUBSCR
+
+101         908 LOAD_DEREF              22 (tg)
+            910 LOAD_ATTR               15 (_SANS)
+            920 LOAD_CONST              12 (16)
+            922 BUILD_TUPLE              2
+            924 LOAD_CONST              36 ('hand2')
+
+100         926 KW_NAMES                37
+            928 PRECALL                  6
+            932 CALL                     6
+            942 STORE_DEREF             19 (close)
+
+102         944 LOAD_DEREF              19 (close)
+            946 LOAD_METHOD             11 (pack)
+            968 LOAD_CONST              38 ('right')
+            970 KW_NAMES                29
+            972 PRECALL                  1
+            976 CALL                     1
+            986 POP_TOP
+
+103         988 LOAD_DEREF              19 (close)
+            990 LOAD_METHOD              9 (bind)
+           1012 LOAD_CONST              39 ('<Button-1>')
+           1014 LOAD_CLOSURE            23 (win)
+           1016 BUILD_TUPLE              1
+           1018 LOAD_CONST              40 (<code object <lambda> at 0x000002BF94AA8120, file "ui\customer_report_menu.py", line 103>)
+           1020 MAKE_FUNCTION            8 (closure)
+           1022 PRECALL                  2
+           1026 CALL                     2
+           1036 POP_TOP
+
+104        1038 LOAD_DEREF              19 (close)
+           1040 LOAD_METHOD              9 (bind)
+           1062 LOAD_CONST              41 ('<Enter>')
+           1064 LOAD_CLOSURE            15 (COL)
+           1066 LOAD_CLOSURE            19 (close)
+           1068 BUILD_TUPLE              2
+           1070 LOAD_CONST              42 (<code object <lambda> at 0x000002BF94A2F030, file "ui\customer_report_menu.py", line 104>)
+           1072 MAKE_FUNCTION            8 (closure)
+           1074 PRECALL                  2
+           1078 CALL                     2
+           1088 POP_TOP
+
+105        1090 LOAD_DEREF              19 (close)
+           1092 LOAD_METHOD              9 (bind)
+           1114 LOAD_CONST              43 ('<Leave>')
+           1116 LOAD_CLOSURE            15 (COL)
+           1118 LOAD_CLOSURE            19 (close)
+           1120 BUILD_TUPLE              2
+           1122 LOAD_CONST              44 (<code object <lambda> at 0x000002BF94A2F730, file "ui\customer_report_menu.py", line 105>)
+           1124 MAKE_FUNCTION            8 (closure)
+           1126 PRECALL                  2
+           1130 CALL                     2
+           1140 POP_TOP
+
+108        1142 LOAD_GLOBAL              5 (NULL + tk)
+           1154 LOAD_ATTR               16 (Label)
+           1164 LOAD_DEREF              23 (win)
+           1166 LOAD_CONST              45 ('点击下方客户名称，打开对应的专属报表模板')
+
+109        1168 LOAD_DEREF              15 (COL)
+           1170 LOAD_CONST               6 ('gap')
+           1172 BINARY_SUBSCR
+           1182 LOAD_DEREF              15 (COL)
+           1184 LOAD_CONST              46 ('ink_2')
+           1186 BINARY_SUBSCR
+           1196 LOAD_DEREF              22 (tg)
+           1198 LOAD_ATTR               15 (_SANS)
+           1208 LOAD_CONST              23 (12)
+           1210 BUILD_TUPLE              2
+
+108        1212 KW_NAMES                31
+           1214 PRECALL                  5
+           1218 CALL                     5
+
+109        1228 LOAD_METHOD             11 (pack)
+
+110        1250 LOAD_CONST              47 ('w')
+           1252 LOAD_CONST              48 (24)
+           1254 LOAD_CONST              49 ((8, 14))
+
+109        1256 KW_NAMES                50
+           1258 PRECALL                  3
+           1262 CALL                     3
+           1272 POP_TOP
+
+113        1274 LOAD_GLOBAL              5 (NULL + tk)
+           1286 LOAD_ATTR               10 (Frame)
+           1296 LOAD_DEREF              23 (win)
+           1298 LOAD_DEREF              15 (COL)
+           1300 LOAD_CONST              51 ('field')
+           1302 BINARY_SUBSCR
+           1312 LOAD_DEREF              15 (COL)
+           1314 LOAD_CONST              52 ('panel_border')
+           1316 BINARY_SUBSCR
+
+114        1326 LOAD_CONST              17 (1)
+
+113        1328 KW_NAMES                53
+           1330 PRECALL                  4
+           1334 CALL                     4
+           1344 STORE_DEREF             16 (body)
+
+115        1346 LOAD_DEREF              16 (body)
+           1348 LOAD_METHOD             11 (pack)
+           1370 LOAD_CONST              54 ('both')
+           1372 LOAD_CONST              55 (True)
+           1374 LOAD_CONST              48 (24)
+           1376 LOAD_CONST              56 ((0, 10))
+           1378 KW_NAMES                57
+           1380 PRECALL                  4
+           1384 CALL                     4
+           1394 POP_TOP
+
+118        1396 LOAD_GLOBAL              5 (NULL + tk)
+           1408 LOAD_ATTR               10 (Frame)
+           1418 LOAD_DEREF              23 (win)
+           1420 LOAD_DEREF              15 (COL)
+           1422 LOAD_CONST               6 ('gap')
+           1424 BINARY_SUBSCR
+           1434 KW_NAMES                 7
+           1436 PRECALL                  2
+           1440 CALL                     2
+           1450 STORE_FAST               3 (bottom_block)
+
+120        1452 LOAD_CLOSURE            15 (COL)
+           1454 LOAD_CLOSURE            16 (body)
+           1456 LOAD_CLOSURE            21 (pick)
+           1458 LOAD_CLOSURE            22 (tg)
+           1460 BUILD_TUPLE              4
+           1462 LOAD_CONST              58 (<code object _make_card at 0x000002BF940C7410, file "ui\customer_report_menu.py", line 120>)
+           1464 MAKE_FUNCTION            8 (closure)
+           1466 STORE_FAST               4 (_make_card)
+
+187        1468 LOAD_GLOBAL             34 (CUSTOMER_REPORTS)
+           1480 GET_ITER
+        >> 1482 FOR_ITER                34 (to 1552)
+           1484 STORE_FAST               5 (cust)
+
+188        1486 PUSH_NULL
+           1488 LOAD_FAST                4 (_make_card)
+           1490 LOAD_FAST                5 (cust)
+           1492 LOAD_FAST                5 (cust)
+           1494 LOAD_METHOD             18 (get)
+           1516 LOAD_CONST              59 ('enabled')
+           1518 LOAD_CONST              55 (True)
+           1520 PRECALL                  2
+           1524 CALL                     2
+           1534 PRECALL                  2
+           1538 CALL                     2
+           1548 POP_TOP
+           1550 JUMP_BACKWARD           35 (to 1482)
+
+191     >> 1552 LOAD_GLOBAL              5 (NULL + tk)
+           1564 LOAD_ATTR               10 (Frame)
+           1574 LOAD_FAST                3 (bottom_block)
+           1576 LOAD_DEREF              15 (COL)
+           1578 LOAD_CONST               6 ('gap')
+           1580 BINARY_SUBSCR
+           1590 KW_NAMES                 7
+           1592 PRECALL                  2
+           1596 CALL                     2
+           1606 STORE_FAST               6 (foot)
+
+192        1608 LOAD_FAST                6 (foot)
+           1610 LOAD_METHOD             11 (pack)
+           1632 LOAD_CONST              11 ('x')
+           1634 LOAD_CONST              60 ((0, 6))
+           1636 KW_NAMES                61
+           1638 PRECALL                  2
+           1642 CALL                     2
+           1652 POP_TOP
+
+193        1654 LOAD_GLOBAL              5 (NULL + tk)
+           1666 LOAD_ATTR               10 (Frame)
+           1676 LOAD_FAST                6 (foot)
+           1678 LOAD_DEREF              15 (COL)
+           1680 LOAD_CONST              52 ('panel_border')
+           1682 BINARY_SUBSCR
+           1692 LOAD_CONST              17 (1)
+           1694 KW_NAMES                62
+           1696 PRECALL                  3
+           1700 CALL                     3
+           1710 LOAD_METHOD             11 (pack)
+           1732 LOAD_CONST              11 ('x')
+           1734 LOAD_CONST              63 ((0, 8))
+           1736 KW_NAMES                61
+           1738 PRECALL                  2
+           1742 CALL                     2
+           1752 POP_TOP
+
+194        1754 LOAD_GLOBAL              5 (NULL + tk)
+           1766 LOAD_ATTR               16 (Label)
+           1776 LOAD_FAST                6 (foot)
+           1778 LOAD_CONST              64 ('管理客户报表模板…')
+           1780 LOAD_DEREF              15 (COL)
+           1782 LOAD_CONST               6 ('gap')
+           1784 BINARY_SUBSCR
+           1794 LOAD_DEREF              15 (COL)
+           1796 LOAD_CONST              35 ('ink_3')
+           1798 BINARY_SUBSCR
+
+195        1808 LOAD_DEREF              22 (tg)
+           1810 LOAD_ATTR               15 (_SANS)
+           1820 LOAD_CONST              23 (12)
+           1822 BUILD_TUPLE              2
+           1824 LOAD_CONST              36 ('hand2')
+
+194        1826 KW_NAMES                37
+           1828 PRECALL                  6
+           1832 CALL                     6
+           1842 STORE_DEREF             20 (link)
+
+196        1844 LOAD_DEREF              20 (link)
+           1846 LOAD_METHOD             11 (pack)
+           1868 LOAD_CONST              47 ('w')
+           1870 KW_NAMES                65
+           1872 PRECALL                  1
+           1876 CALL                     1
+           1886 POP_TOP
+
+198        1888 LOAD_CONST              94 ((None,))
+           1890 LOAD_CONST              66 (<code object _open_templates at 0x000002BF94A69C50, file "ui\customer_report_menu.py", line 198>)
+           1892 MAKE_FUNCTION            1 (defaults)
+           1894 STORE_FAST               7 (_open_templates)
+
+204        1896 LOAD_DEREF              20 (link)
+           1898 LOAD_METHOD              9 (bind)
+           1920 LOAD_CONST              39 ('<Button-1>')
+           1922 LOAD_FAST                7 (_open_templates)
+           1924 PRECALL                  2
+           1928 CALL                     2
+           1938 POP_TOP
+
+205        1940 LOAD_DEREF              20 (link)
+           1942 LOAD_METHOD              9 (bind)
+           1964 LOAD_CONST              41 ('<Enter>')
+           1966 LOAD_CLOSURE            15 (COL)
+           1968 LOAD_CLOSURE            20 (link)
+           1970 BUILD_TUPLE              2
+           1972 LOAD_CONST              67 (<code object <lambda> at 0x000002BF94A2F430, file "ui\customer_report_menu.py", line 205>)
+           1974 MAKE_FUNCTION            8 (closure)
+           1976 PRECALL                  2
+           1980 CALL                     2
+           1990 POP_TOP
+
+206        1992 LOAD_DEREF              20 (link)
+           1994 LOAD_METHOD              9 (bind)
+           2016 LOAD_CONST              43 ('<Leave>')
+           2018 LOAD_CLOSURE            15 (COL)
+           2020 LOAD_CLOSURE            20 (link)
+           2022 BUILD_TUPLE              2
+           2024 LOAD_CONST              68 (<code object <lambda> at 0x000002BF94A2F130, file "ui\customer_report_menu.py", line 206>)
+           2026 MAKE_FUNCTION            8 (closure)
+           2028 PRECALL                  2
+           2032 CALL                     2
+           2042 POP_TOP
+
+207        2044 LOAD_GLOBAL              5 (NULL + tk)
+           2056 LOAD_ATTR               16 (Label)
+           2066 LOAD_FAST                6 (foot)
+           2068 LOAD_CONST              69 ('模板文件存放在输出目录 /special_templates/ 下')
+
+208        2070 LOAD_DEREF              15 (COL)
+           2072 LOAD_CONST               6 ('gap')
+           2074 BINARY_SUBSCR
+           2084 LOAD_CONST              70 ('#5F5E5A')
+           2086 LOAD_DEREF              22 (tg)
+           2088 LOAD_ATTR               15 (_SANS)
+           2098 LOAD_CONST              22 (11)
+           2100 BUILD_TUPLE              2
+
+207        2102 KW_NAMES                31
+           2104 PRECALL                  5
+           2108 CALL                     5
+
+208        2118 LOAD_METHOD             11 (pack)
+           2140 LOAD_CONST              47 ('w')
+           2142 LOAD_CONST              71 ((2, 0))
+           2144 KW_NAMES                72
+           2146 PRECALL                  2
+           2150 CALL                     2
+           2160 POP_TOP
+
+211        2162 LOAD_GLOBAL              5 (NULL + tk)
+           2174 LOAD_ATTR               10 (Frame)
+           2184 LOAD_FAST                3 (bottom_block)
+           2186 LOAD_DEREF              15 (COL)
+           2188 LOAD_CONST               6 ('gap')
+           2190 BINARY_SUBSCR
+           2200 KW_NAMES                 7
+           2202 PRECALL                  2
+           2206 CALL                     2
+           2216 STORE_FAST               8 (bottom)
+
+212        2218 LOAD_FAST                8 (bottom)
+           2220 LOAD_METHOD             11 (pack)
+           2242 LOAD_CONST              11 ('x')
+           2244 LOAD_CONST              73 ((6, 0))
+           2246 KW_NAMES                61
+           2248 PRECALL                  2
+           2252 CALL                     2
+           2262 POP_TOP
+
+213        2264 LOAD_FAST                3 (bottom_block)
+           2266 LOAD_METHOD             11 (pack)
+           2288 LOAD_CONST              74 ('bottom')
+           2290 LOAD_CONST              11 ('x')
+           2292 LOAD_CONST              48 (24)
+           2294 LOAD_CONST              75 ((0, 16))
+           2296 KW_NAMES                76
+           2298 PRECALL                  4
+           2302 CALL                     4
+           2312 POP_TOP
+
+214        2314 LOAD_GLOBAL              5 (NULL + tk)
+           2326 LOAD_ATTR               16 (Label)
+           2336 LOAD_FAST                8 (bottom)
+           2338 LOAD_CONST              77 ('选择后将直接生成并打开对应 .xlsx')
+
+215        2340 LOAD_DEREF              15 (COL)
+           2342 LOAD_CONST               6 ('gap')
+           2344 BINARY_SUBSCR
+           2354 LOAD_DEREF              15 (COL)
+           2356 LOAD_CONST              35 ('ink_3')
+           2358 BINARY_SUBSCR
+           2368 LOAD_DEREF              22 (tg)
+           2370 LOAD_ATTR               15 (_SANS)
+           2380 LOAD_CONST              23 (12)
+           2382 BUILD_TUPLE              2
+
+214        2384 KW_NAMES                31
+           2386 PRECALL                  5
+           2390 CALL                     5
+
+215        2400 LOAD_METHOD             11 (pack)
+
+216        2422 LOAD_CONST              28 ('left')
+           2424 LOAD_CONST              32 ((8, 0))
+
+215        2426 KW_NAMES                78
+           2428 PRECALL                  2
+           2432 CALL                     2
+           2442 POP_TOP
+
+217        2444 LOAD_GLOBAL              5 (NULL + tk)
+           2456 LOAD_ATTR               16 (Label)
+           2466 LOAD_FAST                8 (bottom)
+           2468 LOAD_CONST              79 ('取消')
+           2470 LOAD_DEREF              15 (COL)
+           2472 LOAD_CONST              80 ('accent')
+           2474 BINARY_SUBSCR
+           2484 LOAD_DEREF              15 (COL)
+           2486 LOAD_CONST              81 ('select_fg')
+           2488 BINARY_SUBSCR
+
+218        2498 LOAD_DEREF              22 (tg)
+           2500 LOAD_ATTR               15 (_SANS)
+           2510 LOAD_CONST              82 (13)
+           2512 LOAD_CONST              26 ('bold')
+           2514 BUILD_TUPLE              3
+           2516 LOAD_CONST              83 (20)
+           2518 LOAD_CONST              84 (7)
+           2520 LOAD_CONST              36 ('hand2')
+
+217        2522 KW_NAMES                85
+           2524 PRECALL                  8
+           2528 CALL                     8
+           2538 STORE_DEREF             17 (cancel)
+
+219        2540 LOAD_DEREF              17 (cancel)
+           2542 LOAD_METHOD             11 (pack)
+           2564 LOAD_CONST              38 ('right')
+           2566 KW_NAMES                29
+           2568 PRECALL                  1
+           2572 CALL                     1
+           2582 POP_TOP
+
+220        2584 LOAD_DEREF              17 (cancel)
+           2586 LOAD_METHOD              9 (bind)
+           2608 LOAD_CONST              39 ('<Button-1>')
+           2610 LOAD_CLOSURE            23 (win)
+           2612 BUILD_TUPLE              1
+           2614 LOAD_CONST              86 (<code object <lambda> at 0x000002BF94AA84E0, file "ui\customer_report_menu.py", line 220>)
+           2616 MAKE_FUNCTION            8 (closure)
+           2618 PRECALL                  2
+           2622 CALL                     2
+           2632 POP_TOP
+
+221        2634 LOAD_DEREF              17 (cancel)
+           2636 LOAD_METHOD              9 (bind)
+           2658 LOAD_CONST              41 ('<Enter>')
+           2660 LOAD_CLOSURE            15 (COL)
+           2662 LOAD_CLOSURE            17 (cancel)
+           2664 BUILD_TUPLE              2
+           2666 LOAD_CONST              87 (<code object <lambda> at 0x000002BF94A2F530, file "ui\customer_report_menu.py", line 221>)
+           2668 MAKE_FUNCTION            8 (closure)
+           2670 PRECALL                  2
+           2674 CALL                     2
+           2684 POP_TOP
+
+222        2686 LOAD_DEREF              17 (cancel)
+           2688 LOAD_METHOD              9 (bind)
+           2710 LOAD_CONST              43 ('<Leave>')
+           2712 LOAD_CLOSURE            15 (COL)
+           2714 LOAD_CLOSURE            17 (cancel)
+           2716 BUILD_TUPLE              2
+           2718 LOAD_CONST              88 (<code object <lambda> at 0x000002BF94A2F230, file "ui\customer_report_menu.py", line 222>)
+           2720 MAKE_FUNCTION            8 (closure)
+           2722 PRECALL                  2
+           2726 CALL                     2
+           2736 POP_TOP
+
+224        2738 LOAD_CONST              89 ((816, 912))
+           2740 UNPACK_SEQUENCE          2
+           2744 STORE_FAST               9 (W)
+           2746 STORE_FAST              10 (H)
+
+225        2748 LOAD_DEREF              23 (win)
+           2750 LOAD_METHOD             19 (minsize)
+           2772 LOAD_FAST                9 (W)
+           2774 LOAD_FAST               10 (H)
+           2776 PRECALL                  2
+           2780 CALL                     2
+           2790 POP_TOP
+
+226        2792 LOAD_DEREF              23 (win)
+           2794 LOAD_METHOD             20 (update_idletasks)
+           2816 PRECALL                  0
+           2820 CALL                     0
+           2830 POP_TOP
+
+227        2832 LOAD_FAST                0 (parent)
+           2834 LOAD_METHOD             21 (winfo_width)
+           2856 PRECALL                  0
+           2860 CALL                     0
+           2870 LOAD_FAST                0 (parent)
+           2872 LOAD_METHOD             22 (winfo_height)
+           2894 PRECALL                  0
+           2898 CALL                     0
+           2908 STORE_FAST              12 (ph)
+           2910 STORE_FAST              11 (pw)
+
+228        2912 LOAD_FAST                0 (parent)
+           2914 LOAD_METHOD             23 (winfo_rootx)
+           2936 PRECALL                  0
+           2940 CALL                     0
+           2950 LOAD_FAST                0 (parent)
+           2952 LOAD_METHOD             24 (winfo_rooty)
+           2974 PRECALL                  0
+           2978 CALL                     0
+           2988 STORE_FAST              14 (py)
+           2990 STORE_FAST              13 (px)
+
+229        2992 LOAD_FAST               11 (pw)
+           2994 LOAD_CONST              90 (200)
+           2996 COMPARE_OP               0 (<)
+           3002 POP_JUMP_FORWARD_IF_TRUE     6 (to 3016)
+           3004 LOAD_FAST               12 (ph)
+           3006 LOAD_CONST              90 (200)
+           3008 COMPARE_OP               0 (<)
+           3014 POP_JUMP_FORWARD_IF_FALSE    45 (to 3106)
+
+230     >> 3016 LOAD_DEREF              23 (win)
+           3018 LOAD_METHOD             25 (winfo_screenwidth)
+           3040 PRECALL                  0
+           3044 CALL                     0
+           3054 LOAD_DEREF              23 (win)
+           3056 LOAD_METHOD             26 (winfo_screenheight)
+           3078 PRECALL                  0
+           3082 CALL                     0
+           3092 STORE_FAST              12 (ph)
+           3094 STORE_FAST              11 (pw)
+
+231        3096 LOAD_CONST              91 ((0, 0))
+           3098 UNPACK_SEQUENCE          2
+           3102 STORE_FAST              13 (px)
+           3104 STORE_FAST              14 (py)
+
+232     >> 3106 LOAD_DEREF              23 (win)
+           3108 LOAD_METHOD             27 (geometry)
+           3130 LOAD_FAST                9 (W)
+           3132 FORMAT_VALUE             0
+           3134 LOAD_CONST              11 ('x')
+           3136 LOAD_FAST               10 (H)
+           3138 FORMAT_VALUE             0
+           3140 LOAD_CONST              92 ('+')
+           3142 LOAD_FAST               13 (px)
+           3144 LOAD_GLOBAL             57 (NULL + max)
+           3156 LOAD_CONST               1 (0)
+           3158 LOAD_FAST               11 (pw)
+           3160 LOAD_FAST                9 (W)
+           3162 BINARY_OP               10 (-)
+           3166 LOAD_CONST              93 (2)
+           3168 BINARY_OP                2 (//)
+           3172 PRECALL                  2
+           3176 CALL                     2
+           3186 BINARY_OP                0 (+)
+           3190 FORMAT_VALUE             0
+           3192 LOAD_CONST              92 ('+')
+           3194 LOAD_FAST               14 (py)
+           3196 LOAD_GLOBAL             57 (NULL + max)
+           3208 LOAD_CONST               1 (0)
+           3210 LOAD_FAST               12 (ph)
+           3212 LOAD_FAST               10 (H)
+           3214 BINARY_OP               10 (-)
+           3218 LOAD_CONST              93 (2)
+           3220 BINARY_OP                2 (//)
+           3224 PRECALL                  2
+           3228 CALL                     2
+           3238 BINARY_OP                0 (+)
+           3242 FORMAT_VALUE             0
+           3244 BUILD_STRING             7
+           3246 PRECALL                  1
+           3250 CALL                     1
+           3260 POP_TOP
+
+233        3262 LOAD_DEREF              23 (win)
+           3264 LOAD_METHOD             29 (deiconify)
+           3286 PRECALL                  0
+           3290 CALL                     0
+           3300 POP_TOP
+
+234        3302 LOAD_DEREF              23 (win)
+           3304 LOAD_METHOD             30 (update)
+           3326 PRECALL                  0
+           3330 CALL                     0
+           3340 POP_TOP
+
+235        3342 LOAD_DEREF              23 (win)
+           3344 LOAD_METHOD             31 (wait_window)
+           3366 PRECALL                  0
+           3370 CALL                     0
+           3380 POP_TOP
+
+236        3382 LOAD_DEREF              18 (choice)
+           3384 LOAD_CONST               3 ('v')
+           3386 BINARY_SUBSCR
+           3396 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+ 83           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.pick  (args=1, locals=1)
+# varnames: v
+              0 COPY_FREE_VARS           2
+
+ 85           2 RESUME                   0
+
+ 86           4 LOAD_FAST                0 (v)
+              6 LOAD_DEREF               1 (choice)
+              8 LOAD_CONST               1 ('v')
+             10 STORE_SUBSCR
+
+ 87          14 LOAD_DEREF               2 (win)
+             16 LOAD_METHOD              0 (destroy)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 POP_TOP
+             54 LOAD_CONST               0 (None)
+             56 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+103           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+104           2 RESUME                   0
+              4 LOAD_DEREF               2 (close)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+105           2 RESUME                   0
+              4 LOAD_DEREF               2 (close)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink_3')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card  (args=2, locals=12)
+# varnames: cust, enabled, h, card, av, mid, name_font, name_fg, ul, btn_w, _fire, w
+              0 COPY_FREE_VARS           4
+              2 MAKE_CELL                0 (cust)
+              4 MAKE_CELL                1 (enabled)
+              6 MAKE_CELL               12 (btn)
+
+120           8 RESUME                   0
+
+121          10 LOAD_CONST               1 (70)
+             12 STORE_FAST               2 (h)
+
+122          14 LOAD_GLOBAL              1 (NULL + tk)
+             26 LOAD_ATTR                1 (Frame)
+             36 LOAD_DEREF              14 (body)
+             38 LOAD_DEREF               1 (enabled)
+             40 POP_JUMP_FORWARD_IF_FALSE     8 (to 58)
+             42 LOAD_DEREF              13 (COL)
+             44 LOAD_CONST               2 ('hair')
+             46 BINARY_SUBSCR
+             56 JUMP_FORWARD             7 (to 72)
+        >>   58 LOAD_DEREF              13 (COL)
+             60 LOAD_CONST               3 ('field')
+             62 BINARY_SUBSCR
+
+123     >>   72 LOAD_DEREF              13 (COL)
+             74 LOAD_CONST               4 ('panel_border')
+             76 BINARY_SUBSCR
+             86 LOAD_CONST               5 (1)
+
+122          88 KW_NAMES                 6
+             90 PRECALL                  4
+             94 CALL                     4
+            104 STORE_FAST               3 (card)
+
+124         106 LOAD_FAST                3 (card)
+            108 LOAD_METHOD              2 (pack)
+            130 LOAD_CONST               7 ('x')
+            132 LOAD_DEREF               1 (enabled)
+            134 POP_JUMP_FORWARD_IF_FALSE     2 (to 140)
+            136 LOAD_CONST               8 (10)
+            138 JUMP_FORWARD             1 (to 142)
+        >>  140 LOAD_CONST               9 (0)
+        >>  142 LOAD_CONST               8 (10)
+            144 BUILD_TUPLE              2
+            146 KW_NAMES                10
+            148 PRECALL                  2
+            152 CALL                     2
+            162 POP_TOP
+
+127         164 LOAD_GLOBAL              1 (NULL + tk)
+            176 LOAD_ATTR                3 (Canvas)
+            186 LOAD_FAST                3 (card)
+            188 LOAD_CONST              11 (32)
+            190 LOAD_CONST              11 (32)
+            192 LOAD_FAST                3 (card)
+            194 LOAD_CONST              12 ('bg')
+            196 BINARY_SUBSCR
+
+128         206 LOAD_CONST               9 (0)
+
+127         208 KW_NAMES                13
+            210 PRECALL                  5
+            214 CALL                     5
+            224 STORE_FAST               4 (av)
+
+129         226 LOAD_FAST                4 (av)
+            228 LOAD_METHOD              2 (pack)
+            250 LOAD_CONST              14 ('left')
+            252 LOAD_CONST              15 ((20, 16))
+            254 KW_NAMES                16
+            256 PRECALL                  2
+            260 CALL                     2
+            270 POP_TOP
+
+130         272 LOAD_DEREF               1 (enabled)
+            274 POP_JUMP_FORWARD_IF_FALSE    80 (to 436)
+
+131         276 LOAD_FAST                4 (av)
+            278 LOAD_METHOD              4 (create_oval)
+            300 LOAD_CONST               9 (0)
+            302 LOAD_CONST               9 (0)
+            304 LOAD_CONST              11 (32)
+            306 LOAD_CONST              11 (32)
+            308 LOAD_DEREF              13 (COL)
+            310 LOAD_CONST              17 ('accent')
+            312 BINARY_SUBSCR
+            322 LOAD_DEREF              13 (COL)
+            324 LOAD_CONST              17 ('accent')
+            326 BINARY_SUBSCR
+            336 KW_NAMES                18
+            338 PRECALL                  6
+            342 CALL                     6
+            352 POP_TOP
+
+132         354 LOAD_FAST                4 (av)
+            356 LOAD_METHOD              5 (create_text)
+            378 LOAD_CONST              19 (16)
+            380 LOAD_CONST              20 (17)
+            382 LOAD_CONST              21 ('A')
+            384 LOAD_DEREF              13 (COL)
+            386 LOAD_CONST              22 ('select_fg')
+            388 BINARY_SUBSCR
+
+133         398 LOAD_DEREF              16 (tg)
+            400 LOAD_ATTR                6 (_SANS)
+            410 LOAD_CONST              23 (13)
+            412 LOAD_CONST              24 ('bold')
+            414 BUILD_TUPLE              3
+
+132         416 KW_NAMES                25
+            418 PRECALL                  5
+            422 CALL                     5
+            432 POP_TOP
+            434 JUMP_FORWARD            67 (to 570)
+
+135     >>  436 LOAD_FAST                4 (av)
+            438 LOAD_METHOD              4 (create_oval)
+            460 LOAD_CONST               9 (0)
+            462 LOAD_CONST               9 (0)
+            464 LOAD_CONST              11 (32)
+            466 LOAD_CONST              11 (32)
+            468 LOAD_CONST              26 ('#444b57')
+            470 LOAD_CONST              26 ('#444b57')
+            472 KW_NAMES                18
+            474 PRECALL                  6
+            478 CALL                     6
+            488 POP_TOP
+
+136         490 LOAD_FAST                4 (av)
+            492 LOAD_METHOD              5 (create_text)
+            514 LOAD_CONST              19 (16)
+            516 LOAD_CONST              20 (17)
+            518 LOAD_CONST              27 ('?')
+            520 LOAD_DEREF              13 (COL)
+            522 LOAD_CONST              28 ('ink_2')
+            524 BINARY_SUBSCR
+
+137         534 LOAD_DEREF              16 (tg)
+            536 LOAD_ATTR                6 (_SANS)
+            546 LOAD_CONST              23 (13)
+            548 LOAD_CONST              24 ('bold')
+            550 BUILD_TUPLE              3
+
+136         552 KW_NAMES                25
+            554 PRECALL                  5
+            558 CALL                     5
+            568 POP_TOP
+
+140     >>  570 LOAD_GLOBAL              1 (NULL + tk)
+            582 LOAD_ATTR                1 (Frame)
+            592 LOAD_FAST                3 (card)
+            594 LOAD_FAST                3 (card)
+            596 LOAD_CONST              12 ('bg')
+            598 BINARY_SUBSCR
+            608 KW_NAMES                29
+            610 PRECALL                  2
+            614 CALL                     2
+            624 STORE_FAST               5 (mid)
+
+141         626 LOAD_FAST                5 (mid)
+            628 LOAD_METHOD              2 (pack)
+            650 LOAD_CONST              14 ('left')
+            652 LOAD_CONST              30 ('both')
+            654 LOAD_CONST              31 (True)
+            656 KW_NAMES                32
+            658 PRECALL                  3
+            662 CALL                     3
+            672 POP_TOP
+
+142         674 LOAD_DEREF              16 (tg)
+            676 LOAD_ATTR                6 (_SANS)
+            686 LOAD_CONST              33 (14)
+            688 LOAD_CONST              24 ('bold')
+            690 BUILD_TUPLE              3
+            692 STORE_FAST               6 (name_font)
+
+143         694 LOAD_DEREF               1 (enabled)
+            696 POP_JUMP_FORWARD_IF_FALSE     8 (to 714)
+            698 LOAD_DEREF              13 (COL)
+            700 LOAD_CONST              17 ('accent')
+            702 BINARY_SUBSCR
+            712 JUMP_FORWARD             7 (to 728)
+        >>  714 LOAD_DEREF              13 (COL)
+            716 LOAD_CONST              28 ('ink_2')
+            718 BINARY_SUBSCR
+        >>  728 STORE_FAST               7 (name_fg)
+
+144         730 LOAD_GLOBAL              1 (NULL + tk)
+            742 LOAD_ATTR                7 (Label)
+            752 LOAD_FAST                5 (mid)
+            754 LOAD_DEREF               0 (cust)
+            756 LOAD_CONST              34 ('name')
+            758 BINARY_SUBSCR
+            768 LOAD_FAST                3 (card)
+            770 LOAD_CONST              12 ('bg')
+            772 BINARY_SUBSCR
+            782 LOAD_FAST                7 (name_fg)
+
+145         784 LOAD_FAST                6 (name_font)
+            786 LOAD_DEREF               1 (enabled)
+            788 POP_JUMP_FORWARD_IF_FALSE     2 (to 794)
+            790 LOAD_CONST              35 ('hand2')
+            792 JUMP_FORWARD             1 (to 796)
+        >>  794 LOAD_CONST              36 ('arrow')
+
+146     >>  796 LOAD_CONST              14 ('left')
+
+144         798 KW_NAMES                37
+            800 PRECALL                  7
+            804 CALL                     7
+
+146         814 LOAD_METHOD              2 (pack)
+            836 LOAD_CONST              38 ('w')
+            838 LOAD_CONST              39 ((6, 2))
+            840 KW_NAMES                40
+            842 PRECALL                  2
+            846 CALL                     2
+            856 POP_TOP
+
+147         858 LOAD_DEREF               1 (enabled)
+            860 POP_JUMP_FORWARD_IF_FALSE    47 (to 956)
+
+149         862 LOAD_GLOBAL              1 (NULL + tk)
+            874 LOAD_ATTR                1 (Frame)
+            884 LOAD_FAST                5 (mid)
+            886 LOAD_FAST                7 (name_fg)
+            888 LOAD_CONST               5 (1)
+            890 KW_NAMES                41
+            892 PRECALL                  3
+            896 CALL                     3
+            906 STORE_FAST               8 (ul)
+
+150         908 LOAD_FAST                8 (ul)
+            910 LOAD_METHOD              2 (pack)
+            932 LOAD_CONST              38 ('w')
+            934 LOAD_CONST               7 ('x')
+            936 LOAD_CONST              42 (False)
+            938 KW_NAMES                43
+            940 PRECALL                  3
+            944 CALL                     3
+            954 POP_TOP
+
+151     >>  956 LOAD_GLOBAL              1 (NULL + tk)
+            968 LOAD_ATTR                7 (Label)
+            978 LOAD_FAST                5 (mid)
+            980 LOAD_DEREF               0 (cust)
+            982 LOAD_CONST              44 ('subtitle')
+            984 BINARY_SUBSCR
+            994 LOAD_FAST                3 (card)
+            996 LOAD_CONST              12 ('bg')
+            998 BINARY_SUBSCR
+
+152        1008 LOAD_DEREF               1 (enabled)
+           1010 POP_JUMP_FORWARD_IF_FALSE     8 (to 1028)
+           1012 LOAD_DEREF              13 (COL)
+           1014 LOAD_CONST              28 ('ink_2')
+           1016 BINARY_SUBSCR
+           1026 JUMP_FORWARD             7 (to 1042)
+        >> 1028 LOAD_DEREF              13 (COL)
+           1030 LOAD_CONST              45 ('ink_3')
+           1032 BINARY_SUBSCR
+
+153     >> 1042 LOAD_DEREF              16 (tg)
+           1044 LOAD_ATTR                6 (_SANS)
+           1054 LOAD_CONST              46 (11)
+           1056 BUILD_TUPLE              2
+           1058 LOAD_DEREF               1 (enabled)
+           1060 POP_JUMP_FORWARD_IF_FALSE     2 (to 1066)
+           1062 LOAD_CONST              35 ('hand2')
+           1064 JUMP_FORWARD             1 (to 1068)
+        >> 1066 LOAD_CONST              36 ('arrow')
+
+154     >> 1068 LOAD_CONST              14 ('left')
+
+151        1070 KW_NAMES                37
+           1072 PRECALL                  7
+           1076 CALL                     7
+
+154        1086 LOAD_METHOD              2 (pack)
+           1108 LOAD_CONST              38 ('w')
+           1110 LOAD_CONST              47 ((2, 6))
+           1112 KW_NAMES                40
+           1114 PRECALL                  2
+           1118 CALL                     2
+           1128 POP_TOP
+
+157        1130 LOAD_CONST              48 (84)
+           1132 STORE_FAST               9 (btn_w)
+
+158        1134 LOAD_DEREF               1 (enabled)
+           1136 POP_JUMP_FORWARD_IF_FALSE    50 (to 1238)
+
+159        1138 LOAD_GLOBAL              1 (NULL + tk)
+           1150 LOAD_ATTR                7 (Label)
+           1160 LOAD_FAST                3 (card)
+           1162 LOAD_CONST              49 ('打开')
+           1164 LOAD_DEREF              13 (COL)
+           1166 LOAD_CONST              17 ('accent')
+           1168 BINARY_SUBSCR
+           1178 LOAD_DEREF              13 (COL)
+           1180 LOAD_CONST              22 ('select_fg')
+           1182 BINARY_SUBSCR
+
+160        1192 LOAD_DEREF              16 (tg)
+           1194 LOAD_ATTR                6 (_SANS)
+           1204 LOAD_CONST              50 (12)
+           1206 LOAD_CONST              24 ('bold')
+           1208 BUILD_TUPLE              3
+           1210 LOAD_CONST              51 (8)
+           1212 LOAD_CONST               8 (10)
+           1214 LOAD_CONST              52 (6)
+
+161        1216 LOAD_CONST              35 ('hand2')
+
+159        1218 KW_NAMES                53
+           1220 PRECALL                  9
+           1224 CALL                     9
+           1234 STORE_DEREF             12 (btn)
+           1236 JUMP_FORWARD            45 (to 1328)
+
+163     >> 1238 LOAD_GLOBAL              1 (NULL + tk)
+           1250 LOAD_ATTR                7 (Label)
+           1260 LOAD_FAST                3 (card)
+           1262 LOAD_CONST              49 ('打开')
+           1264 LOAD_CONST              26 ('#444b57')
+           1266 LOAD_DEREF              13 (COL)
+           1268 LOAD_CONST              45 ('ink_3')
+           1270 BINARY_SUBSCR
+
+164        1280 LOAD_DEREF              16 (tg)
+           1282 LOAD_ATTR                6 (_SANS)
+           1292 LOAD_CONST              50 (12)
+           1294 LOAD_CONST              24 ('bold')
+           1296 BUILD_TUPLE              3
+           1298 LOAD_CONST              51 (8)
+           1300 LOAD_CONST               8 (10)
+           1302 LOAD_CONST              52 (6)
+
+165        1304 LOAD_CONST              36 ('arrow')
+           1306 LOAD_CONST              54 ('#5F5E5A')
+
+166        1308 LOAD_CONST               5 (1)
+
+163        1310 KW_NAMES                55
+           1312 PRECALL                 11
+           1316 CALL                    11
+           1326 STORE_DEREF             12 (btn)
+
+168     >> 1328 LOAD_CONST              66 ((None,))
+           1330 LOAD_CLOSURE             0 (cust)
+           1332 LOAD_CLOSURE             1 (enabled)
+           1334 LOAD_CLOSURE            15 (pick)
+           1336 BUILD_TUPLE              3
+           1338 LOAD_CONST              56 (<code object _fire at 0x000002BF94AA8E40, file "ui\customer_report_menu.py", line 168>)
+           1340 MAKE_FUNCTION            9 (defaults, closure)
+           1342 STORE_FAST              10 (_fire)
+
+172        1344 LOAD_DEREF               1 (enabled)
+           1346 POP_JUMP_FORWARD_IF_FALSE   203 (to 1754)
+
+173        1348 LOAD_FAST                3 (card)
+           1350 LOAD_FAST                5 (mid)
+           1352 LOAD_FAST                4 (av)
+           1354 LOAD_DEREF              12 (btn)
+           1356 BUILD_TUPLE              4
+           1358 GET_ITER
+        >> 1360 FOR_ITER                56 (to 1474)
+           1362 STORE_FAST              11 (w)
+
+174        1364 LOAD_FAST               11 (w)
+           1366 LOAD_METHOD              8 (bind)
+           1388 LOAD_CONST              57 ('<Enter>')
+           1390 LOAD_FAST                3 (card)
+           1392 BUILD_TUPLE              1
+           1394 LOAD_CLOSURE            13 (COL)
+           1396 BUILD_TUPLE              1
+           1398 LOAD_CONST              58 (<code object <lambda> at 0x000002BF94A2FE30, file "ui\customer_report_menu.py", line 174>)
+           1400 MAKE_FUNCTION            9 (defaults, closure)
+           1402 PRECALL                  2
+           1406 CALL                     2
+           1416 POP_TOP
+
+176        1418 LOAD_FAST               11 (w)
+           1420 LOAD_METHOD              8 (bind)
+           1442 LOAD_CONST              59 ('<Leave>')
+           1444 LOAD_FAST                3 (card)
+           1446 BUILD_TUPLE              1
+           1448 LOAD_CLOSURE            13 (COL)
+           1450 BUILD_TUPLE              1
+           1452 LOAD_CONST              60 (<code object <lambda> at 0x000002BF94A2ED30, file "ui\customer_report_menu.py", line 176>)
+           1454 MAKE_FUNCTION            9 (defaults, closure)
+           1456 PRECALL                  2
+           1460 CALL                     2
+           1470 POP_TOP
+           1472 JUMP_BACKWARD           57 (to 1360)
+
+178     >> 1474 LOAD_FAST                3 (card)
+           1476 LOAD_METHOD              8 (bind)
+           1498 LOAD_CONST              61 ('<Button-1>')
+           1500 LOAD_FAST               10 (_fire)
+           1502 PRECALL                  2
+           1506 CALL                     2
+           1516 POP_TOP
+
+179        1518 LOAD_FAST                5 (mid)
+           1520 LOAD_METHOD              8 (bind)
+           1542 LOAD_CONST              61 ('<Button-1>')
+           1544 LOAD_FAST               10 (_fire)
+           1546 PRECALL                  2
+           1550 CALL                     2
+           1560 POP_TOP
+
+180        1562 LOAD_FAST                4 (av)
+           1564 LOAD_METHOD              8 (bind)
+           1586 LOAD_CONST              61 ('<Button-1>')
+           1588 LOAD_FAST               10 (_fire)
+           1590 PRECALL                  2
+           1594 CALL                     2
+           1604 POP_TOP
+
+181        1606 LOAD_DEREF              12 (btn)
+           1608 LOAD_METHOD              8 (bind)
+           1630 LOAD_CONST              61 ('<Button-1>')
+           1632 LOAD_FAST               10 (_fire)
+           1634 PRECALL                  2
+           1638 CALL                     2
+           1648 POP_TOP
+
+182        1650 LOAD_DEREF              12 (btn)
+           1652 LOAD_METHOD              8 (bind)
+           1674 LOAD_CONST              57 ('<Enter>')
+           1676 LOAD_CLOSURE            13 (COL)
+           1678 LOAD_CLOSURE            12 (btn)
+           1680 BUILD_TUPLE              2
+           1682 LOAD_CONST              62 (<code object <lambda> at 0x000002BF94A2F330, file "ui\customer_report_menu.py", line 182>)
+           1684 MAKE_FUNCTION            8 (closure)
+           1686 PRECALL                  2
+           1690 CALL                     2
+           1700 POP_TOP
+
+183        1702 LOAD_DEREF              12 (btn)
+           1704 LOAD_METHOD              8 (bind)
+           1726 LOAD_CONST              59 ('<Leave>')
+           1728 LOAD_CLOSURE            13 (COL)
+           1730 LOAD_CLOSURE            12 (btn)
+           1732 BUILD_TUPLE              2
+           1734 LOAD_CONST              63 (<code object <lambda> at 0x000002BF94A2F630, file "ui\customer_report_menu.py", line 183>)
+           1736 MAKE_FUNCTION            8 (closure)
+           1738 PRECALL                  2
+           1742 CALL                     2
+           1752 POP_TOP
+
+185     >> 1754 LOAD_DEREF              12 (btn)
+           1756 LOAD_METHOD              2 (pack)
+           1778 LOAD_CONST              64 ('right')
+           1780 LOAD_CONST              65 ((0, 16))
+           1782 KW_NAMES                16
+           1784 PRECALL                  2
+           1788 CALL                     2
+           1798 POP_TOP
+           1800 LOAD_CONST               0 (None)
+           1802 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card._fire  (args=1, locals=1)
+# varnames: _
+              0 COPY_FREE_VARS           3
+
+168           2 RESUME                   0
+
+169           4 LOAD_DEREF               2 (enabled)
+              6 POP_JUMP_FORWARD_IF_FALSE    19 (to 46)
+
+170           8 PUSH_NULL
+             10 LOAD_DEREF               3 (pick)
+             12 LOAD_DEREF               1 (cust)
+             14 LOAD_CONST               1 ('id')
+             16 BINARY_SUBSCR
+             26 PRECALL                  1
+             30 CALL                     1
+             40 POP_TOP
+             42 LOAD_CONST               0 (None)
+             44 RETURN_VALUE
+
+169     >>   46 LOAD_CONST               0 (None)
+             48 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card.<lambda>  (args=2, locals=2)
+# varnames: e, c
+              0 COPY_FREE_VARS           1
+
+174           2 RESUME                   0
+              4 LOAD_FAST                1 (c)
+              6 LOAD_METHOD              0 (configure)
+
+175          28 LOAD_DEREF               2 (COL)
+             30 LOAD_CONST               1 ('accent')
+             32 BINARY_SUBSCR
+
+174          42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card.<lambda>  (args=2, locals=2)
+# varnames: e, c
+              0 COPY_FREE_VARS           1
+
+176           2 RESUME                   0
+              4 LOAD_FAST                1 (c)
+              6 LOAD_METHOD              0 (configure)
+
+177          28 LOAD_DEREF               2 (COL)
+             30 LOAD_CONST               1 ('panel_border')
+             32 BINARY_SUBSCR
+
+176          42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+182           2 RESUME                   0
+              4 LOAD_DEREF               2 (btn)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent_2')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._make_card.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+183           2 RESUME                   0
+              4 LOAD_DEREF               2 (btn)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report._open_templates  (args=1, locals=1)
+# varnames: _
+198           0 RESUME                   0
+
+199           2 NOP
+
+200           4 LOAD_GLOBAL              1 (NULL + os)
+             16 LOAD_ATTR                1 (startfile)
+             26 LOAD_GLOBAL              4 (_SPECIAL_DIR)
+             38 PRECALL                  1
+             42 CALL                     1
+             52 POP_TOP
+             54 LOAD_CONST               0 (None)
+             56 RETURN_VALUE
+        >>   58 PUSH_EXC_INFO
+
+201          60 LOAD_GLOBAL              6 (Exception)
+             72 CHECK_EXC_MATCH
+             74 POP_JUMP_FORWARD_IF_FALSE     4 (to 84)
+             76 POP_TOP
+
+202          78 POP_EXCEPT
+             80 LOAD_CONST               0 (None)
+             82 RETURN_VALUE
+
+201     >>   84 RERAISE                  0
+        >>   86 COPY                     3
+             88 POP_EXCEPT
+             90 RERAISE                  1
+ExceptionTable:
+  4 to 52 -> 58 [0]
+  58 to 76 -> 86 [1] lasti
+  84 to 84 -> 86 [1] lasti
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+205           2 RESUME                   0
+              4 LOAD_DEREF               2 (link)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink_2')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+206           2 RESUME                   0
+              4 LOAD_DEREF               2 (link)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink_3')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+220           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+221           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent_2')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_customer_report.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+222           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE

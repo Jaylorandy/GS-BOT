@@ -1,0 +1,47 @@
+# ── deps / regenerable build outputs ──
+node_modules/
+dist/
+dist-ssr/
+release/
+build-logs/
+tmp/
+.tmp/
+.tmp-*
+.tmp-asar-inspect/
+
+# ── large vendored runtime (re-provisionable, not source) ──
+vendor/
+
+# ── large user data / training assets ──
+label training/
+
+# ── junk ──
+._*
+__pycache__/
+*.pyc
+.DS_Store
+*.bak
+*.bak-*
+*.broken
+*.log
+*.local
+.playwright-cli/
+
+# ── editor ──
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── AI workspace data (not for publishing) ──
+.workbuddy/
+
+# ── pending-delete old .git (150GB staged-blob accident, being removed in background) ──
+.trash-gsbot-old-git/
+
+# ── secrets (license signing key never goes to public repo) ──
+license-keys/private.pem

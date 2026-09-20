@@ -1,0 +1,12 @@
+# module: core
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core package - Purchase Order Extractor V2 unified data contract & engine.')
+              4 STORE_NAME               0 (__doc__)
+              6 LOAD_CONST               1 (None)
+              8 RETURN_VALUE

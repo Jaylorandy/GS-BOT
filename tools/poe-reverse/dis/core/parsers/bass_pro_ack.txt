@@ -1,0 +1,768 @@
+# module: core.parsers.bass_pro_ack
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\bass_pro_ack.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/bass_pro_ack.py - Bass Pro Shops Order Acknowledgement.\n\nSource: INTERNATIONAL DIRECT GROUP INC -> BASS PRO SHOPS. Each ``Order #`` is\none delivery entity (Ctrl # groups several). The item block is a colour x size\nmatrix printed as a SKU line followed by a ``Size >`` header row and a ``Qty >``\nrow - there is NO TOTAL column, so sizes/quantities are positionally aligned:\n\n    Ctrl # 707036 Status : OPEN Date 06/11/26 Terms: BP 2% NET 60\n    Order # 14579877 Dept: I24\n    SKU/Cust Style Whse Ln Status Retail Price Qty SP Extension\n    2807P MDW MEDIUM WASH DRIFTWOOD CROP 04 1 OPEN 0.00 1,512\n    Size > 2 4 6 8 10 12 14 16 18\n    Qty > 120 132 192 204 240 228 168 120 108\n    199382050427 ... (per-size UPC, ignored)\n\nWhse (2-4 cap token, e.g. ``MDW``) is the colour CODE; the human-readable colour\nname (``MEDIUM WASH``) is the leading words of the description before the product\n(``DRIFTWOOD CROP``). The SKU-line qty (1,512) equals the sum of the ``Qty >``\nrow, so it is captured as ``printed_row_total`` for cross-checking.\n\nThe text layer sometimes GLUES the Whse code to the colour name (``MDWMEDIUM``\ninstead of ``MDW MEDIUM``) - this parser recovers the split using the warehouse\ncode length learned from the clean (space-separated) SKU lines.\n\nThe per-SKU style (``2807P`` vs ``2807P27``) is a style+season code, NOT a\nper-colour style, so every line in an order is normalised to the base style\n(stripping the 2-digit season suffix) - this keeps ``consolidate_entities_``\nfrom over-splitting one Order # into several entities.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 30           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 32          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 33          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 34          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               4 (('Counter',))
+             38 IMPORT_NAME              5 (collections)
+             40 IMPORT_FROM              6 (Counter)
+             42 STORE_NAME               6 (Counter)
+             44 POP_TOP
+
+ 36          46 LOAD_CONST               5 (2)
+             48 LOAD_CONST               6 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             50 IMPORT_NAME              7 (models)
+             52 IMPORT_FROM              8 (LayoutType)
+             54 STORE_NAME               8 (LayoutType)
+             56 IMPORT_FROM              9 (OrderEntity)
+             58 STORE_NAME               9 (OrderEntity)
+             60 IMPORT_FROM             10 (OrderLine)
+             62 STORE_NAME              10 (OrderLine)
+             64 IMPORT_FROM             11 (PurchaseOrder)
+             66 STORE_NAME              11 (PurchaseOrder)
+             68 IMPORT_FROM             12 (SizeQty)
+             70 STORE_NAME              12 (SizeQty)
+             72 IMPORT_FROM             13 (PoRecipe)
+             74 STORE_NAME              13 (PoRecipe)
+             76 POP_TOP
+
+ 38          78 LOAD_CONST               7 (1)
+             80 LOAD_CONST               8 (('BaseParser', '_to_int', '_to_float', 'doc_text'))
+             82 IMPORT_NAME             14 (base)
+             84 IMPORT_FROM             15 (BaseParser)
+             86 STORE_NAME              15 (BaseParser)
+             88 IMPORT_FROM             16 (_to_int)
+             90 STORE_NAME              16 (_to_int)
+             92 IMPORT_FROM             17 (_to_float)
+             94 STORE_NAME              17 (_to_float)
+             96 IMPORT_FROM             18 (doc_text)
+             98 STORE_NAME              18 (doc_text)
+            100 POP_TOP
+
+ 40         102 PUSH_NULL
+            104 LOAD_NAME                4 (re)
+            106 LOAD_ATTR               19 (compile)
+            116 LOAD_CONST               9 ('Order\\s*#\\s*(\\S+)')
+            118 PRECALL                  1
+            122 CALL                     1
+            132 STORE_NAME              20 (_ORDER_RE)
+
+ 42         134 PUSH_NULL
+            136 LOAD_NAME                4 (re)
+            138 LOAD_ATTR               19 (compile)
+
+ 43         148 LOAD_CONST              10 ('^(?P<style>\\S+)\\s+(?P<whse>[A-Z]{2,4})\\s+(?P<desc>.+?)\\s+(?P<ln>\\d+)\\s+(?P<seq>\\d+)\\s+(?P<status>\\S+)\\s+(?P<retail>[\\d.,]+)\\s+(?P<qty>[\\d.,]+)\\s*$')
+
+ 42         150 PRECALL                  1
+            154 CALL                     1
+            164 STORE_NAME              21 (_SKU_RE)
+
+ 48         166 PUSH_NULL
+            168 LOAD_NAME                4 (re)
+            170 LOAD_ATTR               19 (compile)
+
+ 49         180 LOAD_CONST              11 ('^(?P<style>\\S+)\\s+(?P<glued>[A-Z]{2,4}[A-Z]+)\\s+(?P<desc>.+?)\\s+(?P<ln>\\d+)\\s+(?P<seq>\\d+)\\s+(?P<status>\\S+)\\s+(?P<retail>[\\d.,]+)\\s+(?P<qty>[\\d.,]+)\\s*$')
+
+ 48         182 PRECALL                  1
+            186 CALL                     1
+            196 STORE_NAME              22 (_SKU_GLUED_RE)
+
+ 52         198 PUSH_NULL
+            200 LOAD_NAME                4 (re)
+            202 LOAD_ATTR               19 (compile)
+            212 LOAD_CONST              12 ('^Size\\s*>\\s*(.*)$')
+            214 LOAD_NAME                4 (re)
+            216 LOAD_ATTR               23 (I)
+            226 PRECALL                  2
+            230 CALL                     2
+            240 STORE_NAME              24 (_SIZE_RE)
+
+ 53         242 PUSH_NULL
+            244 LOAD_NAME                4 (re)
+            246 LOAD_ATTR               19 (compile)
+            256 LOAD_CONST              13 ('^Qty\\s*>\\s*(.*)$')
+            258 LOAD_NAME                4 (re)
+            260 LOAD_ATTR               23 (I)
+            270 PRECALL                  2
+            274 CALL                     2
+            284 STORE_NAME              25 (_QTY_RE)
+
+ 56         286 LOAD_CONST              14 ('DRIFTWOOD')
+            288 LOAD_CONST              15 ('CROP')
+            290 BUILD_SET                2
+            292 STORE_NAME              26 (_PRODUCT_TAIL)
+
+ 59         294 LOAD_CONST              27 (('style', 'str', 'return', 'str'))
+            296 LOAD_CONST              19 (<code object _base_style at 0x000002BF9474A8E0, file "core\parsers\bass_pro_ack.py", line 59>)
+            298 MAKE_FUNCTION            4 (annotations)
+            300 STORE_NAME              27 (_base_style)
+
+ 68         302 LOAD_CONST              28 (('desc', 'str', 'return', 'str'))
+            304 LOAD_CONST              21 (<code object _color_desc at 0x000002BF94741F00, file "core\parsers\bass_pro_ack.py", line 68>)
+            306 MAKE_FUNCTION            4 (annotations)
+            308 STORE_NAME              28 (_color_desc)
+
+ 78         310 LOAD_CONST              29 (('full', 'str', 'return', 'int'))
+            312 LOAD_CONST              24 (<code object _learn_whse_len at 0x000002BF946C6140, file "core\parsers\bass_pro_ack.py", line 78>)
+            314 MAKE_FUNCTION            4 (annotations)
+            316 STORE_NAME              29 (_learn_whse_len)
+
+ 86         318 PUSH_NULL
+            320 LOAD_BUILD_CLASS
+            322 LOAD_CONST              25 (<code object BassProAckParser at 0x000002BF94AA8E40, file "core\parsers\bass_pro_ack.py", line 86>)
+            324 MAKE_FUNCTION            0
+            326 LOAD_CONST              26 ('BassProAckParser')
+            328 LOAD_NAME               15 (BaseParser)
+            330 PRECALL                  3
+            334 CALL                     3
+            344 STORE_NAME              30 (BassProAckParser)
+            346 LOAD_CONST               3 (None)
+            348 RETURN_VALUE
+
+==============================================================================
+## <module>._base_style  (args=1, locals=3)
+# varnames: style, s, m
+ 59           0 RESUME                   0
+
+ 63           2 LOAD_FAST                0 (style)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_CONST               1 ('')
+        >>    8 LOAD_METHOD              0 (strip)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 STORE_FAST               1 (s)
+
+ 64          46 LOAD_GLOBAL              3 (NULL + re)
+             58 LOAD_ATTR                2 (match)
+             68 LOAD_CONST               2 ('^(.*[A-Za-z])(\\d{2})$')
+             70 LOAD_FAST                1 (s)
+             72 PRECALL                  2
+             76 CALL                     2
+             86 STORE_FAST               2 (m)
+
+ 65          88 LOAD_FAST                2 (m)
+             90 POP_JUMP_FORWARD_IF_FALSE    21 (to 134)
+             92 LOAD_FAST                2 (m)
+             94 LOAD_METHOD              3 (group)
+            116 LOAD_CONST               3 (1)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 JUMP_FORWARD             1 (to 136)
+        >>  134 LOAD_FAST                1 (s)
+        >>  136 RETURN_VALUE
+
+==============================================================================
+## <module>._color_desc  (args=1, locals=3)
+# varnames: desc, out, w
+ 68           0 RESUME                   0
+
+ 70           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+ 71           6 LOAD_FAST                0 (desc)
+              8 LOAD_METHOD              0 (split)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 GET_ITER
+        >>   46 FOR_ITER                71 (to 190)
+             48 STORE_FAST               2 (w)
+
+ 72          50 LOAD_FAST                2 (w)
+             52 LOAD_METHOD              1 (upper)
+             74 PRECALL                  0
+             78 CALL                     0
+             88 LOAD_METHOD              2 (strip)
+            110 LOAD_CONST               1 (',.')
+            112 PRECALL                  1
+            116 CALL                     1
+            126 LOAD_GLOBAL              6 (_PRODUCT_TAIL)
+            138 CONTAINS_OP              0
+            140 POP_JUMP_FORWARD_IF_FALSE     2 (to 146)
+
+ 73         142 POP_TOP
+            144 JUMP_FORWARD            22 (to 190)
+
+ 74     >>  146 LOAD_FAST                1 (out)
+            148 LOAD_METHOD              4 (append)
+            170 LOAD_FAST                2 (w)
+            172 PRECALL                  1
+            176 CALL                     1
+            186 POP_TOP
+            188 JUMP_BACKWARD           72 (to 46)
+
+ 75     >>  190 LOAD_CONST               2 (' ')
+            192 LOAD_METHOD              5 (join)
+            214 LOAD_FAST                1 (out)
+            216 PRECALL                  1
+            220 CALL                     1
+            230 LOAD_METHOD              2 (strip)
+            252 PRECALL                  0
+            256 CALL                     0
+            266 RETURN_VALUE
+
+==============================================================================
+## <module>._learn_whse_len  (args=1, locals=2)
+# varnames: full, lens
+ 78           0 RESUME                   0
+
+ 80           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A65CE0, file "core\parsers\bass_pro_ack.py", line 80>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_GLOBAL              0 (_SKU_RE)
+             18 LOAD_METHOD              1 (finditer)
+             40 LOAD_FAST                0 (full)
+             42 PRECALL                  1
+             46 CALL                     1
+             56 GET_ITER
+             58 PRECALL                  0
+             62 CALL                     0
+             72 STORE_FAST               1 (lens)
+
+ 81          74 LOAD_FAST                1 (lens)
+             76 POP_JUMP_FORWARD_IF_TRUE     2 (to 82)
+
+ 82          78 LOAD_CONST               2 (3)
+             80 RETURN_VALUE
+
+ 83     >>   82 LOAD_GLOBAL              5 (NULL + Counter)
+             94 LOAD_FAST                1 (lens)
+             96 PRECALL                  1
+            100 CALL                     1
+            110 LOAD_METHOD              3 (most_common)
+            132 LOAD_CONST               3 (1)
+            134 PRECALL                  1
+            138 CALL                     1
+            148 LOAD_CONST               4 (0)
+            150 BINARY_SUBSCR
+            160 LOAD_CONST               4 (0)
+            162 BINARY_SUBSCR
+            172 RETURN_VALUE
+
+==============================================================================
+## <module>._learn_whse_len.<listcomp>  (args=1, locals=2)
+# varnames: .0, m
+ 80           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                36 (to 80)
+              8 STORE_FAST               1 (m)
+             10 LOAD_GLOBAL              1 (NULL + len)
+             22 LOAD_FAST                1 (m)
+             24 LOAD_METHOD              1 (group)
+             46 LOAD_CONST               0 ('whse')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 PRECALL                  1
+             66 CALL                     1
+             76 LIST_APPEND              2
+             78 JUMP_BACKWARD           37 (to 6)
+        >>   80 RETURN_VALUE
+
+==============================================================================
+## <module>.BassProAckParser  (args=0, locals=0)
+ 86           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('BassProAckParser')
+              8 STORE_NAME               2 (__qualname__)
+
+ 87          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (BASS_PRO_ACK)
+             22 STORE_NAME               5 (layout_type)
+
+ 89          24 LOAD_CONST               1 ('')
+             26 LOAD_CONST               2 (('source_file',))
+             28 BUILD_CONST_KEY_MAP      1
+             30 LOAD_CONST              11 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             32 LOAD_CONST               9 (<code object parse at 0x000002BF94461590, file "core\parsers\bass_pro_ack.py", line 89>)
+             34 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             36 STORE_NAME               6 (parse)
+             38 LOAD_CONST              10 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>.BassProAckParser.parse  (args=3, locals=27)
+# varnames: self, pages, recipe, source_file, po, full, whse_len, ent, pending_block, pending_sizes, raw, line, om, sm, g_whse, g_desc, style, gm, glued, color_word, szm, qm, qvals, sizes, i, sz, base
+ 89           0 RESUME                   0
+
+ 90           2 LOAD_GLOBAL              1 (NULL + PurchaseOrder)
+
+ 91          14 LOAD_FAST                2 (recipe)
+             16 LOAD_ATTR                1 (customer)
+
+ 92          26 LOAD_FAST                3 (source_file)
+             28 POP_JUMP_FORWARD_IF_FALSE    31 (to 92)
+             30 LOAD_GLOBAL              4 (os)
+             42 LOAD_ATTR                3 (path)
+             52 LOAD_METHOD              4 (basename)
+             74 LOAD_FAST                3 (source_file)
+             76 PRECALL                  1
+             80 CALL                     1
+             90 JUMP_FORWARD             1 (to 94)
+        >>   92 LOAD_CONST               1 ('')
+
+ 93     >>   94 LOAD_FAST                3 (source_file)
+
+ 90          96 KW_NAMES                 2
+             98 PRECALL                  3
+            102 CALL                     3
+            112 STORE_FAST               4 (po)
+
+ 95         114 LOAD_GLOBAL             11 (NULL + doc_text)
+            126 LOAD_FAST                1 (pages)
+            128 PRECALL                  1
+            132 CALL                     1
+            142 STORE_FAST               5 (full)
+
+ 96         144 LOAD_GLOBAL             13 (NULL + re)
+            156 LOAD_ATTR                7 (search)
+            166 LOAD_CONST               3 ('BASS\\s+PRO\\s+SHOPS')
+            168 LOAD_FAST                5 (full)
+            170 PRECALL                  2
+            174 CALL                     2
+            184 POP_JUMP_FORWARD_IF_FALSE     7 (to 200)
+
+ 97         186 LOAD_CONST               4 ('BASS PRO SHOPS')
+            188 LOAD_FAST                4 (po)
+            190 STORE_ATTR               1 (customer)
+
+ 99     >>  200 LOAD_GLOBAL             17 (NULL + _learn_whse_len)
+            212 LOAD_FAST                5 (full)
+            214 PRECALL                  1
+            218 CALL                     1
+            228 STORE_FAST               6 (whse_len)
+
+101         230 LOAD_CONST               0 (None)
+            232 STORE_FAST               7 (ent)
+
+102         234 LOAD_CONST               0 (None)
+            236 STORE_FAST               8 (pending_block)
+
+103         238 LOAD_CONST               0 (None)
+            240 STORE_FAST               9 (pending_sizes)
+
+104         242 LOAD_FAST                5 (full)
+            244 LOAD_METHOD              9 (splitlines)
+            266 PRECALL                  0
+            270 CALL                     0
+            280 GET_ITER
+        >>  282 EXTENDED_ARG             3
+            284 FOR_ITER               782 (to 1850)
+            286 STORE_FAST              10 (raw)
+
+105         288 LOAD_FAST               10 (raw)
+            290 LOAD_METHOD             10 (strip)
+            312 PRECALL                  0
+            316 CALL                     0
+            326 STORE_FAST              11 (line)
+
+106         328 LOAD_FAST               11 (line)
+            330 POP_JUMP_FORWARD_IF_TRUE     1 (to 334)
+
+107         332 JUMP_BACKWARD           26 (to 282)
+
+108     >>  334 LOAD_GLOBAL             22 (_ORDER_RE)
+            346 LOAD_METHOD              7 (search)
+            368 LOAD_FAST               11 (line)
+            370 PRECALL                  1
+            374 CALL                     1
+            384 STORE_FAST              12 (om)
+
+109         386 LOAD_FAST               12 (om)
+            388 POP_JUMP_FORWARD_IF_FALSE    66 (to 522)
+
+110         390 LOAD_GLOBAL             25 (NULL + OrderEntity)
+            402 LOAD_FAST               12 (om)
+            404 LOAD_METHOD             13 (group)
+            426 LOAD_CONST               5 (1)
+            428 PRECALL                  1
+            432 CALL                     1
+            442 KW_NAMES                 6
+            444 PRECALL                  1
+            448 CALL                     1
+            458 STORE_FAST               7 (ent)
+
+111         460 LOAD_FAST                4 (po)
+            462 LOAD_ATTR               14 (entities)
+            472 LOAD_METHOD             15 (append)
+            494 LOAD_FAST                7 (ent)
+            496 PRECALL                  1
+            500 CALL                     1
+            510 POP_TOP
+
+112         512 LOAD_CONST               0 (None)
+            514 STORE_FAST               8 (pending_block)
+
+113         516 LOAD_CONST               0 (None)
+            518 STORE_FAST               9 (pending_sizes)
+
+114         520 JUMP_BACKWARD          120 (to 282)
+
+115     >>  522 LOAD_FAST                7 (ent)
+            524 POP_JUMP_FORWARD_IF_NOT_NONE     1 (to 528)
+
+116         526 JUMP_BACKWARD          123 (to 282)
+
+118     >>  528 LOAD_GLOBAL             32 (_SKU_RE)
+            540 LOAD_METHOD             17 (match)
+            562 LOAD_FAST               11 (line)
+            564 PRECALL                  1
+            568 CALL                     1
+            578 STORE_FAST              13 (sm)
+
+119         580 LOAD_CONST               7 ((None, None))
+            582 UNPACK_SEQUENCE          2
+            586 STORE_FAST              14 (g_whse)
+            588 STORE_FAST              15 (g_desc)
+
+120         590 LOAD_FAST               13 (sm)
+            592 POP_JUMP_FORWARD_IF_FALSE    64 (to 722)
+
+121         594 LOAD_FAST               13 (sm)
+            596 LOAD_METHOD             13 (group)
+            618 LOAD_CONST               8 ('whse')
+            620 PRECALL                  1
+            624 CALL                     1
+            634 STORE_FAST              14 (g_whse)
+
+122         636 LOAD_FAST               13 (sm)
+            638 LOAD_METHOD             13 (group)
+            660 LOAD_CONST               9 ('desc')
+            662 PRECALL                  1
+            666 CALL                     1
+            676 STORE_FAST              15 (g_desc)
+
+123         678 LOAD_FAST               13 (sm)
+            680 LOAD_METHOD             13 (group)
+            702 LOAD_CONST              10 ('style')
+            704 PRECALL                  1
+            708 CALL                     1
+            718 STORE_FAST              16 (style)
+            720 JUMP_FORWARD           134 (to 990)
+
+125     >>  722 LOAD_GLOBAL             36 (_SKU_GLUED_RE)
+            734 LOAD_METHOD             17 (match)
+            756 LOAD_FAST               11 (line)
+            758 PRECALL                  1
+            762 CALL                     1
+            772 STORE_FAST              17 (gm)
+
+126         774 LOAD_FAST               17 (gm)
+            776 POP_JUMP_FORWARD_IF_FALSE   106 (to 990)
+
+127         778 LOAD_FAST               17 (gm)
+            780 LOAD_METHOD             13 (group)
+            802 LOAD_CONST              11 ('glued')
+            804 PRECALL                  1
+            808 CALL                     1
+            818 STORE_FAST              18 (glued)
+
+129         820 LOAD_FAST               18 (glued)
+            822 LOAD_CONST               0 (None)
+            824 LOAD_FAST                6 (whse_len)
+            826 BUILD_SLICE              2
+            828 BINARY_SUBSCR
+            838 STORE_FAST              14 (g_whse)
+
+130         840 LOAD_FAST               18 (glued)
+            842 LOAD_FAST                6 (whse_len)
+            844 LOAD_CONST               0 (None)
+            846 BUILD_SLICE              2
+            848 BINARY_SUBSCR
+            858 STORE_FAST              19 (color_word)
+
+131         860 LOAD_FAST               19 (color_word)
+            862 FORMAT_VALUE             0
+            864 LOAD_CONST              12 (' ')
+            866 LOAD_FAST               17 (gm)
+            868 LOAD_METHOD             13 (group)
+            890 LOAD_CONST               9 ('desc')
+            892 PRECALL                  1
+            896 CALL                     1
+            906 FORMAT_VALUE             0
+            908 BUILD_STRING             3
+            910 LOAD_METHOD             10 (strip)
+            932 PRECALL                  0
+            936 CALL                     0
+            946 STORE_FAST              15 (g_desc)
+
+132         948 LOAD_FAST               17 (gm)
+            950 LOAD_METHOD             13 (group)
+            972 LOAD_CONST              10 ('style')
+            974 PRECALL                  1
+            978 CALL                     1
+            988 STORE_FAST              16 (style)
+
+134     >>  990 LOAD_FAST               14 (g_whse)
+            992 POP_JUMP_FORWARD_IF_NONE    79 (to 1152)
+
+136         994 LOAD_FAST               16 (style)
+
+137         996 LOAD_FAST               14 (g_whse)
+
+138         998 LOAD_GLOBAL             39 (NULL + _color_desc)
+           1010 LOAD_FAST               15 (g_desc)
+           1012 PRECALL                  1
+           1016 CALL                     1
+
+139        1026 LOAD_GLOBAL             41 (NULL + _to_int)
+           1038 LOAD_FAST               13 (sm)
+           1040 POP_JUMP_FORWARD_IF_FALSE    21 (to 1084)
+           1042 LOAD_FAST               13 (sm)
+           1044 LOAD_METHOD             13 (group)
+           1066 LOAD_CONST              13 ('qty')
+           1068 PRECALL                  1
+           1072 CALL                     1
+           1082 JUMP_FORWARD            20 (to 1124)
+        >> 1084 LOAD_FAST               17 (gm)
+           1086 LOAD_METHOD             13 (group)
+           1108 LOAD_CONST              13 ('qty')
+           1110 PRECALL                  1
+           1114 CALL                     1
+        >> 1124 PRECALL                  1
+           1128 CALL                     1
+
+135        1138 LOAD_CONST              14 (('style', 'color_code', 'color_desc', 'qty'))
+           1140 BUILD_CONST_KEY_MAP      4
+           1142 STORE_FAST               8 (pending_block)
+
+141        1144 LOAD_CONST               0 (None)
+           1146 STORE_FAST               9 (pending_sizes)
+
+142        1148 EXTENDED_ARG             1
+           1150 JUMP_BACKWARD          435 (to 282)
+
+144     >> 1152 LOAD_GLOBAL             42 (_SIZE_RE)
+           1164 LOAD_METHOD             17 (match)
+           1186 LOAD_FAST               11 (line)
+           1188 PRECALL                  1
+           1192 CALL                     1
+           1202 STORE_FAST              20 (szm)
+
+145        1204 LOAD_FAST               20 (szm)
+           1206 POP_JUMP_FORWARD_IF_FALSE    51 (to 1310)
+
+146        1208 LOAD_CONST              15 (<code object <listcomp> at 0x000002BF94AB1070, file "core\parsers\bass_pro_ack.py", line 146>)
+           1210 MAKE_FUNCTION            0
+           1212 LOAD_FAST               20 (szm)
+           1214 LOAD_METHOD             13 (group)
+           1236 LOAD_CONST               5 (1)
+           1238 PRECALL                  1
+           1242 CALL                     1
+           1252 LOAD_METHOD             22 (split)
+           1274 PRECALL                  0
+           1278 CALL                     0
+           1288 GET_ITER
+           1290 PRECALL                  0
+           1294 CALL                     0
+           1304 STORE_FAST               9 (pending_sizes)
+
+147        1306 EXTENDED_ARG             2
+           1308 JUMP_BACKWARD          514 (to 282)
+
+149     >> 1310 LOAD_GLOBAL             46 (_QTY_RE)
+           1322 LOAD_METHOD             17 (match)
+           1344 LOAD_FAST               11 (line)
+           1346 PRECALL                  1
+           1350 CALL                     1
+           1360 STORE_FAST              21 (qm)
+
+150        1362 LOAD_FAST               21 (qm)
+           1364 POP_JUMP_FORWARD_IF_FALSE   240 (to 1846)
+           1366 LOAD_FAST                8 (pending_block)
+           1368 POP_JUMP_FORWARD_IF_NONE   238 (to 1846)
+           1370 LOAD_FAST                9 (pending_sizes)
+           1372 POP_JUMP_FORWARD_IF_NONE   236 (to 1846)
+
+151        1374 LOAD_CONST              16 (<code object <listcomp> at 0x000002BF94AA85D0, file "core\parsers\bass_pro_ack.py", line 151>)
+           1376 MAKE_FUNCTION            0
+           1378 LOAD_FAST               21 (qm)
+           1380 LOAD_METHOD             13 (group)
+           1402 LOAD_CONST               5 (1)
+           1404 PRECALL                  1
+           1408 CALL                     1
+           1418 LOAD_METHOD             22 (split)
+           1440 PRECALL                  0
+           1444 CALL                     0
+           1454 GET_ITER
+           1456 PRECALL                  0
+           1460 CALL                     0
+           1470 STORE_FAST              22 (qvals)
+
+152        1472 BUILD_LIST               0
+           1474 STORE_FAST              23 (sizes)
+
+153        1476 LOAD_GLOBAL             49 (NULL + enumerate)
+           1488 LOAD_FAST                9 (pending_sizes)
+           1490 PRECALL                  1
+           1494 CALL                     1
+           1504 GET_ITER
+        >> 1506 FOR_ITER                78 (to 1664)
+           1508 UNPACK_SEQUENCE          2
+           1512 STORE_FAST              24 (i)
+           1514 STORE_FAST              25 (sz)
+
+154        1516 LOAD_FAST               24 (i)
+           1518 LOAD_GLOBAL             51 (NULL + len)
+           1530 LOAD_FAST               22 (qvals)
+           1532 PRECALL                  1
+           1536 CALL                     1
+           1546 COMPARE_OP               0 (<)
+           1552 POP_JUMP_FORWARD_IF_FALSE    54 (to 1662)
+           1554 LOAD_FAST               22 (qvals)
+           1556 LOAD_FAST               24 (i)
+           1558 BINARY_SUBSCR
+           1568 LOAD_CONST              17 (0)
+           1570 COMPARE_OP               4 (>)
+           1576 POP_JUMP_FORWARD_IF_FALSE    42 (to 1662)
+
+155        1578 LOAD_FAST               23 (sizes)
+           1580 LOAD_METHOD             15 (append)
+           1602 LOAD_GLOBAL             53 (NULL + SizeQty)
+           1614 LOAD_FAST               25 (sz)
+           1616 LOAD_FAST               22 (qvals)
+           1618 LOAD_FAST               24 (i)
+           1620 BINARY_SUBSCR
+           1630 KW_NAMES                18
+           1632 PRECALL                  2
+           1636 CALL                     2
+           1646 PRECALL                  1
+           1650 CALL                     1
+           1660 POP_TOP
+        >> 1662 JUMP_BACKWARD           79 (to 1506)
+
+156     >> 1664 LOAD_GLOBAL             55 (NULL + _base_style)
+           1676 LOAD_FAST                8 (pending_block)
+           1678 LOAD_CONST              10 ('style')
+           1680 BINARY_SUBSCR
+           1690 PRECALL                  1
+           1694 CALL                     1
+           1704 STORE_FAST              26 (base)
+
+157        1706 LOAD_FAST                7 (ent)
+           1708 LOAD_ATTR               28 (lines)
+           1718 LOAD_METHOD             15 (append)
+           1740 LOAD_GLOBAL             59 (NULL + OrderLine)
+
+158        1752 LOAD_FAST               26 (base)
+
+159        1754 LOAD_FAST                8 (pending_block)
+           1756 LOAD_CONST              19 ('color_code')
+           1758 BINARY_SUBSCR
+
+160        1768 LOAD_FAST                8 (pending_block)
+           1770 LOAD_CONST              20 ('color_desc')
+           1772 BINARY_SUBSCR
+
+161        1782 LOAD_CONST               0 (None)
+
+162        1784 LOAD_CONST              21 ('PCS')
+
+163        1786 LOAD_FAST               23 (sizes)
+
+164        1788 LOAD_FAST                8 (pending_block)
+           1790 LOAD_CONST              13 ('qty')
+           1792 BINARY_SUBSCR
+
+157        1802 KW_NAMES                22
+           1804 PRECALL                  7
+           1808 CALL                     7
+           1818 PRECALL                  1
+           1822 CALL                     1
+           1832 POP_TOP
+
+166        1834 LOAD_CONST               0 (None)
+           1836 STORE_FAST               8 (pending_block)
+
+167        1838 LOAD_CONST               0 (None)
+           1840 STORE_FAST               9 (pending_sizes)
+
+168        1842 EXTENDED_ARG             3
+           1844 JUMP_BACKWARD          782 (to 282)
+        >> 1846 EXTENDED_ARG             3
+           1848 JUMP_BACKWARD          784 (to 282)
+
+170     >> 1850 LOAD_CONST              23 (<code object <listcomp> at 0x000002BF94A6EE90, file "core\parsers\bass_pro_ack.py", line 170>)
+           1852 MAKE_FUNCTION            0
+           1854 LOAD_FAST                4 (po)
+           1856 LOAD_ATTR               14 (entities)
+           1866 GET_ITER
+           1868 PRECALL                  0
+           1872 CALL                     0
+           1882 LOAD_FAST                4 (po)
+           1884 STORE_ATTR              14 (entities)
+
+171        1894 LOAD_FAST                4 (po)
+           1896 RETURN_VALUE
+
+==============================================================================
+## <module>.BassProAckParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+146           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 6 (to 20)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_FAST                1 (t)
+             16 LIST_APPEND              2
+             18 JUMP_BACKWARD            7 (to 6)
+        >>   20 RETURN_VALUE
+
+==============================================================================
+## <module>.BassProAckParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+151           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                19 (to 46)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 POP_JUMP_BACKWARD_IF_FALSE     4 (to 6)
+             14 LOAD_GLOBAL              1 (NULL + _to_int)
+             26 LOAD_FAST                1 (t)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 LIST_APPEND              2
+             44 JUMP_BACKWARD           20 (to 6)
+        >>   46 RETURN_VALUE
+
+==============================================================================
+## <module>.BassProAckParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, e
+170           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                11 (to 30)
+              8 STORE_FAST               1 (e)
+             10 LOAD_FAST                1 (e)
+             12 LOAD_ATTR                0 (lines)
+             22 POP_JUMP_BACKWARD_IF_FALSE     9 (to 6)
+             24 LOAD_FAST                1 (e)
+             26 LIST_APPEND              2
+             28 JUMP_BACKWARD           12 (to 6)
+        >>   30 RETURN_VALUE

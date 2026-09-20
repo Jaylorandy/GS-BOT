@@ -1,0 +1,316 @@
+# module: ui._win_raise
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\_win_raise.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/_win_raise.py — reliably raise a Tk window to the foreground on Windows.\n\nThe naive ``lift()`` + ``focus_force()`` used before V2.0.19.7 is unreliable on\nWindows: clicking the taskbar button hands the foreground token to\n``explorer.exe``; by the time Tk\'s ``<Map>`` handler runs in-process the token\nhas expired, so ``SetForegroundWindow`` (called internally by ``focus_force``)\nis silently rejected by the foreground lock. The window restores but stays\nbehind other apps — the classic "taskbar shows running but nothing pops up"\nbug.\n\nFix strategy (Windows only):\n  1. deiconify if the window is minimized;\n  2. toggle ``-topmost`` True -> update -> False, which forces the window past\n     the foreground lock even without a valid foreground token;\n  3. ``ShowWindow(hwnd, SW_RESTORE)`` to normalize/restore the window;\n  4. ``SetForegroundWindow(hwnd)`` to pull it forward.\n\nNon-Windows platforms fall back to ``lift()`` + ``focus_force()``.\n\nThis module imports only the standard library so neither ``ui.main_window`` nor\n``ui.recipe_dialog`` creates a circular import when they import it.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 24           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 26          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (sys)
+             24 STORE_NAME               3 (sys)
+
+ 28          26 LOAD_NAME                3 (sys)
+             28 LOAD_ATTR                4 (platform)
+             38 LOAD_CONST               4 ('win32')
+             40 COMPARE_OP               2 (==)
+             46 STORE_NAME               5 (IS_WIN)
+
+ 30          48 LOAD_CONST               5 (9)
+             50 STORE_NAME               6 (_SW_RESTORE)
+
+ 33          52 LOAD_CONST               6 (<code object _user32 at 0x000002BF9472B340, file "ui\_win_raise.py", line 33>)
+             54 MAKE_FUNCTION            0
+             56 STORE_NAME               7 (_user32)
+
+ 43          58 LOAD_CONST              10 (('return', 'None'))
+             60 LOAD_CONST               9 (<code object raise_window at 0x000002BF9444C7E0, file "ui\_win_raise.py", line 43>)
+             62 MAKE_FUNCTION            4 (annotations)
+             64 STORE_NAME               8 (raise_window)
+             66 LOAD_CONST               3 (None)
+             68 RETURN_VALUE
+
+==============================================================================
+## <module>._user32  (args=0, locals=0)
+ 33           0 RESUME                   0
+
+ 35           2 LOAD_GLOBAL              0 (IS_WIN)
+             14 POP_JUMP_FORWARD_IF_TRUE     2 (to 20)
+
+ 36          16 LOAD_CONST               1 (None)
+             18 RETURN_VALUE
+
+ 37     >>   20 NOP
+
+ 38          22 LOAD_GLOBAL              3 (NULL + __import__)
+             34 LOAD_CONST               2 ('ctypes')
+             36 PRECALL                  1
+             40 CALL                     1
+             50 LOAD_ATTR                2 (windll)
+             60 LOAD_ATTR                3 (user32)
+             70 RETURN_VALUE
+        >>   72 PUSH_EXC_INFO
+
+ 39          74 LOAD_GLOBAL              8 (Exception)
+             86 CHECK_EXC_MATCH
+             88 POP_JUMP_FORWARD_IF_FALSE     4 (to 98)
+             90 POP_TOP
+
+ 40          92 POP_EXCEPT
+             94 LOAD_CONST               1 (None)
+             96 RETURN_VALUE
+
+ 39     >>   98 RERAISE                  0
+        >>  100 COPY                     3
+            102 POP_EXCEPT
+            104 RERAISE                  1
+ExceptionTable:
+  22 to 68 -> 72 [0]
+  72 to 90 -> 100 [1] lasti
+  98 to 98 -> 100 [1] lasti
+
+==============================================================================
+## <module>.raise_window  (args=1, locals=3)
+# varnames: win, user32, hwnd
+ 43           0 RESUME                   0
+
+ 51           2 NOP
+
+ 52           4 LOAD_GLOBAL              1 (NULL + getattr)
+             16 LOAD_FAST                0 (win)
+             18 LOAD_CONST               1 ('state')
+             20 LOAD_CONST               2 (None)
+             22 PRECALL                  3
+             26 CALL                     3
+             36 POP_JUMP_FORWARD_IF_NONE    44 (to 126)
+             38 LOAD_FAST                0 (win)
+             40 LOAD_METHOD              1 (state)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 LOAD_CONST               3 ('iconic')
+             78 COMPARE_OP               2 (==)
+             84 POP_JUMP_FORWARD_IF_FALSE    20 (to 126)
+
+ 53          86 LOAD_FAST                0 (win)
+             88 LOAD_METHOD              2 (deiconify)
+            110 PRECALL                  0
+            114 CALL                     0
+            124 POP_TOP
+        >>  126 JUMP_FORWARD            16 (to 160)
+        >>  128 PUSH_EXC_INFO
+
+ 54         130 LOAD_GLOBAL              6 (Exception)
+            142 CHECK_EXC_MATCH
+            144 POP_JUMP_FORWARD_IF_FALSE     3 (to 152)
+            146 POP_TOP
+
+ 55         148 POP_EXCEPT
+            150 JUMP_FORWARD             4 (to 160)
+
+ 54     >>  152 RERAISE                  0
+        >>  154 COPY                     3
+            156 POP_EXCEPT
+            158 RERAISE                  1
+
+ 57     >>  160 LOAD_GLOBAL              9 (NULL + _user32)
+            172 PRECALL                  0
+            176 CALL                     0
+            186 STORE_FAST               1 (user32)
+
+ 58         188 NOP
+
+ 59         190 LOAD_FAST                1 (user32)
+            192 POP_JUMP_FORWARD_IF_NONE   188 (to 570)
+
+ 63         194 NOP
+
+ 64         196 LOAD_FAST                0 (win)
+            198 LOAD_METHOD              5 (wm_attributes)
+            220 LOAD_CONST               4 ('-topmost')
+            222 LOAD_CONST               5 (True)
+            224 PRECALL                  2
+            228 CALL                     2
+            238 POP_TOP
+
+ 65         240 LOAD_FAST                0 (win)
+            242 LOAD_METHOD              6 (update_idletasks)
+            264 PRECALL                  0
+            268 CALL                     0
+            278 POP_TOP
+
+ 66         280 LOAD_FAST                0 (win)
+            282 LOAD_METHOD              5 (wm_attributes)
+            304 LOAD_CONST               4 ('-topmost')
+            306 LOAD_CONST               6 (False)
+            308 PRECALL                  2
+            312 CALL                     2
+            322 POP_TOP
+            324 JUMP_FORWARD            16 (to 358)
+        >>  326 PUSH_EXC_INFO
+
+ 67         328 LOAD_GLOBAL              6 (Exception)
+            340 CHECK_EXC_MATCH
+            342 POP_JUMP_FORWARD_IF_FALSE     3 (to 350)
+            344 POP_TOP
+
+ 68         346 POP_EXCEPT
+            348 JUMP_FORWARD             4 (to 358)
+
+ 67     >>  350 RERAISE                  0
+        >>  352 COPY                     3
+            354 POP_EXCEPT
+            356 RERAISE                  1
+
+ 70     >>  358 LOAD_FAST                0 (win)
+            360 LOAD_METHOD              7 (winfo_id)
+            382 PRECALL                  0
+            386 CALL                     0
+            396 STORE_FAST               2 (hwnd)
+
+ 72         398 NOP
+
+ 73         400 LOAD_FAST                1 (user32)
+            402 LOAD_METHOD              8 (ShowWindow)
+            424 LOAD_FAST                2 (hwnd)
+            426 LOAD_GLOBAL             18 (_SW_RESTORE)
+            438 PRECALL                  2
+            442 CALL                     2
+            452 POP_TOP
+            454 JUMP_FORWARD            16 (to 488)
+        >>  456 PUSH_EXC_INFO
+
+ 74         458 LOAD_GLOBAL              6 (Exception)
+            470 CHECK_EXC_MATCH
+            472 POP_JUMP_FORWARD_IF_FALSE     3 (to 480)
+            474 POP_TOP
+
+ 75         476 POP_EXCEPT
+            478 JUMP_FORWARD             4 (to 488)
+
+ 74     >>  480 RERAISE                  0
+        >>  482 COPY                     3
+            484 POP_EXCEPT
+            486 RERAISE                  1
+
+ 77     >>  488 NOP
+
+ 78         490 LOAD_FAST                1 (user32)
+            492 LOAD_METHOD             10 (SetForegroundWindow)
+            514 LOAD_FAST                2 (hwnd)
+            516 PRECALL                  1
+            520 CALL                     1
+            530 POP_TOP
+            532 LOAD_CONST               2 (None)
+            534 RETURN_VALUE
+        >>  536 PUSH_EXC_INFO
+
+ 79         538 LOAD_GLOBAL              6 (Exception)
+            550 CHECK_EXC_MATCH
+            552 POP_JUMP_FORWARD_IF_FALSE     4 (to 562)
+            554 POP_TOP
+
+ 80         556 POP_EXCEPT
+            558 LOAD_CONST               2 (None)
+            560 RETURN_VALUE
+
+ 79     >>  562 RERAISE                  0
+        >>  564 COPY                     3
+            566 POP_EXCEPT
+            568 RERAISE                  1
+
+ 82     >>  570 LOAD_FAST                0 (win)
+            572 LOAD_METHOD             11 (lift)
+            594 PRECALL                  0
+            598 CALL                     0
+            608 POP_TOP
+
+ 83         610 LOAD_FAST                0 (win)
+            612 LOAD_METHOD             12 (focus_force)
+            634 PRECALL                  0
+            638 CALL                     0
+            648 POP_TOP
+            650 LOAD_CONST               2 (None)
+            652 RETURN_VALUE
+        >>  654 PUSH_EXC_INFO
+
+ 84         656 LOAD_GLOBAL              6 (Exception)
+            668 CHECK_EXC_MATCH
+            670 POP_JUMP_FORWARD_IF_FALSE    63 (to 798)
+            672 POP_TOP
+
+ 85         674 NOP
+
+ 86         676 LOAD_FAST                0 (win)
+            678 LOAD_METHOD             11 (lift)
+            700 PRECALL                  0
+            704 CALL                     0
+            714 POP_TOP
+
+ 87         716 LOAD_FAST                0 (win)
+            718 LOAD_METHOD             12 (focus_force)
+            740 PRECALL                  0
+            744 CALL                     0
+            754 POP_TOP
+            756 POP_EXCEPT
+            758 LOAD_CONST               2 (None)
+            760 RETURN_VALUE
+        >>  762 PUSH_EXC_INFO
+
+ 88         764 LOAD_GLOBAL              6 (Exception)
+            776 CHECK_EXC_MATCH
+            778 POP_JUMP_FORWARD_IF_FALSE     5 (to 790)
+            780 POP_TOP
+
+ 89         782 POP_EXCEPT
+            784 POP_EXCEPT
+            786 LOAD_CONST               2 (None)
+            788 RETURN_VALUE
+
+ 88     >>  790 RERAISE                  0
+        >>  792 COPY                     3
+            794 POP_EXCEPT
+            796 RERAISE                  1
+
+ 84     >>  798 RERAISE                  0
+        >>  800 COPY                     3
+            802 POP_EXCEPT
+            804 RERAISE                  1
+ExceptionTable:
+  4 to 124 -> 128 [0]
+  128 to 146 -> 154 [1] lasti
+  152 to 152 -> 154 [1] lasti
+  190 to 192 -> 654 [0]
+  196 to 322 -> 326 [0]
+  324 to 324 -> 654 [0]
+  326 to 344 -> 352 [1] lasti
+  346 to 348 -> 654 [0]
+  350 to 350 -> 352 [1] lasti
+  352 to 396 -> 654 [0]
+  400 to 452 -> 456 [0]
+  454 to 454 -> 654 [0]
+  456 to 474 -> 482 [1] lasti
+  476 to 478 -> 654 [0]
+  480 to 480 -> 482 [1] lasti
+  482 to 486 -> 654 [0]
+  490 to 530 -> 536 [0]
+  536 to 554 -> 564 [1] lasti
+  556 to 556 -> 654 [0]
+  562 to 562 -> 564 [1] lasti
+  564 to 648 -> 654 [0]
+  654 to 672 -> 800 [1] lasti
+  676 to 754 -> 762 [1]
+  762 to 780 -> 792 [2] lasti
+  782 to 782 -> 800 [1] lasti
+  790 to 790 -> 792 [2] lasti
+  792 to 798 -> 800 [1] lasti

@@ -1,0 +1,1383 @@
+# module: ui.quantity_dialog
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\quantity_dialog.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/quantity_dialog.py - the export-time quantity interception modal.\n\nShown by ``main_window`` when ``core.export_gate.reconcile_quantities`` finds a\nHARD quantity problem in the current batch. The operator must make an explicit\nchoice: Cancel (default, safe) or Release (export anyway, owning the risk).\n')
+              4 STORE_NAME               0 (__doc__)
+
+  7           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+  9          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (tkinter)
+             24 STORE_NAME               4 (tk)
+
+ 10          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('ttk', 'scrolledtext'))
+             30 IMPORT_NAME              3 (tkinter)
+             32 IMPORT_FROM              5 (ttk)
+             34 STORE_NAME               5 (ttk)
+             36 IMPORT_FROM              6 (scrolledtext)
+             38 STORE_NAME               6 (scrolledtext)
+             40 POP_TOP
+
+ 12          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               5 (('ExportGateReport',))
+             46 IMPORT_NAME              7 (core.export_gate)
+             48 IMPORT_FROM              8 (ExportGateReport)
+             50 STORE_NAME               8 (ExportGateReport)
+             52 POP_TOP
+
+ 14          54 NOP
+
+ 15          56 LOAD_CONST               1 (0)
+             58 LOAD_CONST               3 (None)
+             60 IMPORT_NAME              9 (theme_glass)
+             62 STORE_NAME               9 (theme_glass)
+
+ 16          64 PUSH_NULL
+             66 LOAD_NAME               10 (getattr)
+             68 LOAD_NAME                9 (theme_glass)
+             70 LOAD_CONST               6 ('COL')
+             72 BUILD_MAP                0
+             74 PRECALL                  3
+             78 CALL                     3
+             88 STORE_NAME              11 (COL)
+
+ 17          90 PUSH_NULL
+             92 LOAD_NAME               10 (getattr)
+             94 LOAD_NAME                9 (theme_glass)
+             96 LOAD_CONST               7 ('FONT_BODY')
+             98 LOAD_CONST               8 (('Segoe UI', 12))
+            100 PRECALL                  3
+            104 CALL                     3
+            114 STORE_NAME              12 (FONT_BODY)
+
+ 18         116 PUSH_NULL
+            118 LOAD_NAME               10 (getattr)
+            120 LOAD_NAME                9 (theme_glass)
+            122 LOAD_CONST               9 ('FONT_HEAD_BOLD')
+            124 LOAD_CONST              10 (('Segoe UI', 13, 'bold'))
+            126 PRECALL                  3
+            130 CALL                     3
+            140 STORE_NAME              13 (FONT_BOLD)
+
+ 19         142 PUSH_NULL
+            144 LOAD_NAME               10 (getattr)
+            146 LOAD_NAME                9 (theme_glass)
+            148 LOAD_CONST              11 ('FONT_HINT')
+            150 LOAD_CONST              12 (('Segoe UI', 11))
+            152 PRECALL                  3
+            156 CALL                     3
+            166 STORE_NAME              14 (FONT_HINT)
+            168 JUMP_FORWARD            21 (to 212)
+        >>  170 PUSH_EXC_INFO
+
+ 20         172 LOAD_NAME               15 (Exception)
+            174 CHECK_EXC_MATCH
+            176 POP_JUMP_FORWARD_IF_FALSE    13 (to 204)
+            178 POP_TOP
+
+ 21         180 LOAD_CONST               3 (None)
+            182 STORE_NAME               9 (theme_glass)
+
+ 22         184 BUILD_MAP                0
+            186 STORE_NAME              11 (COL)
+
+ 23         188 LOAD_CONST               8 (('Segoe UI', 12))
+            190 STORE_NAME              12 (FONT_BODY)
+
+ 24         192 LOAD_CONST              10 (('Segoe UI', 13, 'bold'))
+            194 STORE_NAME              13 (FONT_BOLD)
+
+ 25         196 LOAD_CONST              12 (('Segoe UI', 11))
+            198 STORE_NAME              14 (FONT_HINT)
+            200 POP_EXCEPT
+            202 JUMP_FORWARD             4 (to 212)
+
+ 20     >>  204 RERAISE                  0
+        >>  206 COPY                     3
+            208 POP_EXCEPT
+            210 RERAISE                  1
+
+ 28     >>  212 LOAD_NAME               12 (FONT_BODY)
+            214 LOAD_CONST               1 (0)
+            216 BINARY_SUBSCR
+            226 PUSH_NULL
+            228 LOAD_NAME               16 (int)
+            230 LOAD_NAME               12 (FONT_BODY)
+            232 LOAD_CONST              13 (1)
+            234 BINARY_SUBSCR
+            244 LOAD_CONST              14 (1.05)
+            246 BINARY_OP                5 (*)
+            250 LOAD_CONST              15 (0.5)
+            252 BINARY_OP                0 (+)
+            256 PRECALL                  1
+            260 CALL                     1
+            270 BUILD_TUPLE              2
+            272 STORE_NAME              17 (FONT_BODY_BIG)
+
+ 29         274 LOAD_NAME               13 (FONT_BOLD)
+            276 LOAD_CONST               1 (0)
+            278 BINARY_SUBSCR
+            288 PUSH_NULL
+            290 LOAD_NAME               16 (int)
+            292 LOAD_NAME               13 (FONT_BOLD)
+            294 LOAD_CONST              13 (1)
+            296 BINARY_SUBSCR
+            306 LOAD_CONST              14 (1.05)
+            308 BINARY_OP                5 (*)
+            312 LOAD_CONST              15 (0.5)
+            314 BINARY_OP                0 (+)
+            318 PRECALL                  1
+            322 CALL                     1
+            332 LOAD_CONST              16 ('bold')
+            334 BUILD_TUPLE              3
+            336 STORE_NAME              18 (FONT_BOLD_BIG)
+
+ 30         338 LOAD_NAME               14 (FONT_HINT)
+            340 LOAD_CONST               1 (0)
+            342 BINARY_SUBSCR
+            352 PUSH_NULL
+            354 LOAD_NAME               16 (int)
+            356 LOAD_NAME               14 (FONT_HINT)
+            358 LOAD_CONST              13 (1)
+            360 BINARY_SUBSCR
+            370 LOAD_CONST              14 (1.05)
+            372 BINARY_OP                5 (*)
+            376 LOAD_CONST              15 (0.5)
+            378 BINARY_OP                0 (+)
+            382 PRECALL                  1
+            386 CALL                     1
+            396 BUILD_TUPLE              2
+            398 STORE_NAME              19 (FONT_HINT_BIG)
+
+ 33         400 PUSH_NULL
+            402 LOAD_BUILD_CLASS
+            404 LOAD_CONST              17 (<code object QuantityMismatchDialog at 0x000002BF94A66890, file "ui\quantity_dialog.py", line 33>)
+            406 MAKE_FUNCTION            0
+            408 LOAD_CONST              18 ('QuantityMismatchDialog')
+            410 LOAD_NAME                4 (tk)
+            412 LOAD_ATTR               20 (Toplevel)
+            422 PRECALL                  3
+            426 CALL                     3
+            436 STORE_NAME              21 (QuantityMismatchDialog)
+
+119         438 PUSH_NULL
+            440 LOAD_BUILD_CLASS
+            442 LOAD_CONST              19 (<code object BatchExportGateDialog at 0x000002BF94A65BD0, file "ui\quantity_dialog.py", line 119>)
+            444 MAKE_FUNCTION            0
+            446 LOAD_CONST              20 ('BatchExportGateDialog')
+            448 LOAD_NAME                4 (tk)
+            450 LOAD_ATTR               20 (Toplevel)
+            460 PRECALL                  3
+            464 CALL                     3
+            474 STORE_NAME              22 (BatchExportGateDialog)
+            476 LOAD_CONST               3 (None)
+            478 RETURN_VALUE
+ExceptionTable:
+  56 to 166 -> 170 [0]
+  170 to 198 -> 206 [1] lasti
+  204 to 204 -> 206 [1] lasti
+
+==============================================================================
+## <module>.QuantityMismatchDialog  (args=0, locals=0)
+              0 MAKE_CELL                0 (__class__)
+
+ 33           2 RESUME                   0
+              4 LOAD_NAME                0 (__name__)
+              6 STORE_NAME               1 (__module__)
+              8 LOAD_CONST               0 ('QuantityMismatchDialog')
+             10 STORE_NAME               2 (__qualname__)
+
+ 34          12 LOAD_CONST               1 ('Modal that blocks export until the operator explicitly cancels or releases.\n\n    ``reports`` is the list of :class:`ExportGateReport` that contained hard\n    blocks. Only appears when at least one hard block exists; warnings from those\n    same reports are shown as advisory notes but never block on their own.\n    ')
+             14 STORE_NAME               3 (__doc__)
+
+ 41          16 LOAD_CONST              12 (('reports', 'list'))
+             18 LOAD_CLOSURE             0 (__class__)
+             20 BUILD_TUPLE              1
+             22 LOAD_CONST               4 (<code object __init__ at 0x000002BF940D40F0, file "ui\quantity_dialog.py", line 41>)
+             24 MAKE_FUNCTION           12 (annotations, closure)
+             26 STORE_NAME               4 (__init__)
+
+ 95          28 LOAD_NAME                5 (staticmethod)
+
+ 96          30 LOAD_CONST              13 (('txt', 'scrolledtext.ScrolledText', 'reports', 'list', 'return', 'None'))
+             32 LOAD_CONST               9 (<code object _fill at 0x000002BF940EA620, file "ui\quantity_dialog.py", line 95>)
+             34 MAKE_FUNCTION            4 (annotations)
+
+ 95          36 PRECALL                  0
+             40 CALL                     0
+
+ 96          50 STORE_NAME               6 (_fill)
+
+110          52 LOAD_CONST              14 (('return', 'None'))
+             54 LOAD_CONST              10 (<code object _cancel at 0x000002BF94A2FB30, file "ui\quantity_dialog.py", line 110>)
+             56 MAKE_FUNCTION            4 (annotations)
+             58 STORE_NAME               7 (_cancel)
+
+114          60 LOAD_CONST              14 (('return', 'None'))
+             62 LOAD_CONST              11 (<code object _release at 0x000002BF94A2F230, file "ui\quantity_dialog.py", line 114>)
+             64 MAKE_FUNCTION            4 (annotations)
+             66 STORE_NAME               8 (_release)
+             68 LOAD_CLOSURE             0 (__class__)
+             70 COPY                     1
+             72 STORE_NAME               9 (__classcell__)
+             74 RETURN_VALUE
+
+==============================================================================
+## <module>.QuantityMismatchDialog.__init__  (args=3, locals=9)
+# varnames: self, parent, reports, body, txt, hint, btn_row, cancel_btn, release_btn
+              0 COPY_FREE_VARS           1
+              2 MAKE_CELL                0 (self)
+
+ 41           4 RESUME                   0
+
+ 42           6 LOAD_GLOBAL              1 (NULL + super)
+             18 PRECALL                  0
+             22 CALL                     0
+             32 LOAD_METHOD              1 (__init__)
+             54 LOAD_FAST                1 (parent)
+             56 PRECALL                  1
+             60 CALL                     1
+             70 POP_TOP
+
+ 43          72 LOAD_CONST               1 (False)
+             74 LOAD_DEREF               0 (self)
+             76 STORE_ATTR               2 (proceed)
+
+ 44          86 NOP
+
+ 45          88 LOAD_DEREF               0 (self)
+             90 LOAD_METHOD              3 (configure)
+            112 LOAD_GLOBAL              8 (COL)
+            124 LOAD_METHOD              5 (get)
+            146 LOAD_CONST               2 ('gap')
+            148 LOAD_CONST               3 ('#e4e5e6')
+            150 PRECALL                  2
+            154 CALL                     2
+            164 KW_NAMES                 4
+            166 PRECALL                  1
+            170 CALL                     1
+            180 POP_TOP
+            182 JUMP_FORWARD            16 (to 216)
+        >>  184 PUSH_EXC_INFO
+
+ 46         186 LOAD_GLOBAL             12 (Exception)
+            198 CHECK_EXC_MATCH
+            200 POP_JUMP_FORWARD_IF_FALSE     3 (to 208)
+            202 POP_TOP
+
+ 47         204 POP_EXCEPT
+            206 JUMP_FORWARD             4 (to 216)
+
+ 46     >>  208 RERAISE                  0
+        >>  210 COPY                     3
+            212 POP_EXCEPT
+            214 RERAISE                  1
+
+ 48     >>  216 LOAD_FAST                2 (reports)
+            218 LOAD_DEREF               0 (self)
+            220 STORE_ATTR               7 (_reports)
+
+ 49         230 LOAD_DEREF               0 (self)
+            232 LOAD_METHOD              8 (title)
+            254 LOAD_CONST               5 ('导出拦截：数量校验未通过')
+            256 PRECALL                  1
+            260 CALL                     1
+            270 POP_TOP
+
+ 50         272 LOAD_DEREF               0 (self)
+            274 LOAD_METHOD              9 (transient)
+            296 LOAD_FAST                1 (parent)
+            298 PRECALL                  1
+            302 CALL                     1
+            312 POP_TOP
+
+ 51         314 LOAD_DEREF               0 (self)
+            316 LOAD_METHOD             10 (grab_set)
+            338 PRECALL                  0
+            342 CALL                     0
+            352 POP_TOP
+
+ 52         354 LOAD_DEREF               0 (self)
+            356 LOAD_METHOD             11 (resizable)
+            378 LOAD_CONST               6 (True)
+            380 LOAD_CONST               6 (True)
+            382 PRECALL                  2
+            386 CALL                     2
+            396 POP_TOP
+
+ 54         398 LOAD_GLOBAL             25 (NULL + ttk)
+            410 LOAD_ATTR               13 (Frame)
+            420 LOAD_DEREF               0 (self)
+            422 LOAD_CONST               7 (14)
+            424 KW_NAMES                 8
+            426 PRECALL                  2
+            430 CALL                     2
+            440 STORE_FAST               3 (body)
+
+ 55         442 LOAD_FAST                3 (body)
+            444 LOAD_METHOD             14 (pack)
+            466 LOAD_GLOBAL             30 (tk)
+            478 LOAD_ATTR               16 (BOTH)
+            488 LOAD_CONST               6 (True)
+            490 KW_NAMES                 9
+            492 PRECALL                  2
+            496 CALL                     2
+            506 POP_TOP
+
+ 57         508 LOAD_GLOBAL             25 (NULL + ttk)
+            520 LOAD_ATTR               17 (Label)
+
+ 58         530 LOAD_FAST                3 (body)
+
+ 59         532 LOAD_CONST              10 ('以下 PO 的数量校验未通过，建议取消导出并核查后再试：')
+
+ 60         534 LOAD_GLOBAL             36 (FONT_BOLD)
+
+ 57         546 KW_NAMES                11
+            548 PRECALL                  3
+            552 CALL                     3
+
+ 61         562 LOAD_METHOD             14 (pack)
+            584 LOAD_GLOBAL             30 (tk)
+            596 LOAD_ATTR               19 (W)
+            606 LOAD_CONST              12 ((0, 8))
+            608 KW_NAMES                13
+            610 PRECALL                  2
+            614 CALL                     2
+            624 POP_TOP
+
+ 63         626 LOAD_GLOBAL             41 (NULL + scrolledtext)
+            638 LOAD_ATTR               21 (ScrolledText)
+
+ 64         648 LOAD_FAST                3 (body)
+            650 LOAD_CONST              14 (92)
+            652 LOAD_CONST              15 (18)
+            654 LOAD_GLOBAL             30 (tk)
+            666 LOAD_ATTR               22 (WORD)
+
+ 65         676 LOAD_GLOBAL              8 (COL)
+            688 LOAD_METHOD              5 (get)
+            710 LOAD_CONST              16 ('field')
+            712 LOAD_CONST              17 ('#31353D')
+            714 PRECALL                  2
+            718 CALL                     2
+
+ 66         728 LOAD_GLOBAL              8 (COL)
+            740 LOAD_METHOD              5 (get)
+            762 LOAD_CONST              18 ('ink')
+            764 LOAD_CONST              19 ('#ECEEF1')
+            766 PRECALL                  2
+            770 CALL                     2
+
+ 67         780 LOAD_GLOBAL              8 (COL)
+            792 LOAD_METHOD              5 (get)
+            814 LOAD_CONST              18 ('ink')
+            816 LOAD_CONST              19 ('#ECEEF1')
+            818 PRECALL                  2
+            822 CALL                     2
+
+ 68         832 LOAD_GLOBAL              8 (COL)
+            844 LOAD_METHOD              5 (get)
+            866 LOAD_CONST              20 ('accent')
+            868 LOAD_CONST              21 ('#C2A878')
+            870 PRECALL                  2
+            874 CALL                     2
+
+ 69         884 LOAD_GLOBAL              8 (COL)
+            896 LOAD_METHOD              5 (get)
+            918 LOAD_CONST              22 ('select_fg')
+            920 LOAD_CONST              23 ('#23262D')
+            922 PRECALL                  2
+            926 CALL                     2
+
+ 63         936 KW_NAMES                24
+            938 PRECALL                  9
+            942 CALL                     9
+            952 STORE_FAST               4 (txt)
+
+ 71         954 LOAD_FAST                4 (txt)
+            956 LOAD_METHOD             14 (pack)
+            978 LOAD_GLOBAL             30 (tk)
+            990 LOAD_ATTR               16 (BOTH)
+           1000 LOAD_CONST               6 (True)
+           1002 KW_NAMES                 9
+           1004 PRECALL                  2
+           1008 CALL                     2
+           1018 POP_TOP
+
+ 72        1020 LOAD_DEREF               0 (self)
+           1022 LOAD_METHOD             23 (_fill)
+           1044 LOAD_FAST                4 (txt)
+           1046 LOAD_FAST                2 (reports)
+           1048 PRECALL                  2
+           1052 CALL                     2
+           1062 POP_TOP
+
+ 73        1064 LOAD_FAST                4 (txt)
+           1066 LOAD_METHOD             24 (config)
+           1088 LOAD_GLOBAL             30 (tk)
+           1100 LOAD_ATTR               25 (DISABLED)
+           1110 KW_NAMES                25
+           1112 PRECALL                  1
+           1116 CALL                     1
+           1126 POP_TOP
+
+ 75        1128 LOAD_GLOBAL             25 (NULL + ttk)
+           1140 LOAD_ATTR               17 (Label)
+
+ 76        1150 LOAD_FAST                3 (body)
+
+ 77        1152 LOAD_CONST              26 ('「取消导出」可返回检查；「仍要导出」将忽略以上提示直接导出。')
+
+ 78        1154 LOAD_GLOBAL             52 (FONT_HINT)
+
+ 75        1166 KW_NAMES                11
+           1168 PRECALL                  3
+           1172 CALL                     3
+           1182 STORE_FAST               5 (hint)
+
+ 80        1184 LOAD_FAST                5 (hint)
+           1186 LOAD_METHOD             14 (pack)
+           1208 LOAD_GLOBAL             30 (tk)
+           1220 LOAD_ATTR               19 (W)
+           1230 LOAD_CONST              27 ((8, 0))
+           1232 KW_NAMES                13
+           1234 PRECALL                  2
+           1238 CALL                     2
+           1248 POP_TOP
+
+ 82        1250 LOAD_GLOBAL             25 (NULL + ttk)
+           1262 LOAD_ATTR               13 (Frame)
+           1272 LOAD_FAST                3 (body)
+           1274 PRECALL                  1
+           1278 CALL                     1
+           1288 STORE_FAST               6 (btn_row)
+
+ 83        1290 LOAD_FAST                6 (btn_row)
+           1292 LOAD_METHOD             14 (pack)
+           1314 LOAD_GLOBAL             30 (tk)
+           1326 LOAD_ATTR               27 (X)
+           1336 LOAD_CONST              28 ((10, 0))
+           1338 KW_NAMES                29
+           1340 PRECALL                  2
+           1344 CALL                     2
+           1354 POP_TOP
+
+ 84        1356 LOAD_GLOBAL             25 (NULL + ttk)
+           1368 LOAD_ATTR               28 (Button)
+           1378 LOAD_FAST                6 (btn_row)
+           1380 LOAD_CONST              30 ('取消导出')
+           1382 LOAD_DEREF               0 (self)
+           1384 LOAD_ATTR               29 (_cancel)
+           1394 KW_NAMES                31
+           1396 PRECALL                  3
+           1400 CALL                     3
+           1410 STORE_FAST               7 (cancel_btn)
+
+ 85        1412 LOAD_FAST                7 (cancel_btn)
+           1414 LOAD_METHOD             14 (pack)
+           1436 LOAD_GLOBAL             30 (tk)
+           1448 LOAD_ATTR               30 (RIGHT)
+           1458 LOAD_CONST              32 (6)
+           1460 KW_NAMES                33
+           1462 PRECALL                  2
+           1466 CALL                     2
+           1476 POP_TOP
+
+ 86        1478 LOAD_GLOBAL             25 (NULL + ttk)
+           1490 LOAD_ATTR               28 (Button)
+           1500 LOAD_FAST                6 (btn_row)
+           1502 LOAD_CONST              34 ('仍要导出')
+           1504 LOAD_DEREF               0 (self)
+           1506 LOAD_ATTR               31 (_release)
+
+ 87        1516 LOAD_CONST              35 ('Accent.TButton')
+
+ 86        1518 KW_NAMES                36
+           1520 PRECALL                  4
+           1524 CALL                     4
+           1534 STORE_FAST               8 (release_btn)
+
+ 88        1536 LOAD_FAST                8 (release_btn)
+           1538 LOAD_METHOD             14 (pack)
+           1560 LOAD_GLOBAL             30 (tk)
+           1572 LOAD_ATTR               30 (RIGHT)
+           1582 KW_NAMES                37
+           1584 PRECALL                  1
+           1588 CALL                     1
+           1598 POP_TOP
+
+ 90        1600 LOAD_FAST                7 (cancel_btn)
+           1602 LOAD_METHOD             32 (focus_set)
+           1624 PRECALL                  0
+           1628 CALL                     0
+           1638 POP_TOP
+
+ 91        1640 LOAD_DEREF               0 (self)
+           1642 LOAD_METHOD             33 (bind)
+           1664 LOAD_CONST              38 ('<Escape>')
+           1666 LOAD_CLOSURE             0 (self)
+           1668 BUILD_TUPLE              1
+           1670 LOAD_CONST              39 (<code object <lambda> at 0x000002BF94A2BF00, file "ui\quantity_dialog.py", line 91>)
+           1672 MAKE_FUNCTION            8 (closure)
+           1674 PRECALL                  2
+           1678 CALL                     2
+           1688 POP_TOP
+
+ 92        1690 LOAD_DEREF               0 (self)
+           1692 LOAD_METHOD             34 (protocol)
+           1714 LOAD_CONST              40 ('WM_DELETE_WINDOW')
+           1716 LOAD_DEREF               0 (self)
+           1718 LOAD_ATTR               29 (_cancel)
+           1728 PRECALL                  2
+           1732 CALL                     2
+           1742 POP_TOP
+
+ 93        1744 LOAD_DEREF               0 (self)
+           1746 LOAD_METHOD             35 (wait_window)
+           1768 LOAD_DEREF               0 (self)
+           1770 PRECALL                  1
+           1774 CALL                     1
+           1784 POP_TOP
+           1786 LOAD_CONST               0 (None)
+           1788 RETURN_VALUE
+ExceptionTable:
+  88 to 180 -> 184 [0]
+  184 to 202 -> 210 [1] lasti
+  208 to 208 -> 210 [1] lasti
+
+==============================================================================
+## <module>.QuantityMismatchDialog.__init__.<lambda>  (args=1, locals=1)
+# varnames: _e
+              0 COPY_FREE_VARS           1
+
+ 91           2 RESUME                   0
+              4 LOAD_DEREF               1 (self)
+              6 LOAD_METHOD              0 (_cancel)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.QuantityMismatchDialog._fill  (args=2, locals=6)
+# varnames: txt, reports, i, r, b, w
+ 95           0 RESUME                   0
+
+ 97           2 LOAD_GLOBAL              1 (NULL + enumerate)
+             14 LOAD_FAST                1 (reports)
+             16 LOAD_CONST               1 (1)
+             18 PRECALL                  2
+             22 CALL                     2
+             32 GET_ITER
+        >>   34 EXTENDED_ARG             1
+             36 FOR_ITER               283 (to 604)
+             38 UNPACK_SEQUENCE          2
+             42 STORE_FAST               2 (i)
+             44 STORE_FAST               3 (r)
+
+ 98          46 LOAD_GLOBAL              3 (NULL + isinstance)
+             58 LOAD_FAST                3 (r)
+             60 LOAD_GLOBAL              4 (ExportGateReport)
+             72 PRECALL                  2
+             76 CALL                     2
+             86 POP_JUMP_FORWARD_IF_TRUE     2 (to 92)
+             88 LOAD_ASSERTION_ERROR
+             90 RAISE_VARARGS            1
+
+ 99     >>   92 LOAD_FAST                0 (txt)
+             94 LOAD_METHOD              3 (insert)
+            116 LOAD_GLOBAL              8 (tk)
+            128 LOAD_ATTR                5 (END)
+            138 LOAD_CONST               2 ('【PO ')
+            140 LOAD_FAST                2 (i)
+            142 FORMAT_VALUE             0
+            144 LOAD_CONST               3 ('】')
+            146 LOAD_FAST                3 (r)
+            148 LOAD_ATTR                6 (customer)
+            158 FORMAT_VALUE             0
+            160 LOAD_CONST               4 ('  |  ')
+            162 LOAD_FAST                3 (r)
+            164 LOAD_ATTR                7 (source)
+            174 FORMAT_VALUE             0
+            176 LOAD_CONST               5 ('\n')
+            178 BUILD_STRING             7
+            180 PRECALL                  2
+            184 CALL                     2
+            194 POP_TOP
+
+100         196 LOAD_FAST                3 (r)
+            198 LOAD_ATTR                8 (blocks)
+            208 POP_JUMP_FORWARD_IF_FALSE    78 (to 366)
+
+101         210 LOAD_FAST                0 (txt)
+            212 LOAD_METHOD              3 (insert)
+            234 LOAD_GLOBAL              8 (tk)
+            246 LOAD_ATTR                5 (END)
+            256 LOAD_CONST               6 ('  [阻断项]\n')
+            258 PRECALL                  2
+            262 CALL                     2
+            272 POP_TOP
+
+102         274 LOAD_FAST                3 (r)
+            276 LOAD_ATTR                8 (blocks)
+            286 GET_ITER
+        >>  288 FOR_ITER                38 (to 366)
+            290 STORE_FAST               4 (b)
+
+103         292 LOAD_FAST                0 (txt)
+            294 LOAD_METHOD              3 (insert)
+            316 LOAD_GLOBAL              8 (tk)
+            328 LOAD_ATTR                5 (END)
+            338 LOAD_CONST               7 ('    - ')
+            340 LOAD_FAST                4 (b)
+            342 FORMAT_VALUE             0
+            344 LOAD_CONST               5 ('\n')
+            346 BUILD_STRING             3
+            348 PRECALL                  2
+            352 CALL                     2
+            362 POP_TOP
+            364 JUMP_BACKWARD           39 (to 288)
+
+104     >>  366 LOAD_FAST                3 (r)
+            368 LOAD_ATTR                9 (warnings)
+            378 POP_JUMP_FORWARD_IF_FALSE    78 (to 536)
+
+105         380 LOAD_FAST                0 (txt)
+            382 LOAD_METHOD              3 (insert)
+            404 LOAD_GLOBAL              8 (tk)
+            416 LOAD_ATTR                5 (END)
+            426 LOAD_CONST               8 ('  [提示]\n')
+            428 PRECALL                  2
+            432 CALL                     2
+            442 POP_TOP
+
+106         444 LOAD_FAST                3 (r)
+            446 LOAD_ATTR                9 (warnings)
+            456 GET_ITER
+        >>  458 FOR_ITER                38 (to 536)
+            460 STORE_FAST               5 (w)
+
+107         462 LOAD_FAST                0 (txt)
+            464 LOAD_METHOD              3 (insert)
+            486 LOAD_GLOBAL              8 (tk)
+            498 LOAD_ATTR                5 (END)
+            508 LOAD_CONST               7 ('    - ')
+            510 LOAD_FAST                5 (w)
+            512 FORMAT_VALUE             0
+            514 LOAD_CONST               5 ('\n')
+            516 BUILD_STRING             3
+            518 PRECALL                  2
+            522 CALL                     2
+            532 POP_TOP
+            534 JUMP_BACKWARD           39 (to 458)
+
+108     >>  536 LOAD_FAST                0 (txt)
+            538 LOAD_METHOD              3 (insert)
+            560 LOAD_GLOBAL              8 (tk)
+            572 LOAD_ATTR                5 (END)
+            582 LOAD_CONST               5 ('\n')
+            584 PRECALL                  2
+            588 CALL                     2
+            598 POP_TOP
+            600 EXTENDED_ARG             1
+            602 JUMP_BACKWARD          285 (to 34)
+
+ 97     >>  604 LOAD_CONST               0 (None)
+            606 RETURN_VALUE
+
+==============================================================================
+## <module>.QuantityMismatchDialog._cancel  (args=1, locals=1)
+# varnames: self
+110           0 RESUME                   0
+
+111           2 LOAD_CONST               1 (False)
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (proceed)
+
+112          16 LOAD_FAST                0 (self)
+             18 LOAD_METHOD              1 (destroy)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 POP_TOP
+             56 LOAD_CONST               0 (None)
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.QuantityMismatchDialog._release  (args=1, locals=1)
+# varnames: self
+114           0 RESUME                   0
+
+115           2 LOAD_CONST               1 (True)
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (proceed)
+
+116          16 LOAD_FAST                0 (self)
+             18 LOAD_METHOD              1 (destroy)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 POP_TOP
+             56 LOAD_CONST               0 (None)
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog  (args=0, locals=0)
+              0 MAKE_CELL                0 (__class__)
+
+119           2 RESUME                   0
+              4 LOAD_NAME                0 (__name__)
+              6 STORE_NAME               1 (__module__)
+              8 LOAD_CONST               0 ('BatchExportGateDialog')
+             10 STORE_NAME               2 (__qualname__)
+
+120          12 LOAD_CONST               1 ('Batch export interception modal with per-record skip semantics.\n\n    Replaces the old all-or-nothing :class:`QuantityMismatchDialog`. It is fed the\n    pre-scanned batch (see :func:`core.export_gate.scan_batch`) and shows how many\n    records are safe to export vs. how many are blocked, lists each blocked PO with\n    its reasons, then offers three operator choices:\n\n      * ``SKIP``   -> export only the passing records, drop the blocked ones;\n      * ``ALL``    -> export everything (operator owns the risk);\n      * ``CANCEL`` -> abort the whole export (default / safe).\n    ')
+             14 STORE_NAME               3 (__doc__)
+
+132          16 LOAD_CONST               2 ('skip')
+             18 STORE_NAME               4 (CHOICE_SKIP)
+
+133          20 LOAD_CONST               3 ('all')
+             22 STORE_NAME               5 (CHOICE_ALL)
+
+134          24 LOAD_CONST               4 ('cancel')
+             26 STORE_NAME               6 (CHOICE_CANCEL)
+
+136          28 LOAD_CLOSURE             0 (__class__)
+             30 BUILD_TUPLE              1
+             32 LOAD_CONST               5 (<code object __init__ at 0x000002BF940D5210, file "ui\quantity_dialog.py", line 136>)
+             34 MAKE_FUNCTION            8 (closure)
+             36 STORE_NAME               7 (__init__)
+
+204          38 LOAD_NAME                8 (staticmethod)
+
+205          40 LOAD_CONST               6 (<code object _stat at 0x000002BF946ABA30, file "ui\quantity_dialog.py", line 204>)
+             42 MAKE_FUNCTION            0
+
+204          44 PRECALL                  0
+             48 CALL                     0
+
+205          58 STORE_NAME               9 (_stat)
+
+211          60 LOAD_CONST              10 (('return', 'None'))
+             62 LOAD_CONST               9 (<code object _choose at 0x000002BF94A2FD30, file "ui\quantity_dialog.py", line 211>)
+             64 MAKE_FUNCTION            4 (annotations)
+             66 STORE_NAME              10 (_choose)
+             68 LOAD_CLOSURE             0 (__class__)
+             70 COPY                     1
+             72 STORE_NAME              11 (__classcell__)
+             74 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__  (args=5, locals=13)
+# varnames: self, parent, ok_count, total_count, blocked_reports, body, warn_count, stats, c, txt, hint, btn_row, skip_btn
+              0 COPY_FREE_VARS           1
+              2 MAKE_CELL                0 (self)
+
+136           4 RESUME                   0
+
+137           6 LOAD_GLOBAL              1 (NULL + super)
+             18 PRECALL                  0
+             22 CALL                     0
+             32 LOAD_METHOD              1 (__init__)
+             54 LOAD_FAST                1 (parent)
+             56 PRECALL                  1
+             60 CALL                     1
+             70 POP_TOP
+
+138          72 LOAD_DEREF               0 (self)
+             74 LOAD_ATTR                2 (CHOICE_CANCEL)
+             84 LOAD_DEREF               0 (self)
+             86 STORE_ATTR               3 (choice)
+
+139          96 NOP
+
+140          98 LOAD_DEREF               0 (self)
+            100 LOAD_METHOD              4 (configure)
+            122 LOAD_GLOBAL             10 (COL)
+            134 LOAD_METHOD              6 (get)
+            156 LOAD_CONST               1 ('gap')
+            158 LOAD_CONST               2 ('#e4e5e6')
+            160 PRECALL                  2
+            164 CALL                     2
+            174 KW_NAMES                 3
+            176 PRECALL                  1
+            180 CALL                     1
+            190 POP_TOP
+            192 JUMP_FORWARD            16 (to 226)
+        >>  194 PUSH_EXC_INFO
+
+141         196 LOAD_GLOBAL             14 (Exception)
+            208 CHECK_EXC_MATCH
+            210 POP_JUMP_FORWARD_IF_FALSE     3 (to 218)
+            212 POP_TOP
+
+142         214 POP_EXCEPT
+            216 JUMP_FORWARD             4 (to 226)
+
+141     >>  218 RERAISE                  0
+        >>  220 COPY                     3
+            222 POP_EXCEPT
+            224 RERAISE                  1
+
+143     >>  226 LOAD_DEREF               0 (self)
+            228 LOAD_METHOD              8 (title)
+            250 LOAD_CONST               4 ('批量导出：数量校验结果')
+            252 PRECALL                  1
+            256 CALL                     1
+            266 POP_TOP
+
+144         268 LOAD_DEREF               0 (self)
+            270 LOAD_METHOD              9 (transient)
+            292 LOAD_FAST                1 (parent)
+            294 PRECALL                  1
+            298 CALL                     1
+            308 POP_TOP
+
+145         310 LOAD_DEREF               0 (self)
+            312 LOAD_METHOD             10 (grab_set)
+            334 PRECALL                  0
+            338 CALL                     0
+            348 POP_TOP
+
+146         350 LOAD_DEREF               0 (self)
+            352 LOAD_METHOD             11 (resizable)
+            374 LOAD_CONST               5 (True)
+            376 LOAD_CONST               5 (True)
+            378 PRECALL                  2
+            382 CALL                     2
+            392 POP_TOP
+
+148         394 LOAD_GLOBAL             25 (NULL + ttk)
+            406 LOAD_ATTR               13 (Frame)
+            416 LOAD_DEREF               0 (self)
+            418 LOAD_CONST               6 (15)
+            420 KW_NAMES                 7
+            422 PRECALL                  2
+            426 CALL                     2
+            436 STORE_FAST               5 (body)
+
+149         438 LOAD_FAST                5 (body)
+            440 LOAD_METHOD             14 (pack)
+            462 LOAD_GLOBAL             30 (tk)
+            474 LOAD_ATTR               16 (BOTH)
+            484 LOAD_CONST               5 (True)
+            486 KW_NAMES                 8
+            488 PRECALL                  2
+            492 CALL                     2
+            502 POP_TOP
+
+151         504 LOAD_GLOBAL             25 (NULL + ttk)
+            516 LOAD_ATTR               17 (Label)
+
+152         526 LOAD_FAST                5 (body)
+
+153         528 LOAD_CONST               9 ('以下 PO 在数量校验中未通过。可跳过问题项导出其余，或选择全部导出。')
+
+154         530 LOAD_GLOBAL             36 (FONT_BOLD_BIG)
+
+151         542 KW_NAMES                10
+            544 PRECALL                  3
+            548 CALL                     3
+
+155         558 LOAD_METHOD             14 (pack)
+            580 LOAD_GLOBAL             30 (tk)
+            592 LOAD_ATTR               19 (W)
+            602 LOAD_CONST              11 ((0, 11))
+            604 KW_NAMES                12
+            606 PRECALL                  2
+            610 CALL                     2
+            620 POP_TOP
+
+157         622 LOAD_GLOBAL             41 (NULL + sum)
+            634 LOAD_CONST              13 (<code object <genexpr> at 0x000002BF94A2F930, file "ui\quantity_dialog.py", line 157>)
+            636 MAKE_FUNCTION            0
+            638 LOAD_FAST                4 (blocked_reports)
+            640 GET_ITER
+            642 PRECALL                  0
+            646 CALL                     0
+            656 PRECALL                  1
+            660 CALL                     1
+            670 STORE_FAST               6 (warn_count)
+
+158         672 LOAD_GLOBAL             25 (NULL + ttk)
+            684 LOAD_ATTR               13 (Frame)
+            694 LOAD_FAST                5 (body)
+            696 PRECALL                  1
+            700 CALL                     1
+            710 STORE_FAST               7 (stats)
+
+159         712 LOAD_FAST                7 (stats)
+            714 LOAD_METHOD             14 (pack)
+            736 LOAD_GLOBAL             30 (tk)
+            748 LOAD_ATTR               21 (X)
+            758 LOAD_CONST              11 ((0, 11))
+            760 KW_NAMES                14
+            762 PRECALL                  2
+            766 CALL                     2
+            776 POP_TOP
+
+160         778 LOAD_GLOBAL             45 (NULL + range)
+            790 LOAD_CONST              15 (4)
+            792 PRECALL                  1
+            796 CALL                     1
+            806 GET_ITER
+        >>  808 FOR_ITER                25 (to 860)
+            810 STORE_FAST               8 (c)
+
+161         812 LOAD_FAST                7 (stats)
+            814 LOAD_METHOD             23 (columnconfigure)
+            836 LOAD_FAST                8 (c)
+            838 LOAD_CONST              16 (1)
+            840 KW_NAMES                17
+            842 PRECALL                  2
+            846 CALL                     2
+            856 POP_TOP
+            858 JUMP_BACKWARD           26 (to 808)
+
+162     >>  860 LOAD_DEREF               0 (self)
+            862 LOAD_METHOD             24 (_stat)
+            884 LOAD_FAST                7 (stats)
+            886 LOAD_CONST              18 ('总计')
+            888 LOAD_FAST                3 (total_count)
+            890 LOAD_CONST              19 (0)
+            892 PRECALL                  4
+            896 CALL                     4
+            906 POP_TOP
+
+163         908 LOAD_DEREF               0 (self)
+            910 LOAD_METHOD             24 (_stat)
+            932 LOAD_FAST                7 (stats)
+            934 LOAD_CONST              20 ('可导出')
+            936 LOAD_FAST                2 (ok_count)
+            938 LOAD_CONST              16 (1)
+            940 PRECALL                  4
+            944 CALL                     4
+            954 POP_TOP
+
+164         956 LOAD_DEREF               0 (self)
+            958 LOAD_METHOD             24 (_stat)
+            980 LOAD_FAST                7 (stats)
+            982 LOAD_CONST              21 ('需跳过')
+            984 LOAD_GLOBAL             51 (NULL + len)
+            996 LOAD_FAST                4 (blocked_reports)
+            998 PRECALL                  1
+           1002 CALL                     1
+           1012 LOAD_CONST              22 (2)
+           1014 PRECALL                  4
+           1018 CALL                     4
+           1028 POP_TOP
+
+165        1030 LOAD_DEREF               0 (self)
+           1032 LOAD_METHOD             24 (_stat)
+           1054 LOAD_FAST                7 (stats)
+           1056 LOAD_CONST              23 ('警告')
+           1058 LOAD_FAST                6 (warn_count)
+           1060 LOAD_CONST              24 (3)
+           1062 PRECALL                  4
+           1066 CALL                     4
+           1076 POP_TOP
+
+167        1078 LOAD_GLOBAL             53 (NULL + scrolledtext)
+           1090 LOAD_ATTR               27 (ScrolledText)
+
+168        1100 LOAD_FAST                5 (body)
+           1102 LOAD_CONST              25 (92)
+           1104 LOAD_CONST              26 (16)
+           1106 LOAD_GLOBAL             30 (tk)
+           1118 LOAD_ATTR               28 (WORD)
+
+169        1128 LOAD_GLOBAL             10 (COL)
+           1140 LOAD_METHOD              6 (get)
+           1162 LOAD_CONST              27 ('field')
+           1164 LOAD_CONST              28 ('#31353D')
+           1166 PRECALL                  2
+           1170 CALL                     2
+
+170        1180 LOAD_GLOBAL             10 (COL)
+           1192 LOAD_METHOD              6 (get)
+           1214 LOAD_CONST              29 ('ink')
+           1216 LOAD_CONST              30 ('#ECEEF1')
+           1218 PRECALL                  2
+           1222 CALL                     2
+
+171        1232 LOAD_GLOBAL             10 (COL)
+           1244 LOAD_METHOD              6 (get)
+           1266 LOAD_CONST              29 ('ink')
+           1268 LOAD_CONST              30 ('#ECEEF1')
+           1270 PRECALL                  2
+           1274 CALL                     2
+
+172        1284 LOAD_GLOBAL             10 (COL)
+           1296 LOAD_METHOD              6 (get)
+           1318 LOAD_CONST              31 ('accent')
+           1320 LOAD_CONST              32 ('#C2A878')
+           1322 PRECALL                  2
+           1326 CALL                     2
+
+173        1336 LOAD_GLOBAL             10 (COL)
+           1348 LOAD_METHOD              6 (get)
+           1370 LOAD_CONST              33 ('select_fg')
+           1372 LOAD_CONST              34 ('#23262D')
+           1374 PRECALL                  2
+           1378 CALL                     2
+
+167        1388 KW_NAMES                35
+           1390 PRECALL                  9
+           1394 CALL                     9
+           1404 STORE_FAST               9 (txt)
+
+175        1406 LOAD_FAST                9 (txt)
+           1408 LOAD_METHOD             14 (pack)
+           1430 LOAD_GLOBAL             30 (tk)
+           1442 LOAD_ATTR               16 (BOTH)
+           1452 LOAD_CONST               5 (True)
+           1454 KW_NAMES                 8
+           1456 PRECALL                  2
+           1460 CALL                     2
+           1470 POP_TOP
+
+176        1472 LOAD_GLOBAL             58 (QuantityMismatchDialog)
+           1484 LOAD_METHOD             30 (_fill)
+           1506 LOAD_FAST                9 (txt)
+           1508 LOAD_FAST                4 (blocked_reports)
+           1510 PRECALL                  2
+           1514 CALL                     2
+           1524 POP_TOP
+
+177        1526 LOAD_FAST                9 (txt)
+           1528 LOAD_METHOD             31 (config)
+           1550 LOAD_GLOBAL             30 (tk)
+           1562 LOAD_ATTR               32 (DISABLED)
+           1572 KW_NAMES                36
+           1574 PRECALL                  1
+           1578 CALL                     1
+           1588 POP_TOP
+
+179        1590 LOAD_GLOBAL             25 (NULL + ttk)
+           1602 LOAD_ATTR               17 (Label)
+
+180        1612 LOAD_FAST                5 (body)
+
+181        1614 LOAD_CONST              37 ('「取消导出」可返回检查；「导出通过项」将跳过以上 PO；「全部仍要导出」忽略提示。')
+
+182        1616 LOAD_GLOBAL             66 (FONT_HINT_BIG)
+
+179        1628 KW_NAMES                10
+           1630 PRECALL                  3
+           1634 CALL                     3
+           1644 STORE_FAST              10 (hint)
+
+184        1646 LOAD_FAST               10 (hint)
+           1648 LOAD_METHOD             14 (pack)
+           1670 LOAD_GLOBAL             30 (tk)
+           1682 LOAD_ATTR               19 (W)
+           1692 LOAD_CONST              38 ((9, 0))
+           1694 KW_NAMES                12
+           1696 PRECALL                  2
+           1700 CALL                     2
+           1710 POP_TOP
+
+186        1712 LOAD_GLOBAL             25 (NULL + ttk)
+           1724 LOAD_ATTR               13 (Frame)
+           1734 LOAD_FAST                5 (body)
+           1736 PRECALL                  1
+           1740 CALL                     1
+           1750 STORE_FAST              11 (btn_row)
+
+187        1752 LOAD_FAST               11 (btn_row)
+           1754 LOAD_METHOD             14 (pack)
+           1776 LOAD_GLOBAL             30 (tk)
+           1788 LOAD_ATTR               21 (X)
+           1798 LOAD_CONST              39 ((11, 0))
+           1800 KW_NAMES                14
+           1802 PRECALL                  2
+           1806 CALL                     2
+           1816 POP_TOP
+
+188        1818 LOAD_GLOBAL             25 (NULL + ttk)
+           1830 LOAD_ATTR               34 (Button)
+
+189        1840 LOAD_FAST               11 (btn_row)
+           1842 LOAD_CONST              40 ('取消导出')
+
+190        1844 LOAD_CLOSURE             0 (self)
+           1846 BUILD_TUPLE              1
+           1848 LOAD_CONST              41 (<code object <lambda> at 0x000002BF94AA8990, file "ui\quantity_dialog.py", line 190>)
+           1850 MAKE_FUNCTION            8 (closure)
+
+188        1852 KW_NAMES                42
+           1854 PRECALL                  3
+           1858 CALL                     3
+
+190        1868 LOAD_METHOD             14 (pack)
+           1890 LOAD_GLOBAL             30 (tk)
+           1902 LOAD_ATTR               35 (RIGHT)
+           1912 LOAD_CONST              43 (6)
+           1914 KW_NAMES                44
+           1916 PRECALL                  2
+           1920 CALL                     2
+           1930 POP_TOP
+
+191        1932 LOAD_GLOBAL             25 (NULL + ttk)
+           1944 LOAD_ATTR               34 (Button)
+
+192        1954 LOAD_FAST               11 (btn_row)
+           1956 LOAD_CONST              45 ('全部仍要导出')
+
+193        1958 LOAD_CLOSURE             0 (self)
+           1960 BUILD_TUPLE              1
+           1962 LOAD_CONST              46 (<code object <lambda> at 0x000002BF94AA8120, file "ui\quantity_dialog.py", line 193>)
+           1964 MAKE_FUNCTION            8 (closure)
+
+191        1966 KW_NAMES                42
+           1968 PRECALL                  3
+           1972 CALL                     3
+
+193        1982 LOAD_METHOD             14 (pack)
+           2004 LOAD_GLOBAL             30 (tk)
+           2016 LOAD_ATTR               35 (RIGHT)
+           2026 LOAD_CONST              43 (6)
+           2028 KW_NAMES                44
+           2030 PRECALL                  2
+           2034 CALL                     2
+           2044 POP_TOP
+
+194        2046 LOAD_GLOBAL             25 (NULL + ttk)
+           2058 LOAD_ATTR               34 (Button)
+
+195        2068 LOAD_FAST               11 (btn_row)
+           2070 LOAD_CONST              47 ('导出通过项并跳过问题项')
+
+196        2072 LOAD_CLOSURE             0 (self)
+           2074 BUILD_TUPLE              1
+           2076 LOAD_CONST              48 (<code object <lambda> at 0x000002BF94AA85D0, file "ui\quantity_dialog.py", line 196>)
+           2078 MAKE_FUNCTION            8 (closure)
+           2080 LOAD_CONST              49 ('Accent.TButton')
+
+194        2082 KW_NAMES                50
+           2084 PRECALL                  4
+           2088 CALL                     4
+           2098 STORE_FAST              12 (skip_btn)
+
+197        2100 LOAD_FAST               12 (skip_btn)
+           2102 LOAD_METHOD             14 (pack)
+           2124 LOAD_GLOBAL             30 (tk)
+           2136 LOAD_ATTR               35 (RIGHT)
+           2146 KW_NAMES                51
+           2148 PRECALL                  1
+           2152 CALL                     1
+           2162 POP_TOP
+
+198        2164 LOAD_FAST               12 (skip_btn)
+           2166 LOAD_METHOD             36 (focus_set)
+           2188 PRECALL                  0
+           2192 CALL                     0
+           2202 POP_TOP
+
+200        2204 LOAD_DEREF               0 (self)
+           2206 LOAD_METHOD             37 (bind)
+           2228 LOAD_CONST              52 ('<Escape>')
+           2230 LOAD_CLOSURE             0 (self)
+           2232 BUILD_TUPLE              1
+           2234 LOAD_CONST              53 (<code object <lambda> at 0x000002BF94AA8E40, file "ui\quantity_dialog.py", line 200>)
+           2236 MAKE_FUNCTION            8 (closure)
+           2238 PRECALL                  2
+           2242 CALL                     2
+           2252 POP_TOP
+
+201        2254 LOAD_DEREF               0 (self)
+           2256 LOAD_METHOD             38 (protocol)
+           2278 LOAD_CONST              54 ('WM_DELETE_WINDOW')
+           2280 LOAD_CLOSURE             0 (self)
+           2282 BUILD_TUPLE              1
+           2284 LOAD_CONST              55 (<code object <lambda> at 0x000002BF94AA84E0, file "ui\quantity_dialog.py", line 201>)
+           2286 MAKE_FUNCTION            8 (closure)
+           2288 PRECALL                  2
+           2292 CALL                     2
+           2302 POP_TOP
+
+202        2304 LOAD_DEREF               0 (self)
+           2306 LOAD_METHOD             39 (wait_window)
+           2328 LOAD_DEREF               0 (self)
+           2330 PRECALL                  1
+           2334 CALL                     1
+           2344 POP_TOP
+           2346 LOAD_CONST               0 (None)
+           2348 RETURN_VALUE
+ExceptionTable:
+  98 to 190 -> 194 [0]
+  194 to 212 -> 220 [1] lasti
+  218 to 218 -> 220 [1] lasti
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<genexpr>  (args=1, locals=2)
+# varnames: .0, r
+157           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (r)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (r)
+             26 LOAD_ATTR                1 (warnings)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<lambda>  (args=0, locals=0)
+              0 COPY_FREE_VARS           1
+
+190           2 RESUME                   0
+              4 LOAD_DEREF               0 (self)
+              6 LOAD_METHOD              0 (_choose)
+             28 LOAD_DEREF               0 (self)
+             30 LOAD_ATTR                1 (CHOICE_CANCEL)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<lambda>  (args=0, locals=0)
+              0 COPY_FREE_VARS           1
+
+193           2 RESUME                   0
+              4 LOAD_DEREF               0 (self)
+              6 LOAD_METHOD              0 (_choose)
+             28 LOAD_DEREF               0 (self)
+             30 LOAD_ATTR                1 (CHOICE_ALL)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<lambda>  (args=0, locals=0)
+              0 COPY_FREE_VARS           1
+
+196           2 RESUME                   0
+              4 LOAD_DEREF               0 (self)
+              6 LOAD_METHOD              0 (_choose)
+             28 LOAD_DEREF               0 (self)
+             30 LOAD_ATTR                1 (CHOICE_SKIP)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<lambda>  (args=1, locals=1)
+# varnames: _e
+              0 COPY_FREE_VARS           1
+
+200           2 RESUME                   0
+              4 LOAD_DEREF               1 (self)
+              6 LOAD_METHOD              0 (_choose)
+             28 LOAD_DEREF               1 (self)
+             30 LOAD_ATTR                1 (CHOICE_CANCEL)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog.__init__.<lambda>  (args=0, locals=0)
+              0 COPY_FREE_VARS           1
+
+201           2 RESUME                   0
+              4 LOAD_DEREF               0 (self)
+              6 LOAD_METHOD              0 (_choose)
+             28 LOAD_DEREF               0 (self)
+             30 LOAD_ATTR                1 (CHOICE_CANCEL)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog._stat  (args=4, locals=5)
+# varnames: parent, label, value, col, f
+204           0 RESUME                   0
+
+206           2 LOAD_GLOBAL              1 (NULL + ttk)
+             14 LOAD_ATTR                1 (Frame)
+             24 LOAD_FAST                0 (parent)
+             26 LOAD_CONST               1 ('groove')
+             28 LOAD_CONST               2 (1)
+             30 LOAD_CONST               3 (9)
+             32 KW_NAMES                 4
+             34 PRECALL                  4
+             38 CALL                     4
+             48 STORE_FAST               4 (f)
+
+207          50 LOAD_FAST                4 (f)
+             52 LOAD_METHOD              2 (grid)
+             74 LOAD_CONST               5 (0)
+             76 LOAD_FAST                3 (col)
+             78 LOAD_CONST               6 (7)
+             80 LOAD_CONST               7 ('ew')
+             82 KW_NAMES                 8
+             84 PRECALL                  4
+             88 CALL                     4
+             98 POP_TOP
+
+208         100 LOAD_GLOBAL              1 (NULL + ttk)
+            112 LOAD_ATTR                3 (Label)
+            122 LOAD_FAST                4 (f)
+            124 LOAD_FAST                1 (label)
+            126 LOAD_GLOBAL              8 (FONT_HINT_BIG)
+            138 KW_NAMES                 9
+            140 PRECALL                  3
+            144 CALL                     3
+            154 LOAD_METHOD              5 (pack)
+            176 PRECALL                  0
+            180 CALL                     0
+            190 POP_TOP
+
+209         192 LOAD_GLOBAL              1 (NULL + ttk)
+            204 LOAD_ATTR                3 (Label)
+            214 LOAD_FAST                4 (f)
+            216 LOAD_GLOBAL             13 (NULL + str)
+            228 LOAD_FAST                2 (value)
+            230 PRECALL                  1
+            234 CALL                     1
+            244 LOAD_GLOBAL             14 (FONT_BOLD_BIG)
+            256 KW_NAMES                 9
+            258 PRECALL                  3
+            262 CALL                     3
+            272 LOAD_METHOD              5 (pack)
+            294 PRECALL                  0
+            298 CALL                     0
+            308 POP_TOP
+            310 LOAD_CONST               0 (None)
+            312 RETURN_VALUE
+
+==============================================================================
+## <module>.BatchExportGateDialog._choose  (args=2, locals=2)
+# varnames: self, choice
+211           0 RESUME                   0
+
+212           2 LOAD_FAST                1 (choice)
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (choice)
+
+213          16 LOAD_FAST                0 (self)
+             18 LOAD_METHOD              1 (destroy)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 POP_TOP
+             56 LOAD_CONST               0 (None)
+             58 RETURN_VALUE

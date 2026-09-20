@@ -1,0 +1,2752 @@
+# module: ui.fingerprint_manager
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\fingerprint_manager.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/fingerprint_manager.py - 事后编辑已缓存的指纹配方（布局指纹管理面板）。\n\n痛点：V2 的配方只在「首份 PO 走 AI」时由确认框写入；命中缓存后若要改，要么\n整批清空（清除布局指纹），要么重导 PDF 并开「人工确认配方」。这里给一个独立\n入口，列出 recipe_cache 下所有 <fp>.json，并支持三种事后操作：\n\n  1) 重新核对 —— 选一个同版式 PDF，复用现有 RecipeConfirmDialog 改完回写缓存。\n     有 PDF 时锚点自动重合成照常工作，完全复用主流程链路。\n  2) 删除 —— 单条 invalidate（不必整批清空）。\n  3) 查看 / 导出 JSON —— 直接看 recipe.to_json()，可另存为文件。\n  4) 高级编辑 —— 无 PDF 直编锚点正则（见 recipe_raw_editor）。\n\n缓存格式不变，纯增量；老用户升级无副作用。\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 15           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 17          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 18          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (sys)
+             32 STORE_NAME               4 (sys)
+
+ 19          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (tkinter)
+             40 STORE_NAME               6 (tk)
+
+ 20          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (('datetime',))
+             46 IMPORT_NAME              7 (datetime)
+             48 IMPORT_FROM              7 (datetime)
+             50 STORE_NAME               7 (datetime)
+             52 POP_TOP
+
+ 21          54 LOAD_CONST               1 (0)
+             56 LOAD_CONST               5 (('Path',))
+             58 IMPORT_NAME              8 (pathlib)
+             60 IMPORT_FROM              9 (Path)
+             62 STORE_NAME               9 (Path)
+             64 POP_TOP
+
+ 22          66 LOAD_CONST               1 (0)
+             68 LOAD_CONST               6 (('filedialog', 'messagebox', 'ttk'))
+             70 IMPORT_NAME              5 (tkinter)
+             72 IMPORT_FROM             10 (filedialog)
+             74 STORE_NAME              10 (filedialog)
+             76 IMPORT_FROM             11 (messagebox)
+             78 STORE_NAME              11 (messagebox)
+             80 IMPORT_FROM             12 (ttk)
+             82 STORE_NAME              12 (ttk)
+             84 POP_TOP
+
+ 24          86 LOAD_CONST               1 (0)
+             88 LOAD_CONST               7 (('PoRecipe',))
+             90 IMPORT_NAME             13 (core.models)
+             92 IMPORT_FROM             14 (PoRecipe)
+             94 STORE_NAME              14 (PoRecipe)
+             96 POP_TOP
+
+ 25          98 LOAD_CONST               1 (0)
+            100 LOAD_CONST               8 (('RecipeCache',))
+            102 IMPORT_NAME             15 (core.store.cache)
+            104 IMPORT_FROM             16 (RecipeCache)
+            106 STORE_NAME              16 (RecipeCache)
+            108 POP_TOP
+
+ 27         110 NOP
+
+ 28         112 LOAD_CONST               1 (0)
+            114 LOAD_CONST               3 (None)
+            116 IMPORT_NAME             17 (theme_glass)
+            118 STORE_NAME              17 (theme_glass)
+
+ 29         120 PUSH_NULL
+            122 LOAD_NAME               18 (getattr)
+            124 LOAD_NAME               17 (theme_glass)
+            126 LOAD_CONST               9 ('COL')
+            128 BUILD_MAP                0
+            130 PRECALL                  3
+            134 CALL                     3
+            144 STORE_NAME              19 (COL)
+
+ 30         146 PUSH_NULL
+            148 LOAD_NAME               18 (getattr)
+            150 LOAD_NAME               17 (theme_glass)
+            152 LOAD_CONST              10 ('FONT_BODY')
+            154 LOAD_CONST              11 (('Segoe UI', 12))
+            156 PRECALL                  3
+            160 CALL                     3
+            170 STORE_NAME              20 (FONT_BODY)
+
+ 31         172 PUSH_NULL
+            174 LOAD_NAME               18 (getattr)
+            176 LOAD_NAME               17 (theme_glass)
+            178 LOAD_CONST              12 ('FONT_HEAD_BOLD')
+            180 LOAD_CONST              13 (('Segoe UI', 13, 'bold'))
+            182 PRECALL                  3
+            186 CALL                     3
+            196 STORE_NAME              21 (FONT_HEAD)
+
+ 32         198 PUSH_NULL
+            200 LOAD_NAME               18 (getattr)
+            202 LOAD_NAME               17 (theme_glass)
+            204 LOAD_CONST              14 ('FONT_BUTTON')
+            206 LOAD_CONST              15 (('Segoe UI', 13))
+            208 PRECALL                  3
+            212 CALL                     3
+            222 STORE_NAME              22 (FONT_BUTTON)
+
+ 33         224 PUSH_NULL
+            226 LOAD_NAME               18 (getattr)
+            228 LOAD_NAME               17 (theme_glass)
+            230 LOAD_CONST              16 ('FONT_BUTTON_BOLD')
+            232 LOAD_CONST              13 (('Segoe UI', 13, 'bold'))
+            234 PRECALL                  3
+            238 CALL                     3
+            248 STORE_NAME              23 (FONT_BUTTON_BOLD)
+
+ 34         250 PUSH_NULL
+            252 LOAD_NAME               18 (getattr)
+            254 LOAD_NAME               17 (theme_glass)
+            256 LOAD_CONST              17 ('FONT_HINT')
+            258 LOAD_CONST              18 (('Segoe UI', 11))
+            260 PRECALL                  3
+            264 CALL                     3
+            274 STORE_NAME              24 (FONT_HINT)
+            276 JUMP_FORWARD            25 (to 328)
+        >>  278 PUSH_EXC_INFO
+
+ 35         280 LOAD_NAME               25 (Exception)
+            282 CHECK_EXC_MATCH
+            284 POP_JUMP_FORWARD_IF_FALSE    17 (to 320)
+            286 POP_TOP
+
+ 36         288 LOAD_CONST               3 (None)
+            290 STORE_NAME              17 (theme_glass)
+
+ 37         292 BUILD_MAP                0
+            294 STORE_NAME              19 (COL)
+
+ 38         296 LOAD_CONST              11 (('Segoe UI', 12))
+            298 STORE_NAME              20 (FONT_BODY)
+
+ 39         300 LOAD_CONST              13 (('Segoe UI', 13, 'bold'))
+            302 STORE_NAME              21 (FONT_HEAD)
+
+ 40         304 LOAD_CONST              15 (('Segoe UI', 13))
+            306 STORE_NAME              22 (FONT_BUTTON)
+
+ 41         308 LOAD_CONST              13 (('Segoe UI', 13, 'bold'))
+            310 STORE_NAME              23 (FONT_BUTTON_BOLD)
+
+ 42         312 LOAD_CONST              18 (('Segoe UI', 11))
+            314 STORE_NAME              24 (FONT_HINT)
+            316 POP_EXCEPT
+            318 JUMP_FORWARD             4 (to 328)
+
+ 35     >>  320 RERAISE                  0
+        >>  322 COPY                     3
+            324 POP_EXCEPT
+            326 RERAISE                  1
+
+ 44     >>  328 LOAD_NAME               19 (COL)
+            330 LOAD_METHOD             26 (get)
+            352 LOAD_CONST              19 ('gap')
+            354 LOAD_CONST              20 ('#2a2e35')
+            356 PRECALL                  2
+            360 CALL                     2
+            370 STORE_NAME              27 (_C_GAP)
+
+ 45         372 LOAD_NAME               19 (COL)
+            374 LOAD_METHOD             26 (get)
+            396 LOAD_CONST              21 ('panel')
+            398 LOAD_CONST              22 ('#343841')
+            400 PRECALL                  2
+            404 CALL                     2
+            414 STORE_NAME              28 (_C_PANEL)
+
+ 46         416 LOAD_NAME               19 (COL)
+            418 LOAD_METHOD             26 (get)
+            440 LOAD_CONST              23 ('ink')
+            442 LOAD_CONST              24 ('#ECEEF1')
+            444 PRECALL                  2
+            448 CALL                     2
+            458 STORE_NAME              29 (_C_INK)
+
+ 47         460 LOAD_NAME               19 (COL)
+            462 LOAD_METHOD             26 (get)
+            484 LOAD_CONST              25 ('ink_2')
+            486 LOAD_CONST              26 ('#B7BDC6')
+            488 PRECALL                  2
+            492 CALL                     2
+            502 STORE_NAME              30 (_C_INK2)
+
+ 48         504 LOAD_NAME               19 (COL)
+            506 LOAD_METHOD             26 (get)
+            528 LOAD_CONST              27 ('ink_3')
+            530 LOAD_CONST              28 ('#8A909B')
+            532 PRECALL                  2
+            536 CALL                     2
+            546 STORE_NAME              31 (_C_INK3)
+
+ 49         548 LOAD_NAME               19 (COL)
+            550 LOAD_METHOD             26 (get)
+            572 LOAD_CONST              29 ('hover')
+            574 LOAD_CONST              30 ('#3C424C')
+            576 PRECALL                  2
+            580 CALL                     2
+            590 STORE_NAME              32 (_C_HOVER)
+
+ 50         592 LOAD_NAME               19 (COL)
+            594 LOAD_METHOD             26 (get)
+            616 LOAD_CONST              31 ('accent')
+            618 LOAD_CONST              32 ('#C2A878')
+            620 PRECALL                  2
+            624 CALL                     2
+            634 STORE_NAME              33 (_C_ACCENT)
+
+ 51         636 LOAD_NAME               19 (COL)
+            638 LOAD_METHOD             26 (get)
+            660 LOAD_CONST              33 ('select_fg')
+            662 LOAD_CONST              34 ('#23262D')
+            664 PRECALL                  2
+            668 CALL                     2
+            678 STORE_NAME              34 (_C_SELECT_FG)
+
+ 52         680 LOAD_CONST              35 ('#E5736B')
+            682 STORE_NAME              35 (_C_DEL_FG)
+
+ 53         684 LOAD_CONST              36 ('#4A2A28')
+            686 STORE_NAME              36 (_C_DEL_ACTIVE)
+
+ 54         688 LOAD_NAME               33 (_C_ACCENT)
+            690 LOAD_NAME               34 (_C_SELECT_FG)
+            692 LOAD_CONST              37 ('flat')
+
+ 55         694 LOAD_CONST               1 (0)
+            696 LOAD_CONST               1 (0)
+
+ 56         698 LOAD_NAME               19 (COL)
+            700 LOAD_METHOD             26 (get)
+            722 LOAD_CONST              38 ('accent_2')
+            724 LOAD_CONST              39 ('#A98C5F')
+            726 PRECALL                  2
+            730 CALL                     2
+
+ 57         740 LOAD_NAME               34 (_C_SELECT_FG)
+
+ 54         742 LOAD_CONST              40 (('bg', 'fg', 'relief', 'borderwidth', 'highlightthickness', 'activebackground', 'activeforeground'))
+            744 BUILD_CONST_KEY_MAP      7
+            746 STORE_NAME              37 (PRIMARY_KW)
+
+ 60         748 PUSH_NULL
+            750 LOAD_BUILD_CLASS
+            752 LOAD_CONST              41 (<code object FingerprintManager at 0x000002BF94A65CE0, file "ui\fingerprint_manager.py", line 60>)
+            754 MAKE_FUNCTION            0
+            756 LOAD_CONST              42 ('FingerprintManager')
+            758 LOAD_NAME                6 (tk)
+            760 LOAD_ATTR               38 (Toplevel)
+            770 PRECALL                  3
+            774 CALL                     3
+            784 STORE_NAME              39 (FingerprintManager)
+            786 LOAD_CONST               3 (None)
+            788 RETURN_VALUE
+ExceptionTable:
+  112 to 274 -> 278 [0]
+  278 to 314 -> 322 [1] lasti
+  320 to 320 -> 322 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager  (args=0, locals=0)
+              0 MAKE_CELL                0 (__class__)
+
+ 60           2 RESUME                   0
+              4 LOAD_NAME                0 (__name__)
+              6 STORE_NAME               1 (__module__)
+              8 LOAD_CONST               0 ('FingerprintManager')
+             10 STORE_NAME               2 (__qualname__)
+
+ 61          12 LOAD_CONST              13 (('cache', 'RecipeCache'))
+             14 LOAD_CLOSURE             0 (__class__)
+             16 BUILD_TUPLE              1
+             18 LOAD_CONST               3 (<code object __init__ at 0x000002BF944646E0, file "ui\fingerprint_manager.py", line 61>)
+             20 MAKE_FUNCTION           12 (annotations, closure)
+             22 STORE_NAME               3 (__init__)
+
+ 76          24 LOAD_CONST               4 (<code object _set_icon at 0x000002BF946C2040, file "ui\fingerprint_manager.py", line 76>)
+             26 MAKE_FUNCTION            0
+             28 STORE_NAME               4 (_set_icon)
+
+ 83          30 LOAD_CONST               5 (<code object _center at 0x000002BF9444CB20, file "ui\fingerprint_manager.py", line 83>)
+             32 MAKE_FUNCTION            0
+             34 STORE_NAME               5 (_center)
+
+ 91          36 LOAD_CONST               6 (<code object _build at 0x000002BF9445B460, file "ui\fingerprint_manager.py", line 91>)
+             38 MAKE_FUNCTION            0
+             40 STORE_NAME               6 (_build)
+
+174          42 LOAD_CONST               7 (<code object _refresh at 0x000002BF94461B90, file "ui\fingerprint_manager.py", line 174>)
+             44 MAKE_FUNCTION            0
+             46 STORE_NAME               7 (_refresh)
+
+205          48 LOAD_CONST               8 (<code object _selected_fp at 0x000002BF9474AA30, file "ui\fingerprint_manager.py", line 205>)
+             50 MAKE_FUNCTION            0
+             52 STORE_NAME               8 (_selected_fp)
+
+215          54 LOAD_CONST               9 (<code object _recheck at 0x000002BF940D4B00, file "ui\fingerprint_manager.py", line 215>)
+             56 MAKE_FUNCTION            0
+             58 STORE_NAME               9 (_recheck)
+
+281          60 LOAD_CONST              10 (<code object _raw_edit at 0x000002BF944637A0, file "ui\fingerprint_manager.py", line 281>)
+             62 MAKE_FUNCTION            0
+             64 STORE_NAME              10 (_raw_edit)
+
+297          66 LOAD_CONST              11 (<code object _view_json at 0x000002BF944DAFB0, file "ui\fingerprint_manager.py", line 297>)
+             68 MAKE_FUNCTION            0
+             70 STORE_NAME              11 (_view_json)
+
+352          72 LOAD_CONST              12 (<code object _delete at 0x000002BF94461FD0, file "ui\fingerprint_manager.py", line 352>)
+             74 MAKE_FUNCTION            0
+             76 STORE_NAME              12 (_delete)
+             78 LOAD_CLOSURE             0 (__class__)
+             80 COPY                     1
+             82 STORE_NAME              13 (__classcell__)
+             84 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager.__init__  (args=3, locals=3)
+# varnames: self, parent, cache
+              0 COPY_FREE_VARS           1
+
+ 61           2 RESUME                   0
+
+ 62           4 LOAD_GLOBAL              1 (NULL + super)
+             16 PRECALL                  0
+             20 CALL                     0
+             30 LOAD_METHOD              1 (__init__)
+             52 LOAD_FAST                1 (parent)
+             54 PRECALL                  1
+             58 CALL                     1
+             68 POP_TOP
+
+ 63          70 LOAD_FAST                0 (self)
+             72 LOAD_METHOD              2 (title)
+             94 LOAD_CONST               1 ('管理指纹配方')
+             96 PRECALL                  1
+            100 CALL                     1
+            110 POP_TOP
+
+ 64         112 LOAD_FAST                2 (cache)
+            114 LOAD_FAST                0 (self)
+            116 STORE_ATTR               3 (_cache)
+
+ 65         126 LOAD_GLOBAL              9 (NULL + set)
+            138 PRECALL                  0
+            142 CALL                     0
+            152 LOAD_FAST                0 (self)
+            154 STORE_ATTR               5 (_fps)
+
+ 67         164 LOAD_FAST                0 (self)
+            166 LOAD_METHOD              6 (transient)
+            188 LOAD_FAST                1 (parent)
+            190 PRECALL                  1
+            194 CALL                     1
+            204 POP_TOP
+
+ 68         206 LOAD_FAST                0 (self)
+            208 LOAD_METHOD              7 (grab_set)
+            230 PRECALL                  0
+            234 CALL                     0
+            244 POP_TOP
+
+ 69         246 LOAD_FAST                0 (self)
+            248 LOAD_METHOD              8 (_set_icon)
+            270 PRECALL                  0
+            274 CALL                     0
+            284 POP_TOP
+
+ 70         286 LOAD_FAST                0 (self)
+            288 LOAD_METHOD              9 (_build)
+            310 PRECALL                  0
+            314 CALL                     0
+            324 POP_TOP
+
+ 71         326 LOAD_FAST                0 (self)
+            328 LOAD_METHOD             10 (_center)
+            350 LOAD_FAST                1 (parent)
+            352 PRECALL                  1
+            356 CALL                     1
+            366 POP_TOP
+
+ 72         368 LOAD_FAST                0 (self)
+            370 LOAD_METHOD             11 (_refresh)
+            392 PRECALL                  0
+            396 CALL                     0
+            406 POP_TOP
+
+ 73         408 LOAD_FAST                0 (self)
+            410 LOAD_METHOD             12 (protocol)
+            432 LOAD_CONST               2 ('WM_DELETE_WINDOW')
+            434 LOAD_FAST                0 (self)
+            436 LOAD_ATTR               13 (destroy)
+            446 PRECALL                  2
+            450 CALL                     2
+            460 POP_TOP
+
+ 74         462 LOAD_FAST                0 (self)
+            464 LOAD_METHOD             14 (wait_window)
+            486 LOAD_FAST                0 (self)
+            488 PRECALL                  1
+            492 CALL                     1
+            502 POP_TOP
+            504 LOAD_CONST               0 (None)
+            506 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._set_icon  (args=1, locals=2)
+# varnames: self, base
+ 76           0 RESUME                   0
+
+ 77           2 NOP
+
+ 78           4 LOAD_GLOBAL              1 (NULL + Path)
+             16 LOAD_GLOBAL              3 (NULL + getattr)
+             28 LOAD_GLOBAL              4 (sys)
+             40 LOAD_CONST               1 ('_MEIPASS')
+             42 LOAD_GLOBAL              1 (NULL + Path)
+             54 LOAD_GLOBAL              6 (__file__)
+             66 PRECALL                  1
+             70 CALL                     1
+             80 LOAD_ATTR                4 (parent)
+             90 LOAD_ATTR                4 (parent)
+            100 PRECALL                  3
+            104 CALL                     3
+            114 PRECALL                  1
+            118 CALL                     1
+            128 STORE_FAST               1 (base)
+
+ 79         130 LOAD_FAST                0 (self)
+            132 LOAD_METHOD              5 (iconbitmap)
+            154 LOAD_GLOBAL             13 (NULL + str)
+            166 LOAD_FAST                1 (base)
+            168 LOAD_CONST               2 ('app.ico')
+            170 BINARY_OP               11 (/)
+            174 PRECALL                  1
+            178 CALL                     1
+            188 PRECALL                  1
+            192 CALL                     1
+            202 POP_TOP
+            204 LOAD_CONST               0 (None)
+            206 RETURN_VALUE
+        >>  208 PUSH_EXC_INFO
+
+ 80         210 LOAD_GLOBAL             14 (Exception)
+            222 CHECK_EXC_MATCH
+            224 POP_JUMP_FORWARD_IF_FALSE     4 (to 234)
+            226 POP_TOP
+
+ 81         228 POP_EXCEPT
+            230 LOAD_CONST               0 (None)
+            232 RETURN_VALUE
+
+ 80     >>  234 RERAISE                  0
+        >>  236 COPY                     3
+            238 POP_EXCEPT
+            240 RERAISE                  1
+ExceptionTable:
+  4 to 202 -> 208 [0]
+  208 to 226 -> 236 [1] lasti
+  234 to 234 -> 236 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._center  (args=2, locals=6)
+# varnames: self, parent, w, h, x, y
+ 83           0 RESUME                   0
+
+ 84           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (update_idletasks)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 POP_TOP
+
+ 85          42 LOAD_CONST               1 ((720, 560))
+             44 UNPACK_SEQUENCE          2
+             48 STORE_FAST               2 (w)
+             50 STORE_FAST               3 (h)
+
+ 86          52 LOAD_FAST                1 (parent)
+             54 LOAD_METHOD              1 (winfo_rootx)
+             76 PRECALL                  0
+             80 CALL                     0
+             90 LOAD_GLOBAL              5 (NULL + max)
+            102 LOAD_CONST               2 (0)
+            104 LOAD_FAST                1 (parent)
+            106 LOAD_METHOD              3 (winfo_width)
+            128 PRECALL                  0
+            132 CALL                     0
+            142 LOAD_FAST                2 (w)
+            144 BINARY_OP               10 (-)
+            148 LOAD_CONST               3 (2)
+            150 BINARY_OP                2 (//)
+            154 PRECALL                  2
+            158 CALL                     2
+            168 BINARY_OP                0 (+)
+            172 STORE_FAST               4 (x)
+
+ 87         174 LOAD_FAST                1 (parent)
+            176 LOAD_METHOD              4 (winfo_rooty)
+            198 PRECALL                  0
+            202 CALL                     0
+            212 LOAD_GLOBAL              5 (NULL + max)
+            224 LOAD_CONST               2 (0)
+            226 LOAD_FAST                1 (parent)
+            228 LOAD_METHOD              5 (winfo_height)
+            250 PRECALL                  0
+            254 CALL                     0
+            264 LOAD_FAST                3 (h)
+            266 BINARY_OP               10 (-)
+            270 LOAD_CONST               3 (2)
+            272 BINARY_OP                2 (//)
+            276 PRECALL                  2
+            280 CALL                     2
+            290 BINARY_OP                0 (+)
+            294 STORE_FAST               5 (y)
+
+ 88         296 LOAD_FAST                0 (self)
+            298 LOAD_METHOD              6 (geometry)
+            320 LOAD_FAST                2 (w)
+            322 FORMAT_VALUE             0
+            324 LOAD_CONST               4 ('x')
+            326 LOAD_FAST                3 (h)
+            328 FORMAT_VALUE             0
+            330 LOAD_CONST               5 ('+')
+            332 LOAD_FAST                4 (x)
+            334 FORMAT_VALUE             0
+            336 LOAD_CONST               5 ('+')
+            338 LOAD_FAST                5 (y)
+            340 FORMAT_VALUE             0
+            342 BUILD_STRING             7
+            344 PRECALL                  1
+            348 CALL                     1
+            358 POP_TOP
+
+ 89         360 LOAD_FAST                0 (self)
+            362 LOAD_METHOD              7 (minsize)
+            384 LOAD_CONST               6 (620)
+            386 LOAD_CONST               7 (420)
+            388 PRECALL                  2
+            392 CALL                     2
+            402 POP_TOP
+            404 LOAD_CONST               0 (None)
+            406 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._build  (args=1, locals=7)
+# varnames: self, outer, head, list_frame, style, vsb, btns
+              0 MAKE_CELL                0 (self)
+
+ 91           2 RESUME                   0
+
+ 92           4 LOAD_GLOBAL              1 (NULL + ttk)
+             16 LOAD_ATTR                1 (Frame)
+             26 LOAD_DEREF               0 (self)
+             28 LOAD_CONST               1 (0)
+             30 KW_NAMES                 2
+             32 PRECALL                  2
+             36 CALL                     2
+             46 STORE_FAST               1 (outer)
+
+ 93          48 LOAD_FAST                1 (outer)
+             50 LOAD_METHOD              2 (pack)
+             72 LOAD_CONST               3 ('both')
+             74 LOAD_CONST               4 (True)
+             76 KW_NAMES                 5
+             78 PRECALL                  2
+             82 CALL                     2
+             92 POP_TOP
+
+ 94          94 LOAD_FAST                1 (outer)
+             96 LOAD_METHOD              3 (columnconfigure)
+            118 LOAD_CONST               1 (0)
+            120 LOAD_CONST               6 (1)
+            122 KW_NAMES                 7
+            124 PRECALL                  2
+            128 CALL                     2
+            138 POP_TOP
+
+ 95         140 LOAD_FAST                1 (outer)
+            142 LOAD_METHOD              4 (rowconfigure)
+            164 LOAD_CONST               6 (1)
+            166 LOAD_CONST               6 (1)
+            168 KW_NAMES                 7
+            170 PRECALL                  2
+            174 CALL                     2
+            184 POP_TOP
+
+ 97         186 LOAD_GLOBAL             11 (NULL + tk)
+            198 LOAD_ATTR                1 (Frame)
+            208 LOAD_FAST                1 (outer)
+            210 LOAD_GLOBAL             12 (_C_GAP)
+            222 LOAD_CONST               8 (20)
+            224 LOAD_CONST               9 (12)
+            226 KW_NAMES                10
+            228 PRECALL                  4
+            232 CALL                     4
+            242 STORE_FAST               2 (head)
+
+ 98         244 LOAD_FAST                2 (head)
+            246 LOAD_METHOD              7 (grid)
+            268 LOAD_CONST               1 (0)
+            270 LOAD_CONST               1 (0)
+            272 LOAD_CONST              11 ('ew')
+            274 KW_NAMES                12
+            276 PRECALL                  3
+            280 CALL                     3
+            290 POP_TOP
+
+ 99         292 LOAD_GLOBAL             11 (NULL + tk)
+            304 LOAD_ATTR                8 (Label)
+            314 LOAD_FAST                2 (head)
+            316 LOAD_CONST              13 ('管理指纹配方')
+            318 LOAD_GLOBAL             18 (FONT_HEAD)
+            330 LOAD_GLOBAL             12 (_C_GAP)
+
+100         342 LOAD_GLOBAL             20 (_C_INK)
+
+ 99         354 KW_NAMES                14
+            356 PRECALL                  5
+            360 CALL                     5
+
+100         370 LOAD_METHOD              2 (pack)
+            392 LOAD_CONST              15 ('w')
+            394 KW_NAMES                16
+            396 PRECALL                  1
+            400 CALL                     1
+            410 POP_TOP
+
+101         412 LOAD_GLOBAL             11 (NULL + tk)
+            424 LOAD_ATTR                8 (Label)
+            434 LOAD_FAST                2 (head)
+            436 LOAD_CONST              17 ('列出全部已缓存版式配方。改动只影响之后导入的同版式 PO；已导出的旧 Excel 不会回填。')
+
+103         438 LOAD_GLOBAL             22 (FONT_HINT)
+            450 LOAD_GLOBAL             12 (_C_GAP)
+            462 LOAD_GLOBAL             24 (_C_INK2)
+            474 LOAD_CONST              18 (680)
+
+104         476 LOAD_CONST              19 ('left')
+
+101         478 KW_NAMES                20
+            480 PRECALL                  7
+            484 CALL                     7
+
+104         494 LOAD_METHOD              2 (pack)
+            516 LOAD_CONST              15 ('w')
+            518 LOAD_CONST              21 ((4, 0))
+            520 KW_NAMES                22
+            522 PRECALL                  2
+            526 CALL                     2
+            536 POP_TOP
+
+105         538 LOAD_GLOBAL             11 (NULL + tk)
+            550 LOAD_ATTR                8 (Label)
+            560 LOAD_FAST                2 (head)
+            562 LOAD_CONST              23 ('中间「指纹前缀」列可直接区分同一客户的不同版式配方。')
+
+106         564 LOAD_GLOBAL             22 (FONT_HINT)
+            576 LOAD_GLOBAL             12 (_C_GAP)
+            588 LOAD_GLOBAL             26 (_C_INK3)
+            600 LOAD_CONST              18 (680)
+
+107         602 LOAD_CONST              19 ('left')
+
+105         604 KW_NAMES                20
+            606 PRECALL                  7
+            610 CALL                     7
+
+107         620 LOAD_METHOD              2 (pack)
+            642 LOAD_CONST              15 ('w')
+            644 LOAD_CONST              24 ((2, 0))
+            646 KW_NAMES                22
+            648 PRECALL                  2
+            652 CALL                     2
+            662 POP_TOP
+
+110         664 LOAD_GLOBAL             11 (NULL + tk)
+            676 LOAD_ATTR                1 (Frame)
+            686 LOAD_FAST                1 (outer)
+            688 LOAD_GLOBAL             12 (_C_GAP)
+            700 LOAD_CONST               8 (20)
+            702 LOAD_CONST              25 (8)
+            704 KW_NAMES                10
+            706 PRECALL                  4
+            710 CALL                     4
+            720 STORE_FAST               3 (list_frame)
+
+111         722 LOAD_FAST                3 (list_frame)
+            724 LOAD_METHOD              7 (grid)
+            746 LOAD_CONST               6 (1)
+            748 LOAD_CONST               1 (0)
+            750 LOAD_CONST              26 ('nsew')
+            752 KW_NAMES                12
+            754 PRECALL                  3
+            758 CALL                     3
+            768 POP_TOP
+
+112         770 LOAD_FAST                3 (list_frame)
+            772 LOAD_METHOD              4 (rowconfigure)
+            794 LOAD_CONST               1 (0)
+            796 LOAD_CONST               6 (1)
+            798 KW_NAMES                 7
+            800 PRECALL                  2
+            804 CALL                     2
+            814 POP_TOP
+
+113         816 LOAD_FAST                3 (list_frame)
+            818 LOAD_METHOD              3 (columnconfigure)
+            840 LOAD_CONST               1 (0)
+            842 LOAD_CONST               6 (1)
+            844 KW_NAMES                 7
+            846 PRECALL                  2
+            850 CALL                     2
+            860 POP_TOP
+
+117         862 LOAD_GLOBAL             28 (theme_glass)
+            874 POP_JUMP_FORWARD_IF_NONE    21 (to 918)
+
+118         876 LOAD_GLOBAL             29 (NULL + theme_glass)
+            888 LOAD_ATTR               15 (ge_treeview_style)
+            898 LOAD_CONST              27 ('FP.Treeview')
+            900 PRECALL                  1
+            904 CALL                     1
+            914 POP_TOP
+            916 JUMP_FORWARD           167 (to 1252)
+
+120     >>  918 LOAD_GLOBAL              1 (NULL + ttk)
+            930 LOAD_ATTR               16 (Style)
+            940 PRECALL                  0
+            944 CALL                     0
+            954 STORE_FAST               4 (style)
+
+121         956 NOP
+
+122         958 LOAD_FAST                4 (style)
+            960 LOAD_METHOD             17 (configure)
+            982 LOAD_CONST              27 ('FP.Treeview')
+            984 LOAD_GLOBAL             36 (_C_PANEL)
+            996 LOAD_GLOBAL             20 (_C_INK)
+
+123        1008 LOAD_GLOBAL             36 (_C_PANEL)
+           1020 LOAD_GLOBAL             38 (FONT_BODY)
+           1032 LOAD_CONST              28 (34)
+
+124        1034 LOAD_CONST               1 (0)
+           1036 LOAD_CONST              29 ('flat')
+
+122        1038 KW_NAMES                30
+           1040 PRECALL                  8
+           1044 CALL                     8
+           1054 POP_TOP
+
+125        1056 LOAD_FAST                4 (style)
+           1058 LOAD_METHOD             17 (configure)
+           1080 LOAD_CONST              31 ('FP.Treeview.Heading')
+           1082 LOAD_GLOBAL             12 (_C_GAP)
+
+126        1094 LOAD_GLOBAL             24 (_C_INK2)
+           1106 LOAD_GLOBAL             18 (FONT_HEAD)
+           1118 LOAD_CONST               1 (0)
+
+125        1120 KW_NAMES                32
+           1122 PRECALL                  5
+           1126 CALL                     5
+           1136 POP_TOP
+
+127        1138 LOAD_FAST                4 (style)
+           1140 LOAD_METHOD             20 (map)
+           1162 LOAD_CONST              27 ('FP.Treeview')
+
+128        1164 LOAD_CONST              33 ('selected')
+           1166 LOAD_GLOBAL             42 (_C_ACCENT)
+           1178 BUILD_TUPLE              2
+           1180 BUILD_LIST               1
+
+129        1182 LOAD_CONST              33 ('selected')
+           1184 LOAD_GLOBAL             44 (_C_SELECT_FG)
+           1196 BUILD_TUPLE              2
+           1198 BUILD_LIST               1
+
+127        1200 KW_NAMES                34
+           1202 PRECALL                  3
+           1206 CALL                     3
+           1216 POP_TOP
+           1218 JUMP_FORWARD            16 (to 1252)
+        >> 1220 PUSH_EXC_INFO
+
+130        1222 LOAD_GLOBAL             46 (Exception)
+           1234 CHECK_EXC_MATCH
+           1236 POP_JUMP_FORWARD_IF_FALSE     3 (to 1244)
+           1238 POP_TOP
+
+131        1240 POP_EXCEPT
+           1242 JUMP_FORWARD             4 (to 1252)
+
+130     >> 1244 RERAISE                  0
+        >> 1246 COPY                     3
+           1248 POP_EXCEPT
+           1250 RERAISE                  1
+
+133     >> 1252 LOAD_GLOBAL              1 (NULL + ttk)
+           1264 LOAD_ATTR               24 (Treeview)
+           1274 LOAD_FAST                3 (list_frame)
+
+134        1276 LOAD_CONST              35 (('customer', 'fp', 'layout', 'updated'))
+
+135        1278 LOAD_CONST              36 ('headings')
+           1280 LOAD_CONST              37 ('browse')
+
+136        1282 LOAD_CONST              27 ('FP.Treeview')
+
+133        1284 KW_NAMES                38
+           1286 PRECALL                  5
+           1290 CALL                     5
+           1300 LOAD_DEREF               0 (self)
+           1302 STORE_ATTR              25 (tree)
+
+137        1312 LOAD_DEREF               0 (self)
+           1314 LOAD_ATTR               25 (tree)
+           1324 LOAD_METHOD             26 (heading)
+           1346 LOAD_CONST              39 ('customer')
+           1348 LOAD_CONST              40 ('客户名称')
+           1350 LOAD_CONST              41 ('center')
+           1352 KW_NAMES                42
+           1354 PRECALL                  3
+           1358 CALL                     3
+           1368 POP_TOP
+
+138        1370 LOAD_DEREF               0 (self)
+           1372 LOAD_ATTR               25 (tree)
+           1382 LOAD_METHOD             26 (heading)
+           1404 LOAD_CONST              43 ('fp')
+           1406 LOAD_CONST              44 ('指纹前缀')
+           1408 LOAD_CONST              41 ('center')
+           1410 KW_NAMES                42
+           1412 PRECALL                  3
+           1416 CALL                     3
+           1426 POP_TOP
+
+139        1428 LOAD_DEREF               0 (self)
+           1430 LOAD_ATTR               25 (tree)
+           1440 LOAD_METHOD             26 (heading)
+           1462 LOAD_CONST              45 ('layout')
+           1464 LOAD_CONST              46 ('版式')
+           1466 LOAD_CONST              41 ('center')
+           1468 KW_NAMES                42
+           1470 PRECALL                  3
+           1474 CALL                     3
+           1484 POP_TOP
+
+140        1486 LOAD_DEREF               0 (self)
+           1488 LOAD_ATTR               25 (tree)
+           1498 LOAD_METHOD             26 (heading)
+           1520 LOAD_CONST              47 ('updated')
+           1522 LOAD_CONST              48 ('更新时间')
+           1524 LOAD_CONST              41 ('center')
+           1526 KW_NAMES                42
+           1528 PRECALL                  3
+           1532 CALL                     3
+           1542 POP_TOP
+
+142        1544 LOAD_DEREF               0 (self)
+           1546 LOAD_ATTR               25 (tree)
+           1556 LOAD_METHOD             27 (column)
+           1578 LOAD_CONST              39 ('customer')
+           1580 LOAD_CONST              41 ('center')
+           1582 LOAD_CONST               4 (True)
+           1584 LOAD_CONST              49 (120)
+           1586 LOAD_CONST              49 (120)
+           1588 KW_NAMES                50
+           1590 PRECALL                  5
+           1594 CALL                     5
+           1604 POP_TOP
+
+143        1606 LOAD_DEREF               0 (self)
+           1608 LOAD_ATTR               25 (tree)
+           1618 LOAD_METHOD             27 (column)
+           1640 LOAD_CONST              43 ('fp')
+           1642 LOAD_CONST              41 ('center')
+           1644 LOAD_CONST               4 (True)
+           1646 LOAD_CONST              49 (120)
+           1648 LOAD_CONST              49 (120)
+           1650 KW_NAMES                50
+           1652 PRECALL                  5
+           1656 CALL                     5
+           1666 POP_TOP
+
+144        1668 LOAD_DEREF               0 (self)
+           1670 LOAD_ATTR               25 (tree)
+           1680 LOAD_METHOD             27 (column)
+           1702 LOAD_CONST              45 ('layout')
+           1704 LOAD_CONST              41 ('center')
+           1706 LOAD_CONST               4 (True)
+           1708 LOAD_CONST              49 (120)
+           1710 LOAD_CONST              49 (120)
+           1712 KW_NAMES                50
+           1714 PRECALL                  5
+           1718 CALL                     5
+           1728 POP_TOP
+
+145        1730 LOAD_DEREF               0 (self)
+           1732 LOAD_ATTR               25 (tree)
+           1742 LOAD_METHOD             27 (column)
+           1764 LOAD_CONST              47 ('updated')
+           1766 LOAD_CONST              41 ('center')
+           1768 LOAD_CONST               4 (True)
+           1770 LOAD_CONST              49 (120)
+           1772 LOAD_CONST              49 (120)
+           1774 KW_NAMES                50
+           1776 PRECALL                  5
+           1780 CALL                     5
+           1790 POP_TOP
+
+146        1792 LOAD_GLOBAL              1 (NULL + ttk)
+           1804 LOAD_ATTR               28 (Scrollbar)
+           1814 LOAD_FAST                3 (list_frame)
+           1816 LOAD_CONST              51 ('vertical')
+           1818 LOAD_DEREF               0 (self)
+           1820 LOAD_ATTR               25 (tree)
+           1830 LOAD_ATTR               29 (yview)
+           1840 KW_NAMES                52
+           1842 PRECALL                  3
+           1846 CALL                     3
+           1856 STORE_FAST               5 (vsb)
+
+147        1858 LOAD_DEREF               0 (self)
+           1860 LOAD_ATTR               25 (tree)
+           1870 LOAD_METHOD             17 (configure)
+           1892 LOAD_FAST                5 (vsb)
+           1894 LOAD_ATTR               30 (set)
+           1904 KW_NAMES                53
+           1906 PRECALL                  1
+           1910 CALL                     1
+           1920 POP_TOP
+
+148        1922 LOAD_DEREF               0 (self)
+           1924 LOAD_ATTR               25 (tree)
+           1934 LOAD_METHOD              7 (grid)
+           1956 LOAD_CONST               1 (0)
+           1958 LOAD_CONST               1 (0)
+           1960 LOAD_CONST              26 ('nsew')
+           1962 KW_NAMES                12
+           1964 PRECALL                  3
+           1968 CALL                     3
+           1978 POP_TOP
+
+149        1980 LOAD_FAST                5 (vsb)
+           1982 LOAD_METHOD              7 (grid)
+           2004 LOAD_CONST               1 (0)
+           2006 LOAD_CONST               6 (1)
+           2008 LOAD_CONST              54 ('ns')
+           2010 KW_NAMES                12
+           2012 PRECALL                  3
+           2016 CALL                     3
+           2026 POP_TOP
+
+150        2028 LOAD_DEREF               0 (self)
+           2030 LOAD_ATTR               25 (tree)
+           2040 LOAD_METHOD             31 (bind)
+           2062 LOAD_CONST              55 ('<Double-1>')
+           2064 LOAD_CLOSURE             0 (self)
+           2066 BUILD_TUPLE              1
+           2068 LOAD_CONST              56 (<code object <lambda> at 0x000002BF94AA85D0, file "ui\fingerprint_manager.py", line 150>)
+           2070 MAKE_FUNCTION            8 (closure)
+           2072 PRECALL                  2
+           2076 CALL                     2
+           2086 POP_TOP
+
+153        2088 LOAD_GLOBAL             11 (NULL + tk)
+           2100 LOAD_ATTR                1 (Frame)
+           2110 LOAD_FAST                1 (outer)
+           2112 LOAD_GLOBAL             12 (_C_GAP)
+           2124 LOAD_CONST               8 (20)
+           2126 LOAD_CONST               9 (12)
+           2128 KW_NAMES                10
+           2130 PRECALL                  4
+           2134 CALL                     4
+           2144 STORE_FAST               6 (btns)
+
+154        2146 LOAD_FAST                6 (btns)
+           2148 LOAD_METHOD              7 (grid)
+           2170 LOAD_CONST              57 (2)
+           2172 LOAD_CONST               1 (0)
+           2174 LOAD_CONST              11 ('ew')
+           2176 KW_NAMES                12
+           2178 PRECALL                  3
+           2182 CALL                     3
+           2192 POP_TOP
+
+155        2194 LOAD_GLOBAL             11 (NULL + tk)
+           2206 LOAD_ATTR               32 (Button)
+           2216 LOAD_FAST                6 (btns)
+           2218 LOAD_CONST              58 ('重新核对…')
+           2220 LOAD_DEREF               0 (self)
+           2222 LOAD_ATTR               33 (_recheck)
+           2232 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+156        2244 LOAD_CONST              59 (14)
+           2246 LOAD_CONST              25 (8)
+           2248 LOAD_GLOBAL             12 (_C_GAP)
+           2260 LOAD_GLOBAL             20 (_C_INK)
+
+157        2272 LOAD_CONST              29 ('flat')
+           2274 LOAD_GLOBAL             70 (_C_HOVER)
+
+155        2286 KW_NAMES                60
+           2288 PRECALL                 10
+           2292 CALL                    10
+
+157        2302 LOAD_METHOD              2 (pack)
+           2324 LOAD_CONST              19 ('left')
+           2326 LOAD_CONST              61 (4)
+           2328 KW_NAMES                62
+           2330 PRECALL                  2
+           2334 CALL                     2
+           2344 POP_TOP
+
+158        2346 LOAD_GLOBAL             11 (NULL + tk)
+           2358 LOAD_ATTR               32 (Button)
+           2368 LOAD_FAST                6 (btns)
+           2370 LOAD_CONST              63 ('高级编辑…')
+           2372 LOAD_DEREF               0 (self)
+           2374 LOAD_ATTR               36 (_raw_edit)
+           2384 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+159        2396 LOAD_CONST              59 (14)
+           2398 LOAD_CONST              25 (8)
+           2400 LOAD_GLOBAL             12 (_C_GAP)
+           2412 LOAD_GLOBAL             20 (_C_INK)
+
+160        2424 LOAD_CONST              29 ('flat')
+           2426 LOAD_GLOBAL             70 (_C_HOVER)
+
+158        2438 KW_NAMES                60
+           2440 PRECALL                 10
+           2444 CALL                    10
+
+160        2454 LOAD_METHOD              2 (pack)
+           2476 LOAD_CONST              19 ('left')
+           2478 LOAD_CONST              61 (4)
+           2480 KW_NAMES                62
+           2482 PRECALL                  2
+           2486 CALL                     2
+           2496 POP_TOP
+
+161        2498 LOAD_GLOBAL             11 (NULL + tk)
+           2510 LOAD_ATTR               32 (Button)
+           2520 LOAD_FAST                6 (btns)
+           2522 LOAD_CONST              64 ('查看 / 导出')
+           2524 LOAD_DEREF               0 (self)
+           2526 LOAD_ATTR               37 (_view_json)
+           2536 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+162        2548 LOAD_CONST              59 (14)
+           2550 LOAD_CONST              25 (8)
+           2552 LOAD_GLOBAL             12 (_C_GAP)
+           2564 LOAD_GLOBAL             20 (_C_INK)
+
+163        2576 LOAD_CONST              29 ('flat')
+           2578 LOAD_GLOBAL             70 (_C_HOVER)
+
+161        2590 KW_NAMES                60
+           2592 PRECALL                 10
+           2596 CALL                    10
+
+163        2606 LOAD_METHOD              2 (pack)
+           2628 LOAD_CONST              19 ('left')
+           2630 LOAD_CONST              61 (4)
+           2632 KW_NAMES                62
+           2634 PRECALL                  2
+           2638 CALL                     2
+           2648 POP_TOP
+
+164        2650 LOAD_GLOBAL             11 (NULL + tk)
+           2662 LOAD_ATTR               32 (Button)
+           2672 LOAD_FAST                6 (btns)
+           2674 LOAD_CONST              65 ('删除')
+           2676 LOAD_DEREF               0 (self)
+           2678 LOAD_ATTR               38 (_delete)
+           2688 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+165        2700 LOAD_CONST              59 (14)
+           2702 LOAD_CONST              25 (8)
+           2704 LOAD_GLOBAL             12 (_C_GAP)
+           2716 LOAD_GLOBAL             78 (_C_DEL_FG)
+
+166        2728 LOAD_CONST              29 ('flat')
+           2730 LOAD_GLOBAL             80 (_C_DEL_ACTIVE)
+
+164        2742 KW_NAMES                60
+           2744 PRECALL                 10
+           2748 CALL                    10
+
+166        2758 LOAD_METHOD              2 (pack)
+           2780 LOAD_CONST              19 ('left')
+           2782 LOAD_CONST              61 (4)
+           2784 KW_NAMES                62
+           2786 PRECALL                  2
+           2790 CALL                     2
+           2800 POP_TOP
+
+167        2802 LOAD_GLOBAL             11 (NULL + tk)
+           2814 LOAD_ATTR               32 (Button)
+           2824 LOAD_FAST                6 (btns)
+           2826 LOAD_CONST              66 ('刷新')
+           2828 LOAD_DEREF               0 (self)
+           2830 LOAD_ATTR               41 (_refresh)
+           2840 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+168        2852 LOAD_CONST              59 (14)
+           2854 LOAD_CONST              25 (8)
+           2856 LOAD_GLOBAL             12 (_C_GAP)
+           2868 LOAD_GLOBAL             24 (_C_INK2)
+
+169        2880 LOAD_CONST              29 ('flat')
+           2882 LOAD_GLOBAL             70 (_C_HOVER)
+
+167        2894 KW_NAMES                60
+           2896 PRECALL                 10
+           2900 CALL                    10
+
+169        2910 LOAD_METHOD              2 (pack)
+           2932 LOAD_CONST              19 ('left')
+           2934 LOAD_CONST              61 (4)
+           2936 KW_NAMES                62
+           2938 PRECALL                  2
+           2942 CALL                     2
+           2952 POP_TOP
+
+170        2954 LOAD_GLOBAL             11 (NULL + tk)
+           2966 LOAD_ATTR               32 (Button)
+           2976 LOAD_FAST                6 (btns)
+           2978 BUILD_TUPLE              1
+           2980 LOAD_CONST              67 ('关闭')
+           2982 LOAD_DEREF               0 (self)
+           2984 LOAD_ATTR               42 (destroy)
+           2994 LOAD_GLOBAL             68 (FONT_BUTTON)
+
+171        3006 LOAD_CONST              59 (14)
+           3008 LOAD_CONST              25 (8)
+
+170        3010 LOAD_CONST              68 (('text', 'command', 'font', 'padx', 'pady'))
+           3012 BUILD_CONST_KEY_MAP      5
+
+171        3014 LOAD_GLOBAL             86 (PRIMARY_KW)
+
+170        3026 DICT_MERGE               1
+           3028 CALL_FUNCTION_EX         1
+
+171        3030 LOAD_METHOD              2 (pack)
+           3052 LOAD_CONST              69 ('right')
+           3054 KW_NAMES                70
+           3056 PRECALL                  1
+           3060 CALL                     1
+           3070 POP_TOP
+           3072 LOAD_CONST               0 (None)
+           3074 RETURN_VALUE
+ExceptionTable:
+  958 to 1216 -> 1220 [0]
+  1220 to 1238 -> 1246 [1] lasti
+  1244 to 1244 -> 1246 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._build.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+150           2 RESUME                   0
+              4 LOAD_DEREF               1 (self)
+              6 LOAD_METHOD              0 (_raw_edit)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._refresh  (args=1, locals=11)
+# varnames: self, it, names, n, fp, customer, layout, updated, recipe, os, mtime
+174           0 RESUME                   0
+
+175           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (tree)
+             14 LOAD_METHOD              1 (get_children)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 GET_ITER
+        >>   52 FOR_ITER                28 (to 110)
+             54 STORE_FAST               1 (it)
+
+176          56 LOAD_FAST                0 (self)
+             58 LOAD_ATTR                0 (tree)
+             68 LOAD_METHOD              2 (delete)
+             90 LOAD_FAST                1 (it)
+             92 PRECALL                  1
+             96 CALL                     1
+            106 POP_TOP
+            108 JUMP_BACKWARD           29 (to 52)
+
+177     >>  110 LOAD_GLOBAL              7 (NULL + set)
+            122 PRECALL                  0
+            126 CALL                     0
+            136 LOAD_FAST                0 (self)
+            138 STORE_ATTR               4 (_fps)
+
+178         148 NOP
+
+179         150 LOAD_GLOBAL             11 (NULL + sorted)
+            162 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2EB30, file "ui\fingerprint_manager.py", line 179>)
+            164 MAKE_FUNCTION            0
+
+180         166 LOAD_FAST                0 (self)
+            168 LOAD_ATTR                6 (_cache)
+            178 LOAD_METHOD              7 (dir_list)
+            200 PRECALL                  0
+            204 CALL                     0
+
+179         214 GET_ITER
+            216 PRECALL                  0
+            220 CALL                     0
+            230 PRECALL                  1
+            234 CALL                     1
+            244 STORE_FAST               2 (names)
+            246 JUMP_FORWARD            18 (to 284)
+        >>  248 PUSH_EXC_INFO
+
+181         250 LOAD_GLOBAL             16 (Exception)
+            262 CHECK_EXC_MATCH
+            264 POP_JUMP_FORWARD_IF_FALSE     5 (to 276)
+            266 POP_TOP
+
+182         268 BUILD_LIST               0
+            270 STORE_FAST               2 (names)
+            272 POP_EXCEPT
+            274 JUMP_FORWARD             4 (to 284)
+
+181     >>  276 RERAISE                  0
+        >>  278 COPY                     3
+            280 POP_EXCEPT
+            282 RERAISE                  1
+
+183     >>  284 LOAD_FAST                2 (names)
+            286 POP_JUMP_FORWARD_IF_TRUE    32 (to 352)
+
+184         288 LOAD_FAST                0 (self)
+            290 LOAD_ATTR                0 (tree)
+            300 LOAD_METHOD              9 (insert)
+            322 LOAD_CONST               2 ('')
+            324 LOAD_CONST               3 ('end')
+            326 LOAD_CONST               4 ('__empty__')
+
+185         328 LOAD_CONST               5 (('（暂无已缓存的版式配方）', '', '', ''))
+
+184         330 KW_NAMES                 6
+            332 PRECALL                  4
+            336 CALL                     4
+            346 POP_TOP
+
+186         348 LOAD_CONST               0 (None)
+            350 RETURN_VALUE
+
+187     >>  352 LOAD_FAST                2 (names)
+            354 GET_ITER
+        >>  356 EXTENDED_ARG             1
+            358 FOR_ITER               262 (to 884)
+            360 STORE_FAST               3 (n)
+
+188         362 LOAD_FAST                3 (n)
+            364 LOAD_CONST               0 (None)
+            366 LOAD_CONST               7 (-5)
+            368 BUILD_SLICE              2
+            370 BINARY_SUBSCR
+            380 STORE_FAST               4 (fp)
+
+189         382 LOAD_CONST               8 ('（无客户名）')
+            384 STORE_FAST               5 (customer)
+
+190         386 LOAD_CONST               9 ('?')
+            388 STORE_FAST               6 (layout)
+
+191         390 LOAD_CONST               9 ('?')
+            392 STORE_FAST               7 (updated)
+
+192         394 NOP
+
+193         396 LOAD_FAST                0 (self)
+            398 LOAD_ATTR                6 (_cache)
+            408 LOAD_METHOD             10 (get)
+            430 LOAD_FAST                4 (fp)
+            432 PRECALL                  1
+            436 CALL                     1
+            446 STORE_FAST               8 (recipe)
+
+194         448 LOAD_FAST                8 (recipe)
+            450 LOAD_ATTR               11 (customer)
+            460 JUMP_IF_TRUE_OR_POP      1 (to 464)
+            462 LOAD_CONST               2 ('')
+        >>  464 LOAD_METHOD             12 (strip)
+            486 PRECALL                  0
+            490 CALL                     0
+            500 JUMP_IF_TRUE_OR_POP      1 (to 504)
+            502 LOAD_FAST                5 (customer)
+        >>  504 STORE_FAST               5 (customer)
+
+195         506 LOAD_FAST                8 (recipe)
+            508 LOAD_ATTR               13 (layout_type)
+            518 STORE_FAST               6 (layout)
+
+196         520 LOAD_CONST              10 (0)
+            522 LOAD_CONST               0 (None)
+            524 IMPORT_NAME             14 (os)
+            526 STORE_FAST               9 (os)
+
+197         528 LOAD_FAST                9 (os)
+            530 LOAD_ATTR               15 (path)
+            540 LOAD_METHOD             16 (getmtime)
+            562 LOAD_FAST                0 (self)
+            564 LOAD_ATTR                6 (_cache)
+            574 LOAD_METHOD             17 (_path)
+            596 LOAD_FAST                4 (fp)
+            598 PRECALL                  1
+            602 CALL                     1
+            612 PRECALL                  1
+            616 CALL                     1
+            626 STORE_FAST              10 (mtime)
+
+198         628 LOAD_GLOBAL             37 (NULL + datetime)
+            640 LOAD_ATTR               19 (fromtimestamp)
+            650 LOAD_FAST               10 (mtime)
+            652 PRECALL                  1
+            656 CALL                     1
+            666 LOAD_METHOD             20 (strftime)
+            688 LOAD_CONST              11 ('%Y-%m-%d %H:%M')
+            690 PRECALL                  1
+            694 CALL                     1
+            704 STORE_FAST               7 (updated)
+            706 JUMP_FORWARD            18 (to 744)
+        >>  708 PUSH_EXC_INFO
+
+199         710 LOAD_GLOBAL             16 (Exception)
+            722 CHECK_EXC_MATCH
+            724 POP_JUMP_FORWARD_IF_FALSE     5 (to 736)
+            726 POP_TOP
+
+200         728 LOAD_CONST              12 ('（损坏）')
+            730 STORE_FAST               5 (customer)
+            732 POP_EXCEPT
+            734 JUMP_FORWARD             4 (to 744)
+
+199     >>  736 RERAISE                  0
+        >>  738 COPY                     3
+            740 POP_EXCEPT
+            742 RERAISE                  1
+
+201     >>  744 LOAD_FAST                0 (self)
+            746 LOAD_ATTR                0 (tree)
+            756 LOAD_METHOD              9 (insert)
+            778 LOAD_CONST               2 ('')
+            780 LOAD_CONST               3 ('end')
+            782 LOAD_FAST                4 (fp)
+
+202         784 LOAD_FAST                5 (customer)
+            786 LOAD_FAST                4 (fp)
+            788 LOAD_CONST               0 (None)
+            790 LOAD_CONST              13 (8)
+            792 BUILD_SLICE              2
+            794 BINARY_SUBSCR
+            804 LOAD_FAST                6 (layout)
+            806 LOAD_FAST                7 (updated)
+            808 BUILD_TUPLE              4
+
+201         810 KW_NAMES                 6
+            812 PRECALL                  4
+            816 CALL                     4
+            826 POP_TOP
+
+203         828 LOAD_FAST                0 (self)
+            830 LOAD_ATTR                4 (_fps)
+            840 LOAD_METHOD             21 (add)
+            862 LOAD_FAST                4 (fp)
+            864 PRECALL                  1
+            868 CALL                     1
+            878 POP_TOP
+            880 EXTENDED_ARG             1
+            882 JUMP_BACKWARD          264 (to 356)
+
+187     >>  884 LOAD_CONST               0 (None)
+            886 RETURN_VALUE
+ExceptionTable:
+  150 to 244 -> 248 [0]
+  248 to 270 -> 278 [1] lasti
+  276 to 276 -> 278 [1] lasti
+  396 to 704 -> 708 [1]
+  708 to 730 -> 738 [2] lasti
+  736 to 736 -> 738 [2] lasti
+
+==============================================================================
+## <module>.FingerprintManager._refresh.<genexpr>  (args=1, locals=2)
+# varnames: .0, n
+179           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                27 (to 64)
+
+180          10 STORE_FAST               1 (n)
+             12 LOAD_FAST                1 (n)
+             14 LOAD_METHOD              0 (endswith)
+             36 LOAD_CONST               0 ('.json')
+             38 PRECALL                  1
+             42 CALL                     1
+
+179          52 POP_JUMP_BACKWARD_IF_FALSE    23 (to 8)
+
+180          54 LOAD_FAST                1 (n)
+
+179          56 YIELD_VALUE
+             58 RESUME                   1
+             60 POP_TOP
+             62 JUMP_BACKWARD           28 (to 8)
+        >>   64 LOAD_CONST               1 (None)
+             66 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._selected_fp  (args=1, locals=3)
+# varnames: self, sel, fp
+205           0 RESUME                   0
+
+206           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (tree)
+             14 LOAD_METHOD              1 (selection)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 STORE_FAST               1 (sel)
+
+207          52 LOAD_FAST                1 (sel)
+             54 POP_JUMP_FORWARD_IF_TRUE    25 (to 106)
+
+208          56 LOAD_GLOBAL              5 (NULL + messagebox)
+             68 LOAD_ATTR                3 (showinfo)
+             78 LOAD_CONST               1 ('请选择')
+             80 LOAD_CONST               2 ('先在列表里选中一条版式配方。')
+             82 LOAD_FAST                0 (self)
+             84 KW_NAMES                 3
+             86 PRECALL                  3
+             90 CALL                     3
+            100 POP_TOP
+
+209         102 LOAD_CONST               0 (None)
+            104 RETURN_VALUE
+
+210     >>  106 LOAD_FAST                1 (sel)
+            108 LOAD_CONST               4 (0)
+            110 BINARY_SUBSCR
+            120 STORE_FAST               2 (fp)
+
+211         122 LOAD_FAST                2 (fp)
+            124 LOAD_FAST                0 (self)
+            126 LOAD_ATTR                4 (_fps)
+            136 CONTAINS_OP              1
+            138 POP_JUMP_FORWARD_IF_FALSE     2 (to 144)
+
+212         140 LOAD_CONST               0 (None)
+            142 RETURN_VALUE
+
+213     >>  144 LOAD_FAST                2 (fp)
+            146 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._recheck  (args=1, locals=19)
+# varnames: self, fp, path, pdf_to_pages, layout_fingerprint, parse_doc, doc_text, RecipeConfirmDialog, pages, raw_text, new_fp, recipe, doc_lines, po, dlg, res, e, overrides, po2
+215           0 RESUME                   0
+
+217           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (_selected_fp)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (fp)
+
+218          42 LOAD_FAST                1 (fp)
+             44 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 50)
+
+219          46 LOAD_CONST               1 (None)
+             48 RETURN_VALUE
+
+220     >>   50 LOAD_GLOBAL              3 (NULL + filedialog)
+             62 LOAD_ATTR                2 (askopenfilename)
+
+221          72 LOAD_CONST               2 ('选择一份同版式 PDF（用于重新核对配方）')
+
+222          74 LOAD_CONST               3 (('PDF', '*.pdf'))
+             76 LOAD_CONST               4 (('所有文件', '*.*'))
+             78 BUILD_LIST               2
+             80 LOAD_FAST                0 (self)
+
+220          82 KW_NAMES                 5
+             84 PRECALL                  3
+             88 CALL                     3
+             98 STORE_FAST               2 (path)
+
+223         100 LOAD_FAST                2 (path)
+            102 POP_JUMP_FORWARD_IF_TRUE     2 (to 108)
+
+224         104 LOAD_CONST               1 (None)
+            106 RETURN_VALUE
+
+225     >>  108 NOP
+
+226         110 LOAD_CONST               6 (0)
+            112 LOAD_CONST               7 (('pdf_to_pages',))
+            114 IMPORT_NAME              3 (core.io.pdf)
+            116 IMPORT_FROM              4 (pdf_to_pages)
+            118 STORE_FAST               3 (pdf_to_pages)
+            120 POP_TOP
+
+227         122 LOAD_CONST               6 (0)
+            124 LOAD_CONST               8 (('layout_fingerprint',))
+            126 IMPORT_NAME              5 (core.store.cache)
+            128 IMPORT_FROM              6 (layout_fingerprint)
+            130 STORE_FAST               4 (layout_fingerprint)
+            132 POP_TOP
+
+228         134 LOAD_CONST               6 (0)
+            136 LOAD_CONST               9 (('parse',))
+            138 IMPORT_NAME              7 (core.parsers.registry)
+            140 IMPORT_FROM              8 (parse)
+            142 STORE_FAST               5 (parse_doc)
+            144 POP_TOP
+
+229         146 LOAD_CONST               6 (0)
+            148 LOAD_CONST              10 (('doc_text',))
+            150 IMPORT_NAME              9 (core.parsers.base)
+            152 IMPORT_FROM             10 (doc_text)
+            154 STORE_FAST               6 (doc_text)
+            156 POP_TOP
+
+230         158 LOAD_CONST               6 (0)
+            160 LOAD_CONST              11 (('RecipeConfirmDialog',))
+            162 IMPORT_NAME             11 (ui.recipe_dialog)
+            164 IMPORT_FROM             12 (RecipeConfirmDialog)
+            166 STORE_FAST               7 (RecipeConfirmDialog)
+            168 POP_TOP
+
+232         170 PUSH_NULL
+            172 LOAD_FAST                3 (pdf_to_pages)
+            174 LOAD_FAST                2 (path)
+            176 LOAD_CONST               1 (None)
+            178 LOAD_GLOBAL             26 (print)
+            190 KW_NAMES                12
+            192 PRECALL                  3
+            196 CALL                     3
+            206 STORE_FAST               8 (pages)
+
+233         208 LOAD_FAST                8 (pages)
+            210 POP_JUMP_FORWARD_IF_FALSE    29 (to 270)
+            212 LOAD_GLOBAL             29 (NULL + sum)
+            224 LOAD_CONST              13 (<code object <genexpr> at 0x000002BF94A2F830, file "ui\fingerprint_manager.py", line 233>)
+            226 MAKE_FUNCTION            0
+            228 LOAD_FAST                8 (pages)
+            230 GET_ITER
+            232 PRECALL                  0
+            236 CALL                     0
+            246 PRECALL                  1
+            250 CALL                     1
+            260 LOAD_CONST               6 (0)
+            262 COMPARE_OP               2 (==)
+            268 POP_JUMP_FORWARD_IF_FALSE    15 (to 300)
+
+234     >>  270 LOAD_GLOBAL             31 (NULL + RuntimeError)
+            282 LOAD_CONST              14 ('该 PDF 抽词为空（可能是纯图片扫描件且 OCR 未配置）。')
+            284 PRECALL                  1
+            288 CALL                     1
+            298 RAISE_VARARGS            1
+
+235     >>  300 LOAD_CONST              15 ('\n')
+            302 LOAD_METHOD             16 (join)
+            324 LOAD_CONST              16 (<code object <genexpr> at 0x000002BF94A6A550, file "ui\fingerprint_manager.py", line 235>)
+            326 MAKE_FUNCTION            0
+            328 LOAD_FAST                8 (pages)
+            330 GET_ITER
+            332 PRECALL                  0
+            336 CALL                     0
+            346 PRECALL                  1
+            350 CALL                     1
+            360 STORE_FAST               9 (raw_text)
+
+236         362 PUSH_NULL
+            364 LOAD_FAST                4 (layout_fingerprint)
+            366 LOAD_FAST                9 (raw_text)
+            368 PRECALL                  1
+            372 CALL                     1
+            382 STORE_FAST              10 (new_fp)
+
+237         384 LOAD_FAST                0 (self)
+            386 LOAD_ATTR               17 (_cache)
+            396 LOAD_METHOD             18 (get)
+            418 LOAD_FAST                1 (fp)
+            420 PRECALL                  1
+            424 CALL                     1
+            434 STORE_FAST              11 (recipe)
+
+238         436 LOAD_FAST               10 (new_fp)
+            438 LOAD_FAST                1 (fp)
+            440 COMPARE_OP               3 (!=)
+            446 POP_JUMP_FORWARD_IF_FALSE    48 (to 544)
+
+239         448 LOAD_GLOBAL             39 (NULL + messagebox)
+            460 LOAD_ATTR               20 (askyesno)
+
+240         470 LOAD_CONST              17 ('指纹不符')
+
+241         472 LOAD_CONST              18 ('所选 PDF 的指纹（')
+            474 LOAD_FAST               10 (new_fp)
+            476 LOAD_CONST               1 (None)
+            478 LOAD_CONST              19 (16)
+            480 BUILD_SLICE              2
+            482 BINARY_SUBSCR
+            492 FORMAT_VALUE             0
+            494 LOAD_CONST              20 ('…）与选中的配方（')
+
+242         496 LOAD_FAST                1 (fp)
+            498 LOAD_CONST               1 (None)
+            500 LOAD_CONST              19 (16)
+            502 BUILD_SLICE              2
+            504 BINARY_SUBSCR
+
+241         514 FORMAT_VALUE             0
+            516 LOAD_CONST              21 ('…）不一致，可能不是同一版式。\n仍要加载选中配方并用这份 PDF 测试吗？')
+            518 BUILD_STRING             5
+
+244         520 LOAD_FAST                0 (self)
+
+239         522 KW_NAMES                22
+            524 PRECALL                  3
+            528 CALL                     3
+            538 POP_JUMP_FORWARD_IF_TRUE     2 (to 544)
+
+245         540 LOAD_CONST               1 (None)
+            542 RETURN_VALUE
+
+246     >>  544 LOAD_CONST              23 (<code object <listcomp> at 0x000002BF9473E830, file "ui\fingerprint_manager.py", line 246>)
+            546 MAKE_FUNCTION            0
+
+247         548 LOAD_FAST                8 (pages)
+
+246         550 GET_ITER
+            552 PRECALL                  0
+            556 CALL                     0
+            566 STORE_FAST              12 (doc_lines)
+
+248         568 PUSH_NULL
+            570 LOAD_FAST                5 (parse_doc)
+            572 LOAD_FAST                8 (pages)
+            574 LOAD_FAST               11 (recipe)
+            576 LOAD_GLOBAL             43 (NULL + str)
+            588 LOAD_FAST                2 (path)
+            590 PRECALL                  1
+            594 CALL                     1
+            604 KW_NAMES                24
+            606 PRECALL                  3
+            610 CALL                     3
+            620 STORE_FAST              13 (po)
+
+249         622 PUSH_NULL
+            624 LOAD_FAST                7 (RecipeConfirmDialog)
+            626 LOAD_FAST                0 (self)
+            628 LOAD_FAST               11 (recipe)
+            630 LOAD_FAST               13 (po)
+            632 LOAD_FAST               12 (doc_lines)
+            634 PRECALL                  4
+            638 CALL                     4
+            648 STORE_FAST              14 (dlg)
+
+250         650 LOAD_FAST               14 (dlg)
+            652 LOAD_ATTR               22 (result)
+            662 STORE_FAST              15 (res)
+            664 JUMP_FORWARD            48 (to 762)
+        >>  666 PUSH_EXC_INFO
+
+251         668 LOAD_GLOBAL             46 (Exception)
+            680 CHECK_EXC_MATCH
+            682 POP_JUMP_FORWARD_IF_FALSE    35 (to 754)
+            684 STORE_FAST              16 (e)
+
+252         686 LOAD_GLOBAL             39 (NULL + messagebox)
+            698 LOAD_ATTR               24 (showerror)
+            708 LOAD_CONST              25 ('重新核对失败')
+            710 LOAD_FAST               16 (e)
+            712 FORMAT_VALUE             0
+            714 LOAD_FAST                0 (self)
+            716 KW_NAMES                22
+            718 PRECALL                  3
+            722 CALL                     3
+            732 POP_TOP
+
+253         734 POP_EXCEPT
+            736 LOAD_CONST               1 (None)
+            738 STORE_FAST              16 (e)
+            740 DELETE_FAST             16 (e)
+            742 LOAD_CONST               1 (None)
+            744 RETURN_VALUE
+        >>  746 LOAD_CONST               1 (None)
+            748 STORE_FAST              16 (e)
+            750 DELETE_FAST             16 (e)
+            752 RERAISE                  1
+
+251     >>  754 RERAISE                  0
+        >>  756 COPY                     3
+            758 POP_EXCEPT
+            760 RERAISE                  1
+
+254     >>  762 LOAD_FAST               15 (res)
+            764 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 770)
+
+255         766 LOAD_CONST               1 (None)
+            768 RETURN_VALUE
+
+256     >>  770 LOAD_FAST               15 (res)
+            772 LOAD_CONST              26 ('RETRY')
+            774 COMPARE_OP               2 (==)
+            780 POP_JUMP_FORWARD_IF_FALSE    25 (to 832)
+
+257         782 LOAD_GLOBAL             39 (NULL + messagebox)
+            794 LOAD_ATTR               25 (showinfo)
+            804 LOAD_CONST              27 ('提示')
+            806 LOAD_CONST              28 ('重新核对模式不支持「重新识别」；请用主界面的正常提取流程（开启人工确认配方）重试。')
+
+259         808 LOAD_FAST                0 (self)
+
+257         810 KW_NAMES                22
+            812 PRECALL                  3
+            816 CALL                     3
+            826 POP_TOP
+
+260         828 LOAD_CONST               1 (None)
+            830 RETURN_VALUE
+
+263     >>  832 LOAD_GLOBAL             53 (NULL + dict)
+            844 LOAD_FAST               15 (res)
+            846 LOAD_ATTR               27 (field_overrides)
+            856 PRECALL                  1
+            860 CALL                     1
+            870 STORE_FAST              17 (overrides)
+
+264         872 LOAD_FAST               17 (overrides)
+            874 LOAD_METHOD             18 (get)
+            896 LOAD_CONST              29 ('customer')
+            898 PRECALL                  1
+            902 CALL                     1
+            912 POP_JUMP_FORWARD_IF_FALSE    14 (to 942)
+
+265         914 LOAD_FAST               17 (overrides)
+            916 LOAD_CONST              29 ('customer')
+            918 BINARY_SUBSCR
+            928 LOAD_FAST               15 (res)
+            930 STORE_ATTR              28 (customer)
+            940 JUMP_FORWARD            44 (to 1030)
+
+266     >>  942 LOAD_FAST               15 (res)
+            944 LOAD_ATTR               29 (field_defaults)
+            954 LOAD_METHOD             18 (get)
+            976 LOAD_CONST              29 ('customer')
+            978 PRECALL                  1
+            982 CALL                     1
+            992 POP_JUMP_FORWARD_IF_FALSE    18 (to 1030)
+
+267         994 LOAD_FAST               15 (res)
+            996 LOAD_ATTR               29 (field_defaults)
+           1006 LOAD_CONST              29 ('customer')
+           1008 BINARY_SUBSCR
+           1018 LOAD_FAST               15 (res)
+           1020 STORE_ATTR              28 (customer)
+
+268     >> 1030 LOAD_FAST               15 (res)
+           1032 LOAD_ATTR               27 (field_overrides)
+           1042 LOAD_METHOD             30 (clear)
+           1064 PRECALL                  0
+           1068 CALL                     0
+           1078 POP_TOP
+
+269        1080 NOP
+
+270        1082 PUSH_NULL
+           1084 LOAD_FAST                5 (parse_doc)
+           1086 LOAD_FAST                8 (pages)
+           1088 LOAD_FAST               15 (res)
+           1090 LOAD_GLOBAL             43 (NULL + str)
+           1102 LOAD_FAST                2 (path)
+           1104 PRECALL                  1
+           1108 CALL                     1
+           1118 KW_NAMES                24
+           1120 PRECALL                  3
+           1124 CALL                     3
+           1134 STORE_FAST              18 (po2)
+
+271        1136 LOAD_FAST               18 (po2)
+           1138 LOAD_METHOD             31 (apply_recipe_overrides)
+           1160 LOAD_FAST               17 (overrides)
+           1162 PRECALL                  1
+           1166 CALL                     1
+           1176 POP_TOP
+
+272        1178 LOAD_FAST                0 (self)
+           1180 LOAD_ATTR               17 (_cache)
+           1190 LOAD_METHOD             32 (put)
+           1212 LOAD_FAST                1 (fp)
+           1214 LOAD_FAST               15 (res)
+           1216 PRECALL                  2
+           1220 CALL                     2
+           1230 POP_TOP
+           1232 JUMP_FORWARD            50 (to 1334)
+        >> 1234 PUSH_EXC_INFO
+
+273        1236 LOAD_GLOBAL             46 (Exception)
+           1248 CHECK_EXC_MATCH
+           1250 POP_JUMP_FORWARD_IF_FALSE    37 (to 1326)
+           1252 STORE_FAST              16 (e)
+
+274        1254 LOAD_GLOBAL             39 (NULL + messagebox)
+           1266 LOAD_ATTR               24 (showerror)
+           1276 LOAD_CONST              30 ('保存失败')
+           1278 LOAD_CONST              31 ('写入缓存失败：')
+           1280 LOAD_FAST               16 (e)
+           1282 FORMAT_VALUE             0
+           1284 BUILD_STRING             2
+           1286 LOAD_FAST                0 (self)
+           1288 KW_NAMES                22
+           1290 PRECALL                  3
+           1294 CALL                     3
+           1304 POP_TOP
+
+275        1306 POP_EXCEPT
+           1308 LOAD_CONST               1 (None)
+           1310 STORE_FAST              16 (e)
+           1312 DELETE_FAST             16 (e)
+           1314 LOAD_CONST               1 (None)
+           1316 RETURN_VALUE
+        >> 1318 LOAD_CONST               1 (None)
+           1320 STORE_FAST              16 (e)
+           1322 DELETE_FAST             16 (e)
+           1324 RERAISE                  1
+
+273     >> 1326 RERAISE                  0
+        >> 1328 COPY                     3
+           1330 POP_EXCEPT
+           1332 RERAISE                  1
+
+276     >> 1334 LOAD_GLOBAL             39 (NULL + messagebox)
+           1346 LOAD_ATTR               25 (showinfo)
+           1356 LOAD_CONST              32 ('已更新')
+
+277        1358 LOAD_CONST              33 ('配方 ')
+           1360 LOAD_FAST                1 (fp)
+           1362 LOAD_CONST               1 (None)
+           1364 LOAD_CONST              19 (16)
+           1366 BUILD_SLICE              2
+           1368 BINARY_SUBSCR
+           1378 FORMAT_VALUE             0
+           1380 LOAD_CONST              34 ('… 已按核对结果回写缓存。\n后续同版式 PO 将套用新配方。')
+           1382 BUILD_STRING             3
+
+278        1384 LOAD_FAST                0 (self)
+
+276        1386 KW_NAMES                22
+           1388 PRECALL                  3
+           1392 CALL                     3
+           1402 POP_TOP
+
+279        1404 LOAD_FAST                0 (self)
+           1406 LOAD_METHOD             33 (_refresh)
+           1428 PRECALL                  0
+           1432 CALL                     0
+           1442 POP_TOP
+           1444 LOAD_CONST               1 (None)
+           1446 RETURN_VALUE
+ExceptionTable:
+  110 to 538 -> 666 [0]
+  544 to 662 -> 666 [0]
+  666 to 684 -> 756 [1] lasti
+  686 to 732 -> 746 [1] lasti
+  746 to 754 -> 756 [1] lasti
+  1082 to 1230 -> 1234 [0]
+  1234 to 1252 -> 1328 [1] lasti
+  1254 to 1304 -> 1318 [1] lasti
+  1318 to 1326 -> 1328 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._recheck.<genexpr>  (args=1, locals=2)
+# varnames: .0, p
+233           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (p)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (p)
+             26 LOAD_ATTR                1 (tokens)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._recheck.<genexpr>  (args=1, locals=2)
+# varnames: .0, pg
+235           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                40 (to 90)
+             10 STORE_FAST               1 (pg)
+             12 LOAD_CONST               0 (' ')
+             14 LOAD_METHOD              0 (join)
+             36 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6EA30, file "ui\fingerprint_manager.py", line 235>)
+             38 MAKE_FUNCTION            0
+             40 LOAD_FAST                1 (pg)
+             42 LOAD_ATTR                1 (tokens)
+             52 GET_ITER
+             54 PRECALL                  0
+             58 CALL                     0
+             68 PRECALL                  1
+             72 CALL                     1
+             82 YIELD_VALUE
+             84 RESUME                   1
+             86 POP_TOP
+             88 JUMP_BACKWARD           41 (to 8)
+        >>   90 LOAD_CONST               2 (None)
+             92 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._recheck.<genexpr>.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+235           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._recheck.<listcomp>  (args=1, locals=3)
+# varnames: .0, pg, line
+246           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                56 (to 120)
+
+247           8 STORE_FAST               1 (pg)
+             10 LOAD_FAST                1 (pg)
+             12 LOAD_METHOD              0 (lines)
+             34 PRECALL                  0
+             38 CALL                     0
+
+246          48 GET_ITER
+        >>   50 FOR_ITER                33 (to 118)
+
+247          52 STORE_FAST               2 (line)
+
+246          54 LOAD_CONST               0 (' ')
+             56 LOAD_METHOD              1 (join)
+             78 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6EE90, file "ui\fingerprint_manager.py", line 246>)
+             80 MAKE_FUNCTION            0
+             82 LOAD_FAST                2 (line)
+             84 GET_ITER
+             86 PRECALL                  0
+             90 CALL                     0
+            100 PRECALL                  1
+            104 CALL                     1
+            114 LIST_APPEND              3
+            116 JUMP_BACKWARD           34 (to 50)
+        >>  118 JUMP_BACKWARD           57 (to 6)
+        >>  120 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._recheck.<listcomp>.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+246           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.FingerprintManager._raw_edit  (args=1, locals=6)
+# varnames: self, fp, RecipeRawEditor, recipe, dlg, e
+281           0 RESUME                   0
+
+282           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (_selected_fp)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (fp)
+
+283          42 LOAD_FAST                1 (fp)
+             44 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 50)
+
+284          46 LOAD_CONST               0 (None)
+             48 RETURN_VALUE
+
+285     >>   50 NOP
+
+286          52 LOAD_CONST               1 (0)
+             54 LOAD_CONST               2 (('RecipeRawEditor',))
+             56 IMPORT_NAME              1 (ui.recipe_raw_editor)
+             58 IMPORT_FROM              2 (RecipeRawEditor)
+             60 STORE_FAST               2 (RecipeRawEditor)
+             62 POP_TOP
+
+287          64 LOAD_FAST                0 (self)
+             66 LOAD_ATTR                3 (_cache)
+             76 LOAD_METHOD              4 (get)
+             98 LOAD_FAST                1 (fp)
+            100 PRECALL                  1
+            104 CALL                     1
+            114 STORE_FAST               3 (recipe)
+
+288         116 PUSH_NULL
+            118 LOAD_FAST                2 (RecipeRawEditor)
+            120 LOAD_FAST                0 (self)
+            122 LOAD_FAST                3 (recipe)
+            124 LOAD_FAST                1 (fp)
+            126 LOAD_FAST                0 (self)
+            128 LOAD_ATTR                3 (_cache)
+            138 PRECALL                  4
+            142 CALL                     4
+            152 STORE_FAST               4 (dlg)
+            154 JUMP_FORWARD            48 (to 252)
+        >>  156 PUSH_EXC_INFO
+
+289         158 LOAD_GLOBAL             10 (Exception)
+            170 CHECK_EXC_MATCH
+            172 POP_JUMP_FORWARD_IF_FALSE    35 (to 244)
+            174 STORE_FAST               5 (e)
+
+290         176 LOAD_GLOBAL             13 (NULL + messagebox)
+            188 LOAD_ATTR                7 (showerror)
+            198 LOAD_CONST               3 ('打开失败')
+            200 LOAD_FAST                5 (e)
+            202 FORMAT_VALUE             0
+            204 LOAD_FAST                0 (self)
+            206 KW_NAMES                 4
+            208 PRECALL                  3
+            212 CALL                     3
+            222 POP_TOP
+
+291         224 POP_EXCEPT
+            226 LOAD_CONST               0 (None)
+            228 STORE_FAST               5 (e)
+            230 DELETE_FAST              5 (e)
+            232 LOAD_CONST               0 (None)
+            234 RETURN_VALUE
+        >>  236 LOAD_CONST               0 (None)
+            238 STORE_FAST               5 (e)
+            240 DELETE_FAST              5 (e)
+            242 RERAISE                  1
+
+289     >>  244 RERAISE                  0
+        >>  246 COPY                     3
+            248 POP_EXCEPT
+            250 RERAISE                  1
+
+292     >>  252 LOAD_FAST                4 (dlg)
+            254 LOAD_ATTR                8 (result)
+            264 POP_JUMP_FORWARD_IF_FALSE    57 (to 380)
+
+293         266 LOAD_GLOBAL             13 (NULL + messagebox)
+            278 LOAD_ATTR                9 (showinfo)
+            288 LOAD_CONST               5 ('已更新')
+            290 LOAD_CONST               6 ('配方 ')
+            292 LOAD_FAST                1 (fp)
+            294 LOAD_CONST               0 (None)
+            296 LOAD_CONST               7 (16)
+            298 BUILD_SLICE              2
+            300 BINARY_SUBSCR
+            310 FORMAT_VALUE             0
+            312 LOAD_CONST               8 ('… 的锚点已回写缓存。')
+            314 BUILD_STRING             3
+
+294         316 LOAD_FAST                0 (self)
+
+293         318 KW_NAMES                 4
+            320 PRECALL                  3
+            324 CALL                     3
+            334 POP_TOP
+
+295         336 LOAD_FAST                0 (self)
+            338 LOAD_METHOD             10 (_refresh)
+            360 PRECALL                  0
+            364 CALL                     0
+            374 POP_TOP
+            376 LOAD_CONST               0 (None)
+            378 RETURN_VALUE
+
+292     >>  380 LOAD_CONST               0 (None)
+            382 RETURN_VALUE
+ExceptionTable:
+  52 to 152 -> 156 [0]
+  156 to 174 -> 246 [1] lasti
+  176 to 222 -> 236 [1] lasti
+  236 to 244 -> 246 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._view_json  (args=1, locals=12)
+# varnames: self, recipe, e, base, f, txt, bf, _save_as, winw, winh, x, y
+              0 MAKE_CELL               12 (fp)
+              2 MAKE_CELL               13 (text)
+              4 MAKE_CELL               14 (win)
+
+297           6 RESUME                   0
+
+298           8 LOAD_FAST                0 (self)
+             10 LOAD_METHOD              0 (_selected_fp)
+             32 PRECALL                  0
+             36 CALL                     0
+             46 STORE_DEREF             12 (fp)
+
+299          48 LOAD_DEREF              12 (fp)
+             50 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 56)
+
+300          52 LOAD_CONST               0 (None)
+             54 RETURN_VALUE
+
+301     >>   56 NOP
+
+302          58 LOAD_FAST                0 (self)
+             60 LOAD_ATTR                1 (_cache)
+             70 LOAD_METHOD              2 (get)
+             92 LOAD_DEREF              12 (fp)
+             94 PRECALL                  1
+             98 CALL                     1
+            108 STORE_FAST               1 (recipe)
+
+303         110 LOAD_FAST                1 (recipe)
+            112 LOAD_METHOD              3 (to_json)
+            134 PRECALL                  0
+            138 CALL                     0
+            148 STORE_DEREF             13 (text)
+            150 JUMP_FORWARD            48 (to 248)
+        >>  152 PUSH_EXC_INFO
+
+304         154 LOAD_GLOBAL              8 (Exception)
+            166 CHECK_EXC_MATCH
+            168 POP_JUMP_FORWARD_IF_FALSE    35 (to 240)
+            170 STORE_FAST               2 (e)
+
+305         172 LOAD_GLOBAL             11 (NULL + messagebox)
+            184 LOAD_ATTR                6 (showerror)
+            194 LOAD_CONST               1 ('读取失败')
+            196 LOAD_FAST                2 (e)
+            198 FORMAT_VALUE             0
+            200 LOAD_FAST                0 (self)
+            202 KW_NAMES                 2
+            204 PRECALL                  3
+            208 CALL                     3
+            218 POP_TOP
+
+306         220 POP_EXCEPT
+            222 LOAD_CONST               0 (None)
+            224 STORE_FAST               2 (e)
+            226 DELETE_FAST              2 (e)
+            228 LOAD_CONST               0 (None)
+            230 RETURN_VALUE
+        >>  232 LOAD_CONST               0 (None)
+            234 STORE_FAST               2 (e)
+            236 DELETE_FAST              2 (e)
+            238 RERAISE                  1
+
+304     >>  240 RERAISE                  0
+        >>  242 COPY                     3
+            244 POP_EXCEPT
+            246 RERAISE                  1
+
+308     >>  248 LOAD_GLOBAL             15 (NULL + tk)
+            260 LOAD_ATTR                8 (Toplevel)
+            270 LOAD_FAST                0 (self)
+            272 PRECALL                  1
+            276 CALL                     1
+            286 STORE_DEREF             14 (win)
+
+309         288 LOAD_DEREF              14 (win)
+            290 LOAD_METHOD              9 (title)
+            312 LOAD_CONST               3 ('配方 JSON · ')
+            314 LOAD_DEREF              12 (fp)
+            316 LOAD_CONST               0 (None)
+            318 LOAD_CONST               4 (16)
+            320 BUILD_SLICE              2
+            322 BINARY_SUBSCR
+            332 FORMAT_VALUE             0
+            334 LOAD_CONST               5 ('…')
+            336 BUILD_STRING             3
+            338 PRECALL                  1
+            342 CALL                     1
+            352 POP_TOP
+
+310         354 LOAD_DEREF              14 (win)
+            356 LOAD_METHOD             10 (transient)
+            378 LOAD_FAST                0 (self)
+            380 PRECALL                  1
+            384 CALL                     1
+            394 POP_TOP
+
+311         396 LOAD_DEREF              14 (win)
+            398 LOAD_METHOD             11 (grab_set)
+            420 PRECALL                  0
+            424 CALL                     0
+            434 POP_TOP
+
+312         436 NOP
+
+313         438 LOAD_GLOBAL             25 (NULL + Path)
+            450 LOAD_GLOBAL             27 (NULL + getattr)
+            462 LOAD_GLOBAL             28 (sys)
+            474 LOAD_CONST               6 ('_MEIPASS')
+            476 LOAD_GLOBAL             25 (NULL + Path)
+            488 LOAD_GLOBAL             30 (__file__)
+            500 PRECALL                  1
+            504 CALL                     1
+            514 LOAD_ATTR               16 (parent)
+            524 LOAD_ATTR               16 (parent)
+            534 PRECALL                  3
+            538 CALL                     3
+            548 PRECALL                  1
+            552 CALL                     1
+            562 STORE_FAST               3 (base)
+
+314         564 LOAD_DEREF              14 (win)
+            566 LOAD_METHOD             17 (iconbitmap)
+            588 LOAD_GLOBAL             37 (NULL + str)
+            600 LOAD_FAST                3 (base)
+            602 LOAD_CONST               7 ('app.ico')
+            604 BINARY_OP               11 (/)
+            608 PRECALL                  1
+            612 CALL                     1
+            622 PRECALL                  1
+            626 CALL                     1
+            636 POP_TOP
+            638 JUMP_FORWARD            16 (to 672)
+        >>  640 PUSH_EXC_INFO
+
+315         642 LOAD_GLOBAL              8 (Exception)
+            654 CHECK_EXC_MATCH
+            656 POP_JUMP_FORWARD_IF_FALSE     3 (to 664)
+            658 POP_TOP
+
+316         660 POP_EXCEPT
+            662 JUMP_FORWARD             4 (to 672)
+
+315     >>  664 RERAISE                  0
+        >>  666 COPY                     3
+            668 POP_EXCEPT
+            670 RERAISE                  1
+
+317     >>  672 LOAD_GLOBAL             15 (NULL + tk)
+            684 LOAD_ATTR               19 (Frame)
+            694 LOAD_DEREF              14 (win)
+            696 LOAD_CONST               8 (12)
+            698 LOAD_CONST               8 (12)
+            700 KW_NAMES                 9
+            702 PRECALL                  3
+            706 CALL                     3
+            716 STORE_FAST               4 (f)
+
+318         718 LOAD_FAST                4 (f)
+            720 LOAD_METHOD             20 (pack)
+            742 LOAD_CONST              10 ('both')
+            744 LOAD_CONST              11 (True)
+            746 KW_NAMES                12
+            748 PRECALL                  2
+            752 CALL                     2
+            762 POP_TOP
+
+319         764 LOAD_GLOBAL             15 (NULL + tk)
+            776 LOAD_ATTR               21 (Text)
+            786 LOAD_FAST                4 (f)
+            788 LOAD_CONST              13 (('Consolas', 10))
+            790 LOAD_GLOBAL             44 (_C_PANEL)
+            802 LOAD_GLOBAL             46 (_C_INK)
+
+320         814 LOAD_CONST              14 ('flat')
+            816 LOAD_CONST              15 ('none')
+
+319         818 KW_NAMES                16
+            820 PRECALL                  6
+            824 CALL                     6
+            834 STORE_FAST               5 (txt)
+
+321         836 LOAD_FAST                5 (txt)
+            838 LOAD_METHOD             24 (insert)
+            860 LOAD_CONST              17 ('1.0')
+            862 LOAD_DEREF              13 (text)
+            864 PRECALL                  2
+            868 CALL                     2
+            878 POP_TOP
+
+322         880 LOAD_FAST                5 (txt)
+            882 LOAD_METHOD             25 (configure)
+            904 LOAD_CONST              18 ('disabled')
+            906 KW_NAMES                19
+            908 PRECALL                  1
+            912 CALL                     1
+            922 POP_TOP
+
+323         924 LOAD_FAST                5 (txt)
+            926 LOAD_METHOD             20 (pack)
+            948 LOAD_CONST              10 ('both')
+            950 LOAD_CONST              11 (True)
+            952 LOAD_CONST              20 ('top')
+            954 KW_NAMES                21
+            956 PRECALL                  3
+            960 CALL                     3
+            970 POP_TOP
+
+324         972 LOAD_GLOBAL             15 (NULL + tk)
+            984 LOAD_ATTR               19 (Frame)
+            994 LOAD_FAST                4 (f)
+            996 PRECALL                  1
+           1000 CALL                     1
+           1010 STORE_FAST               6 (bf)
+
+325        1012 LOAD_FAST                6 (bf)
+           1014 LOAD_METHOD             20 (pack)
+           1036 LOAD_CONST              22 ('x')
+           1038 LOAD_CONST              23 ((8, 0))
+           1040 KW_NAMES                24
+           1042 PRECALL                  2
+           1046 CALL                     2
+           1056 POP_TOP
+
+327        1058 LOAD_CLOSURE            12 (fp)
+           1060 LOAD_CLOSURE            13 (text)
+           1062 LOAD_CLOSURE            14 (win)
+           1064 BUILD_TUPLE              3
+           1066 LOAD_CONST              25 (<code object _save_as at 0x000002BF943828D0, file "ui\fingerprint_manager.py", line 327>)
+           1068 MAKE_FUNCTION            8 (closure)
+           1070 STORE_FAST               7 (_save_as)
+
+341        1072 LOAD_GLOBAL             15 (NULL + tk)
+           1084 LOAD_ATTR               26 (Button)
+           1094 LOAD_FAST                6 (bf)
+           1096 LOAD_CONST              26 ('另存为…')
+           1098 LOAD_FAST                7 (_save_as)
+           1100 LOAD_GLOBAL             54 (FONT_BUTTON)
+
+342        1112 LOAD_CONST              27 (14)
+           1114 LOAD_CONST              28 (6)
+           1116 LOAD_GLOBAL             56 (_C_GAP)
+           1128 LOAD_GLOBAL             46 (_C_INK)
+           1140 LOAD_CONST              14 ('flat')
+
+341        1142 KW_NAMES                29
+           1144 PRECALL                  9
+           1148 CALL                     9
+
+342        1158 LOAD_METHOD             20 (pack)
+           1180 LOAD_CONST              30 ('left')
+           1182 KW_NAMES                31
+           1184 PRECALL                  1
+           1188 CALL                     1
+           1198 POP_TOP
+
+343        1200 LOAD_GLOBAL             15 (NULL + tk)
+           1212 LOAD_ATTR               26 (Button)
+           1222 LOAD_FAST                6 (bf)
+           1224 BUILD_TUPLE              1
+           1226 LOAD_CONST              32 ('关闭')
+           1228 LOAD_DEREF              14 (win)
+           1230 LOAD_ATTR               29 (destroy)
+           1240 LOAD_GLOBAL             54 (FONT_BUTTON)
+
+344        1252 LOAD_CONST              27 (14)
+           1254 LOAD_CONST              28 (6)
+
+343        1256 LOAD_CONST              33 (('text', 'command', 'font', 'padx', 'pady'))
+           1258 BUILD_CONST_KEY_MAP      5
+
+344        1260 LOAD_GLOBAL             60 (PRIMARY_KW)
+
+343        1272 DICT_MERGE               1
+           1274 CALL_FUNCTION_EX         1
+
+344        1276 LOAD_METHOD             20 (pack)
+           1298 LOAD_CONST              34 ('right')
+           1300 KW_NAMES                31
+           1302 PRECALL                  1
+           1306 CALL                     1
+           1316 POP_TOP
+
+345        1318 LOAD_DEREF              14 (win)
+           1320 LOAD_METHOD             31 (update_idletasks)
+           1342 PRECALL                  0
+           1346 CALL                     0
+           1356 POP_TOP
+
+346        1358 LOAD_CONST              35 ((560, 460))
+           1360 UNPACK_SEQUENCE          2
+           1364 STORE_FAST               8 (winw)
+           1366 STORE_FAST               9 (winh)
+
+347        1368 LOAD_FAST                0 (self)
+           1370 LOAD_METHOD             32 (winfo_rootx)
+           1392 PRECALL                  0
+           1396 CALL                     0
+           1406 LOAD_GLOBAL             67 (NULL + max)
+           1418 LOAD_CONST              36 (0)
+           1420 LOAD_FAST                0 (self)
+           1422 LOAD_METHOD             34 (winfo_width)
+           1444 PRECALL                  0
+           1448 CALL                     0
+           1458 LOAD_FAST                8 (winw)
+           1460 BINARY_OP               10 (-)
+           1464 LOAD_CONST              37 (2)
+           1466 BINARY_OP                2 (//)
+           1470 PRECALL                  2
+           1474 CALL                     2
+           1484 BINARY_OP                0 (+)
+           1488 STORE_FAST              10 (x)
+
+348        1490 LOAD_FAST                0 (self)
+           1492 LOAD_METHOD             35 (winfo_rooty)
+           1514 PRECALL                  0
+           1518 CALL                     0
+           1528 LOAD_GLOBAL             67 (NULL + max)
+           1540 LOAD_CONST              36 (0)
+           1542 LOAD_FAST                0 (self)
+           1544 LOAD_METHOD             36 (winfo_height)
+           1566 PRECALL                  0
+           1570 CALL                     0
+           1580 LOAD_FAST                9 (winh)
+           1582 BINARY_OP               10 (-)
+           1586 LOAD_CONST              37 (2)
+           1588 BINARY_OP                2 (//)
+           1592 PRECALL                  2
+           1596 CALL                     2
+           1606 BINARY_OP                0 (+)
+           1610 STORE_FAST              11 (y)
+
+349        1612 LOAD_DEREF              14 (win)
+           1614 LOAD_METHOD             37 (geometry)
+           1636 LOAD_FAST                8 (winw)
+           1638 FORMAT_VALUE             0
+           1640 LOAD_CONST              22 ('x')
+           1642 LOAD_FAST                9 (winh)
+           1644 FORMAT_VALUE             0
+           1646 LOAD_CONST              38 ('+')
+           1648 LOAD_FAST               10 (x)
+           1650 FORMAT_VALUE             0
+           1652 LOAD_CONST              38 ('+')
+           1654 LOAD_FAST               11 (y)
+           1656 FORMAT_VALUE             0
+           1658 BUILD_STRING             7
+           1660 PRECALL                  1
+           1664 CALL                     1
+           1674 POP_TOP
+
+350        1676 LOAD_DEREF              14 (win)
+           1678 LOAD_METHOD             38 (wait_window)
+           1700 LOAD_DEREF              14 (win)
+           1702 PRECALL                  1
+           1706 CALL                     1
+           1716 POP_TOP
+           1718 LOAD_CONST               0 (None)
+           1720 RETURN_VALUE
+ExceptionTable:
+  58 to 148 -> 152 [0]
+  152 to 170 -> 242 [1] lasti
+  172 to 218 -> 232 [1] lasti
+  232 to 240 -> 242 [1] lasti
+  438 to 636 -> 640 [0]
+  640 to 658 -> 666 [1] lasti
+  664 to 664 -> 666 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._view_json._save_as  (args=0, locals=3)
+# varnames: out, fh, e
+              0 COPY_FREE_VARS           3
+
+327           2 RESUME                   0
+
+328           4 LOAD_GLOBAL              1 (NULL + filedialog)
+             16 LOAD_ATTR                1 (asksaveasfilename)
+
+329          26 LOAD_CONST               1 ('另存为配方 JSON')
+
+330          28 LOAD_CONST               2 ('.json')
+
+331          30 LOAD_DEREF               3 (fp)
+             32 FORMAT_VALUE             0
+             34 LOAD_CONST               2 ('.json')
+             36 BUILD_STRING             2
+
+332          38 LOAD_CONST               3 (('JSON', '*.json'))
+             40 LOAD_CONST               4 (('所有文件', '*.*'))
+             42 BUILD_LIST               2
+             44 LOAD_DEREF               5 (win)
+
+328          46 KW_NAMES                 5
+             48 PRECALL                  5
+             52 CALL                     5
+             62 STORE_FAST               0 (out)
+
+333          64 LOAD_FAST                0 (out)
+             66 POP_JUMP_FORWARD_IF_FALSE   140 (to 348)
+
+334          68 NOP
+
+335          70 LOAD_GLOBAL              5 (NULL + open)
+             82 LOAD_FAST                0 (out)
+             84 LOAD_CONST               6 ('w')
+             86 LOAD_CONST               7 ('utf-8')
+             88 KW_NAMES                 8
+             90 PRECALL                  3
+             94 CALL                     3
+            104 BEFORE_WITH
+            106 STORE_FAST               1 (fh)
+
+336         108 LOAD_FAST                1 (fh)
+            110 LOAD_METHOD              3 (write)
+            132 LOAD_DEREF               4 (text)
+            134 PRECALL                  1
+            138 CALL                     1
+            148 POP_TOP
+
+335         150 LOAD_CONST               0 (None)
+            152 LOAD_CONST               0 (None)
+            154 LOAD_CONST               0 (None)
+            156 PRECALL                  2
+            160 CALL                     2
+            170 POP_TOP
+            172 JUMP_FORWARD            11 (to 196)
+        >>  174 PUSH_EXC_INFO
+            176 WITH_EXCEPT_START
+            178 POP_JUMP_FORWARD_IF_TRUE     4 (to 188)
+            180 RERAISE                  2
+        >>  182 COPY                     3
+            184 POP_EXCEPT
+            186 RERAISE                  1
+        >>  188 POP_TOP
+            190 POP_EXCEPT
+            192 POP_TOP
+            194 POP_TOP
+
+337     >>  196 LOAD_GLOBAL              9 (NULL + messagebox)
+            208 LOAD_ATTR                5 (showinfo)
+            218 LOAD_CONST               9 ('已保存')
+            220 LOAD_CONST              10 ('已导出到：\n')
+            222 LOAD_FAST                0 (out)
+            224 FORMAT_VALUE             0
+            226 BUILD_STRING             2
+            228 LOAD_DEREF               5 (win)
+            230 KW_NAMES                11
+            232 PRECALL                  3
+            236 CALL                     3
+            246 POP_TOP
+            248 LOAD_CONST               0 (None)
+            250 RETURN_VALUE
+        >>  252 PUSH_EXC_INFO
+
+338         254 LOAD_GLOBAL             12 (Exception)
+            266 CHECK_EXC_MATCH
+            268 POP_JUMP_FORWARD_IF_FALSE    35 (to 340)
+            270 STORE_FAST               2 (e)
+
+339         272 LOAD_GLOBAL              9 (NULL + messagebox)
+            284 LOAD_ATTR                7 (showerror)
+            294 LOAD_CONST              12 ('保存失败')
+            296 LOAD_FAST                2 (e)
+            298 FORMAT_VALUE             0
+            300 LOAD_DEREF               5 (win)
+            302 KW_NAMES                11
+            304 PRECALL                  3
+            308 CALL                     3
+            318 POP_TOP
+            320 POP_EXCEPT
+            322 LOAD_CONST               0 (None)
+            324 STORE_FAST               2 (e)
+            326 DELETE_FAST              2 (e)
+            328 LOAD_CONST               0 (None)
+            330 RETURN_VALUE
+        >>  332 LOAD_CONST               0 (None)
+            334 STORE_FAST               2 (e)
+            336 DELETE_FAST              2 (e)
+            338 RERAISE                  1
+
+338     >>  340 RERAISE                  0
+        >>  342 COPY                     3
+            344 POP_EXCEPT
+            346 RERAISE                  1
+
+333     >>  348 LOAD_CONST               0 (None)
+            350 RETURN_VALUE
+ExceptionTable:
+  70 to 104 -> 252 [0]
+  106 to 148 -> 174 [1] lasti
+  150 to 172 -> 252 [0]
+  174 to 180 -> 182 [3] lasti
+  182 to 186 -> 252 [0]
+  188 to 188 -> 182 [3] lasti
+  190 to 246 -> 252 [0]
+  252 to 270 -> 342 [1] lasti
+  272 to 318 -> 332 [1] lasti
+  332 to 340 -> 342 [1] lasti
+
+==============================================================================
+## <module>.FingerprintManager._delete  (args=1, locals=3)
+# varnames: self, fp, e
+352           0 RESUME                   0
+
+353           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (_selected_fp)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (fp)
+
+354          42 LOAD_FAST                1 (fp)
+             44 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 50)
+
+355          46 LOAD_CONST               0 (None)
+             48 RETURN_VALUE
+
+356     >>   50 LOAD_GLOBAL              3 (NULL + messagebox)
+             62 LOAD_ATTR                2 (askyesno)
+             72 LOAD_CONST               1 ('删除配方')
+
+357          74 LOAD_CONST               2 ('确定删除版式配方 ')
+             76 LOAD_FAST                1 (fp)
+             78 LOAD_CONST               0 (None)
+             80 LOAD_CONST               3 (16)
+             82 BUILD_SLICE              2
+             84 BINARY_SUBSCR
+             94 FORMAT_VALUE             0
+             96 LOAD_CONST               4 ('… 吗？\n删除后该版式下次导入会重新 AI 推断（只删这一条）。')
+             98 BUILD_STRING             3
+
+359         100 LOAD_FAST                0 (self)
+
+356         102 KW_NAMES                 5
+            104 PRECALL                  3
+            108 CALL                     3
+            118 POP_JUMP_FORWARD_IF_TRUE     2 (to 124)
+
+360         120 LOAD_CONST               0 (None)
+            122 RETURN_VALUE
+
+361     >>  124 NOP
+
+362         126 LOAD_FAST                0 (self)
+            128 LOAD_ATTR                3 (_cache)
+            138 LOAD_METHOD              4 (invalidate)
+            160 LOAD_FAST                1 (fp)
+            162 PRECALL                  1
+            166 CALL                     1
+            176 POP_TOP
+            178 JUMP_FORWARD            48 (to 276)
+        >>  180 PUSH_EXC_INFO
+
+363         182 LOAD_GLOBAL             10 (Exception)
+            194 CHECK_EXC_MATCH
+            196 POP_JUMP_FORWARD_IF_FALSE    35 (to 268)
+            198 STORE_FAST               2 (e)
+
+364         200 LOAD_GLOBAL              3 (NULL + messagebox)
+            212 LOAD_ATTR                6 (showerror)
+            222 LOAD_CONST               6 ('删除失败')
+            224 LOAD_FAST                2 (e)
+            226 FORMAT_VALUE             0
+            228 LOAD_FAST                0 (self)
+            230 KW_NAMES                 5
+            232 PRECALL                  3
+            236 CALL                     3
+            246 POP_TOP
+
+365         248 POP_EXCEPT
+            250 LOAD_CONST               0 (None)
+            252 STORE_FAST               2 (e)
+            254 DELETE_FAST              2 (e)
+            256 LOAD_CONST               0 (None)
+            258 RETURN_VALUE
+        >>  260 LOAD_CONST               0 (None)
+            262 STORE_FAST               2 (e)
+            264 DELETE_FAST              2 (e)
+            266 RERAISE                  1
+
+363     >>  268 RERAISE                  0
+        >>  270 COPY                     3
+            272 POP_EXCEPT
+            274 RERAISE                  1
+
+366     >>  276 LOAD_GLOBAL              3 (NULL + messagebox)
+            288 LOAD_ATTR                7 (showinfo)
+            298 LOAD_CONST               7 ('已删除')
+            300 LOAD_CONST               8 ('已删除配方 ')
+            302 LOAD_FAST                1 (fp)
+            304 LOAD_CONST               0 (None)
+            306 LOAD_CONST               3 (16)
+            308 BUILD_SLICE              2
+            310 BINARY_SUBSCR
+            320 FORMAT_VALUE             0
+            322 LOAD_CONST               9 ('…')
+            324 BUILD_STRING             3
+            326 LOAD_FAST                0 (self)
+            328 KW_NAMES                 5
+            330 PRECALL                  3
+            334 CALL                     3
+            344 POP_TOP
+
+367         346 LOAD_FAST                0 (self)
+            348 LOAD_METHOD              8 (_refresh)
+            370 PRECALL                  0
+            374 CALL                     0
+            384 POP_TOP
+            386 LOAD_CONST               0 (None)
+            388 RETURN_VALUE
+ExceptionTable:
+  126 to 176 -> 180 [0]
+  180 to 198 -> 270 [1] lasti
+  200 to 246 -> 260 [1] lasti
+  260 to 268 -> 270 [1] lasti

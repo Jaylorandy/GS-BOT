@@ -1,0 +1,1230 @@
+# module: core.parsers.control_sheet
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\control_sheet.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/control_sheet.py - A&F-style "Control Sheet" layout (ISOLATED).\n\nA "Control Sheet" PO is a 2-page block: a "Control Sheet" page carrying header\nfields as ``Label: value`` pairs (PO#, Style, Color, Fashion Color, Quantity,\nCost, PO Total$, ...) plus a "Pack Ratio" table, followed by a "Fabrics" detail\npage. Every PO is ONE style + ONE colour + ONE total quantity.\n\nThis parser is deliberately SELF-CONTAINED: it reads only ``recipe.field_map``\nanchors (populated at synthesis time with generic ``Label: value`` patterns) and\nthe shared ``BaseParser``. It never touches matrix_1axis / matrix_2axis /\nline_items or the shared ``size_columns`` / ``split_row_total`` helpers, so the\nexisting architectures are unaffected.\n\n``field_map`` keys used (all optional): entity, po_no, style, product_desc,\ncolor_code, color_desc, quantity, unit_price, total_amount, ship_date, season,\nsize_rng.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 18           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 20          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 21          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 23          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (LayoutType)
+             42 STORE_NAME               6 (LayoutType)
+             44 IMPORT_FROM              7 (OrderEntity)
+             46 STORE_NAME               7 (OrderEntity)
+             48 IMPORT_FROM              8 (OrderLine)
+             50 STORE_NAME               8 (OrderLine)
+             52 IMPORT_FROM              9 (PurchaseOrder)
+             54 STORE_NAME               9 (PurchaseOrder)
+             56 IMPORT_FROM             10 (SizeQty)
+             58 STORE_NAME              10 (SizeQty)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 POP_TOP
+
+ 25          66 LOAD_CONST               6 (1)
+             68 LOAD_CONST               7 (('BaseParser', 'doc_text'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (doc_text)
+             78 STORE_NAME              14 (doc_text)
+             80 POP_TOP
+
+ 28          82 LOAD_CONST              24 (('s', 'str'))
+             84 LOAD_CONST              10 (<code object _num at 0x000002BF9444CAA0, file "core\parsers\control_sheet.py", line 28>)
+             86 MAKE_FUNCTION            4 (annotations)
+             88 STORE_NAME              15 (_num)
+
+ 48          90 LOAD_CONST              25 (('s', 'str', 'return', 'str'))
+             92 LOAD_CONST              12 (<code object _us_date at 0x000002BF94462C60, file "core\parsers\control_sheet.py", line 48>)
+             94 MAKE_FUNCTION            4 (annotations)
+             96 STORE_NAME              16 (_us_date)
+
+ 59          98 PUSH_NULL
+            100 LOAD_NAME                4 (re)
+            102 LOAD_ATTR               17 (compile)
+            112 LOAD_CONST              13 ('\\b(?:\\d{1,2}[MTY]\\b|\\d+/\\d+)\\b')
+            114 PRECALL                  1
+            118 CALL                     1
+            128 STORE_NAME              18 (_SIZE_TOKEN)
+
+ 65         130 LOAD_CONST              14 ('F')
+            132 LOAD_CONST              15 ('FOB')
+
+ 64         134 BUILD_MAP                1
+            136 STORE_NAME              19 (_COST_TYPE_MAP)
+
+ 69         138 LOAD_CONST              26 (('seg', 'str'))
+            140 LOAD_CONST              17 (<code object _parse_pack_ratio at 0x000002BF940C7410, file "core\parsers\control_sheet.py", line 69>)
+            142 MAKE_FUNCTION            4 (annotations)
+            144 STORE_NAME              20 (_parse_pack_ratio)
+
+100         146 PUSH_NULL
+            148 LOAD_BUILD_CLASS
+            150 LOAD_CONST              18 (<code object ControlSheetParser at 0x000002BF94AA8120, file "core\parsers\control_sheet.py", line 100>)
+            152 MAKE_FUNCTION            0
+            154 LOAD_CONST              19 ('ControlSheetParser')
+            156 LOAD_NAME               13 (BaseParser)
+            158 PRECALL                  3
+            162 CALL                     3
+            172 STORE_NAME              21 (ControlSheetParser)
+
+210         174 LOAD_CONST              27 (('return', 'str'))
+            176 LOAD_CONST              20 (<code object _page_text at 0x000002BF94A65AC0, file "core\parsers\control_sheet.py", line 210>)
+            178 MAKE_FUNCTION            4 (annotations)
+            180 STORE_NAME              22 (_page_text)
+
+214         182 LOAD_CONST              28 (('return', 'bool'))
+            184 LOAD_CONST              22 (<code object is_multi_po_control_sheet at 0x000002BF94A658A0, file "core\parsers\control_sheet.py", line 214>)
+            186 MAKE_FUNCTION            4 (annotations)
+            188 STORE_NAME              23 (is_multi_po_control_sheet)
+
+225         190 LOAD_CONST              23 (<code object split_control_sheet_pages at 0x000002BF94692790, file "core\parsers\control_sheet.py", line 225>)
+            192 MAKE_FUNCTION            0
+            194 STORE_NAME              24 (split_control_sheet_pages)
+            196 LOAD_CONST               3 (None)
+            198 RETURN_VALUE
+
+==============================================================================
+## <module>._num  (args=1, locals=2)
+# varnames: s, f
+ 28           0 RESUME                   0
+
+ 30           2 LOAD_FAST                0 (s)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_CONST               1 ('')
+        >>    8 LOAD_METHOD              0 (strip)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 STORE_FAST               0 (s)
+
+ 31          46 LOAD_FAST                0 (s)
+             48 POP_JUMP_FORWARD_IF_TRUE     2 (to 54)
+
+ 32          50 LOAD_CONST               2 (None)
+             52 RETURN_VALUE
+
+ 33     >>   54 LOAD_CONST               3 (',')
+             56 LOAD_FAST                0 (s)
+             58 CONTAINS_OP              0
+             60 POP_JUMP_FORWARD_IF_FALSE   114 (to 290)
+             62 LOAD_CONST               4 ('.')
+             64 LOAD_FAST                0 (s)
+             66 CONTAINS_OP              0
+             68 POP_JUMP_FORWARD_IF_FALSE   110 (to 290)
+
+ 35          70 LOAD_FAST                0 (s)
+             72 LOAD_METHOD              1 (rfind)
+             94 LOAD_CONST               3 (',')
+             96 PRECALL                  1
+            100 CALL                     1
+            110 LOAD_FAST                0 (s)
+            112 LOAD_METHOD              1 (rfind)
+            134 LOAD_CONST               4 ('.')
+            136 PRECALL                  1
+            140 CALL                     1
+            150 COMPARE_OP               4 (>)
+            156 POP_JUMP_FORWARD_IF_FALSE    43 (to 244)
+
+ 36         158 LOAD_FAST                0 (s)
+            160 LOAD_METHOD              2 (replace)
+            182 LOAD_CONST               4 ('.')
+            184 LOAD_CONST               1 ('')
+            186 PRECALL                  2
+            190 CALL                     2
+            200 LOAD_METHOD              2 (replace)
+            222 LOAD_CONST               3 (',')
+            224 LOAD_CONST               4 ('.')
+            226 PRECALL                  2
+            230 CALL                     2
+            240 STORE_FAST               0 (s)
+            242 JUMP_FORWARD            49 (to 342)
+
+ 38     >>  244 LOAD_FAST                0 (s)
+            246 LOAD_METHOD              2 (replace)
+            268 LOAD_CONST               3 (',')
+            270 LOAD_CONST               1 ('')
+            272 PRECALL                  2
+            276 CALL                     2
+            286 STORE_FAST               0 (s)
+            288 JUMP_FORWARD            26 (to 342)
+
+ 39     >>  290 LOAD_CONST               3 (',')
+            292 LOAD_FAST                0 (s)
+            294 CONTAINS_OP              0
+            296 POP_JUMP_FORWARD_IF_FALSE    22 (to 342)
+
+ 40         298 LOAD_FAST                0 (s)
+            300 LOAD_METHOD              2 (replace)
+            322 LOAD_CONST               3 (',')
+            324 LOAD_CONST               4 ('.')
+            326 PRECALL                  2
+            330 CALL                     2
+            340 STORE_FAST               0 (s)
+
+ 41     >>  342 NOP
+
+ 42         344 LOAD_GLOBAL              7 (NULL + float)
+            356 LOAD_FAST                0 (s)
+            358 PRECALL                  1
+            362 CALL                     1
+            372 STORE_FAST               1 (f)
+            374 JUMP_FORWARD            24 (to 424)
+        >>  376 PUSH_EXC_INFO
+
+ 43         378 LOAD_GLOBAL              8 (TypeError)
+            390 LOAD_GLOBAL             10 (ValueError)
+            402 BUILD_TUPLE              2
+            404 CHECK_EXC_MATCH
+            406 POP_JUMP_FORWARD_IF_FALSE     4 (to 416)
+            408 POP_TOP
+
+ 44         410 POP_EXCEPT
+            412 LOAD_CONST               2 (None)
+            414 RETURN_VALUE
+
+ 43     >>  416 RERAISE                  0
+        >>  418 COPY                     3
+            420 POP_EXCEPT
+            422 RERAISE                  1
+
+ 45     >>  424 LOAD_FAST                1 (f)
+            426 LOAD_GLOBAL             13 (NULL + int)
+            438 LOAD_FAST                1 (f)
+            440 PRECALL                  1
+            444 CALL                     1
+            454 COMPARE_OP               2 (==)
+            460 POP_JUMP_FORWARD_IF_FALSE    15 (to 492)
+            462 LOAD_GLOBAL             13 (NULL + int)
+            474 LOAD_FAST                1 (f)
+            476 PRECALL                  1
+            480 CALL                     1
+            490 JUMP_FORWARD             1 (to 494)
+        >>  492 LOAD_FAST                1 (f)
+        >>  494 RETURN_VALUE
+ExceptionTable:
+  344 to 372 -> 376 [0]
+  376 to 408 -> 418 [1] lasti
+  416 to 416 -> 418 [1] lasti
+
+==============================================================================
+## <module>._us_date  (args=1, locals=5)
+# varnames: s, m, mo, dd, y
+ 48           0 RESUME                   0
+
+ 50           2 LOAD_GLOBAL              1 (NULL + re)
+             14 LOAD_ATTR                1 (match)
+             24 LOAD_CONST               1 ('(\\d{1,2})/(\\d{1,2})/(\\d{2,4})$')
+             26 LOAD_FAST                0 (s)
+             28 JUMP_IF_TRUE_OR_POP      1 (to 32)
+             30 LOAD_CONST               2 ('')
+        >>   32 LOAD_METHOD              2 (strip)
+             54 PRECALL                  0
+             58 CALL                     0
+             68 PRECALL                  2
+             72 CALL                     2
+             82 STORE_FAST               1 (m)
+
+ 51          84 LOAD_FAST                1 (m)
+             86 POP_JUMP_FORWARD_IF_TRUE     2 (to 92)
+
+ 52          88 LOAD_FAST                0 (s)
+             90 RETURN_VALUE
+
+ 53     >>   92 LOAD_GLOBAL              7 (NULL + int)
+            104 LOAD_FAST                1 (m)
+            106 LOAD_METHOD              4 (group)
+            128 LOAD_CONST               3 (1)
+            130 PRECALL                  1
+            134 CALL                     1
+            144 PRECALL                  1
+            148 CALL                     1
+            158 LOAD_GLOBAL              7 (NULL + int)
+            170 LOAD_FAST                1 (m)
+            172 LOAD_METHOD              4 (group)
+            194 LOAD_CONST               4 (2)
+            196 PRECALL                  1
+            200 CALL                     1
+            210 PRECALL                  1
+            214 CALL                     1
+            224 LOAD_FAST                1 (m)
+            226 LOAD_METHOD              4 (group)
+            248 LOAD_CONST               5 (3)
+            250 PRECALL                  1
+            254 CALL                     1
+            264 STORE_FAST               4 (y)
+            266 STORE_FAST               3 (dd)
+            268 STORE_FAST               2 (mo)
+
+ 54         270 LOAD_GLOBAL             11 (NULL + len)
+            282 LOAD_FAST                4 (y)
+            284 PRECALL                  1
+            288 CALL                     1
+            298 LOAD_CONST               4 (2)
+            300 COMPARE_OP               2 (==)
+            306 POP_JUMP_FORWARD_IF_FALSE     5 (to 318)
+
+ 55         308 LOAD_CONST               6 ('20')
+            310 LOAD_FAST                4 (y)
+            312 BINARY_OP                0 (+)
+            316 STORE_FAST               4 (y)
+
+ 56     >>  318 LOAD_GLOBAL              7 (NULL + int)
+            330 LOAD_FAST                4 (y)
+            332 PRECALL                  1
+            336 CALL                     1
+            346 LOAD_CONST               7 ('04d')
+            348 FORMAT_VALUE             4 (with format)
+            350 LOAD_CONST               8 ('-')
+            352 LOAD_FAST                2 (mo)
+            354 LOAD_CONST               9 ('02d')
+            356 FORMAT_VALUE             4 (with format)
+            358 LOAD_CONST               8 ('-')
+            360 LOAD_FAST                3 (dd)
+            362 LOAD_CONST               9 ('02d')
+            364 FORMAT_VALUE             4 (with format)
+            366 BUILD_STRING             5
+            368 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_pack_ratio  (args=1, locals=7)
+# varnames: seg, m, body, sizes, ints, n, ratios
+ 69           0 RESUME                   0
+
+ 80           2 LOAD_GLOBAL              1 (NULL + re)
+             14 LOAD_ATTR                1 (search)
+
+ 81          24 LOAD_CONST               1 ('Pack\\s+Ratio\\s*:\\s*(.+?)(?=Required\\s+Hanger\\s+Vendors|Comments:|Account:|Fabrics:)')
+
+ 82          26 LOAD_FAST                0 (seg)
+
+ 83          28 LOAD_GLOBAL              0 (re)
+             40 LOAD_ATTR                2 (S)
+
+ 80          50 PRECALL                  3
+             54 CALL                     3
+             64 STORE_FAST               1 (m)
+
+ 85          66 LOAD_FAST                1 (m)
+             68 POP_JUMP_FORWARD_IF_TRUE     2 (to 74)
+
+ 86          70 BUILD_LIST               0
+             72 RETURN_VALUE
+
+ 87     >>   74 LOAD_FAST                1 (m)
+             76 LOAD_METHOD              3 (group)
+             98 LOAD_CONST               2 (1)
+            100 PRECALL                  1
+            104 CALL                     1
+            114 STORE_FAST               2 (body)
+
+ 88         116 LOAD_GLOBAL              8 (_SIZE_TOKEN)
+            128 LOAD_METHOD              5 (findall)
+            150 LOAD_FAST                2 (body)
+            152 PRECALL                  1
+            156 CALL                     1
+            166 STORE_FAST               3 (sizes)
+
+ 89         168 LOAD_FAST                3 (sizes)
+            170 POP_JUMP_FORWARD_IF_TRUE     2 (to 176)
+
+ 90         172 BUILD_LIST               0
+            174 RETURN_VALUE
+
+ 92     >>  176 LOAD_CONST               3 (<code object <listcomp> at 0x000002BF94AA8E40, file "core\parsers\control_sheet.py", line 92>)
+            178 MAKE_FUNCTION            0
+            180 LOAD_GLOBAL              1 (NULL + re)
+            192 LOAD_ATTR                5 (findall)
+            202 LOAD_CONST               4 ('(?<![A-Za-z0-9/])\\d+(?![A-Za-z0-9/])')
+            204 LOAD_FAST                2 (body)
+            206 PRECALL                  2
+            210 CALL                     2
+            220 GET_ITER
+            222 PRECALL                  0
+            226 CALL                     0
+            236 STORE_FAST               4 (ints)
+
+ 93         238 LOAD_GLOBAL             13 (NULL + len)
+            250 LOAD_FAST                3 (sizes)
+            252 PRECALL                  1
+            256 CALL                     1
+            266 STORE_FAST               5 (n)
+
+ 94         268 LOAD_GLOBAL             13 (NULL + len)
+            280 LOAD_FAST                4 (ints)
+            282 PRECALL                  1
+            286 CALL                     1
+            296 LOAD_FAST                5 (n)
+            298 COMPARE_OP               0 (<)
+            304 POP_JUMP_FORWARD_IF_FALSE     2 (to 310)
+
+ 95         306 BUILD_LIST               0
+            308 RETURN_VALUE
+
+ 96     >>  310 LOAD_FAST                4 (ints)
+            312 LOAD_FAST                5 (n)
+            314 UNARY_NEGATIVE
+            316 LOAD_CONST               5 (None)
+            318 BUILD_SLICE              2
+            320 BINARY_SUBSCR
+            330 STORE_FAST               6 (ratios)
+
+ 97         332 LOAD_GLOBAL             15 (NULL + list)
+            344 LOAD_GLOBAL             17 (NULL + zip)
+            356 LOAD_FAST                3 (sizes)
+            358 LOAD_FAST                6 (ratios)
+            360 PRECALL                  2
+            364 CALL                     2
+            374 PRECALL                  1
+            378 CALL                     1
+            388 RETURN_VALUE
+
+==============================================================================
+## <module>._parse_pack_ratio.<listcomp>  (args=1, locals=2)
+# varnames: .0, x
+ 92           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                17 (to 42)
+              8 STORE_FAST               1 (x)
+             10 LOAD_GLOBAL              1 (NULL + int)
+             22 LOAD_FAST                1 (x)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 LIST_APPEND              2
+             40 JUMP_BACKWARD           18 (to 6)
+        >>   42 RETURN_VALUE
+
+==============================================================================
+## <module>.ControlSheetParser  (args=0, locals=0)
+100           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('ControlSheetParser')
+              8 STORE_NAME               2 (__qualname__)
+
+101          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (CONTROL_SHEET)
+             22 STORE_NAME               5 (layout_type)
+
+103          24 LOAD_CONST               1 ('')
+             26 LOAD_CONST               2 (('source_file',))
+             28 BUILD_CONST_KEY_MAP      1
+             30 LOAD_CONST              11 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             32 LOAD_CONST               9 (<code object parse at 0x000002BF940D20E0, file "core\parsers\control_sheet.py", line 103>)
+             34 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             36 STORE_NAME               6 (parse)
+             38 LOAD_CONST              10 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>.ControlSheetParser.parse  (args=3, locals=38)
+# varnames: self, pages, recipe, source_file, text, po, grab, ent_anchor, ms, blocks, i, m, end, seg, po_no, style, product_desc, color_code, color_desc, qty, unit_price, season, delivery, price_term, port_loading, port_discharge, ship_mode, pay_type, pay_days, payment_terms, ent, sizes, pack, carton_sum, size_label, ratio, sq, diff
+              0 MAKE_CELL               38 (fm)
+
+103           2 RESUME                   0
+
+104           4 LOAD_GLOBAL              1 (NULL + doc_text)
+             16 LOAD_FAST                1 (pages)
+             18 PRECALL                  1
+             22 CALL                     1
+             32 STORE_FAST               4 (text)
+
+105          34 LOAD_GLOBAL              3 (NULL + PurchaseOrder)
+
+106          46 LOAD_FAST                2 (recipe)
+             48 LOAD_ATTR                2 (customer)
+
+107          58 LOAD_FAST                3 (source_file)
+             60 POP_JUMP_FORWARD_IF_FALSE    31 (to 124)
+             62 LOAD_GLOBAL              6 (os)
+             74 LOAD_ATTR                4 (path)
+             84 LOAD_METHOD              5 (basename)
+            106 LOAD_FAST                3 (source_file)
+            108 PRECALL                  1
+            112 CALL                     1
+            122 JUMP_FORWARD             1 (to 126)
+        >>  124 LOAD_CONST               1 ('')
+
+108     >>  126 LOAD_FAST                3 (source_file)
+
+105         128 KW_NAMES                 2
+            130 PRECALL                  3
+            134 CALL                     3
+            144 STORE_FAST               5 (po)
+
+110         146 LOAD_FAST                2 (recipe)
+            148 LOAD_ATTR                6 (field_map)
+            158 JUMP_IF_TRUE_OR_POP      1 (to 162)
+            160 BUILD_MAP                0
+        >>  162 STORE_DEREF             38 (fm)
+
+112         164 LOAD_CLOSURE            38 (fm)
+            166 BUILD_TUPLE              1
+            168 LOAD_CONST               3 (<code object grab at 0x000002BF94A01960, file "core\parsers\control_sheet.py", line 112>)
+            170 MAKE_FUNCTION            8 (closure)
+            172 STORE_FAST               6 (grab)
+
+125         174 LOAD_DEREF              38 (fm)
+            176 LOAD_METHOD              7 (get)
+            198 LOAD_CONST               4 ('entity')
+            200 PRECALL                  1
+            204 CALL                     1
+            214 JUMP_IF_TRUE_OR_POP      8 (to 232)
+            216 LOAD_FAST                2 (recipe)
+            218 LOAD_ATTR                8 (entity_anchor)
+            228 JUMP_IF_TRUE_OR_POP      1 (to 232)
+            230 LOAD_CONST               5 ('PO#\\s*:\\s*(\\S+)')
+        >>  232 STORE_FAST               7 (ent_anchor)
+
+126         234 NOP
+
+127         236 LOAD_GLOBAL             19 (NULL + list)
+            248 LOAD_GLOBAL             21 (NULL + re)
+            260 LOAD_ATTR               11 (finditer)
+            270 LOAD_FAST                7 (ent_anchor)
+            272 LOAD_FAST                4 (text)
+            274 PRECALL                  2
+            278 CALL                     2
+            288 PRECALL                  1
+            292 CALL                     1
+            302 STORE_FAST               8 (ms)
+            304 JUMP_FORWARD            23 (to 352)
+        >>  306 PUSH_EXC_INFO
+
+128         308 LOAD_GLOBAL             20 (re)
+            320 LOAD_ATTR               12 (error)
+            330 CHECK_EXC_MATCH
+            332 POP_JUMP_FORWARD_IF_FALSE     5 (to 344)
+            334 POP_TOP
+
+129         336 BUILD_LIST               0
+            338 STORE_FAST               8 (ms)
+            340 POP_EXCEPT
+            342 JUMP_FORWARD             4 (to 352)
+
+128     >>  344 RERAISE                  0
+        >>  346 COPY                     3
+            348 POP_EXCEPT
+            350 RERAISE                  1
+
+130     >>  352 BUILD_LIST               0
+            354 STORE_FAST               9 (blocks)
+
+131         356 LOAD_GLOBAL             27 (NULL + enumerate)
+            368 LOAD_FAST                8 (ms)
+            370 PRECALL                  1
+            374 CALL                     1
+            384 GET_ITER
+        >>  386 FOR_ITER               120 (to 628)
+            388 UNPACK_SEQUENCE          2
+            392 STORE_FAST              10 (i)
+            394 STORE_FAST              11 (m)
+
+132         396 LOAD_FAST               10 (i)
+            398 LOAD_CONST               6 (1)
+            400 BINARY_OP                0 (+)
+            404 LOAD_GLOBAL             29 (NULL + len)
+            416 LOAD_FAST                8 (ms)
+            418 PRECALL                  1
+            422 CALL                     1
+            432 COMPARE_OP               0 (<)
+            438 POP_JUMP_FORWARD_IF_FALSE    29 (to 498)
+            440 LOAD_FAST                8 (ms)
+            442 LOAD_FAST               10 (i)
+            444 LOAD_CONST               6 (1)
+            446 BINARY_OP                0 (+)
+            450 BINARY_SUBSCR
+            460 LOAD_METHOD             15 (start)
+            482 PRECALL                  0
+            486 CALL                     0
+            496 JUMP_FORWARD            14 (to 526)
+        >>  498 LOAD_GLOBAL             29 (NULL + len)
+            510 LOAD_FAST                4 (text)
+            512 PRECALL                  1
+            516 CALL                     1
+        >>  526 STORE_FAST              12 (end)
+
+133         528 LOAD_FAST                9 (blocks)
+            530 LOAD_METHOD             16 (append)
+            552 LOAD_FAST               11 (m)
+            554 LOAD_FAST                4 (text)
+            556 LOAD_FAST               11 (m)
+            558 LOAD_METHOD             15 (start)
+            580 PRECALL                  0
+            584 CALL                     0
+            594 LOAD_FAST               12 (end)
+            596 BUILD_SLICE              2
+            598 BINARY_SUBSCR
+            608 BUILD_TUPLE              2
+            610 PRECALL                  1
+            614 CALL                     1
+            624 POP_TOP
+            626 JUMP_BACKWARD          121 (to 386)
+
+135     >>  628 LOAD_FAST                9 (blocks)
+            630 GET_ITER
+        >>  632 EXTENDED_ARG             2
+            634 FOR_ITER               690 (to 2016)
+            636 UNPACK_SEQUENCE          2
+            640 STORE_FAST              11 (m)
+            642 STORE_FAST              13 (seg)
+
+136         644 LOAD_FAST               11 (m)
+            646 LOAD_METHOD             17 (groups)
+            668 PRECALL                  0
+            672 CALL                     0
+            682 POP_JUMP_FORWARD_IF_FALSE    21 (to 726)
+            684 LOAD_FAST               11 (m)
+            686 LOAD_METHOD             18 (group)
+            708 LOAD_CONST               6 (1)
+            710 PRECALL                  1
+            714 CALL                     1
+            724 JUMP_FORWARD             1 (to 728)
+        >>  726 LOAD_CONST               1 ('')
+        >>  728 LOAD_METHOD             19 (strip)
+            750 PRECALL                  0
+            754 CALL                     0
+            764 STORE_FAST              14 (po_no)
+
+137         766 PUSH_NULL
+            768 LOAD_FAST                6 (grab)
+            770 LOAD_CONST               7 ('style')
+            772 LOAD_FAST               13 (seg)
+            774 PRECALL                  2
+            778 CALL                     2
+            788 STORE_FAST              15 (style)
+
+138         790 PUSH_NULL
+            792 LOAD_FAST                6 (grab)
+            794 LOAD_CONST               8 ('product_desc')
+            796 LOAD_FAST               13 (seg)
+            798 PRECALL                  2
+            802 CALL                     2
+            812 STORE_FAST              16 (product_desc)
+
+139         814 PUSH_NULL
+            816 LOAD_FAST                6 (grab)
+            818 LOAD_CONST               9 ('color_code')
+            820 LOAD_FAST               13 (seg)
+            822 PRECALL                  2
+            826 CALL                     2
+            836 STORE_FAST              17 (color_code)
+
+140         838 PUSH_NULL
+            840 LOAD_FAST                6 (grab)
+            842 LOAD_CONST              10 ('color_desc')
+            844 LOAD_FAST               13 (seg)
+            846 PRECALL                  2
+            850 CALL                     2
+            860 STORE_FAST              18 (color_desc)
+
+141         862 LOAD_GLOBAL             41 (NULL + int)
+            874 LOAD_GLOBAL             43 (NULL + _num)
+            886 PUSH_NULL
+            888 LOAD_FAST                6 (grab)
+            890 LOAD_CONST              11 ('quantity')
+            892 LOAD_FAST               13 (seg)
+            894 PRECALL                  2
+            898 CALL                     2
+            908 PRECALL                  1
+            912 CALL                     1
+            922 JUMP_IF_TRUE_OR_POP      1 (to 926)
+            924 LOAD_CONST              12 (0)
+        >>  926 PRECALL                  1
+            930 CALL                     1
+            940 STORE_FAST              19 (qty)
+
+142         942 LOAD_GLOBAL             43 (NULL + _num)
+            954 PUSH_NULL
+            956 LOAD_FAST                6 (grab)
+            958 LOAD_CONST              13 ('unit_price')
+            960 LOAD_FAST               13 (seg)
+            962 PRECALL                  2
+            966 CALL                     2
+            976 PRECALL                  1
+            980 CALL                     1
+            990 STORE_FAST              20 (unit_price)
+
+143         992 PUSH_NULL
+            994 LOAD_FAST                6 (grab)
+            996 LOAD_CONST              14 ('season')
+            998 LOAD_FAST               13 (seg)
+           1000 PRECALL                  2
+           1004 CALL                     2
+           1014 STORE_FAST              21 (season)
+
+144        1016 LOAD_GLOBAL             45 (NULL + _us_date)
+           1028 PUSH_NULL
+           1030 LOAD_FAST                6 (grab)
+           1032 LOAD_CONST              15 ('ship_date')
+           1034 LOAD_FAST               13 (seg)
+           1036 PRECALL                  2
+           1040 CALL                     2
+           1050 PRECALL                  1
+           1054 CALL                     1
+           1064 STORE_FAST              22 (delivery)
+
+148        1066 LOAD_GLOBAL             46 (_COST_TYPE_MAP)
+           1078 LOAD_METHOD              7 (get)
+           1100 PUSH_NULL
+           1102 LOAD_FAST                6 (grab)
+           1104 LOAD_CONST              16 ('price_term')
+           1106 LOAD_FAST               13 (seg)
+           1108 PRECALL                  2
+           1112 CALL                     2
+
+149        1122 PUSH_NULL
+           1124 LOAD_FAST                6 (grab)
+           1126 LOAD_CONST              16 ('price_term')
+           1128 LOAD_FAST               13 (seg)
+           1130 PRECALL                  2
+           1134 CALL                     2
+
+148        1144 PRECALL                  2
+           1148 CALL                     2
+           1158 STORE_FAST              23 (price_term)
+
+150        1160 PUSH_NULL
+           1162 LOAD_FAST                6 (grab)
+           1164 LOAD_CONST              17 ('port_loading')
+           1166 LOAD_FAST               13 (seg)
+           1168 PRECALL                  2
+           1172 CALL                     2
+           1182 STORE_FAST              24 (port_loading)
+
+151        1184 PUSH_NULL
+           1186 LOAD_FAST                6 (grab)
+           1188 LOAD_CONST              18 ('port_discharge')
+           1190 LOAD_FAST               13 (seg)
+           1192 PRECALL                  2
+           1196 CALL                     2
+           1206 STORE_FAST              25 (port_discharge)
+
+152        1208 PUSH_NULL
+           1210 LOAD_FAST                6 (grab)
+           1212 LOAD_CONST              19 ('ship_mode')
+           1214 LOAD_FAST               13 (seg)
+           1216 PRECALL                  2
+           1220 CALL                     2
+           1230 STORE_FAST              26 (ship_mode)
+
+153        1232 PUSH_NULL
+           1234 LOAD_FAST                6 (grab)
+           1236 LOAD_CONST              20 ('payment_type')
+           1238 LOAD_FAST               13 (seg)
+           1240 PRECALL                  2
+           1244 CALL                     2
+           1254 STORE_FAST              27 (pay_type)
+
+154        1256 PUSH_NULL
+           1258 LOAD_FAST                6 (grab)
+           1260 LOAD_CONST              21 ('payment_days')
+           1262 LOAD_FAST               13 (seg)
+           1264 PRECALL                  2
+           1268 CALL                     2
+           1278 STORE_FAST              28 (pay_days)
+
+155        1280 LOAD_CONST               1 ('')
+           1282 STORE_FAST              29 (payment_terms)
+
+156        1284 LOAD_FAST               27 (pay_type)
+           1286 POP_JUMP_FORWARD_IF_FALSE    12 (to 1312)
+
+157        1288 LOAD_FAST               28 (pay_days)
+           1290 POP_JUMP_FORWARD_IF_FALSE     8 (to 1308)
+           1292 LOAD_FAST               27 (pay_type)
+           1294 FORMAT_VALUE             0
+           1296 LOAD_CONST              22 (' ')
+           1298 LOAD_FAST               28 (pay_days)
+           1300 FORMAT_VALUE             0
+           1302 LOAD_CONST              23 (' DAYS')
+           1304 BUILD_STRING             4
+           1306 JUMP_FORWARD             1 (to 1310)
+        >> 1308 LOAD_FAST               27 (pay_type)
+        >> 1310 STORE_FAST              29 (payment_terms)
+
+159     >> 1312 LOAD_GLOBAL             49 (NULL + OrderEntity)
+
+160        1324 LOAD_FAST               14 (po_no)
+
+161        1326 LOAD_FAST               15 (style)
+
+162        1328 LOAD_FAST               21 (season)
+
+163        1330 LOAD_FAST               22 (delivery)
+
+164        1332 LOAD_FAST               16 (product_desc)
+
+165        1334 PUSH_NULL
+           1336 LOAD_FAST                6 (grab)
+           1338 LOAD_CONST              24 ('country')
+           1340 LOAD_FAST               13 (seg)
+           1342 PRECALL                  2
+           1346 CALL                     2
+
+166        1356 LOAD_FAST               23 (price_term)
+
+167        1358 LOAD_FAST               24 (port_loading)
+
+168        1360 LOAD_FAST               25 (port_discharge)
+
+169        1362 LOAD_FAST               26 (ship_mode)
+
+170        1364 LOAD_FAST               29 (payment_terms)
+
+159        1366 KW_NAMES                25
+           1368 PRECALL                 11
+           1372 CALL                    11
+           1382 STORE_FAST              30 (ent)
+
+172        1384 LOAD_FAST               19 (qty)
+           1386 LOAD_CONST              12 (0)
+           1388 COMPARE_OP               4 (>)
+           1394 EXTENDED_ARG             1
+           1396 POP_JUMP_FORWARD_IF_FALSE   274 (to 1946)
+
+175        1398 BUILD_LIST               0
+           1400 STORE_FAST              31 (sizes)
+
+176        1402 LOAD_GLOBAL             51 (NULL + _parse_pack_ratio)
+           1414 LOAD_FAST               13 (seg)
+           1416 PRECALL                  1
+           1420 CALL                     1
+           1430 STORE_FAST              32 (pack)
+
+177        1432 LOAD_FAST               32 (pack)
+           1434 POP_JUMP_FORWARD_IF_FALSE   190 (to 1816)
+
+178        1436 LOAD_GLOBAL             53 (NULL + sum)
+           1448 LOAD_CONST              26 (<code object <genexpr> at 0x000002BF94A6E950, file "core\parsers\control_sheet.py", line 178>)
+           1450 MAKE_FUNCTION            0
+           1452 LOAD_FAST               32 (pack)
+           1454 GET_ITER
+           1456 PRECALL                  0
+           1460 CALL                     0
+           1470 PRECALL                  1
+           1474 CALL                     1
+           1484 STORE_FAST              33 (carton_sum)
+
+179        1486 LOAD_FAST               33 (carton_sum)
+           1488 LOAD_CONST              12 (0)
+           1490 COMPARE_OP               4 (>)
+           1496 POP_JUMP_FORWARD_IF_FALSE   159 (to 1816)
+
+180        1498 LOAD_FAST               32 (pack)
+           1500 GET_ITER
+        >> 1502 FOR_ITER                75 (to 1654)
+           1504 UNPACK_SEQUENCE          2
+           1508 STORE_FAST              34 (size_label)
+           1510 STORE_FAST              35 (ratio)
+
+181        1512 LOAD_GLOBAL             41 (NULL + int)
+           1524 LOAD_GLOBAL             55 (NULL + round)
+           1536 LOAD_FAST               19 (qty)
+           1538 LOAD_FAST               35 (ratio)
+           1540 BINARY_OP                5 (*)
+           1544 LOAD_FAST               33 (carton_sum)
+           1546 BINARY_OP               11 (/)
+           1550 PRECALL                  1
+           1554 CALL                     1
+           1564 PRECALL                  1
+           1568 CALL                     1
+           1578 STORE_FAST              36 (sq)
+
+182        1580 LOAD_FAST               31 (sizes)
+           1582 LOAD_METHOD             16 (append)
+           1604 LOAD_GLOBAL             57 (NULL + SizeQty)
+           1616 LOAD_FAST               34 (size_label)
+           1618 LOAD_FAST               36 (sq)
+           1620 KW_NAMES                27
+           1622 PRECALL                  2
+           1626 CALL                     2
+           1636 PRECALL                  1
+           1640 CALL                     1
+           1650 POP_TOP
+           1652 JUMP_BACKWARD           76 (to 1502)
+
+184     >> 1654 LOAD_FAST               19 (qty)
+           1656 LOAD_GLOBAL             53 (NULL + sum)
+           1668 LOAD_CONST              28 (<code object <genexpr> at 0x000002BF94A6EE90, file "core\parsers\control_sheet.py", line 184>)
+           1670 MAKE_FUNCTION            0
+           1672 LOAD_FAST               31 (sizes)
+           1674 GET_ITER
+           1676 PRECALL                  0
+           1680 CALL                     0
+           1690 PRECALL                  1
+           1694 CALL                     1
+           1704 BINARY_OP               10 (-)
+           1708 STORE_FAST              37 (diff)
+
+185        1710 LOAD_FAST               37 (diff)
+           1712 LOAD_CONST              12 (0)
+           1714 COMPARE_OP               3 (!=)
+           1720 POP_JUMP_FORWARD_IF_FALSE    47 (to 1816)
+           1722 LOAD_FAST               31 (sizes)
+           1724 POP_JUMP_FORWARD_IF_FALSE    45 (to 1816)
+
+186        1726 LOAD_GLOBAL             57 (NULL + SizeQty)
+           1738 LOAD_FAST               31 (sizes)
+           1740 LOAD_CONST              29 (-1)
+           1742 BINARY_SUBSCR
+           1752 LOAD_ATTR               29 (size)
+
+187        1762 LOAD_FAST               31 (sizes)
+           1764 LOAD_CONST              29 (-1)
+           1766 BINARY_SUBSCR
+           1776 LOAD_ATTR               30 (qty)
+           1786 LOAD_FAST               37 (diff)
+           1788 BINARY_OP                0 (+)
+
+186        1792 KW_NAMES                27
+           1794 PRECALL                  2
+           1798 CALL                     2
+           1808 LOAD_FAST               31 (sizes)
+           1810 LOAD_CONST              29 (-1)
+           1812 STORE_SUBSCR
+
+188     >> 1816 LOAD_FAST               31 (sizes)
+           1818 POP_JUMP_FORWARD_IF_TRUE    18 (to 1856)
+
+189        1820 LOAD_GLOBAL             57 (NULL + SizeQty)
+           1832 LOAD_CONST               1 ('')
+           1834 LOAD_FAST               19 (qty)
+           1836 KW_NAMES                27
+           1838 PRECALL                  2
+           1842 CALL                     2
+           1852 BUILD_LIST               1
+           1854 STORE_FAST              31 (sizes)
+
+190     >> 1856 LOAD_FAST               30 (ent)
+           1858 LOAD_ATTR               31 (lines)
+           1868 LOAD_METHOD             16 (append)
+           1890 LOAD_GLOBAL             65 (NULL + OrderLine)
+
+191        1902 LOAD_FAST               15 (style)
+
+192        1904 LOAD_FAST               17 (color_code)
+
+193        1906 LOAD_FAST               18 (color_desc)
+
+194        1908 LOAD_FAST               20 (unit_price)
+
+195        1910 LOAD_CONST              30 ('PCS')
+
+196        1912 LOAD_FAST               31 (sizes)
+
+190        1914 KW_NAMES                31
+           1916 PRECALL                  6
+           1920 CALL                     6
+           1930 PRECALL                  1
+           1934 CALL                     1
+           1944 POP_TOP
+
+198     >> 1946 LOAD_FAST               30 (ent)
+           1948 LOAD_ATTR               31 (lines)
+           1958 POP_JUMP_FORWARD_IF_FALSE    26 (to 2012)
+
+199        1960 LOAD_FAST                5 (po)
+           1962 LOAD_ATTR               33 (entities)
+           1972 LOAD_METHOD             16 (append)
+           1994 LOAD_FAST               30 (ent)
+           1996 PRECALL                  1
+           2000 CALL                     1
+           2010 POP_TOP
+        >> 2012 EXTENDED_ARG             2
+           2014 JUMP_BACKWARD          692 (to 632)
+
+200     >> 2016 LOAD_FAST                5 (po)
+           2018 RETURN_VALUE
+ExceptionTable:
+  236 to 302 -> 306 [0]
+  306 to 338 -> 346 [1] lasti
+  344 to 344 -> 346 [1] lasti
+
+==============================================================================
+## <module>.ControlSheetParser.parse.grab  (args=2, locals=4)
+# varnames: key, hay, a, m
+              0 COPY_FREE_VARS           1
+
+112           2 RESUME                   0
+
+113           4 LOAD_DEREF               4 (fm)
+              6 LOAD_METHOD              0 (get)
+             28 LOAD_FAST                0 (key)
+             30 PRECALL                  1
+             34 CALL                     1
+             44 STORE_FAST               2 (a)
+
+114          46 LOAD_FAST                2 (a)
+             48 POP_JUMP_FORWARD_IF_TRUE     2 (to 54)
+
+115          50 LOAD_CONST               1 ('')
+             52 RETURN_VALUE
+
+116     >>   54 NOP
+
+117          56 LOAD_GLOBAL              3 (NULL + re)
+             68 LOAD_ATTR                2 (search)
+             78 LOAD_FAST                2 (a)
+             80 LOAD_FAST                1 (hay)
+             82 PRECALL                  2
+             86 CALL                     2
+             96 STORE_FAST               3 (m)
+             98 JUMP_FORWARD            22 (to 144)
+        >>  100 PUSH_EXC_INFO
+
+118         102 LOAD_GLOBAL              2 (re)
+            114 LOAD_ATTR                3 (error)
+            124 CHECK_EXC_MATCH
+            126 POP_JUMP_FORWARD_IF_FALSE     4 (to 136)
+            128 POP_TOP
+
+119         130 POP_EXCEPT
+            132 LOAD_CONST               1 ('')
+            134 RETURN_VALUE
+
+118     >>  136 RERAISE                  0
+        >>  138 COPY                     3
+            140 POP_EXCEPT
+            142 RERAISE                  1
+
+120     >>  144 LOAD_FAST                3 (m)
+            146 POP_JUMP_FORWARD_IF_TRUE     2 (to 152)
+
+121         148 LOAD_CONST               1 ('')
+            150 RETURN_VALUE
+
+122     >>  152 LOAD_FAST                3 (m)
+            154 LOAD_METHOD              4 (groups)
+            176 PRECALL                  0
+            180 CALL                     0
+            190 POP_JUMP_FORWARD_IF_FALSE    21 (to 234)
+            192 LOAD_FAST                3 (m)
+            194 LOAD_METHOD              5 (group)
+            216 LOAD_CONST               2 (1)
+            218 PRECALL                  1
+            222 CALL                     1
+            232 JUMP_FORWARD            20 (to 274)
+        >>  234 LOAD_FAST                3 (m)
+            236 LOAD_METHOD              5 (group)
+            258 LOAD_CONST               3 (0)
+            260 PRECALL                  1
+            264 CALL                     1
+        >>  274 LOAD_METHOD              6 (strip)
+            296 PRECALL                  0
+            300 CALL                     0
+            310 RETURN_VALUE
+ExceptionTable:
+  56 to 96 -> 100 [0]
+  100 to 128 -> 138 [1] lasti
+  136 to 136 -> 138 [1] lasti
+
+==============================================================================
+## <module>.ControlSheetParser.parse.<genexpr>  (args=1, locals=3)
+# varnames: .0, _, r
+178           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                 9 (to 28)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (_)
+             16 STORE_FAST               2 (r)
+             18 LOAD_FAST                2 (r)
+             20 YIELD_VALUE
+             22 RESUME                   1
+             24 POP_TOP
+             26 JUMP_BACKWARD           10 (to 8)
+        >>   28 LOAD_CONST               0 (None)
+             30 RETURN_VALUE
+
+==============================================================================
+## <module>.ControlSheetParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, s
+184           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (s)
+             12 LOAD_FAST                1 (s)
+             14 LOAD_ATTR                0 (qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>._page_text  (args=1, locals=1)
+# varnames: p
+210           0 RESUME                   0
+
+211           2 LOAD_CONST               1 (' ')
+              4 LOAD_METHOD              0 (join)
+             26 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94A6E410, file "core\parsers\control_sheet.py", line 211>)
+             28 MAKE_FUNCTION            0
+             30 LOAD_FAST                0 (p)
+             32 LOAD_ATTR                1 (tokens)
+             42 GET_ITER
+             44 PRECALL                  0
+             48 CALL                     0
+             58 PRECALL                  1
+             62 CALL                     1
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>._page_text.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+211           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.is_multi_po_control_sheet  (args=1, locals=3)
+# varnames: pages, n, p
+214           0 RESUME                   0
+
+216           2 LOAD_CONST               1 (0)
+              4 STORE_FAST               1 (n)
+
+217           6 LOAD_FAST                0 (pages)
+              8 GET_ITER
+        >>   10 FOR_ITER                33 (to 78)
+             12 STORE_FAST               2 (p)
+
+218          14 LOAD_CONST               2 ('Control Sheet')
+             16 LOAD_GLOBAL              1 (NULL + _page_text)
+             28 LOAD_FAST                2 (p)
+             30 PRECALL                  1
+             34 CALL                     1
+             44 CONTAINS_OP              0
+             46 POP_JUMP_FORWARD_IF_FALSE    14 (to 76)
+
+219          48 LOAD_FAST                1 (n)
+             50 LOAD_CONST               3 (1)
+             52 BINARY_OP               13 (+=)
+             56 STORE_FAST               1 (n)
+
+220          58 LOAD_FAST                1 (n)
+             60 LOAD_CONST               3 (1)
+             62 COMPARE_OP               4 (>)
+             68 POP_JUMP_FORWARD_IF_FALSE     3 (to 76)
+
+221          70 POP_TOP
+             72 LOAD_CONST               4 (True)
+             74 RETURN_VALUE
+        >>   76 JUMP_BACKWARD           34 (to 10)
+
+222     >>   78 LOAD_CONST               5 (False)
+             80 RETURN_VALUE
+
+==============================================================================
+## <module>.split_control_sheet_pages  (args=1, locals=5)
+# varnames: pages, groups, i, p, grp
+225           0 RESUME                   0
+
+232           2 BUILD_LIST               0
+              4 STORE_FAST               1 (groups)
+
+233           6 LOAD_GLOBAL              1 (NULL + enumerate)
+             18 LOAD_FAST                0 (pages)
+             20 PRECALL                  1
+             24 CALL                     1
+             34 GET_ITER
+        >>   36 FOR_ITER               125 (to 288)
+             38 UNPACK_SEQUENCE          2
+             42 STORE_FAST               2 (i)
+             44 STORE_FAST               3 (p)
+
+234          46 LOAD_CONST               1 ('Control Sheet')
+             48 LOAD_GLOBAL              3 (NULL + _page_text)
+             60 LOAD_FAST                3 (p)
+             62 PRECALL                  1
+             66 CALL                     1
+             76 CONTAINS_OP              1
+             78 POP_JUMP_FORWARD_IF_FALSE     1 (to 82)
+
+235          80 JUMP_BACKWARD           23 (to 36)
+
+236     >>   82 LOAD_FAST                3 (p)
+             84 BUILD_LIST               1
+             86 STORE_FAST               4 (grp)
+
+237          88 LOAD_FAST                2 (i)
+             90 LOAD_CONST               2 (1)
+             92 BINARY_OP                0 (+)
+             96 LOAD_GLOBAL              5 (NULL + len)
+            108 LOAD_FAST                0 (pages)
+            110 PRECALL                  1
+            114 CALL                     1
+            124 COMPARE_OP               0 (<)
+            130 POP_JUMP_FORWARD_IF_FALSE    56 (to 244)
+            132 LOAD_CONST               1 ('Control Sheet')
+            134 LOAD_GLOBAL              3 (NULL + _page_text)
+            146 LOAD_FAST                0 (pages)
+            148 LOAD_FAST                2 (i)
+            150 LOAD_CONST               2 (1)
+            152 BINARY_OP                0 (+)
+            156 BINARY_SUBSCR
+            166 PRECALL                  1
+            170 CALL                     1
+            180 CONTAINS_OP              1
+            182 POP_JUMP_FORWARD_IF_FALSE    30 (to 244)
+
+238         184 LOAD_FAST                4 (grp)
+            186 LOAD_METHOD              3 (append)
+            208 LOAD_FAST                0 (pages)
+            210 LOAD_FAST                2 (i)
+            212 LOAD_CONST               2 (1)
+            214 BINARY_OP                0 (+)
+            218 BINARY_SUBSCR
+            228 PRECALL                  1
+            232 CALL                     1
+            242 POP_TOP
+
+239     >>  244 LOAD_FAST                1 (groups)
+            246 LOAD_METHOD              3 (append)
+            268 LOAD_FAST                4 (grp)
+            270 PRECALL                  1
+            274 CALL                     1
+            284 POP_TOP
+            286 JUMP_BACKWARD          126 (to 36)
+
+240     >>  288 LOAD_FAST                1 (groups)
+            290 RETURN_VALUE

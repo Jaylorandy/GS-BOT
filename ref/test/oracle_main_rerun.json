@@ -1,0 +1,3982 @@
+{
+ "LayoutType": {
+  "MATRIX_2AXIS": "matrix_2axis",
+  "MATRIX_1AXIS": "matrix_1axis",
+  "LINE_ITEMS": "line_items",
+  "CONTROL_SHEET": "control_sheet",
+  "MATRIX_PERCARTON": "matrix_percarton",
+  "LINE_ITEMS_EU": "line_items_eu",
+  "COSTCO_HYBRID": "costco_hybrid",
+  "COSTCO_ECOM": "costco_ecom",
+  "CELIO": "celio",
+  "FRANKIE_ECOM": "frankie_ecom",
+  "BASS_PRO_ACK": "bass_pro_ack",
+  "IMPORT_PO": "import_po",
+  "ANF_PO": "anf_po",
+  "ANF_COMMITMENT": "anf_commitment"
+ },
+ "dataclass_fields": {
+  "SizeQty": [
+   {
+    "name": "size",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "qty",
+    "type": "int",
+    "default": 0,
+    "factory": null
+   }
+  ],
+  "OrderLine": [
+   {
+    "name": "style_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "color_code",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "color_desc",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "inseam",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "sizes",
+    "type": "List[SizeQty]",
+    "default": "<MISSING>",
+    "factory": "list"
+   },
+   {
+    "name": "unit_price",
+    "type": "Optional[float]",
+    "default": null,
+    "factory": null
+   },
+   {
+    "name": "su",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "printed_row_total",
+    "type": "Optional[int]",
+    "default": null,
+    "factory": null
+   },
+   {
+    "name": "net_amount",
+    "type": "Optional[float]",
+    "default": null,
+    "factory": null
+   },
+   {
+    "name": "extra",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   }
+  ],
+  "OrderEntity": [
+   {
+    "name": "entity_index",
+    "type": "int",
+    "default": 0,
+    "factory": null
+   },
+   {
+    "name": "style_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "po_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "channel",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "delivery_date",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "destination_code",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "packing_method",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "wash_method",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "washing_color",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "payment_terms",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "price_term",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "currency",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "size_scale",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "product_group",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "age_sex_desc",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "product_desc",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "season",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "port_loading",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "port_discharge",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "ship_mode",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "vendor_name",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "agent_name",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "import_po_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "reference_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "cir_no",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "freight_terms",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "country_of_origin",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "dc_address",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "lines",
+    "type": "List[OrderLine]",
+    "default": "<MISSING>",
+    "factory": "list"
+   },
+   {
+    "name": "printed_size_totals",
+    "type": "Dict[str, int]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "printed_total_qty",
+    "type": "Optional[int]",
+    "default": null,
+    "factory": null
+   },
+   {
+    "name": "printed_total_amount",
+    "type": "Optional[float]",
+    "default": null,
+    "factory": null
+   },
+   {
+    "name": "extra",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   }
+  ],
+  "PurchaseOrder": [
+   {
+    "name": "customer",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "source_file",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "source_file_path",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "order_date",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "per_destination",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "entities",
+    "type": "List[OrderEntity]",
+    "default": "<MISSING>",
+    "factory": "list"
+   },
+   {
+    "name": "validation_warnings",
+    "type": "List[dict]",
+    "default": "<MISSING>",
+    "factory": "list"
+   },
+   {
+    "name": "fingerprint",
+    "type": "str",
+    "default": "",
+    "factory": null
+   }
+  ],
+  "PoRecipe": [
+   {
+    "name": "fingerprint",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "customer",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "layout_type",
+    "type": "str",
+    "default": "matrix_2axis",
+    "factory": null
+   },
+   {
+    "name": "version",
+    "type": "str",
+    "default": "1",
+    "factory": null
+   },
+   {
+    "name": "note",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "po_no_anchor",
+    "type": "str",
+    "default": "ORDER NO[.\\s:]+(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "customer_anchor",
+    "type": "str",
+    "default": "^(.*?)\\s+Purchase Order",
+    "factory": null
+   },
+   {
+    "name": "season_anchor",
+    "type": "str",
+    "default": "Season:\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "delivery_anchor",
+    "type": "str",
+    "default": "Shipment date:\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "currency_anchor",
+    "type": "str",
+    "default": "Currency:\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "price_term_anchor",
+    "type": "str",
+    "default": "Terms of payment:\\s*(.+)",
+    "factory": null
+   },
+   {
+    "name": "style_anchor",
+    "type": "str",
+    "default": "(?:Model\\s+No\\.|STYLE\\s+NO)[\\s.]*[:.]?\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "price_anchor",
+    "type": "str",
+    "default": "UNIT PR[İI]CE\\S*:\\s*([\\d.,]+)",
+    "factory": null
+   },
+   {
+    "name": "packing_anchor",
+    "type": "str",
+    "default": "MULTIPACK",
+    "factory": null
+   },
+   {
+    "name": "packing_method",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "port_discharge_anchor",
+    "type": "str",
+    "default": "Port of discharge:\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "port_loading_anchor",
+    "type": "str",
+    "default": "(?:Port of loading|Loading port|Place of receipt)[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+    "factory": null
+   },
+   {
+    "name": "ship_mode_anchor",
+    "type": "str",
+    "default": "Transport Type:\\s*(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "agent_anchor",
+    "type": "str",
+    "default": "Agent:\\s*(.+)",
+    "factory": null
+   },
+   {
+    "name": "vendor_anchor",
+    "type": "str",
+    "default": "Supplier:\\s*(.+)",
+    "factory": null
+   },
+   {
+    "name": "payment_terms_anchor",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "import_po_no_anchor",
+    "type": "str",
+    "default": "Import\\s*PO\\s*(?:#|No|Number)?[.\\s:]+(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "reference_no_anchor",
+    "type": "str",
+    "default": "Reference\\s*(?:#|No)?[.\\s:]+(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "cir_no_anchor",
+    "type": "str",
+    "default": "CIR\\s*(?:#|No)?[.\\s:]+(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "freight_terms_anchor",
+    "type": "str",
+    "default": "Freight\\s*Terms?[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+    "factory": null
+   },
+   {
+    "name": "country_of_origin_anchor",
+    "type": "str",
+    "default": "(?:Country\\s*of\\s*Origin|Origin\\s*Country|Exiting\\s*Country)[.\\s:]+(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "dc_address_anchor",
+    "type": "str",
+    "default": "(?:DC\\s*Address|Distribution\\s*Center|Deliver\\s*to)[.\\s:]+(\\S.+)",
+    "factory": null
+   },
+   {
+    "name": "channel_anchor",
+    "type": "str",
+    "default": "E-COMM",
+    "factory": null
+   },
+   {
+    "name": "channel_value",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "entity_anchor",
+    "type": "str",
+    "default": "Entity\\s+\\d+\\s+Order No:\\s*(\\S+)(?:\\s+(E-COMM))?",
+    "factory": null
+   },
+   {
+    "name": "destination_anchor",
+    "type": "str",
+    "default": "Destination Code:(\\S+)",
+    "factory": null
+   },
+   {
+    "name": "section_anchor",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "section_delim_pattern",
+    "type": "str",
+    "default": "^(DESTINATION|PACKAGING|COLOR) DETAILS$",
+    "factory": null
+   },
+   {
+    "name": "line_pattern",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "order_unit",
+    "type": "str",
+    "default": "PCS",
+    "factory": null
+   },
+   {
+    "name": "color_anchor",
+    "type": "str",
+    "default": "COLOR NO\\s*:\\s*(\\S+)\\s+(.+)",
+    "factory": null
+   },
+   {
+    "name": "has_inseam",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "size_header_token",
+    "type": "str",
+    "default": "COLOR NO",
+    "factory": null
+   },
+   {
+    "name": "total_token",
+    "type": "str",
+    "default": "TOTAL",
+    "factory": null
+   },
+   {
+    "name": "grid_orientation",
+    "type": "str",
+    "default": "rows",
+    "factory": null
+   },
+   {
+    "name": "size_header_anchor",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "color_code_pattern",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "require_row_total",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "breakdown_anchor",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "summary_anchor",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "line_field_map",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "field_map",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "has_color_total",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "has_size_total",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "size_encoding",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "dedup_style_size",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   },
+   {
+    "name": "field_overrides",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "field_defaults",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "cleans",
+    "type": "Dict[str, List[Dict[str, str]]]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "color_vocab",
+    "type": "Dict[str, str]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "validators",
+    "type": "Dict[str, List[Dict[str, str]]]",
+    "default": "<MISSING>",
+    "factory": "dict"
+   },
+   {
+    "name": "date_format",
+    "type": "str",
+    "default": "",
+    "factory": null
+   },
+   {
+    "name": "date_dayfirst",
+    "type": "bool",
+    "default": false,
+    "factory": null
+   }
+  ]
+ },
+ "sample": {
+  "template_b_rows": [
+   {
+    "A": "LPP SA",
+    "B": "637JO",
+    "C": "11321589",
+    "D": "SS26",
+    "E": "80X",
+    "F": "BEIGE",
+    "G": "S",
+    "H": "",
+    "I": 744,
+    "J": "PCS",
+    "K": 10.2,
+    "L": null,
+    "M": "FOB",
+    "N": "USD",
+    "O": "2026-03-02",
+    "P": "Sihanoukville",
+    "Q": "Gdynia",
+    "R": "Sea",
+    "S": "",
+    "T": "TT HSBC 180 Days",
+    "U": "",
+    "V": "LPP SA|11321589|637JO|80X|S||",
+    "W": 2,
+    "X": "Y",
+    "Y": "=HYPERLINK(\"file:///C:/fake%20dir/PO_637JO_2627182_2026-01-15.pdf\", \"PO_637JO_2627182_2026-01-15.pdf\")",
+    "Z": "B2026-01",
+    "AA": "FP123"
+   },
+   {
+    "A": "LPP SA",
+    "B": "637JO",
+    "C": "11321589",
+    "D": "SS26",
+    "E": "80X",
+    "F": "BEIGE",
+    "G": "M",
+    "H": "",
+    "I": 500,
+    "J": "PCS",
+    "K": 10.2,
+    "L": null,
+    "M": "FOB",
+    "N": "USD",
+    "O": "2026-03-02",
+    "P": "Sihanoukville",
+    "Q": "Gdynia",
+    "R": "Sea",
+    "S": "",
+    "T": "TT HSBC 180 Days",
+    "U": "",
+    "V": "LPP SA|11321589|637JO|80X|M||",
+    "W": 2,
+    "X": "Y",
+    "Y": "=HYPERLINK(\"file:///C:/fake%20dir/PO_637JO_2627182_2026-01-15.pdf\", \"PO_637JO_2627182_2026-01-15.pdf\")",
+    "Z": "B2026-01",
+    "AA": "FP123"
+   },
+   {
+    "A": "LPP SA",
+    "B": "637JO",
+    "C": "11321589",
+    "D": "SS26",
+    "E": "90Z",
+    "F": "BLACK",
+    "G": "S",
+    "H": "30",
+    "I": 200,
+    "J": "PR",
+    "K": 8.5,
+    "L": null,
+    "M": "FOB",
+    "N": "USD",
+    "O": "2026-03-02",
+    "P": "Sihanoukville",
+    "Q": "Gdynia",
+    "R": "Sea",
+    "S": "",
+    "T": "TT HSBC 180 Days",
+    "U": "",
+    "V": "LPP SA|11321589|637JO|90Z|S|30|",
+    "W": 2,
+    "X": "Y",
+    "Y": "=HYPERLINK(\"file:///C:/fake%20dir/PO_637JO_2627182_2026-01-15.pdf\", \"PO_637JO_2627182_2026-01-15.pdf\")",
+    "Z": "B2026-01",
+    "AA": "FP123"
+   },
+   {
+    "A": "LPP SA",
+    "B": "637JO",
+    "C": "11321589",
+    "D": "SS26",
+    "E": "90Z",
+    "F": "BLACK",
+    "G": "L",
+    "H": "30",
+    "I": 0,
+    "J": "PR",
+    "K": 8.5,
+    "L": null,
+    "M": "FOB",
+    "N": "USD",
+    "O": "2026-03-02",
+    "P": "Sihanoukville",
+    "Q": "Gdynia",
+    "R": "Sea",
+    "S": "",
+    "T": "TT HSBC 180 Days",
+    "U": "",
+    "V": "LPP SA|11321589|637JO|90Z|L|30|",
+    "W": 2,
+    "X": "Y",
+    "Y": "=HYPERLINK(\"file:///C:/fake%20dir/PO_637JO_2627182_2026-01-15.pdf\", \"PO_637JO_2627182_2026-01-15.pdf\")",
+    "Z": "B2026-01",
+    "AA": "FP123"
+   }
+  ],
+  "total_qty": 1444,
+  "size_totals": {
+   "S": 944,
+   "M": 500,
+   "L": 0
+  },
+  "color_totals": {
+   "80X": 1244,
+   "90Z": 200
+  }
+ },
+ "qty_safe": {
+  "int 5": 5,
+  "str 5": 5,
+  "abc": 0,
+  "None": 0,
+  "float 5.7": 5
+ },
+ "build_row_key": {
+  "full": "LPP SA|11321589|637JO|80X|S||",
+  "with_inseam_dest": "A|B|C|D|E|F|G",
+  "empty": "||||||",
+  "none_as_falsy": "|B||D|E||"
+ },
+ "_color_combined": {
+  "both": "80X / BEIGE",
+  "code_only": "80X",
+  "desc_only": "BEIGE",
+  "none": "",
+  "none2": ""
+ },
+ "overrides_a": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "85X / IVORY"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_b": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "NATURAL"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_c": {
+  "ret": null,
+  "state": {
+   "customer": "NEW CUST",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "EUR"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "NEW CUST"
+    ],
+    [
+     "L1-1·款式",
+     "12345"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "12345"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_d": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_e": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "999"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "NEWSTYLE"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "NEWSTYLE"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_f": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_g": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO2"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_h": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_i": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_j": {
+  "error": null,
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "overrides_k": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "field_defaults": {
+  "changes": [
+   "H1·currency: 'USD' → 'EUR' (默认)",
+   "H1·payment_terms: 'TT HSBC 180 Days' → 'CAD 30D' (默认)"
+  ],
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "EUR"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "CAD 30D"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "field_defaults_none": [],
+ "value_clean": {
+  "changes": [
+   "H1·currency: 'USD' → 'US$'"
+  ],
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "US$"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "value_clean_badpat": {
+  "ret": [],
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "value_clean_color": {
+  "changes": [
+   "L1-1·颜色: '80X / BEIGE' → '80X / IVORY'"
+  ],
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / IVORY"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "value_clean_skip": {
+  "ret": [],
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_field_currency": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "US$"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_field_customer": {
+  "ret": null,
+  "state": {
+   "customer": "NEW SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "NEW SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_field_style": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_field_unknown": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_color_desc": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "80X / IVORY"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_color_code_only": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "0 / BEIGE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "0 / BLACK"
+    ]
+   ]
+  }
+ },
+ "clean_color_split": {
+  "ret": null,
+  "state": {
+   "customer": "LPP SA",
+   "pairs": [
+    [
+     "H1·po_no",
+     "11321589"
+    ],
+    [
+     "H1·season",
+     "SS26"
+    ],
+    [
+     "H1·currency",
+     "USD"
+    ],
+    [
+     "H1·price_term",
+     "FOB"
+    ],
+    [
+     "H1·payment_terms",
+     "TT HSBC 180 Days"
+    ],
+    [
+     "H1·port_loading",
+     "Sihanoukville"
+    ],
+    [
+     "H1·port_discharge",
+     "Gdynia"
+    ],
+    [
+     "H1·ship_mode",
+     "Sea"
+    ],
+    [
+     "H1·vendor_name",
+     "Gs Global Sourcing Co.,Ltd"
+    ],
+    [
+     "H1·agent_name",
+     ""
+    ],
+    [
+     "H1·channel",
+     "STANDARD"
+    ],
+    [
+     "H1·size_scale",
+     "ALPHA"
+    ],
+    [
+     "H1·product_group",
+     "C_trousers"
+    ],
+    [
+     "H1·age_sex_desc",
+     "MENS"
+    ],
+    [
+     "H1·product_desc",
+     "MEN'S TROUSERS"
+    ],
+    [
+     "H1·destination_code",
+     ""
+    ],
+    [
+     "H1·wash_method",
+     ""
+    ],
+    [
+     "H1·washing_color",
+     ""
+    ],
+    [
+     "H1·packing_method",
+     "MULTIPACK"
+    ],
+    [
+     "H1·delivery_date",
+     "2026-03-02"
+    ],
+    [
+     "H1·import_po_no",
+     ""
+    ],
+    [
+     "H1·reference_no",
+     ""
+    ],
+    [
+     "H1·cir_no",
+     ""
+    ],
+    [
+     "H1·freight_terms",
+     ""
+    ],
+    [
+     "H1·country_of_origin",
+     ""
+    ],
+    [
+     "H1·dc_address",
+     ""
+    ],
+    [
+     "H1·customer",
+     "LPP SA"
+    ],
+    [
+     "L1-1·款式",
+     "637JO"
+    ],
+    [
+     "L1-1·颜色",
+     "55X / TAUPE"
+    ],
+    [
+     "L1-2·款式",
+     "637JO"
+    ],
+    [
+     "L1-2·颜色",
+     "90Z / BLACK"
+    ]
+   ]
+  }
+ },
+ "to_json": "{\n  \"fingerprint\": \"F1\",\n  \"customer\": \"LPP SA\",\n  \"layout_type\": \"line_items\",\n  \"version\": \"1\",\n  \"note\": \"\",\n  \"po_no_anchor\": \"ORDER NO[.\\\\s:]+(\\\\S+)\",\n  \"customer_anchor\": \"^(.*?)\\\\s+Purchase Order\",\n  \"season_anchor\": \"Season:\\\\s*(\\\\S+)\",\n  \"delivery_anchor\": \"Shipment date:\\\\s*(\\\\S+)\",\n  \"currency_anchor\": \"Currency:\\\\s*(\\\\S+)\",\n  \"price_term_anchor\": \"Terms of payment:\\\\s*(.+)\",\n  \"style_anchor\": \"(?:Model\\\\s+No\\\\.|STYLE\\\\s+NO)[\\\\s.]*[:.]?\\\\s*(\\\\S+)\",\n  \"price_anchor\": \"UNIT PR[İI]CE\\\\S*:\\\\s*([\\\\d.,]+)\",\n  \"packing_anchor\": \"MULTIPACK\",\n  \"packing_method\": \"\",\n  \"port_discharge_anchor\": \"Port of discharge:\\\\s*(\\\\S+)\",\n  \"port_loading_anchor\": \"(?:Port of loading|Loading port|Place of receipt)[.\\\\s:]+(\\\\S+(?:\\\\s+\\\\S+)?)\",\n  \"ship_mode_anchor\": \"Transport Type:\\\\s*(\\\\S+)\",\n  \"agent_anchor\": \"Agent:\\\\s*(.+)\",\n  \"vendor_anchor\": \"Supplier:\\\\s*(.+)\",\n  \"payment_terms_anchor\": \"\",\n  \"import_po_no_anchor\": \"Import\\\\s*PO\\\\s*(?:#|No|Number)?[.\\\\s:]+(\\\\S+)\",\n  \"reference_no_anchor\": \"Reference\\\\s*(?:#|No)?[.\\\\s:]+(\\\\S+)\",\n  \"cir_no_anchor\": \"CIR\\\\s*(?:#|No)?[.\\\\s:]+(\\\\S+)\",\n  \"freight_terms_anchor\": \"Freight\\\\s*Terms?[.\\\\s:]+(\\\\S+(?:\\\\s+\\\\S+)?)\",\n  \"country_of_origin_anchor\": \"(?:Country\\\\s*of\\\\s*Origin|Origin\\\\s*Country|Exiting\\\\s*Country)[.\\\\s:]+(\\\\S+)\",\n  \"dc_address_anchor\": \"(?:DC\\\\s*Address|Distribution\\\\s*Center|Deliver\\\\s*to)[.\\\\s:]+(\\\\S.+)\",\n  \"channel_anchor\": \"E-COMM\",\n  \"channel_value\": \"\",\n  \"entity_anchor\": \"Entity\\\\s+\\\\d+\\\\s+Order No:\\\\s*(\\\\S+)(?:\\\\s+(E-COMM))?\",\n  \"destination_anchor\": \"Destination Code:(\\\\S+)\",\n  \"section_anchor\": \"\",\n  \"section_delim_pattern\": \"^(DESTINATION|PACKAGING|COLOR) DETAILS$\",\n  \"line_pattern\": \"\",\n  \"order_unit\": \"PCS\",\n  \"color_anchor\": \"COLOR NO\\\\s*:\\\\s*(\\\\S+)\\\\s+(.+)\",\n  \"has_inseam\": true,\n  \"size_header_token\": \"COLOR NO\",\n  \"total_token\": \"TOTAL\",\n  \"grid_orientation\": \"rows\",\n  \"size_header_anchor\": \"\",\n  \"color_code_pattern\": \"\",\n  \"require_row_total\": false,\n  \"breakdown_anchor\": \"\",\n  \"summary_anchor\": \"\",\n  \"line_field_map\": {\n    \"style_no\": \"A\"\n  },\n  \"field_map\": {},\n  \"has_color_total\": false,\n  \"has_size_total\": false,\n  \"size_encoding\": \"\",\n  \"dedup_style_size\": false,\n  \"field_overrides\": {},\n  \"field_defaults\": {\n    \"currency\": \"EUR\"\n  },\n  \"cleans\": {\n    \"currency\": [\n      {\n        \"pat\": \"USD\",\n        \"repl\": \"US$\"\n      }\n    ]\n  },\n  \"color_vocab\": {\n    \"80X\": \"80X\"\n  },\n  \"validators\": {},\n  \"date_format\": \"%Y-%m-%d\",\n  \"date_dayfirst\": false\n}",
+ "from_json_roundtrip": {
+  "fingerprint": "F1",
+  "customer": "LPP SA",
+  "layout_type": "line_items",
+  "version": "1",
+  "note": "",
+  "po_no_anchor": "ORDER NO[.\\s:]+(\\S+)",
+  "customer_anchor": "^(.*?)\\s+Purchase Order",
+  "season_anchor": "Season:\\s*(\\S+)",
+  "delivery_anchor": "Shipment date:\\s*(\\S+)",
+  "currency_anchor": "Currency:\\s*(\\S+)",
+  "price_term_anchor": "Terms of payment:\\s*(.+)",
+  "style_anchor": "(?:Model\\s+No\\.|STYLE\\s+NO)[\\s.]*[:.]?\\s*(\\S+)",
+  "price_anchor": "UNIT PR[İI]CE\\S*:\\s*([\\d.,]+)",
+  "packing_anchor": "MULTIPACK",
+  "packing_method": "",
+  "port_discharge_anchor": "Port of discharge:\\s*(\\S+)",
+  "port_loading_anchor": "(?:Port of loading|Loading port|Place of receipt)[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+  "ship_mode_anchor": "Transport Type:\\s*(\\S+)",
+  "agent_anchor": "Agent:\\s*(.+)",
+  "vendor_anchor": "Supplier:\\s*(.+)",
+  "payment_terms_anchor": "",
+  "import_po_no_anchor": "Import\\s*PO\\s*(?:#|No|Number)?[.\\s:]+(\\S+)",
+  "reference_no_anchor": "Reference\\s*(?:#|No)?[.\\s:]+(\\S+)",
+  "cir_no_anchor": "CIR\\s*(?:#|No)?[.\\s:]+(\\S+)",
+  "freight_terms_anchor": "Freight\\s*Terms?[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+  "country_of_origin_anchor": "(?:Country\\s*of\\s*Origin|Origin\\s*Country|Exiting\\s*Country)[.\\s:]+(\\S+)",
+  "dc_address_anchor": "(?:DC\\s*Address|Distribution\\s*Center|Deliver\\s*to)[.\\s:]+(\\S.+)",
+  "channel_anchor": "E-COMM",
+  "channel_value": "",
+  "entity_anchor": "Entity\\s+\\d+\\s+Order No:\\s*(\\S+)(?:\\s+(E-COMM))?",
+  "destination_anchor": "Destination Code:(\\S+)",
+  "section_anchor": "",
+  "section_delim_pattern": "^(DESTINATION|PACKAGING|COLOR) DETAILS$",
+  "line_pattern": "",
+  "order_unit": "PCS",
+  "color_anchor": "COLOR NO\\s*:\\s*(\\S+)\\s+(.+)",
+  "has_inseam": true,
+  "size_header_token": "COLOR NO",
+  "total_token": "TOTAL",
+  "grid_orientation": "rows",
+  "size_header_anchor": "",
+  "color_code_pattern": "",
+  "require_row_total": false,
+  "breakdown_anchor": "",
+  "summary_anchor": "",
+  "line_field_map": {
+   "style_no": "A"
+  },
+  "field_map": {},
+  "has_color_total": false,
+  "has_size_total": false,
+  "size_encoding": "",
+  "dedup_style_size": false,
+  "field_overrides": {},
+  "field_defaults": {
+   "currency": "EUR"
+  },
+  "cleans": {
+   "currency": [
+    {
+     "pat": "USD",
+     "repl": "US$"
+    }
+   ]
+  },
+  "color_vocab": {
+   "80X": "80X"
+  },
+  "validators": {},
+  "date_format": "%Y-%m-%d",
+  "date_dayfirst": false
+ },
+ "from_json_legacy": {
+  "cleans": {
+   "payment_terms": [
+    {
+     "pat": "X",
+     "repl": "Y"
+    }
+   ],
+   "color": [
+    {
+     "pat": "BEIGE",
+     "repl": "IVORY"
+    }
+   ]
+  },
+  "field_defaults": {}
+ }
+}

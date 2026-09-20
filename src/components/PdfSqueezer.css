@@ -1,0 +1,865 @@
+.pdf-squeezer-page {
+  --pdf-shell-border: var(--module-shell-border);
+  --pdf-shell-bg: linear-gradient(180deg, var(--surface-2), var(--surface-1));
+  --pdf-shell-shadow:
+    var(--module-shell-shadow),
+    inset 0 1px 0 var(--shell-panel-inset);
+  --pdf-toolbar-border: rgba(255, 255, 255, 0.08);
+  --pdf-brand-icon-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  --pdf-brand-icon-border: rgba(255, 255, 255, 0.1);
+  --pdf-brand-icon-shadow: 0 14px 28px rgba(2, 7, 14, 0.24);
+  --pdf-brand-icon-color: rgba(243, 246, 251, 0.72);
+  --pdf-strength-bg: rgba(255, 255, 255, 0.06);
+  --pdf-strength-border: rgba(255, 255, 255, 0.08);
+  --pdf-strength-active-bg: rgba(255, 255, 255, 0.14);
+  --pdf-strength-active-shadow: 0 10px 18px rgba(2, 7, 14, 0.2);
+  --pdf-action-bg: rgba(255, 255, 255, 0.07);
+  --pdf-action-border: rgba(255, 255, 255, 0.1);
+  --pdf-action-ghost-bg: rgba(255, 255, 255, 0.04);
+  --pdf-action-success-bg: rgba(144, 213, 173, 0.16);
+  --pdf-action-success-color: #bde8cd;
+  --pdf-action-success-border: rgba(144, 213, 173, 0.24);
+  --pdf-dropzone-border: rgba(255, 255, 255, 0.14);
+  --pdf-dropzone-bg:
+    radial-gradient(circle at top, rgba(22, 30, 40, 0.96), rgba(12, 18, 26, 0.94)),
+    rgba(0, 0, 0, 0.16);
+  --pdf-dropzone-active-border: rgba(90, 214, 171, 0.55);
+  --pdf-dropzone-active-bg:
+    radial-gradient(circle at top, rgba(18, 48, 40, 0.92), rgba(10, 22, 24, 0.94)),
+    rgba(0, 0, 0, 0.18);
+  --pdf-dropzone-active-shadow: 0 24px 60px rgba(52, 211, 153, 0.12);
+  --pdf-drop-icon-color: rgba(243, 246, 251, 0.28);
+  --pdf-preview-bg:
+    linear-gradient(180deg, rgba(24, 32, 42, 0.98), rgba(14, 20, 28, 0.96)),
+    #111820;
+  --pdf-preview-border: rgba(255, 255, 255, 0.08);
+  --pdf-preview-shadow:
+    0 24px 54px rgba(2, 7, 14, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pdf-preview-running-shadow:
+    0 24px 54px rgba(59, 130, 246, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pdf-preview-success-shadow:
+    0 24px 54px rgba(52, 211, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pdf-preview-warning-shadow:
+    0 24px 54px rgba(249, 115, 22, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --pdf-preview-fold-bg:
+    linear-gradient(135deg, rgba(44, 58, 74, 0.98) 0%, rgba(35, 48, 63, 0.98) 55%, rgba(20, 29, 41, 0.92) 100%);
+  --pdf-preview-fold-shadow: -10px 12px 20px rgba(2, 7, 14, 0.28);
+  --pdf-preview-watermark-color: rgba(243, 246, 251, 0.26);
+  --pdf-status-pill-bg: rgba(255, 255, 255, 0.08);
+  --pdf-spinner-color: rgba(243, 246, 251, 0.42);
+  --pdf-progress-track-bg: rgba(255, 255, 255, 0.08);
+  --pdf-progress-fill: linear-gradient(90deg, rgba(var(--accent-rgb), 0.96), rgba(255, 255, 255, 0.72));
+  --pdf-arrow-color: rgba(243, 246, 251, 0.34);
+  --pdf-summary-chip-bg: rgba(255, 255, 255, 0.06);
+  --pdf-summary-chip-border: rgba(255, 255, 255, 0.08);
+  --pdf-summary-chip-success-color: #bde8cd;
+  --pdf-summary-chip-success-bg: rgba(144, 213, 173, 0.14);
+  --pdf-summary-chip-success-border: rgba(144, 213, 173, 0.24);
+  --pdf-file-row-border: rgba(255, 255, 255, 0.08);
+  --pdf-file-row-bg: rgba(255, 255, 255, 0.04);
+  --pdf-file-row-shadow: 0 12px 24px rgba(2, 7, 14, 0.14);
+  --pdf-file-row-hover-border: rgba(255, 255, 255, 0.14);
+  --pdf-file-row-active-border: rgba(var(--accent-rgb), 0.34);
+  --pdf-file-row-active-bg: rgba(255, 255, 255, 0.08);
+  --pdf-file-row-active-shadow: 0 16px 28px rgba(2, 7, 14, 0.18);
+  --pdf-file-stats-success-color: #bde8cd;
+  --pdf-notice-border: rgba(255, 255, 255, 0.08);
+  --pdf-notice-bg: rgba(255, 255, 255, 0.05);
+  --pdf-notice-success-bg: rgba(144, 213, 173, 0.12);
+  --pdf-notice-success-border: rgba(144, 213, 173, 0.22);
+  --pdf-notice-warning-bg: rgba(251, 191, 36, 0.14);
+  --pdf-notice-warning-border: rgba(251, 191, 36, 0.24);
+  --pdf-notice-error-bg: rgba(248, 113, 113, 0.16);
+  --pdf-notice-error-border: rgba(248, 113, 113, 0.24);
+  --pdf-footer-border: rgba(255, 255, 255, 0.08);
+  --pdf-log-error: #ffb4b4;
+  --pdf-log-warning: #f6ce79;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.pdf-squeezer-shell {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 28px;
+  border: 1px solid var(--pdf-shell-border);
+  background: var(--pdf-shell-bg);
+  box-shadow: var(--pdf-shell-shadow);
+  overflow: hidden;
+}
+
+.pdf-squeezer-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--pdf-toolbar-border);
+}
+
+.pdf-squeezer-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.pdf-squeezer-brand-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 16px;
+  background: var(--pdf-brand-icon-bg);
+  border: 1px solid var(--pdf-brand-icon-border);
+  box-shadow: var(--pdf-brand-icon-shadow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--pdf-brand-icon-color);
+}
+
+.pdf-squeezer-brand-copy {
+  min-width: 0;
+}
+
+.pdf-squeezer-brand-copy h1 {
+  margin: 0;
+  font-size: 1.55rem;
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+}
+
+.pdf-squeezer-brand-copy p {
+  margin: 6px 0 0;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pdf-squeezer-strength {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 999px;
+  background: var(--pdf-strength-bg);
+  border: 1px solid var(--pdf-strength-border);
+  gap: 4px;
+}
+
+.pdf-squeezer-strength-btn,
+.pdf-squeezer-action,
+.pdf-squeezer-inline-link {
+  border: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.pdf-squeezer-strength-btn {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 700;
+  transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.pdf-squeezer-strength-btn.active {
+  background: var(--pdf-strength-active-bg);
+  color: var(--text-primary);
+  box-shadow: var(--pdf-strength-active-shadow);
+}
+
+.pdf-squeezer-action {
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--pdf-action-bg);
+  border: 1px solid var(--pdf-action-border);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.pdf-squeezer-action.primary {
+  position: relative;
+  overflow: hidden;
+  color: #fff;
+  border-color: transparent;
+  background: var(--gemini-border);
+  background-size: 320% 320%;
+  animation: geminiFlow 6s ease infinite;
+  box-shadow:
+    0 18px 34px rgba(var(--accent-rgb), 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  font-weight: 700;
+}
+
+.pdf-squeezer-action.primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    0 22px 38px rgba(var(--accent-rgb), 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.pdf-squeezer-action.success {
+  background: var(--pdf-action-success-bg);
+  color: var(--pdf-action-success-color);
+  border-color: var(--pdf-action-success-border);
+}
+
+.pdf-squeezer-action.ghost {
+  background: var(--pdf-action-ghost-bg);
+}
+
+.pdf-squeezer-strength-btn:hover:not(:disabled),
+.pdf-squeezer-action:hover:not(:disabled),
+.pdf-squeezer-inline-link:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.pdf-squeezer-strength-btn:disabled,
+.pdf-squeezer-action:disabled,
+.pdf-squeezer-inline-link:disabled {
+  cursor: default;
+  opacity: 0.48;
+  transform: none;
+}
+
+.pdf-squeezer-canvas {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 28px;
+}
+
+.pdf-squeezer-canvas.empty {
+  justify-content: center;
+}
+
+.pdf-squeezer-dropzone {
+  min-height: 100%;
+  border-radius: 28px;
+  border: 2px dashed var(--pdf-dropzone-border);
+  background: var(--pdf-dropzone-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  text-align: center;
+  padding: 48px 28px;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.pdf-squeezer-dropzone.active,
+.pdf-squeezer-page.is-dragging .pdf-squeezer-dropzone {
+  border-color: var(--pdf-dropzone-active-border);
+  background: var(--pdf-dropzone-active-bg);
+  box-shadow: var(--pdf-dropzone-active-shadow);
+  transform: translateY(-2px);
+}
+
+.pdf-squeezer-drop-icon {
+  width: 116px;
+  height: 116px;
+  color: var(--pdf-drop-icon-color);
+}
+
+.pdf-squeezer-drop-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pdf-squeezer-dropzone strong {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.03em;
+}
+
+.pdf-squeezer-dropzone p {
+  margin: 0;
+  font-size: 0.96rem;
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-stage {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-height: 0;
+  flex: 1;
+}
+
+.pdf-squeezer-hero {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  text-align: center;
+  padding: 8px 0 0;
+}
+
+.pdf-squeezer-preview-card {
+  position: relative;
+  width: min(380px, 100%);
+  aspect-ratio: 1.35 / 1;
+  border-radius: 26px;
+  background: var(--pdf-preview-bg);
+  border: 1px solid var(--pdf-preview-border);
+  box-shadow: var(--pdf-preview-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 34px;
+  overflow: hidden;
+}
+
+.pdf-squeezer-preview-card.running {
+  box-shadow: var(--pdf-preview-running-shadow);
+}
+
+.pdf-squeezer-preview-card.done,
+.pdf-squeezer-preview-card.saved {
+  box-shadow: var(--pdf-preview-success-shadow);
+}
+
+.pdf-squeezer-preview-card.unchanged {
+  box-shadow: var(--pdf-preview-warning-shadow);
+}
+
+.pdf-squeezer-preview-fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 78px;
+  height: 78px;
+  background: var(--pdf-preview-fold-bg);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  box-shadow: var(--pdf-preview-fold-shadow);
+}
+
+.pdf-squeezer-preview-watermark {
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pdf-preview-watermark-color);
+  margin-bottom: 12px;
+}
+
+.pdf-squeezer-preview-name {
+  max-width: 100%;
+  font-size: clamp(1.55rem, 3vw, 2.5rem);
+  line-height: 1.02;
+  letter-spacing: -0.05em;
+  font-weight: 800;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.pdf-squeezer-preview-meta {
+  margin-top: 14px;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-status-pill {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--pdf-status-pill-bg);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.pdf-squeezer-progress-wrap {
+  width: min(460px, 100%);
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 12px 14px;
+  align-items: center;
+}
+
+.pdf-squeezer-spinner {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  color: var(--pdf-spinner-color);
+  animation: pdf-spinner-rotate 1s linear infinite;
+}
+
+.pdf-squeezer-spinner svg {
+  width: 100%;
+  height: 100%;
+}
+
+.pdf-squeezer-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--pdf-progress-track-bg);
+  overflow: hidden;
+}
+
+.pdf-squeezer-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--pdf-progress-fill);
+  transition: width 220ms ease;
+}
+
+.pdf-squeezer-progress-copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.pdf-squeezer-progress-copy strong {
+  color: var(--text-primary);
+}
+
+.pdf-squeezer-size-line {
+  font-size: clamp(1.8rem, 3vw, 2.35rem);
+  letter-spacing: -0.05em;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pdf-squeezer-size-line .arrow {
+  color: var(--pdf-arrow-color);
+}
+
+.pdf-squeezer-size-caption {
+  font-size: 0.98rem;
+  color: var(--text-secondary);
+}
+
+.pdf-squeezer-summary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.pdf-squeezer-summary-chip {
+  min-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--pdf-summary-chip-bg);
+  border: 1px solid var(--pdf-summary-chip-border);
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.pdf-squeezer-summary-chip.success {
+  color: var(--pdf-summary-chip-success-color);
+  background: var(--pdf-summary-chip-success-bg);
+  border-color: var(--pdf-summary-chip-success-border);
+}
+
+.pdf-squeezer-summary-chip.muted {
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-file-list {
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-right: 4px;
+}
+
+.pdf-squeezer-file-row {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--pdf-file-row-border);
+  background: var(--pdf-file-row-bg);
+  box-shadow: var(--pdf-file-row-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.pdf-squeezer-file-row:hover {
+  transform: translateY(-1px);
+  border-color: var(--pdf-file-row-hover-border);
+}
+
+.pdf-squeezer-file-row.active {
+  border-color: var(--pdf-file-row-active-border);
+  background: var(--pdf-file-row-active-bg);
+  box-shadow: var(--pdf-file-row-active-shadow);
+}
+
+.pdf-squeezer-file-main,
+.pdf-squeezer-file-stats {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 4px;
+}
+
+.pdf-squeezer-file-main strong,
+.pdf-squeezer-file-stats span:first-child {
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+
+.pdf-squeezer-file-main span,
+.pdf-squeezer-file-stats span:last-child {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-file-stats {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.pdf-squeezer-file-stats .success {
+  color: var(--pdf-file-stats-success-color);
+}
+
+.pdf-squeezer-file-stats .muted {
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-notice {
+  margin: 0 28px 18px;
+  padding: 14px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--pdf-notice-border);
+  background: var(--pdf-notice-bg);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pdf-squeezer-notice.success {
+  background: var(--pdf-notice-success-bg);
+  border-color: var(--pdf-notice-success-border);
+}
+
+.pdf-squeezer-notice.warning {
+  background: var(--pdf-notice-warning-bg);
+  border-color: var(--pdf-notice-warning-border);
+}
+
+.pdf-squeezer-notice.error {
+  background: var(--pdf-notice-error-bg);
+  border-color: var(--pdf-notice-error-border);
+}
+
+.pdf-squeezer-notice strong {
+  display: block;
+  color: var(--text-primary);
+}
+
+.pdf-squeezer-notice p {
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.pdf-squeezer-inline-link {
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.pdf-squeezer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--pdf-footer-border);
+}
+
+.pdf-squeezer-footer-left,
+.pdf-squeezer-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+}
+
+.pdf-squeezer-details {
+  color: var(--text-secondary);
+}
+
+.pdf-squeezer-details summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+}
+
+.pdf-squeezer-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.pdf-squeezer-log-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(620px, 70vw);
+}
+
+.pdf-squeezer-log-row {
+  display: grid;
+  grid-template-columns: 82px 1fr;
+  gap: 12px;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.pdf-squeezer-log-row.error {
+  color: var(--pdf-log-error);
+}
+
+.pdf-squeezer-log-row.warning {
+  color: var(--pdf-log-warning);
+}
+
+@keyframes pdf-spinner-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 980px) {
+  .pdf-squeezer-toolbar,
+  .pdf-squeezer-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .pdf-squeezer-toolbar-actions,
+  .pdf-squeezer-footer-right {
+    justify-content: flex-start;
+  }
+
+  .pdf-squeezer-file-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pdf-squeezer-file-stats {
+    align-items: flex-start;
+    text-align: left;
+  }
+}
+
+@media (max-height: 880px) {
+  .pdf-squeezer-toolbar {
+    padding: 16px 20px;
+  }
+
+  .pdf-squeezer-canvas {
+    padding: 20px;
+  }
+
+  .pdf-squeezer-stage {
+    gap: 16px;
+  }
+
+  .pdf-squeezer-hero {
+    gap: 14px;
+    padding-top: 0;
+  }
+
+  .pdf-squeezer-preview-card {
+    width: min(320px, 100%);
+    padding: 26px;
+    border-radius: 22px;
+  }
+
+  .pdf-squeezer-preview-fold {
+    width: 64px;
+    height: 64px;
+  }
+
+  .pdf-squeezer-size-line {
+    font-size: clamp(1.5rem, 2.5vw, 2rem);
+  }
+
+  .pdf-squeezer-dropzone {
+    padding: 36px 24px;
+    gap: 14px;
+  }
+
+  .pdf-squeezer-dropzone strong {
+    font-size: 1.35rem;
+  }
+
+  .pdf-squeezer-drop-icon {
+    width: 88px;
+    height: 88px;
+  }
+
+  .pdf-squeezer-notice {
+    margin: 0 20px 14px;
+  }
+
+  .pdf-squeezer-footer {
+    padding: 14px 20px 16px;
+  }
+}
+
+@media (max-height: 740px) {
+  .pdf-squeezer-page {
+    overflow: auto;
+  }
+
+  .pdf-squeezer-shell {
+    height: auto;
+    min-height: 100%;
+    overflow: visible;
+  }
+
+  .pdf-squeezer-brand-copy h1 {
+    font-size: 1.3rem;
+  }
+
+  .pdf-squeezer-brand-copy p {
+    font-size: 0.75rem;
+  }
+
+  .pdf-squeezer-action {
+    min-height: 34px;
+    padding: 0 14px;
+    font-size: 0.78rem;
+  }
+
+  .pdf-squeezer-canvas {
+    padding: 16px;
+  }
+
+  .pdf-squeezer-preview-card {
+    width: min(280px, 100%);
+    padding: 20px;
+  }
+
+  .pdf-squeezer-preview-name {
+    font-size: clamp(1.2rem, 2vw, 1.8rem);
+  }
+
+  .pdf-squeezer-progress-wrap {
+    grid-template-columns: 28px 1fr;
+    gap: 10px 12px;
+  }
+
+  .pdf-squeezer-spinner {
+    width: 28px;
+    height: 28px;
+  }
+
+  .pdf-squeezer-progress-copy {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .pdf-squeezer-size-caption {
+    font-size: 0.84rem;
+  }
+
+  .pdf-squeezer-summary-chip {
+    min-height: 30px;
+    padding: 0 12px;
+    font-size: 0.72rem;
+  }
+
+  .pdf-squeezer-file-row {
+    padding: 12px 14px;
+  }
+
+  .pdf-squeezer-file-main strong,
+  .pdf-squeezer-file-stats span:first-child {
+    font-size: 0.82rem;
+  }
+
+  .pdf-squeezer-file-main span,
+  .pdf-squeezer-file-stats span:last-child {
+    font-size: 0.7rem;
+  }
+
+  .pdf-squeezer-notice {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .pdf-squeezer-footer {
+    align-items: flex-start;
+  }
+
+  .pdf-squeezer-log-list {
+    max-width: 100%;
+  }
+
+  .pdf-squeezer-log-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

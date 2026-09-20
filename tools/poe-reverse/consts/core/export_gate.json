@@ -1,0 +1,233 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "typing",
+   "List",
+   "models",
+   "PoRecipe",
+   "PurchaseOrder",
+   "validate",
+   "BreakdownProblem",
+   "reconcile",
+   "validate_breakdown",
+   "validate_totals",
+   "ExportGateReport",
+   "reconcile_quantities",
+   "scan_batch"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/export_gate.py - the export-time secondary quantity interception.\n\nThe synthesis gate (``recipe_synth.verify_recipe``) already proves a recipe\nreproduces the AI-read totals before it enters the cache. This module is the\nSECOND interception, run at export time over the current batch only\n(``self.results``), so a later edit, a value-clean transform, or a stale cache\ncan never ship a silently wrong quantity.\n\nWhat it checks (all quantity-focused, customer-agnostic):\n\n  * HARD (blocks export unless the operator explicitly releases):\n      - colour/size breakdown mismatches vs the PDF's printed subtotals\n        (``validate_breakdown`` - gated by the AI-set recipe flags);\n      - a parsed total of 0 (nothing usable to export);\n      - any negative quantity (clearly wrong).\n  * SOFT (advisory, never blocks):\n      - the structural/price-coverage warnings from ``validate.reconcile``.\n\nA single batch may contain several POs; the gate aggregates every hard problem\nand presents them in one modal so the operator decides once.\n",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "dataclass",
+    "field"
+   ],
+   [
+    "List"
+   ],
+   1,
+   [
+    "PoRecipe",
+    "PurchaseOrder"
+   ],
+   [
+    "BreakdownProblem",
+    "reconcile",
+    "validate_breakdown",
+    "validate_totals"
+   ],
+   "ExportGateReport",
+   "",
+   "po",
+   "PurchaseOrder",
+   "recipe",
+   "PoRecipe",
+   "source",
+   "str",
+   "return",
+   "tuple",
+   null,
+   [
+    ""
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "recipe",
+    "PoRecipe",
+    "source",
+    "str",
+    "return",
+    "ExportGateReport"
+   ],
+   [
+    "return",
+    "tuple"
+   ]
+  ],
+  "n_instructions": 66
+ },
+ "<module>.ExportGateReport": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "customer",
+   "__annotations__",
+   "source",
+   "field",
+   "list",
+   "blocks",
+   "warnings",
+   "breakdown",
+   "property",
+   "ok"
+  ],
+  "varnames": [],
+  "consts": [
+   "ExportGateReport",
+   "Result of the export-time quantity check for ONE purchase order.",
+   "",
+   "str",
+   "customer",
+   "source",
+   [
+    "default_factory"
+   ],
+   "List[str]",
+   "blocks",
+   "warnings",
+   "List[BreakdownProblem]",
+   "breakdown",
+   "return",
+   "bool",
+   null,
+   [
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 62
+ },
+ "<module>.ExportGateReport.ok": {
+  "names": [
+   "blocks"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 5
+ },
+ "<module>.reconcile_quantities": {
+  "names": [
+   "ExportGateReport",
+   "customer",
+   "validate_breakdown",
+   "blocks",
+   "append",
+   "message",
+   "breakdown",
+   "validate_totals",
+   "total_qty",
+   "sum",
+   "entities",
+   "warnings",
+   "extend",
+   "reconcile"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "source",
+   "rep",
+   "bp",
+   "msg",
+   "neg"
+  ],
+  "consts": [
+   "Run the export-time quantity interception for one parsed PO.\n\n    ``source`` is the original file name, shown in the dialog for context.\n    ",
+   [
+    "customer",
+    "source"
+   ],
+   0,
+   "解析总数量为 0，无有效数量可导出",
+   "存在 ",
+   " 个负数量，疑似解析异常",
+   ""
+  ],
+  "n_instructions": 98
+ },
+ "<module>.reconcile_quantities.<genexpr>": {
+  "names": [
+   "lines",
+   "sizes",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "e",
+   "ln",
+   "s"
+  ],
+  "consts": [
+   0,
+   1,
+   null
+  ],
+  "n_instructions": 30
+ },
+ "<module>.scan_batch": {
+  "names": [
+   "pathlib",
+   "Path",
+   "get",
+   "append",
+   "str",
+   "name",
+   "reconcile_quantities",
+   "ok"
+  ],
+  "varnames": [
+   "results",
+   "Path",
+   "ok",
+   "blocked",
+   "r",
+   "po",
+   "recipe",
+   "src",
+   "rep"
+  ],
+  "consts": [
+   "Pre-scan an entire batch before export, partitioning it into records that\n    pass the quantity interception and records that contain hard blocks.\n\n    ``results`` is the same list-of-dicts shape as ``MainWindow.results``\n    (keys: po, recipe, path, ...). Records with no parseable ``po``/``recipe`` are\n    treated as passable (the downstream writer will surface any real error), so\n    the gate never silently drops an unparsed file. Returns ``(ok, blocked)``\n    where ``ok`` is the list of source records to export and ``blocked`` is the\n    list of :class:`ExportGateReport` that carry hard blocks.\n    ",
+   0,
+   [
+    "Path"
+   ],
+   "po",
+   "recipe",
+   null,
+   "path",
+   "",
+   [
+    "source"
+   ]
+  ],
+  "n_instructions": 82
+ }
+}

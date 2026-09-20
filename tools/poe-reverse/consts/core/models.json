@@ -1,0 +1,1509 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "asdict",
+   "fields",
+   "enum",
+   "Enum",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "core.winpath",
+   "excel_hyperlink_formula",
+   "str",
+   "LayoutType",
+   "SizeQty",
+   "OrderLine",
+   "OrderEntity",
+   "PurchaseOrder",
+   "build_row_key",
+   "PoRecipe",
+   "__name__",
+   "po",
+   "template_b_rows",
+   "rows",
+   "len",
+   "r",
+   "expected_key",
+   "print",
+   "MATRIX_2AXIS",
+   "value",
+   "rec",
+   "from_json",
+   "to_json",
+   "rec2",
+   "customer",
+   "layout_type",
+   "splitlines"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/models.py - Unified data contract for Purchase Order Extractor V2.\n\nDesign rule (hard requirement): NO customer name is ever hardcoded in code.\nAll sources (PDF / image, any customer or layout) are parsed into the same\n``PurchaseOrder`` contract. Customer-specific differences live entirely in\n``PoRecipe`` (JSON, cached per layout fingerprint) - never in an ``if customer``.\n\nData hierarchy\n--------------\n    PurchaseOrder                # one source document\n      └─ OrderEntity[]           # one delivery entity inside a PO (a PO may have several)\n           └─ OrderLine[]        # one color/style line, with a size breakdown\n                └─ SizeQty[]     # a single size label + ordered quantity\n\nTemplate B is a LONG table (28 columns A..AB, labels 照搬 V1.6.4): every\n``SizeQty`` becomes its own row. The 7-segment ``_Row Key``\n(Customer|PO|Style|ColorCode|Size|Inseam|Destination) is computed as a plain\nstring so openpyxl (which does not evaluate formulas) can dedupe idempotently.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass",
+    "field",
+    "asdict",
+    "fields"
+   ],
+   [
+    "Enum"
+   ],
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   [
+    "excel_hyperlink_formula"
+   ],
+   "LayoutType",
+   "SizeQty",
+   "OrderLine",
+   "OrderEntity",
+   "PurchaseOrder",
+   "customer",
+   "str",
+   "po_no",
+   "style",
+   "color_code",
+   "size",
+   "inseam",
+   "destination",
+   "return",
+   "PoRecipe",
+   "__main__",
+   "LPP SA",
+   "PO_637JO_2627182_2026-01-15.pdf",
+   "entity_index",
+   "11321589",
+   "channel",
+   "STANDARD",
+   "season",
+   "SS26",
+   "delivery_date",
+   "2026-03-02",
+   "destination_code",
+   "",
+   "packing_method",
+   "MULTIPACK",
+   "price_term",
+   "FOB",
+   "currency",
+   "USD",
+   "size_scale",
+   "ALPHA",
+   "product_group",
+   "C_trousers",
+   "age_sex_desc",
+   "MENS",
+   "product_desc",
+   "MEN'S TROUSERS",
+   "port_loading",
+   "Sihanoukville",
+   "port_discharge",
+   "Gdynia",
+   "ship_mode",
+   "Sea",
+   "vendor_name",
+   "Gs Global Sourcing Co.,Ltd",
+   "payment_terms",
+   "TT HSBC 180 Days",
+   "lines",
+   "637JO",
+   "80X",
+   "BEIGE",
+   "PCS",
+   10.2,
+   "S",
+   744,
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "inseam",
+    "su",
+    "unit_price",
+    "sizes"
+   ],
+   [
+    "customer",
+    "source_file",
+    "entities"
+   ],
+   1,
+   "A",
+   "E",
+   "C",
+   "LPP SA|11321589|637JO|80X|S||",
+   "AA",
+   "OK rows:",
+   "Row Key:",
+   "Color Code:",
+   "| Price Term:",
+   "M",
+   "| Net Amt formula at L (writer fills =I*K):",
+   "L",
+   "deadbeef",
+   [
+    "customer",
+    "layout_type",
+    "fingerprint",
+    "channel_value"
+   ],
+   "Recipe round-trip OK ->",
+   [
+    "customer",
+    "str",
+    "po_no",
+    "str",
+    "style",
+    "str",
+    "color_code",
+    "str",
+    "size",
+    "str",
+    "inseam",
+    "str",
+    "destination",
+    "str",
+    "return",
+    "str"
+   ],
+   []
+  ],
+  "n_instructions": 370
+ },
+ "<module>.LayoutType": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "MATRIX_2AXIS",
+   "MATRIX_1AXIS",
+   "LINE_ITEMS",
+   "CONTROL_SHEET",
+   "MATRIX_PERCARTON",
+   "LINE_ITEMS_EU",
+   "COSTCO_HYBRID",
+   "COSTCO_ECOM",
+   "CELIO",
+   "FRANKIE_ECOM",
+   "BASS_PRO_ACK",
+   "IMPORT_PO",
+   "ANF_PO",
+   "ANF_COMMITMENT"
+  ],
+  "varnames": [],
+  "consts": [
+   "LayoutType",
+   "The PO layouts the recipe engine supports.",
+   "matrix_2axis",
+   "matrix_1axis",
+   "line_items",
+   "control_sheet",
+   "matrix_percarton",
+   "line_items_eu",
+   "costco_hybrid",
+   "costco_ecom",
+   "celio",
+   "frankie_ecom",
+   "bass_pro_ack",
+   "import_po",
+   "anf_po",
+   "anf_commitment",
+   null
+  ],
+  "n_instructions": 37
+ },
+ "<module>.SizeQty": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "size",
+   "__annotations__",
+   "qty",
+   "property",
+   "qty_safe"
+  ],
+  "varnames": [],
+  "consts": [
+   "SizeQty",
+   "A single size label and its ordered quantity.",
+   "",
+   "str",
+   "size",
+   0,
+   "int",
+   "qty",
+   "return",
+   null,
+   [
+    "return",
+    "int"
+   ]
+  ],
+  "n_instructions": 29
+ },
+ "<module>.SizeQty.qty_safe": {
+  "names": [
+   "int",
+   "qty",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   0
+  ],
+  "n_instructions": 22
+ },
+ "<module>.OrderLine": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "style_no",
+   "__annotations__",
+   "color_code",
+   "color_desc",
+   "inseam",
+   "field",
+   "list",
+   "sizes",
+   "unit_price",
+   "su",
+   "printed_row_total",
+   "net_amount",
+   "dict",
+   "extra",
+   "property",
+   "total_qty",
+   "size_labels"
+  ],
+  "varnames": [],
+  "consts": [
+   "OrderLine",
+   "One color (and style) line within an entity, with a size breakdown.",
+   "",
+   "str",
+   "style_no",
+   "color_code",
+   "color_desc",
+   "inseam",
+   [
+    "default_factory"
+   ],
+   "List[SizeQty]",
+   "sizes",
+   null,
+   "Optional[float]",
+   "unit_price",
+   "su",
+   "Optional[int]",
+   "printed_row_total",
+   "net_amount",
+   "Dict[str, str]",
+   "extra",
+   "return",
+   "int",
+   "List[str]",
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "List[str]"
+   ]
+  ],
+  "n_instructions": 91
+ },
+ "<module>.OrderLine.total_qty": {
+  "names": [
+   "sum",
+   "sizes"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.OrderLine.total_qty.<genexpr>": {
+  "names": [
+   "qty_safe"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.OrderLine.size_labels": {
+  "names": [
+   "sizes"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>.OrderLine.size_labels.<listcomp>": {
+  "names": [
+   "size"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [],
+  "n_instructions": 10
+ },
+ "<module>.OrderEntity": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "entity_index",
+   "__annotations__",
+   "style_no",
+   "po_no",
+   "channel",
+   "delivery_date",
+   "destination_code",
+   "packing_method",
+   "wash_method",
+   "washing_color",
+   "payment_terms",
+   "price_term",
+   "currency",
+   "size_scale",
+   "product_group",
+   "age_sex_desc",
+   "product_desc",
+   "season",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "vendor_name",
+   "agent_name",
+   "import_po_no",
+   "reference_no",
+   "cir_no",
+   "freight_terms",
+   "country_of_origin",
+   "dc_address",
+   "field",
+   "list",
+   "lines",
+   "dict",
+   "printed_size_totals",
+   "printed_total_qty",
+   "printed_total_amount",
+   "extra",
+   "property",
+   "total_qty"
+  ],
+  "varnames": [],
+  "consts": [
+   "OrderEntity",
+   "One delivery entity inside a PO. A single PO may contain several entities\n    (each with its own price / delivery date / destination / channel).",
+   0,
+   "int",
+   "entity_index",
+   "",
+   "str",
+   "style_no",
+   "po_no",
+   "channel",
+   "delivery_date",
+   "destination_code",
+   "packing_method",
+   "wash_method",
+   "washing_color",
+   "payment_terms",
+   "price_term",
+   "currency",
+   "size_scale",
+   "product_group",
+   "age_sex_desc",
+   "product_desc",
+   "season",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "vendor_name",
+   "agent_name",
+   "import_po_no",
+   "reference_no",
+   "cir_no",
+   "freight_terms",
+   "country_of_origin",
+   "dc_address",
+   [
+    "default_factory"
+   ],
+   "List[OrderLine]",
+   "lines",
+   "Dict[str, int]",
+   "printed_size_totals",
+   null,
+   "Optional[int]",
+   "printed_total_qty",
+   "Optional[float]",
+   "printed_total_amount",
+   "Dict[str, str]",
+   "extra",
+   "return",
+   [
+    "return",
+    "int"
+   ]
+  ],
+  "n_instructions": 230
+ },
+ "<module>.OrderEntity.total_qty": {
+  "names": [
+   "sum",
+   "lines"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.OrderEntity.total_qty.<genexpr>": {
+  "names": [
+   "total_qty"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.PurchaseOrder": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "customer",
+   "__annotations__",
+   "source_file",
+   "source_file_path",
+   "order_date",
+   "per_destination",
+   "field",
+   "list",
+   "entities",
+   "validation_warnings",
+   "fingerprint",
+   "template_b_rows",
+   "property",
+   "total_qty",
+   "size_totals",
+   "color_totals",
+   "apply_recipe_overrides",
+   "apply_field_defaults",
+   "apply_value_clean",
+   "_cleanable_pairs",
+   "staticmethod",
+   "_color_combined",
+   "_clean_field",
+   "_clean_color"
+  ],
+  "varnames": [],
+  "consts": [
+   "PurchaseOrder",
+   "Top-level document result. Source-agnostic; all 4 PDF types map here.",
+   "",
+   "str",
+   "customer",
+   "source_file",
+   "source_file_path",
+   "order_date",
+   false,
+   "bool",
+   "per_destination",
+   [
+    "default_factory"
+   ],
+   "List[OrderEntity]",
+   "entities",
+   "List[dict]",
+   "validation_warnings",
+   "fingerprint",
+   1,
+   "Y",
+   "po_version",
+   "int",
+   "is_current",
+   "import_batch",
+   "return",
+   "List[Dict[str, object]]",
+   "Dict[str, int]",
+   "overrides",
+   "Dict[str, str]",
+   "None",
+   "recipe",
+   "'PoRecipe'",
+   "list",
+   "code",
+   "desc",
+   "field_name",
+   "pat",
+   "repl",
+   null,
+   [
+    1,
+    "Y",
+    ""
+   ],
+   [
+    "po_version",
+    "int",
+    "is_current",
+    "str",
+    "import_batch",
+    "str",
+    "return",
+    "List[Dict[str, object]]"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "Dict[str, int]"
+   ],
+   [
+    "overrides",
+    "Dict[str, str]",
+    "return",
+    "None"
+   ],
+   [
+    "recipe",
+    "'PoRecipe'",
+    "return",
+    "list"
+   ],
+   [
+    "return",
+    "list"
+   ],
+   [
+    "code",
+    "str",
+    "desc",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "field_name",
+    "str",
+    "pat",
+    "str",
+    "repl",
+    "str",
+    "return",
+    "None"
+   ],
+   [
+    "pat",
+    "str",
+    "repl",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 121
+ },
+ "<module>.PurchaseOrder.template_b_rows": {
+  "names": [
+   "entities",
+   "lines",
+   "sizes",
+   "build_row_key",
+   "customer",
+   "po_no",
+   "style_no",
+   "color_code",
+   "size",
+   "inseam",
+   "destination_code",
+   "append",
+   "season",
+   "color_desc",
+   "qty_safe",
+   "su",
+   "unit_price",
+   "price_term",
+   "currency",
+   "delivery_date",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "payment_terms",
+   "country_of_origin",
+   "source_file_path",
+   "source_file",
+   "excel_hyperlink_formula",
+   "os",
+   "path",
+   "basename",
+   "fingerprint"
+  ],
+  "varnames": [
+   "self",
+   "po_version",
+   "is_current",
+   "import_batch",
+   "out",
+   "ent",
+   "ln",
+   "sq",
+   "rk"
+  ],
+  "consts": [
+   "Flatten into the 27-column Template B schema (columns A..AA).\n\n        V2.0.5 起对齐 V1.6.4 的栏位规范（栏位 label 全部照搬 1.6.4）：相对旧的\n        35 列（A..AI）硬删除了 7 列 —— Channel / Size Scale / Age-Sex Desc /\n        Product Desc / Wash Method / Washing Color / Packing Method —— V2.0.19.x\n        再删 5 列 —— Product Group / Vendor Name / Agent Name / Freight Terms /\n        DC Address —— 余 21 列内容 + 6 列 meta = 27 列（A..AA）。V2.0.19.12 起追\n        加 AA(_Fingerprint) 元数据列供 OSR 回灌学习精确 join。\n\n        Returns dicts keyed by column LETTER (A..AA). Column L (Net Amt) is\n        left as None - the writer fills the live formula ``=I*K``.\n        ",
+   [
+    "customer",
+    "po_no",
+    "style",
+    "color_code",
+    "size",
+    "inseam",
+    "destination"
+   ],
+   "A",
+   "B",
+   "C",
+   "D",
+   "E",
+   "F",
+   "G",
+   "H",
+   "I",
+   "J",
+   "K",
+   null,
+   "",
+   "L",
+   "M",
+   "N",
+   "O",
+   "P",
+   "Q",
+   [
+    "R",
+    "S",
+    "T",
+    "U",
+    "V",
+    "W",
+    "X",
+    "Y",
+    "Z",
+    "AA"
+   ]
+  ],
+  "n_instructions": 179
+ },
+ "<module>.PurchaseOrder.total_qty": {
+  "names": [
+   "sum",
+   "entities"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.PurchaseOrder.total_qty.<genexpr>": {
+  "names": [
+   "total_qty"
+  ],
+  "varnames": [
+   ".0",
+   "ent"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.PurchaseOrder.size_totals": {
+  "names": [
+   "entities",
+   "lines",
+   "sizes",
+   "get",
+   "size",
+   "qty_safe"
+  ],
+  "varnames": [
+   "self",
+   "out",
+   "ent",
+   "ln",
+   "sq"
+  ],
+  "consts": [
+   "Sum of quantities per size label across ALL entities (a document-level\n        per-size total, handy for a quick grand cross-check).",
+   0
+  ],
+  "n_instructions": 37
+ },
+ "<module>.PurchaseOrder.color_totals": {
+  "names": [
+   "entities",
+   "lines",
+   "get",
+   "color_code",
+   "total_qty"
+  ],
+  "varnames": [
+   "self",
+   "out",
+   "ent",
+   "ln"
+  ],
+  "consts": [
+   "Sum of quantities per colour code across ALL entities (a document-level\n        per-colour total).",
+   0
+  ],
+  "n_instructions": 31
+ },
+ "<module>.PurchaseOrder.apply_recipe_overrides": {
+  "names": [
+   "get",
+   "isinstance",
+   "str",
+   "json",
+   "loads",
+   "Exception",
+   "dict",
+   "entities",
+   "lines",
+   "_color_combined",
+   "color_code",
+   "color_desc",
+   "split",
+   "strip",
+   "items",
+   "startswith",
+   "customer",
+   "setattr",
+   "style_no",
+   "float",
+   "replace",
+   "TypeError",
+   "ValueError",
+   "unit_price",
+   "su",
+   "int",
+   "len",
+   "getattr",
+   "print",
+   "inseam",
+   "append",
+   "sizes",
+   "size",
+   "max",
+   "qty"
+  ],
+  "varnames": [
+   "self",
+   "overrides",
+   "color_edits",
+   "color_map",
+   "ent",
+   "ln",
+   "combined",
+   "new",
+   "c",
+   "dd",
+   "entity_fields",
+   "ent_overrides",
+   "line_overrides",
+   "k",
+   "v",
+   "_style_no_reach_needle",
+   "price",
+   "idx_str",
+   "fields",
+   "idx",
+   "e",
+   "fk",
+   "fv",
+   "old",
+   "key",
+   "ins",
+   "cands",
+   "ov",
+   "sizes",
+   "sq"
+  ],
+  "consts": [
+   "Apply user-confirmed field overrides from the recipe confirm dialog.\n\n        Header-level overrides (po_no, season, ...) are applied to every entity;\n        line-level overrides (style_no, unit_price, su) are applied to every line.\n        The ``su`` default (e.g. \"PCS\") persisted from the confirm dialog is\n        propagated to every OrderLine so empty units do not keep reappearing.\n        This guarantees that what the user typed in the confirm box is exactly\n        what appears in the exported Excel, even when the synthesized anchor\n        would otherwise capture the whole surrounding line.\n        ",
+   null,
+   "color_edits",
+   " / ",
+   1,
+   "",
+   [
+    "<frozenset>",
+    "age_sex_desc",
+    "agent_name",
+    "channel",
+    "cir_no",
+    "country_of_origin",
+    "currency",
+    "dc_address",
+    "delivery_date",
+    "destination_code",
+    "freight_terms",
+    "import_po_no",
+    "packing_method",
+    "payment_terms",
+    "po_no",
+    "port_discharge",
+    "port_loading",
+    "price_term",
+    "product_desc",
+    "product_group",
+    "reference_no",
+    "season",
+    "ship_mode",
+    "size_scale",
+    "style_no",
+    "vendor_name",
+    "wash_method",
+    "washing_color"
+   ],
+   "__ent_overrides__",
+   "__line_overrides__",
+   "__",
+   "customer",
+   "style_no",
+   "style_no_default_reaches_every_OrderLine",
+   "unit_price",
+   ",",
+   "su",
+   0,
+   "po_no",
+   "[override] entity ",
+   " style_no: ",
+   " -> ",
+   "␟",
+   [
+    null,
+    ""
+   ],
+   "inseam",
+   "sizes"
+  ],
+  "n_instructions": 587
+ },
+ "<module>.PurchaseOrder.apply_field_defaults": {
+  "names": [
+   "_cleanable_pairs",
+   "getattr",
+   "apply_recipe_overrides",
+   "dict",
+   "get",
+   "len",
+   "append"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "before",
+   "defaults",
+   "after",
+   "bmap",
+   "changes",
+   "label",
+   "new",
+   "old",
+   "o",
+   "n"
+  ],
+  "consts": [
+   "Apply persisted, layout-scoped field defaults (cross-PO propagation).\n\n        Unlike :meth:`apply_recipe_overrides` (which is current-file-only and is\n        stripped before caching), these defaults live on the recipe and are\n        applied to EVERY extraction of this fingerprint, so a correction made in\n        the confirm dialog reaches all sister POs — not just the one edited. Uses\n        the same field mapping as ``apply_recipe_overrides``.\n\n        Returns a list of human-readable change strings (e.g.\n        ``\"H1·destination_code: '' → 'EG.CL.R' (默认)\"``) for logging; empty list\n        means nothing was altered.\n        ",
+   "field_defaults",
+   null,
+   "",
+   28,
+   25,
+   "…",
+   ": ",
+   " → ",
+   " (默认)"
+  ],
+  "n_instructions": 108
+ },
+ "<module>.PurchaseOrder.apply_value_clean": {
+  "names": [
+   "_cleanable_pairs",
+   "getattr",
+   "items",
+   "isinstance",
+   "list",
+   "dict",
+   "get",
+   "_clean_color",
+   "_clean_field",
+   "len",
+   "append"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "before",
+   "cleans",
+   "field_name",
+   "rules",
+   "spec",
+   "pat",
+   "repl",
+   "after",
+   "bmap",
+   "changes",
+   "label",
+   "new",
+   "old",
+   "o",
+   "n"
+  ],
+  "consts": [
+   "Apply user-confirmed cleanup rules from the recipe.\n\n        Called by ``parse_doc`` for EVERY extraction (cached or not), so a\n        correction made in the confirm dialog propagates to all later POs of the\n        same layout. ``recipe.cleans`` is a dict of field-name -> list of\n        {\"pat\", \"repl\"} rules; the key ``\"color\"`` targets the combined\n        \"CODE / DESC\" string of every line. Rules CHAIN in order (idempotent),\n        so multiple corrections accumulate instead of overwriting (whack-a-mole).\n\n        Returns a list of human-readable change strings (e.g.\n        ``\"L1-1·款式: '014KK-08X-XS' → '014KK'\"``) for logging/observability;\n        empty list means nothing was altered.\n        ",
+   "cleans",
+   null,
+   "pat",
+   "",
+   "repl",
+   "color",
+   28,
+   25,
+   "…",
+   ": ",
+   " → "
+  ],
+  "n_instructions": 166
+ },
+ "<module>.PurchaseOrder._cleanable_pairs": {
+  "names": [
+   "enumerate",
+   "entities",
+   "append",
+   "getattr",
+   "customer",
+   "lines",
+   "style_no",
+   "_color_combined",
+   "color_code",
+   "color_desc"
+  ],
+  "varnames": [
+   "self",
+   "pairs",
+   "ei",
+   "ent",
+   "k",
+   "li",
+   "ln"
+  ],
+  "consts": [
+   "Snapshot of all (label, value) strings affected by value/color_clean.\n\n        Used by :meth:`apply_value_clean` to compute a readable diff of what was\n        changed so the log can show the user that a correction took effect.\n        ",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "channel",
+    "size_scale",
+    "product_group",
+    "age_sex_desc",
+    "product_desc",
+    "destination_code",
+    "wash_method",
+    "washing_color",
+    "packing_method",
+    "delivery_date",
+    "import_po_no",
+    "reference_no",
+    "cir_no",
+    "freight_terms",
+    "country_of_origin",
+    "dc_address"
+   ],
+   "H",
+   1,
+   "·",
+   "",
+   "·customer",
+   "L",
+   "-",
+   "·款式",
+   "·颜色"
+  ],
+  "n_instructions": 119
+ },
+ "<module>.PurchaseOrder._color_combined": {
+  "names": [
+   "join",
+   "filter"
+  ],
+  "varnames": [
+   "code",
+   "desc"
+  ],
+  "consts": [
+   null,
+   " / ",
+   ""
+  ],
+  "n_instructions": 17
+ },
+ "<module>.PurchaseOrder._clean_field": {
+  "names": [
+   "re",
+   "compile",
+   "error",
+   "entities",
+   "sub",
+   "customer",
+   "setattr",
+   "getattr",
+   "lines",
+   "style_no"
+  ],
+  "varnames": [
+   "self",
+   "field_name",
+   "pat",
+   "repl",
+   "rx",
+   "entity_fields",
+   "ent",
+   "ln"
+  ],
+  "consts": [
+   null,
+   [
+    "<frozenset>",
+    "age_sex_desc",
+    "agent_name",
+    "channel",
+    "cir_no",
+    "country_of_origin",
+    "currency",
+    "dc_address",
+    "delivery_date",
+    "destination_code",
+    "freight_terms",
+    "import_po_no",
+    "packing_method",
+    "payment_terms",
+    "po_no",
+    "port_discharge",
+    "port_loading",
+    "price_term",
+    "product_desc",
+    "product_group",
+    "reference_no",
+    "season",
+    "ship_mode",
+    "size_scale",
+    "style_no",
+    "vendor_name",
+    "wash_method",
+    "washing_color"
+   ],
+   "customer",
+   "",
+   "style_no"
+  ],
+  "n_instructions": 94
+ },
+ "<module>.PurchaseOrder._clean_color": {
+  "names": [
+   "re",
+   "compile",
+   "error",
+   "entities",
+   "lines",
+   "_color_combined",
+   "color_code",
+   "color_desc",
+   "sub",
+   "split",
+   "strip"
+  ],
+  "varnames": [
+   "self",
+   "pat",
+   "repl",
+   "rx",
+   "ent",
+   "ln",
+   "combined",
+   "new",
+   "c",
+   "d"
+  ],
+  "consts": [
+   null,
+   " / ",
+   1,
+   ""
+  ],
+  "n_instructions": 106
+ },
+ "<module>.build_row_key": {
+  "names": [
+   "join"
+  ],
+  "varnames": [
+   "customer",
+   "po_no",
+   "style",
+   "color_code",
+   "size",
+   "inseam",
+   "destination"
+  ],
+  "consts": [
+   "7-segment Template B dedup key (column AA, _Row Key):\n\n        Customer | PO | Style | ColorCode | Size | Inseam | Destination\n\n    V2.0.5：随 28 列改造去掉了第 8 段 PackingMethod —— Packing Method 栏位已从\n    表中删除，若仍保留在行键里，两行在表面上完全相同却因不可见字段不同而生成\n    不同的键，会被去重逻辑当成两条新行重复追加。行键只应由表内可见的定位列组成。\n    ",
+   "|",
+   ""
+  ],
+  "n_instructions": 28
+ },
+ "<module>.PoRecipe": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "fingerprint",
+   "__annotations__",
+   "customer",
+   "LayoutType",
+   "MATRIX_2AXIS",
+   "value",
+   "layout_type",
+   "version",
+   "note",
+   "po_no_anchor",
+   "customer_anchor",
+   "season_anchor",
+   "delivery_anchor",
+   "currency_anchor",
+   "price_term_anchor",
+   "style_anchor",
+   "price_anchor",
+   "packing_anchor",
+   "packing_method",
+   "port_discharge_anchor",
+   "port_loading_anchor",
+   "ship_mode_anchor",
+   "agent_anchor",
+   "vendor_anchor",
+   "payment_terms_anchor",
+   "import_po_no_anchor",
+   "reference_no_anchor",
+   "cir_no_anchor",
+   "freight_terms_anchor",
+   "country_of_origin_anchor",
+   "dc_address_anchor",
+   "channel_anchor",
+   "channel_value",
+   "entity_anchor",
+   "destination_anchor",
+   "section_anchor",
+   "section_delim_pattern",
+   "line_pattern",
+   "order_unit",
+   "color_anchor",
+   "has_inseam",
+   "size_header_token",
+   "total_token",
+   "grid_orientation",
+   "size_header_anchor",
+   "color_code_pattern",
+   "require_row_total",
+   "breakdown_anchor",
+   "summary_anchor",
+   "field",
+   "dict",
+   "line_field_map",
+   "field_map",
+   "has_color_total",
+   "has_size_total",
+   "size_encoding",
+   "dedup_style_size",
+   "field_overrides",
+   "field_defaults",
+   "cleans",
+   "color_vocab",
+   "validators",
+   "date_format",
+   "date_dayfirst",
+   "to_json",
+   "classmethod",
+   "from_json"
+  ],
+  "varnames": [],
+  "consts": [
+   "PoRecipe",
+   "The extraction recipe. Every customer- or layout-specific difference lives\n    here as data, never as ``if COLIN'S:`` in code. JSON-serializable; cached per\n    layout fingerprint so the FIRST PO of a customer uses AI + manual confirm, and\n    every later PO of the same layout is extracted zero-AI.\n\n    layout_type drives which parser consumes the recipe:\n        matrix_2axis / matrix_1axis -> grid parsers\n        line_items                  -> row parser\n    ",
+   "",
+   "str",
+   "fingerprint",
+   "customer",
+   "layout_type",
+   "1",
+   "version",
+   "note",
+   "ORDER NO[.\\s:]+(\\S+)",
+   "po_no_anchor",
+   "^(.*?)\\s+Purchase Order",
+   "customer_anchor",
+   "Season:\\s*(\\S+)",
+   "season_anchor",
+   "Shipment date:\\s*(\\S+)",
+   "delivery_anchor",
+   "Currency:\\s*(\\S+)",
+   "currency_anchor",
+   "Terms of payment:\\s*(.+)",
+   "price_term_anchor",
+   "(?:Model\\s+No\\.|STYLE\\s+NO)[\\s.]*[:.]?\\s*(\\S+)",
+   "style_anchor",
+   "UNIT PR[İI]CE\\S*:\\s*([\\d.,]+)",
+   "price_anchor",
+   "MULTIPACK",
+   "packing_anchor",
+   "packing_method",
+   "Port of discharge:\\s*(\\S+)",
+   "port_discharge_anchor",
+   "(?:Port of loading|Loading port|Place of receipt)[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+   "port_loading_anchor",
+   "Transport Type:\\s*(\\S+)",
+   "ship_mode_anchor",
+   "Agent:\\s*(.+)",
+   "agent_anchor",
+   "Supplier:\\s*(.+)",
+   "vendor_anchor",
+   "payment_terms_anchor",
+   "Import\\s*PO\\s*(?:#|No|Number)?[.\\s:]+(\\S+)",
+   "import_po_no_anchor",
+   "Reference\\s*(?:#|No)?[.\\s:]+(\\S+)",
+   "reference_no_anchor",
+   "CIR\\s*(?:#|No)?[.\\s:]+(\\S+)",
+   "cir_no_anchor",
+   "Freight\\s*Terms?[.\\s:]+(\\S+(?:\\s+\\S+)?)",
+   "freight_terms_anchor",
+   "(?:Country\\s*of\\s*Origin|Origin\\s*Country|Exiting\\s*Country)[.\\s:]+(\\S+)",
+   "country_of_origin_anchor",
+   "(?:DC\\s*Address|Distribution\\s*Center|Deliver\\s*to)[.\\s:]+(\\S.+)",
+   "dc_address_anchor",
+   "E-COMM",
+   "channel_anchor",
+   "channel_value",
+   "Entity\\s+\\d+\\s+Order No:\\s*(\\S+)(?:\\s+(E-COMM))?",
+   "entity_anchor",
+   "Destination Code:(\\S+)",
+   "destination_anchor",
+   "section_anchor",
+   "^(DESTINATION|PACKAGING|COLOR) DETAILS$",
+   "section_delim_pattern",
+   "line_pattern",
+   "PCS",
+   "order_unit",
+   "COLOR NO\\s*:\\s*(\\S+)\\s+(.+)",
+   "color_anchor",
+   false,
+   "bool",
+   "has_inseam",
+   "COLOR NO",
+   "size_header_token",
+   "TOTAL",
+   "total_token",
+   "rows",
+   "grid_orientation",
+   "size_header_anchor",
+   "color_code_pattern",
+   "require_row_total",
+   "breakdown_anchor",
+   "summary_anchor",
+   [
+    "default_factory"
+   ],
+   "Dict[str, str]",
+   "line_field_map",
+   "field_map",
+   "has_color_total",
+   "has_size_total",
+   "size_encoding",
+   "dedup_style_size",
+   "field_overrides",
+   "field_defaults",
+   "Dict[str, List[Dict[str, str]]]",
+   "cleans",
+   "color_vocab",
+   "validators",
+   "date_format",
+   "date_dayfirst",
+   "return",
+   "s",
+   "'PoRecipe'",
+   null,
+   [
+    "return",
+    "str"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "'PoRecipe'"
+   ]
+  ],
+  "n_instructions": 406
+ },
+ "<module>.PoRecipe.to_json": {
+  "names": [
+   "json",
+   "dumps",
+   "asdict"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ]
+  ],
+  "n_instructions": 13
+ },
+ "<module>.PoRecipe.from_json": {
+  "names": [
+   "json",
+   "loads",
+   "fields",
+   "dict",
+   "get",
+   "isinstance",
+   "items",
+   "setdefault",
+   "append"
+  ],
+  "varnames": [
+   "cls",
+   "s",
+   "d",
+   "cleans",
+   "vc",
+   "f_name",
+   "spec",
+   "cc",
+   "kwargs"
+  ],
+  "consts": [
+   null,
+   "cleans",
+   "value_clean",
+   "pat",
+   "",
+   "repl",
+   [
+    "pat",
+    "repl"
+   ],
+   "color_clean",
+   "color",
+   "field_defaults",
+   []
+  ],
+  "n_instructions": 161
+ },
+ "<module>.PoRecipe.from_json.<setcomp>": {
+  "names": [
+   "name"
+  ],
+  "varnames": [
+   ".0",
+   "f"
+  ],
+  "consts": [],
+  "n_instructions": 10
+ },
+ "<module>.PoRecipe.from_json.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [],
+  "n_instructions": 17
+ }
+}

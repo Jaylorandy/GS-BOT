@@ -1,0 +1,23 @@
+==================== <module>.PurchaseOrder.apply_recipe_overrides consts[0] ====================
+"Apply user-confirmed field overrides from the recipe confirm dialog.\n\n        Header-level overrides (po_no, season, ...) are applied to every entity;\n        line-level overrides (style_no, unit_price, su) are applied to every line.\n        The ``su`` default (e.g. \"PCS\") persisted from the confirm dialog is\n        propagated to every OrderLine so empty units do not keep reappearing.\n        This guarantees that what the user typed in the confirm box is exactly\n        what appears in the exported Excel, even when the synthesized anchor\n        would otherwise capture the whole surrounding line.\n        "
+
+==================== <module>.PurchaseOrder.apply_recipe_overrides consts[6] ====================
+["<frozenset>", "age_sex_desc", "agent_name", "channel", "cir_no", "country_of_origin", "currency", "dc_address", "delivery_date", "destination_code", "freight_terms", "import_po_no", "packing_method", "payment_terms", "po_no", "port_discharge", "port_loading", "price_term", "product_desc", "product_group", "reference_no", "season", "ship_mode", "size_scale", "style_no", "vendor_name", "wash_method", "washing_color"]
+
+==================== <module>.PurchaseOrder.apply_field_defaults consts[0] ====================
+"Apply persisted, layout-scoped field defaults (cross-PO propagation).\n\n        Unlike :meth:`apply_recipe_overrides` (which is current-file-only and is\n        stripped before caching), these defaults live on the recipe and are\n        applied to EVERY extraction of this fingerprint, so a correction made in\n        the confirm dialog reaches all sister POs — not just the one edited. Uses\n        the same field mapping as ``apply_recipe_overrides``.\n\n        Returns a list of human-readable change strings (e.g.\n        ``\"H1·destination_code: '' → 'EG.CL.R' (默认)\"``) for logging; empty list\n        means nothing was altered.\n        "
+
+==================== <module>.PurchaseOrder.apply_value_clean consts[0] ====================
+"Apply user-confirmed cleanup rules from the recipe.\n\n        Called by ``parse_doc`` for EVERY extraction (cached or not), so a\n        correction made in the confirm dialog propagates to all later POs of the\n        same layout. ``recipe.cleans`` is a dict of field-name -> list of\n        {\"pat\", \"repl\"} rules; the key ``\"color\"`` targets the combined\n        \"CODE / DESC\" string of every line. Rules CHAIN in order (idempotent),\n        so multiple corrections accumulate instead of overwriting (whack-a-mole).\n\n        Returns a list of human-readable change strings (e.g.\n        ``\"L1-1·款式: '014KK-08X-XS' → '014KK'\"``) for logging/observability;\n        empty list means nothing was altered.\n        "
+
+==================== <module>.PurchaseOrder._cleanable_pairs consts[0] ====================
+"Snapshot of all (label, value) strings affected by value/color_clean.\n\n        Used by :meth:`apply_value_clean` to compute a readable diff of what was\n        changed so the log can show the user that a correction took effect.\n        "
+
+==================== <module>.PurchaseOrder._cleanable_pairs consts[1] ====================
+["po_no", "season", "currency", "price_term", "payment_terms", "port_loading", "port_discharge", "ship_mode", "vendor_name", "agent_name", "channel", "size_scale", "product_group", "age_sex_desc", "product_desc", "destination_code", "wash_method", "washing_color", "packing_method", "delivery_date", "import_po_no", "reference_no", "cir_no", "freight_terms", "country_of_origin", "dc_address"]
+
+==================== <module>.PurchaseOrder._clean_field consts[1] ====================
+["<frozenset>", "age_sex_desc", "agent_name", "channel", "cir_no", "country_of_origin", "currency", "dc_address", "delivery_date", "destination_code", "freight_terms", "import_po_no", "packing_method", "payment_terms", "po_no", "port_discharge", "port_loading", "price_term", "product_desc", "product_group", "reference_no", "season", "ship_mode", "size_scale", "style_no", "vendor_name", "wash_method", "washing_color"]
+
+==================== <module>.build_row_key consts[0] ====================
+"7-segment Template B dedup key (column AA, _Row Key):\n\n        Customer | PO | Style | ColorCode | Size | Inseam | Destination\n\n    V2.0.5：随 28 列改造去掉了第 8 段 PackingMethod —— Packing Method 栏位已从\n    表中删除，若仍保留在行键里，两行在表面上完全相同却因不可见字段不同而生成\n    不同的键，会被去重逻辑当成两条新行重复追加。行键只应由表内可见的定位列组成。\n    "

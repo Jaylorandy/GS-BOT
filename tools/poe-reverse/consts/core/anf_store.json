@@ -1,0 +1,311 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "typing",
+   "Dict",
+   "Optional",
+   "models",
+   "PurchaseOrder",
+   "CommitmentRecord",
+   "CommitmentStore"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/anf_store.py - A&F Commitment Store + KI backfill.\n\nA single A&F tech pack spreads across N PO PDFs (each referencing its own\n``Commitment:`` number) and M Commitment PDFs (one commitment per file). The PO\nPDFs lack the Key Item (KI) / Mill / Fabric, which only exist on the Commitment\nsheet. This module holds the parsed Commitment records and backfills them onto the\nPO entities by ``Commitment:`` number.\n\nKeying: the user confirmed a Tech Pack can carry several KIs, so the join key MUST\nbe the Commitment # (unique per KI), never the Tech Pack #.\n",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "Dict",
+    "Optional"
+   ],
+   1,
+   [
+    "PurchaseOrder"
+   ],
+   "CommitmentRecord",
+   "CommitmentStore",
+   null
+  ],
+  "n_instructions": 41
+ },
+ "<module>.CommitmentRecord": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__slots__",
+   "__init__",
+   "as_dict"
+  ],
+  "varnames": [],
+  "consts": [
+   "CommitmentRecord",
+   "One parsed A&F Commitment sheet (one per file).",
+   [
+    "commitment_no",
+    "ki_no",
+    "tech_pack_no",
+    "mill_name",
+    "fabric_ref",
+    "vendor_code",
+    "factory_code",
+    "ship_via",
+    "ship_date",
+    "carton_std"
+   ],
+   "return",
+   "Dict[str, str]",
+   null,
+   [
+    "return",
+    "Dict[str, str]"
+   ]
+  ],
+  "n_instructions": 18
+ },
+ "<module>.CommitmentRecord.__init__": {
+  "names": [
+   "get",
+   "commitment_no",
+   "ki_no",
+   "tech_pack_no",
+   "mill_name",
+   "fabric_ref",
+   "vendor_code",
+   "factory_code",
+   "ship_via",
+   "ship_date",
+   "carton_std"
+  ],
+  "varnames": [
+   "self",
+   "kw"
+  ],
+  "consts": [
+   null,
+   "commitment_no",
+   "",
+   "ki_no",
+   "tech_pack_no",
+   "mill_name",
+   "fabric_ref",
+   "vendor_code",
+   "factory_code",
+   "ship_via",
+   "ship_date",
+   "carton_std"
+  ],
+  "n_instructions": 103
+ },
+ "<module>.CommitmentRecord.as_dict": {
+  "names": [
+   "commitment_no",
+   "ki_no",
+   "tech_pack_no",
+   "mill_name",
+   "fabric_ref",
+   "vendor_code",
+   "factory_code",
+   "ship_via",
+   "ship_date",
+   "carton_std"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   [
+    "commitment_no",
+    "ki_no",
+    "tech_pack_no",
+    "mill_name",
+    "fabric_ref",
+    "vendor_code",
+    "factory_code",
+    "ship_via",
+    "ship_date",
+    "carton_std"
+   ]
+  ],
+  "n_instructions": 24
+ },
+ "<module>.CommitmentStore": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "classmethod",
+   "from_commitment_pos",
+   "add_po",
+   "get",
+   "backfill",
+   "__len__"
+  ],
+  "varnames": [],
+  "consts": [
+   "CommitmentStore",
+   "Keyed by Commitment # (string). One record per Commitment PDF.",
+   "commitment_pos",
+   "list",
+   "return",
+   "'CommitmentStore'",
+   "po",
+   "PurchaseOrder",
+   "None",
+   "commitment_no",
+   "str",
+   "Optional[CommitmentRecord]",
+   "bool",
+   null,
+   [
+    "commitment_pos",
+    "list",
+    "return",
+    "'CommitmentStore'"
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "return",
+    "None"
+   ],
+   [
+    "commitment_no",
+    "str",
+    "return",
+    "Optional[CommitmentRecord]"
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 34
+ },
+ "<module>.CommitmentStore.__init__": {
+  "names": [
+   "_by_no"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 6
+ },
+ "<module>.CommitmentStore.from_commitment_pos": {
+  "names": [
+   "entities",
+   "CommitmentRecord",
+   "extra",
+   "commitment_no",
+   "_by_no"
+  ],
+  "varnames": [
+   "cls",
+   "commitment_pos",
+   "store",
+   "po",
+   "ent",
+   "rec"
+  ],
+  "consts": [
+   "Build a store from a list of parsed ANF_COMMITMENT ``PurchaseOrder``s.",
+   []
+  ],
+  "n_instructions": 36
+ },
+ "<module>.CommitmentStore.add_po": {
+  "names": [
+   "entities",
+   "CommitmentRecord",
+   "extra",
+   "commitment_no",
+   "_by_no"
+  ],
+  "varnames": [
+   "self",
+   "po",
+   "ent",
+   "rec"
+  ],
+  "consts": [
+   null,
+   []
+  ],
+  "n_instructions": 26
+ },
+ "<module>.CommitmentStore.get": {
+  "names": [
+   "_by_no",
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   "self",
+   "commitment_no"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 13
+ },
+ "<module>.CommitmentStore.backfill": {
+  "names": [
+   "entities",
+   "extra",
+   "get",
+   "strip",
+   "_by_no",
+   "dict",
+   "as_dict",
+   "items",
+   "setdefault"
+  ],
+  "varnames": [
+   "self",
+   "po",
+   "changed",
+   "ent",
+   "cno",
+   "rec",
+   "merged",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "Backfill KI / mill / fabric onto every entity of ``po`` by its\n        ``commitment_no``. Returns True if at least one entity was filled.",
+   false,
+   "commitment_no",
+   "",
+   true
+  ],
+  "n_instructions": 66
+ },
+ "<module>.CommitmentStore.__len__": {
+  "names": [
+   "len",
+   "_by_no"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ }
+}

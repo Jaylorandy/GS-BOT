@@ -1,0 +1,478 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "compile",
+   "_SIZE_TOKEN_RE",
+   "_PRICE_TAIL",
+   "_first",
+   "_eu_float",
+   "_eu_int",
+   "_is_eu_int",
+   "_eu_date",
+   "_extract_celio_header",
+   "_extract_size_breakdown",
+   "CelioParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/celio.py - CELIO France PO (Implant order \"IMP\").\n\nLayout (e.g. PO 60127501 POSTRAM, 6 pages):\n  page 0  - header block (PO number / Season / Shipping mode / Incoterm /\n            Payment terms / delivery date / MI) + the STANDARD packaging\n            line-item block (one row per colour x size, EU decimals).\n  page 1/3/5 - \"Terms of buying\" boilerplate (ignored).\n  page 2  - the Homogene packaging line-item block + a size-breakdown matrix\n            (``XXXS XXS XS S M L XL XXL XXXL`` header, then one row per colour\n            with ``/`` empty markers + per-size qty + a trailing total) + the\n            final ``BOX ORDERED / PIECES ORDERED / TOTAL AMOUNT`` summary.\n  page 4  - signature block (ignored).\n\nKey facts:\n  * Per-size quantities are taken from the size-breakdown matrix (already the\n    combined STANDARD+Homogene totals), NOT from re-summing the two line-item\n    blocks whose rows wrap awkwardly across lines.\n  * European numbers: dot = thousands separator, comma = decimal (``1.110``,\n    ``9,50``, ``45.495,50``).\n  * Prices: the column aligned under ``UNIT PRICE`` is the USD cost/FOB price\n    (``9,50 USD``); the ``39,99 EUR`` value sits in an unlabelled retail-price\n    column and is NOT the PO amount. The PO totals are USD, so the OSR\n    ``Unit Price`` = USD price and ``Currency`` = USD.\n\nISOLATED: self-contained; does not touch matrix_* / line_items / control_sheet /\ncostco_* / line_items_eu.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   "^(?:X{0,4}[SL]|[SML]|\\d{1,3}[A-Z]?)$",
+   "(\\d+,\\d{2})\\s+(\\d+,\\d{2})\\s+USD\\s+([\\d.,]+)\\s+USD",
+   "regex",
+   "str",
+   "text",
+   "flags",
+   "int",
+   "return",
+   "float",
+   "bool",
+   "s",
+   "dict",
+   "CelioParser",
+   [
+    0
+   ],
+   [
+    "regex",
+    "str",
+    "text",
+    "str",
+    "flags",
+    "int",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "float"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ],
+   [
+    "text",
+    "str"
+   ]
+  ],
+  "n_instructions": 95
+ },
+ "<module>._first": {
+  "names": [
+   "re",
+   "search",
+   "groups",
+   "group",
+   "strip"
+  ],
+  "varnames": [
+   "regex",
+   "text",
+   "flags",
+   "m"
+  ],
+  "consts": [
+   null,
+   "",
+   1,
+   0
+  ],
+  "n_instructions": 33
+ },
+ "<module>._eu_float": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "float",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   "EU decimal: ``9,50`` -> 9.5, ``45.495,50`` -> 45495.5, ``1.110,00`` -> 1110.0.",
+   null,
+   0.0,
+   ".",
+   "",
+   ","
+  ],
+  "n_instructions": 41
+ },
+ "<module>._eu_int": {
+  "names": [
+   "int",
+   "str",
+   "strip",
+   "replace"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   "EU integer with dot-thousands: ``1.366`` -> 1366, ``510`` -> 510.",
+   ".",
+   ""
+  ],
+  "n_instructions": 17
+ },
+ "<module>._is_eu_int": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "isdigit"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ".",
+   ""
+  ],
+  "n_instructions": 17
+ },
+ "<module>._eu_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "group"
+  ],
+  "varnames": [
+   "s",
+   "m"
+  ],
+  "consts": [
+   "``20.07.2026`` -> ``2026-07-20``.",
+   "(\\d{2})\\.(\\d{2})\\.(\\d{4})",
+   "",
+   3,
+   "-",
+   2,
+   1
+  ],
+  "n_instructions": 39
+ },
+ "<module>._extract_celio_header": {
+  "names": [
+   "re",
+   "search",
+   "group",
+   "_first",
+   "split",
+   "reversed",
+   "fullmatch",
+   "_eu_date",
+   "_PRICE_TAIL",
+   "_eu_float"
+  ],
+  "varnames": [
+   "text",
+   "h",
+   "m",
+   "incoterm",
+   "toks",
+   "t"
+  ],
+  "consts": [
+   null,
+   "(CELIO\\s+FRANCE\\s+SAS)",
+   1,
+   "CELIO",
+   "customer",
+   "PURCHASE ORDER N°\\s*(\\d+)",
+   "po_no",
+   "Purchase Order Nr:\\s*(\\d+)",
+   "Season:\\s*([A-Z]+\\s+\\d{4})",
+   "season",
+   "Shipping mode:\\s*(\\w+)",
+   "ship_mode",
+   "Incoterm:\\s*(.*?)(?:\\s+Origin of Fabric|$)",
+   0,
+   "",
+   "price_term",
+   "port_loading",
+   "[A-Z]{4,}",
+   "FABRIC",
+   "Payment terms:\\s*(.*?)\\s+MI:",
+   "payment_terms",
+   "MI:\\s*(?:[A-Z]{2}\\s+)?([A-Z]+)",
+   "country_of_origin",
+   "Initial delivery date to forwarder:\\s*(\\d{2}\\.\\d{2}\\.\\d{4})",
+   "ship_date",
+   "Country:\\s*(\\w+)",
+   "destination",
+   "([A-Z][A-Z0-9]{3,})\\s+\\d{14}",
+   "style_no",
+   2,
+   0.0,
+   "unit_price",
+   "USD",
+   "currency"
+  ],
+  "n_instructions": 184
+ },
+ "<module>._extract_size_breakdown": {
+  "names": [
+   "split",
+   "enumerate",
+   "len",
+   "all",
+   "join",
+   "strip",
+   "zip",
+   "append"
+  ],
+  "varnames": [
+   "text",
+   "lines",
+   "i",
+   "ln",
+   "toks",
+   "sizes",
+   "colors",
+   "j",
+   "vtoks",
+   "size_vals",
+   "color_part",
+   "color_desc",
+   "qty"
+  ],
+  "consts": [
+   "Return ``[(color_desc, [(size, qty), ...]), ...]`` from the size-breakdown\n    matrix. The header line lists the ordered size labels; each value row below\n    it is ``<color desc> / <N size values (``/`` or qty)> <total>``. The first\n    valid matrix (with at least one resolved colour) wins.",
+   "\n",
+   4,
+   1,
+   2,
+   -1,
+   null,
+   "/",
+   " "
+  ],
+  "n_instructions": 185
+ },
+ "<module>._extract_size_breakdown.<listcomp>": {
+  "names": [
+   "_eu_int"
+  ],
+  "varnames": [
+   ".0",
+   "s",
+   "v"
+  ],
+  "consts": [
+   "/",
+   0
+  ],
+  "n_instructions": 27
+ },
+ "<module>._extract_size_breakdown.<genexpr>": {
+  "names": [
+   "_is_eu_int"
+  ],
+  "varnames": [
+   ".0",
+   "v"
+  ],
+  "consts": [
+   "/",
+   null
+  ],
+  "n_instructions": 20
+ },
+ "<module>.CelioParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "CELIO",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "CelioParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.CelioParser.parse": {
+  "names": [
+   "doc_text",
+   "_extract_celio_header",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "_extract_size_breakdown",
+   "lines",
+   "append",
+   "OrderLine",
+   "re",
+   "search",
+   "_eu_int",
+   "group",
+   "printed_total_qty",
+   "_eu_float",
+   "printed_total_amount",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "hdr",
+   "po",
+   "ent",
+   "style_no",
+   "unit_price",
+   "color_desc",
+   "size_qty",
+   "m"
+  ],
+  "consts": [
+   null,
+   false,
+   [
+    "crop_footer"
+   ],
+   "customer",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "ship_date",
+   "port_loading",
+   "ship_mode",
+   "destination",
+   "country_of_origin",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "port_loading",
+    "ship_mode",
+    "destination_code",
+    "country_of_origin"
+   ],
+   "style_no",
+   "unit_price",
+   "PCS",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ],
+   "BOX ORDERED PIECES ORDERED TOTAL AMOUNT\\s*\\n\\s*\\d+\\s+([\\d.]+)\\s+([\\d.,]+)\\s+USD",
+   1,
+   2
+  ],
+  "n_instructions": 152
+ },
+ "<module>.CelioParser.parse.<listcomp>": {
+  "names": [
+   "SizeQty"
+  ],
+  "varnames": [
+   ".0",
+   "s",
+   "q"
+  ],
+  "consts": [
+   [
+    "size",
+    "qty"
+   ]
+  ],
+  "n_instructions": 16
+ }
+}

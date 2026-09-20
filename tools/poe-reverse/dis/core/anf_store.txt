@@ -1,0 +1,488 @@
+# module: core.anf_store
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\anf_store.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/anf_store.py - A&F Commitment Store + KI backfill.\n\nA single A&F tech pack spreads across N PO PDFs (each referencing its own\n``Commitment:`` number) and M Commitment PDFs (one commitment per file). The PO\nPDFs lack the Key Item (KI) / Mill / Fabric, which only exist on the Commitment\nsheet. This module holds the parsed Commitment records and backfills them onto the\nPO entities by ``Commitment:`` number.\n\nKeying: the user confirmed a Tech Pack can carry several KIs, so the join key MUST\nbe the Commitment # (unique per KI), never the Tech Pack #.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 12           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 14          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('Dict', 'Optional'))
+             22 IMPORT_NAME              3 (typing)
+             24 IMPORT_FROM              4 (Dict)
+             26 STORE_NAME               4 (Dict)
+             28 IMPORT_FROM              5 (Optional)
+             30 STORE_NAME               5 (Optional)
+             32 POP_TOP
+
+ 16          34 LOAD_CONST               4 (1)
+             36 LOAD_CONST               5 (('PurchaseOrder',))
+             38 IMPORT_NAME              6 (models)
+             40 IMPORT_FROM              7 (PurchaseOrder)
+             42 STORE_NAME               7 (PurchaseOrder)
+             44 POP_TOP
+
+ 19          46 PUSH_NULL
+             48 LOAD_BUILD_CLASS
+             50 LOAD_CONST               6 (<code object CommitmentRecord at 0x000002BF94A6E5D0, file "core\anf_store.py", line 19>)
+             52 MAKE_FUNCTION            0
+             54 LOAD_CONST               7 ('CommitmentRecord')
+             56 PRECALL                  2
+             60 CALL                     2
+             70 STORE_NAME               8 (CommitmentRecord)
+
+ 53          72 PUSH_NULL
+             74 LOAD_BUILD_CLASS
+             76 LOAD_CONST               8 (<code object CommitmentStore at 0x000002BF94A65680, file "core\anf_store.py", line 53>)
+             78 MAKE_FUNCTION            0
+             80 LOAD_CONST               9 ('CommitmentStore')
+             82 PRECALL                  2
+             86 CALL                     2
+             96 STORE_NAME               9 (CommitmentStore)
+             98 LOAD_CONST              10 (None)
+            100 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentRecord  (args=0, locals=0)
+ 19           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('CommitmentRecord')
+              8 STORE_NAME               2 (__qualname__)
+
+ 20          10 LOAD_CONST               1 ('One parsed A&F Commitment sheet (one per file).')
+             12 STORE_NAME               3 (__doc__)
+
+ 22          14 LOAD_CONST               2 (('commitment_no', 'ki_no', 'tech_pack_no', 'mill_name', 'fabric_ref', 'vendor_code', 'factory_code', 'ship_via', 'ship_date', 'carton_std'))
+             16 STORE_NAME               4 (__slots__)
+
+ 26          18 LOAD_CONST               3 (<code object __init__ at 0x000002BF94448EF0, file "core\anf_store.py", line 26>)
+             20 MAKE_FUNCTION            0
+             22 STORE_NAME               5 (__init__)
+
+ 38          24 LOAD_CONST               8 (('return', 'Dict[str, str]'))
+             26 LOAD_CONST               6 (<code object as_dict at 0x000002BF9473E6F0, file "core\anf_store.py", line 38>)
+             28 MAKE_FUNCTION            4 (annotations)
+             30 STORE_NAME               6 (as_dict)
+             32 LOAD_CONST               7 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentRecord.__init__  (args=1, locals=2)
+# varnames: self, kw
+ 26           0 RESUME                   0
+
+ 27           2 LOAD_FAST                1 (kw)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('commitment_no')
+             28 LOAD_CONST               2 ('')
+             30 PRECALL                  2
+             34 CALL                     2
+             44 JUMP_IF_TRUE_OR_POP      1 (to 48)
+             46 LOAD_CONST               2 ('')
+        >>   48 LOAD_FAST                0 (self)
+             50 STORE_ATTR               1 (commitment_no)
+
+ 28          60 LOAD_FAST                1 (kw)
+             62 LOAD_METHOD              0 (get)
+             84 LOAD_CONST               3 ('ki_no')
+             86 LOAD_CONST               2 ('')
+             88 PRECALL                  2
+             92 CALL                     2
+            102 JUMP_IF_TRUE_OR_POP      1 (to 106)
+            104 LOAD_CONST               2 ('')
+        >>  106 LOAD_FAST                0 (self)
+            108 STORE_ATTR               2 (ki_no)
+
+ 29         118 LOAD_FAST                1 (kw)
+            120 LOAD_METHOD              0 (get)
+            142 LOAD_CONST               4 ('tech_pack_no')
+            144 LOAD_CONST               2 ('')
+            146 PRECALL                  2
+            150 CALL                     2
+            160 JUMP_IF_TRUE_OR_POP      1 (to 164)
+            162 LOAD_CONST               2 ('')
+        >>  164 LOAD_FAST                0 (self)
+            166 STORE_ATTR               3 (tech_pack_no)
+
+ 30         176 LOAD_FAST                1 (kw)
+            178 LOAD_METHOD              0 (get)
+            200 LOAD_CONST               5 ('mill_name')
+            202 LOAD_CONST               2 ('')
+            204 PRECALL                  2
+            208 CALL                     2
+            218 JUMP_IF_TRUE_OR_POP      1 (to 222)
+            220 LOAD_CONST               2 ('')
+        >>  222 LOAD_FAST                0 (self)
+            224 STORE_ATTR               4 (mill_name)
+
+ 31         234 LOAD_FAST                1 (kw)
+            236 LOAD_METHOD              0 (get)
+            258 LOAD_CONST               6 ('fabric_ref')
+            260 LOAD_CONST               2 ('')
+            262 PRECALL                  2
+            266 CALL                     2
+            276 JUMP_IF_TRUE_OR_POP      1 (to 280)
+            278 LOAD_CONST               2 ('')
+        >>  280 LOAD_FAST                0 (self)
+            282 STORE_ATTR               5 (fabric_ref)
+
+ 32         292 LOAD_FAST                1 (kw)
+            294 LOAD_METHOD              0 (get)
+            316 LOAD_CONST               7 ('vendor_code')
+            318 LOAD_CONST               2 ('')
+            320 PRECALL                  2
+            324 CALL                     2
+            334 JUMP_IF_TRUE_OR_POP      1 (to 338)
+            336 LOAD_CONST               2 ('')
+        >>  338 LOAD_FAST                0 (self)
+            340 STORE_ATTR               6 (vendor_code)
+
+ 33         350 LOAD_FAST                1 (kw)
+            352 LOAD_METHOD              0 (get)
+            374 LOAD_CONST               8 ('factory_code')
+            376 LOAD_CONST               2 ('')
+            378 PRECALL                  2
+            382 CALL                     2
+            392 JUMP_IF_TRUE_OR_POP      1 (to 396)
+            394 LOAD_CONST               2 ('')
+        >>  396 LOAD_FAST                0 (self)
+            398 STORE_ATTR               7 (factory_code)
+
+ 34         408 LOAD_FAST                1 (kw)
+            410 LOAD_METHOD              0 (get)
+            432 LOAD_CONST               9 ('ship_via')
+            434 LOAD_CONST               2 ('')
+            436 PRECALL                  2
+            440 CALL                     2
+            450 JUMP_IF_TRUE_OR_POP      1 (to 454)
+            452 LOAD_CONST               2 ('')
+        >>  454 LOAD_FAST                0 (self)
+            456 STORE_ATTR               8 (ship_via)
+
+ 35         466 LOAD_FAST                1 (kw)
+            468 LOAD_METHOD              0 (get)
+            490 LOAD_CONST              10 ('ship_date')
+            492 LOAD_CONST               2 ('')
+            494 PRECALL                  2
+            498 CALL                     2
+            508 JUMP_IF_TRUE_OR_POP      1 (to 512)
+            510 LOAD_CONST               2 ('')
+        >>  512 LOAD_FAST                0 (self)
+            514 STORE_ATTR               9 (ship_date)
+
+ 36         524 LOAD_FAST                1 (kw)
+            526 LOAD_METHOD              0 (get)
+            548 LOAD_CONST              11 ('carton_std')
+            550 LOAD_CONST               2 ('')
+            552 PRECALL                  2
+            556 CALL                     2
+            566 JUMP_IF_TRUE_OR_POP      1 (to 570)
+            568 LOAD_CONST               2 ('')
+        >>  570 LOAD_FAST                0 (self)
+            572 STORE_ATTR              10 (carton_std)
+            582 LOAD_CONST               0 (None)
+            584 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentRecord.as_dict  (args=1, locals=1)
+# varnames: self
+ 38           0 RESUME                   0
+
+ 40           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (commitment_no)
+
+ 41          14 LOAD_FAST                0 (self)
+             16 LOAD_ATTR                1 (ki_no)
+
+ 42          26 LOAD_FAST                0 (self)
+             28 LOAD_ATTR                2 (tech_pack_no)
+
+ 43          38 LOAD_FAST                0 (self)
+             40 LOAD_ATTR                3 (mill_name)
+
+ 44          50 LOAD_FAST                0 (self)
+             52 LOAD_ATTR                4 (fabric_ref)
+
+ 45          62 LOAD_FAST                0 (self)
+             64 LOAD_ATTR                5 (vendor_code)
+
+ 46          74 LOAD_FAST                0 (self)
+             76 LOAD_ATTR                6 (factory_code)
+
+ 47          86 LOAD_FAST                0 (self)
+             88 LOAD_ATTR                7 (ship_via)
+
+ 48          98 LOAD_FAST                0 (self)
+            100 LOAD_ATTR                8 (ship_date)
+
+ 49         110 LOAD_FAST                0 (self)
+            112 LOAD_ATTR                9 (carton_std)
+
+ 39         122 LOAD_CONST               1 (('commitment_no', 'ki_no', 'tech_pack_no', 'mill_name', 'fabric_ref', 'vendor_code', 'factory_code', 'ship_via', 'ship_date', 'carton_std'))
+            124 BUILD_CONST_KEY_MAP     10
+            126 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore  (args=0, locals=0)
+ 53           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('CommitmentStore')
+              8 STORE_NAME               2 (__qualname__)
+
+ 54          10 LOAD_CONST               1 ('Keyed by Commitment # (string). One record per Commitment PDF.')
+             12 STORE_NAME               3 (__doc__)
+
+ 56          14 LOAD_CONST               2 (<code object __init__ at 0x000002BF94AB0100, file "core\anf_store.py", line 56>)
+             16 MAKE_FUNCTION            0
+             18 STORE_NAME               4 (__init__)
+
+ 59          20 LOAD_NAME                5 (classmethod)
+
+ 60          22 LOAD_CONST              20 (('commitment_pos', 'list', 'return', "'CommitmentStore'"))
+             24 LOAD_CONST               7 (<code object from_commitment_pos at 0x000002BF9473D7F0, file "core\anf_store.py", line 59>)
+             26 MAKE_FUNCTION            4 (annotations)
+
+ 59          28 PRECALL                  0
+             32 CALL                     0
+
+ 60          42 STORE_NAME               6 (from_commitment_pos)
+
+ 70          44 LOAD_CONST              21 (('po', 'PurchaseOrder', 'return', 'None'))
+             46 LOAD_CONST              11 (<code object add_po at 0x000002BF94A696B0, file "core\anf_store.py", line 70>)
+             48 MAKE_FUNCTION            4 (annotations)
+             50 STORE_NAME               7 (add_po)
+
+ 76          52 LOAD_CONST              22 (('commitment_no', 'str', 'return', 'Optional[CommitmentRecord]'))
+             54 LOAD_CONST              15 (<code object get at 0x000002BF94A697D0, file "core\anf_store.py", line 76>)
+             56 MAKE_FUNCTION            4 (annotations)
+             58 STORE_NAME               8 (get)
+
+ 79          60 LOAD_CONST              23 (('po', 'PurchaseOrder', 'return', 'bool'))
+             62 LOAD_CONST              17 (<code object backfill at 0x000002BF9444C660, file "core\anf_store.py", line 79>)
+             64 MAKE_FUNCTION            4 (annotations)
+             66 STORE_NAME               9 (backfill)
+
+ 97          68 LOAD_CONST              18 (<code object __len__ at 0x000002BF94AA8300, file "core\anf_store.py", line 97>)
+             70 MAKE_FUNCTION            0
+             72 STORE_NAME              10 (__len__)
+             74 LOAD_CONST              19 (None)
+             76 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.__init__  (args=1, locals=1)
+# varnames: self
+ 56           0 RESUME                   0
+
+ 57           2 BUILD_MAP                0
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (_by_no)
+             16 LOAD_CONST               0 (None)
+             18 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.from_commitment_pos  (args=2, locals=6)
+# varnames: cls, commitment_pos, store, po, ent, rec
+ 59           0 RESUME                   0
+
+ 62           2 PUSH_NULL
+              4 LOAD_FAST                0 (cls)
+              6 PRECALL                  0
+             10 CALL                     0
+             20 STORE_FAST               2 (store)
+
+ 63          22 LOAD_FAST                1 (commitment_pos)
+             24 GET_ITER
+        >>   26 FOR_ITER                51 (to 130)
+             28 STORE_FAST               3 (po)
+
+ 64          30 LOAD_FAST                3 (po)
+             32 LOAD_ATTR                0 (entities)
+             42 GET_ITER
+        >>   44 FOR_ITER                41 (to 128)
+             46 STORE_FAST               4 (ent)
+
+ 65          48 LOAD_GLOBAL              3 (NULL + CommitmentRecord)
+             60 LOAD_CONST               1 (())
+             62 BUILD_MAP                0
+             64 LOAD_FAST                4 (ent)
+             66 LOAD_ATTR                2 (extra)
+             76 DICT_MERGE               1
+             78 CALL_FUNCTION_EX         1
+             80 STORE_FAST               5 (rec)
+
+ 66          82 LOAD_FAST                5 (rec)
+             84 LOAD_ATTR                3 (commitment_no)
+             94 POP_JUMP_FORWARD_IF_FALSE    15 (to 126)
+
+ 67          96 LOAD_FAST                5 (rec)
+             98 LOAD_FAST                2 (store)
+            100 LOAD_ATTR                4 (_by_no)
+            110 LOAD_FAST                5 (rec)
+            112 LOAD_ATTR                3 (commitment_no)
+            122 STORE_SUBSCR
+        >>  126 JUMP_BACKWARD           42 (to 44)
+
+ 64     >>  128 JUMP_BACKWARD           52 (to 26)
+
+ 68     >>  130 LOAD_FAST                2 (store)
+            132 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.add_po  (args=2, locals=4)
+# varnames: self, po, ent, rec
+ 70           0 RESUME                   0
+
+ 71           2 LOAD_FAST                1 (po)
+              4 LOAD_ATTR                0 (entities)
+             14 GET_ITER
+        >>   16 FOR_ITER                41 (to 100)
+             18 STORE_FAST               2 (ent)
+
+ 72          20 LOAD_GLOBAL              3 (NULL + CommitmentRecord)
+             32 LOAD_CONST               1 (())
+             34 BUILD_MAP                0
+             36 LOAD_FAST                2 (ent)
+             38 LOAD_ATTR                2 (extra)
+             48 DICT_MERGE               1
+             50 CALL_FUNCTION_EX         1
+             52 STORE_FAST               3 (rec)
+
+ 73          54 LOAD_FAST                3 (rec)
+             56 LOAD_ATTR                3 (commitment_no)
+             66 POP_JUMP_FORWARD_IF_FALSE    15 (to 98)
+
+ 74          68 LOAD_FAST                3 (rec)
+             70 LOAD_FAST                0 (self)
+             72 LOAD_ATTR                4 (_by_no)
+             82 LOAD_FAST                3 (rec)
+             84 LOAD_ATTR                3 (commitment_no)
+             94 STORE_SUBSCR
+        >>   98 JUMP_BACKWARD           42 (to 16)
+
+ 71     >>  100 LOAD_CONST               0 (None)
+            102 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.get  (args=2, locals=2)
+# varnames: self, commitment_no
+ 76           0 RESUME                   0
+
+ 77           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (_by_no)
+             14 LOAD_METHOD              1 (get)
+             36 LOAD_FAST                1 (commitment_no)
+             38 JUMP_IF_TRUE_OR_POP      1 (to 42)
+             40 LOAD_CONST               1 ('')
+        >>   42 LOAD_METHOD              2 (strip)
+             64 PRECALL                  0
+             68 CALL                     0
+             78 PRECALL                  1
+             82 CALL                     1
+             92 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.backfill  (args=2, locals=9)
+# varnames: self, po, changed, ent, cno, rec, merged, k, v
+ 79           0 RESUME                   0
+
+ 82           2 LOAD_CONST               1 (False)
+              4 STORE_FAST               2 (changed)
+
+ 83           6 LOAD_FAST                1 (po)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 FOR_ITER               172 (to 366)
+             22 STORE_FAST               3 (ent)
+
+ 84          24 LOAD_FAST                3 (ent)
+             26 LOAD_ATTR                1 (extra)
+             36 LOAD_METHOD              2 (get)
+             58 LOAD_CONST               2 ('commitment_no')
+             60 PRECALL                  1
+             64 CALL                     1
+             74 JUMP_IF_TRUE_OR_POP      1 (to 78)
+             76 LOAD_CONST               3 ('')
+        >>   78 LOAD_METHOD              3 (strip)
+            100 PRECALL                  0
+            104 CALL                     0
+            114 STORE_FAST               4 (cno)
+
+ 85         116 LOAD_FAST                0 (self)
+            118 LOAD_ATTR                4 (_by_no)
+            128 LOAD_METHOD              2 (get)
+            150 LOAD_FAST                4 (cno)
+            152 PRECALL                  1
+            156 CALL                     1
+            166 STORE_FAST               5 (rec)
+
+ 86         168 LOAD_FAST                5 (rec)
+            170 POP_JUMP_FORWARD_IF_TRUE     1 (to 174)
+
+ 87         172 JUMP_BACKWARD           77 (to 20)
+
+ 89     >>  174 LOAD_GLOBAL             11 (NULL + dict)
+            186 LOAD_FAST                5 (rec)
+            188 LOAD_METHOD              6 (as_dict)
+            210 PRECALL                  0
+            214 CALL                     0
+            224 PRECALL                  1
+            228 CALL                     1
+            238 STORE_FAST               6 (merged)
+
+ 90         240 LOAD_FAST                6 (merged)
+            242 LOAD_METHOD              7 (items)
+            264 PRECALL                  0
+            268 CALL                     0
+            278 GET_ITER
+        >>  280 FOR_ITER                39 (to 360)
+            282 UNPACK_SEQUENCE          2
+            286 STORE_FAST               7 (k)
+            288 STORE_FAST               8 (v)
+
+ 91         290 LOAD_FAST                7 (k)
+            292 LOAD_CONST               2 ('commitment_no')
+            294 COMPARE_OP               2 (==)
+            300 POP_JUMP_FORWARD_IF_FALSE     1 (to 304)
+
+ 92         302 JUMP_BACKWARD           12 (to 280)
+
+ 93     >>  304 LOAD_FAST                3 (ent)
+            306 LOAD_ATTR                1 (extra)
+            316 LOAD_METHOD              8 (setdefault)
+            338 LOAD_FAST                7 (k)
+            340 LOAD_FAST                8 (v)
+            342 PRECALL                  2
+            346 CALL                     2
+            356 POP_TOP
+            358 JUMP_BACKWARD           40 (to 280)
+
+ 94     >>  360 LOAD_CONST               4 (True)
+            362 STORE_FAST               2 (changed)
+            364 JUMP_BACKWARD          173 (to 20)
+
+ 95     >>  366 LOAD_FAST                2 (changed)
+            368 RETURN_VALUE
+
+==============================================================================
+## <module>.CommitmentStore.__len__  (args=1, locals=1)
+# varnames: self
+ 97           0 RESUME                   0
+
+ 98           2 LOAD_GLOBAL              1 (NULL + len)
+             14 LOAD_FAST                0 (self)
+             16 LOAD_ATTR                1 (_by_no)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 RETURN_VALUE

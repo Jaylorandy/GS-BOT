@@ -1,0 +1,451 @@
+# module: core.parsers.anf_commitment
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\anf_commitment.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/anf_commitment.py - Abercrombie & Fitch Commitment sheet (structural).\n\nOne file = one Commitment. The PO PDFs reference a ``Commitment:`` number but do\nNOT carry the Key Item (KI) / Mill / Fabric - this sheet supplies them. The ANF\nfolder flow parses every Commitment PDF into a ``CommitmentStore`` record keyed by\n``Commitment #``; later POs look the number up to backfill KI / mill / fabric.\n\nSource fields observed (one per file):\n    Commitment # 1190449\n    Key Item 26051\n    Tech Pack # 339260253\n    Mill Name Abercrombie & Fitch ... / Wuxi Goldsmile ...\n    Fabric Ref Code KNT000194\n    Vendor 401052   Factory 15126\n    Ship Via ...   Ship Date 08/28/26   Carton Standard 6\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 17           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 19          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 20          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 22          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (LayoutType)
+             42 STORE_NAME               6 (LayoutType)
+             44 IMPORT_FROM              7 (OrderEntity)
+             46 STORE_NAME               7 (OrderEntity)
+             48 IMPORT_FROM              8 (OrderLine)
+             50 STORE_NAME               8 (OrderLine)
+             52 IMPORT_FROM              9 (PurchaseOrder)
+             54 STORE_NAME               9 (PurchaseOrder)
+             56 IMPORT_FROM             10 (SizeQty)
+             58 STORE_NAME              10 (SizeQty)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 POP_TOP
+
+ 24          66 LOAD_CONST               6 (1)
+             68 LOAD_CONST               7 (('BaseParser', 'doc_text'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (doc_text)
+             78 STORE_NAME              14 (doc_text)
+             80 POP_TOP
+
+ 26          82 PUSH_NULL
+             84 LOAD_NAME                4 (re)
+             86 LOAD_ATTR               15 (compile)
+             96 LOAD_CONST               8 ('Commitment\\s*#\\s*(\\d+)')
+             98 PRECALL                  1
+            102 CALL                     1
+            112 STORE_NAME              16 (_CMT_NO_RE)
+
+ 27         114 PUSH_NULL
+            116 LOAD_NAME                4 (re)
+            118 LOAD_ATTR               15 (compile)
+            128 LOAD_CONST               9 ('Key\\s+Item\\s+(\\d+)')
+            130 PRECALL                  1
+            134 CALL                     1
+            144 STORE_NAME              17 (_KI_RE)
+
+ 28         146 PUSH_NULL
+            148 LOAD_NAME                4 (re)
+            150 LOAD_ATTR               15 (compile)
+            160 LOAD_CONST              10 ('Tech\\s+Pack\\s*#\\s*(\\d+)')
+            162 PRECALL                  1
+            166 CALL                     1
+            176 STORE_NAME              18 (_TP_RE)
+
+ 29         178 PUSH_NULL
+            180 LOAD_NAME                4 (re)
+            182 LOAD_ATTR               15 (compile)
+            192 LOAD_CONST              11 ('Mill\\s+Name\\s+(.+)')
+            194 LOAD_NAME                4 (re)
+            196 LOAD_ATTR               19 (I)
+            206 PRECALL                  2
+            210 CALL                     2
+            220 STORE_NAME              20 (_MILL_RE)
+
+ 30         222 PUSH_NULL
+            224 LOAD_NAME                4 (re)
+            226 LOAD_ATTR               15 (compile)
+            236 LOAD_CONST              12 ('Fabric\\s+Ref\\s+Code\\s+(\\S+)')
+            238 PRECALL                  1
+            242 CALL                     1
+            252 STORE_NAME              21 (_FABRIC_RE)
+
+ 31         254 PUSH_NULL
+            256 LOAD_NAME                4 (re)
+            258 LOAD_ATTR               15 (compile)
+            268 LOAD_CONST              13 ('Vendor\\s+(\\d+)')
+            270 PRECALL                  1
+            274 CALL                     1
+            284 STORE_NAME              22 (_VENDOR_RE)
+
+ 32         286 PUSH_NULL
+            288 LOAD_NAME                4 (re)
+            290 LOAD_ATTR               15 (compile)
+            300 LOAD_CONST              14 ('Factory\\s+(\\d+)')
+            302 PRECALL                  1
+            306 CALL                     1
+            316 STORE_NAME              23 (_FACTORY_RE)
+
+ 33         318 PUSH_NULL
+            320 LOAD_NAME                4 (re)
+            322 LOAD_ATTR               15 (compile)
+            332 LOAD_CONST              15 ('Ship\\s+Via\\s+(.+)')
+            334 LOAD_NAME                4 (re)
+            336 LOAD_ATTR               19 (I)
+            346 PRECALL                  2
+            350 CALL                     2
+            360 STORE_NAME              24 (_SHIP_VIA_RE)
+
+ 34         362 PUSH_NULL
+            364 LOAD_NAME                4 (re)
+            366 LOAD_ATTR               15 (compile)
+            376 LOAD_CONST              16 ('Ship\\s+Date\\s+(\\S+)')
+            378 PRECALL                  1
+            382 CALL                     1
+            392 STORE_NAME              25 (_SHIP_DATE_RE)
+
+ 35         394 PUSH_NULL
+            396 LOAD_NAME                4 (re)
+            398 LOAD_ATTR               15 (compile)
+            408 LOAD_CONST              17 ('Carton\\s+Standard\\s+(\\d+)')
+            410 PRECALL                  1
+            414 CALL                     1
+            424 STORE_NAME              26 (_CARTON_RE)
+
+ 38         426 PUSH_NULL
+            428 LOAD_BUILD_CLASS
+            430 LOAD_CONST              18 (<code object AnfCommitmentParser at 0x000002BF94AA85D0, file "core\parsers\anf_commitment.py", line 38>)
+            432 MAKE_FUNCTION            0
+            434 LOAD_CONST              19 ('AnfCommitmentParser')
+            436 LOAD_NAME               13 (BaseParser)
+            438 PRECALL                  3
+            442 CALL                     3
+            452 STORE_NAME              27 (AnfCommitmentParser)
+            454 LOAD_CONST               3 (None)
+            456 RETURN_VALUE
+
+==============================================================================
+## <module>.AnfCommitmentParser  (args=0, locals=0)
+ 38           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('AnfCommitmentParser')
+              8 STORE_NAME               2 (__qualname__)
+
+ 39          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (ANF_COMMITMENT)
+             22 STORE_NAME               5 (layout_type)
+
+ 41          24 LOAD_CONST               1 ('')
+             26 LOAD_CONST               2 (('source_file',))
+             28 BUILD_CONST_KEY_MAP      1
+             30 LOAD_CONST              11 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             32 LOAD_CONST               9 (<code object parse at 0x000002BF94461590, file "core\parsers\anf_commitment.py", line 41>)
+             34 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             36 STORE_NAME               6 (parse)
+             38 LOAD_CONST              10 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>.AnfCommitmentParser.parse  (args=3, locals=17)
+# varnames: self, pages, recipe, source_file, po, full, cmt, ki, tp, mill, fabric, vendor, factory, ship_via, ship_date, carton, ent
+ 41           0 RESUME                   0
+
+ 42           2 LOAD_GLOBAL              1 (NULL + PurchaseOrder)
+
+ 43          14 LOAD_FAST                2 (recipe)
+             16 LOAD_ATTR                1 (customer)
+             26 JUMP_IF_TRUE_OR_POP      1 (to 30)
+             28 LOAD_CONST               1 ('Abercrombie & Fitch')
+
+ 44     >>   30 LOAD_FAST                3 (source_file)
+             32 POP_JUMP_FORWARD_IF_FALSE    31 (to 96)
+             34 LOAD_GLOBAL              4 (os)
+             46 LOAD_ATTR                3 (path)
+             56 LOAD_METHOD              4 (basename)
+             78 LOAD_FAST                3 (source_file)
+             80 PRECALL                  1
+             84 CALL                     1
+             94 JUMP_FORWARD             1 (to 98)
+        >>   96 LOAD_CONST               2 ('')
+
+ 45     >>   98 LOAD_FAST                3 (source_file)
+
+ 42         100 KW_NAMES                 3
+            102 PRECALL                  3
+            106 CALL                     3
+            116 STORE_FAST               4 (po)
+
+ 47         118 LOAD_GLOBAL             11 (NULL + doc_text)
+            130 LOAD_FAST                1 (pages)
+            132 PRECALL                  1
+            136 CALL                     1
+            146 STORE_FAST               5 (full)
+
+ 49         148 LOAD_GLOBAL             12 (_CMT_NO_RE)
+            160 LOAD_METHOD              7 (search)
+            182 LOAD_FAST                5 (full)
+            184 PRECALL                  1
+            188 CALL                     1
+            198 STORE_FAST               6 (cmt)
+
+ 50         200 LOAD_GLOBAL             16 (_KI_RE)
+            212 LOAD_METHOD              7 (search)
+            234 LOAD_FAST                5 (full)
+            236 PRECALL                  1
+            240 CALL                     1
+            250 STORE_FAST               7 (ki)
+
+ 51         252 LOAD_GLOBAL             18 (_TP_RE)
+            264 LOAD_METHOD              7 (search)
+            286 LOAD_FAST                5 (full)
+            288 PRECALL                  1
+            292 CALL                     1
+            302 STORE_FAST               8 (tp)
+
+ 52         304 LOAD_GLOBAL             20 (_MILL_RE)
+            316 LOAD_METHOD              7 (search)
+            338 LOAD_FAST                5 (full)
+            340 PRECALL                  1
+            344 CALL                     1
+            354 STORE_FAST               9 (mill)
+
+ 53         356 LOAD_GLOBAL             22 (_FABRIC_RE)
+            368 LOAD_METHOD              7 (search)
+            390 LOAD_FAST                5 (full)
+            392 PRECALL                  1
+            396 CALL                     1
+            406 STORE_FAST              10 (fabric)
+
+ 54         408 LOAD_GLOBAL             24 (_VENDOR_RE)
+            420 LOAD_METHOD              7 (search)
+            442 LOAD_FAST                5 (full)
+            444 PRECALL                  1
+            448 CALL                     1
+            458 STORE_FAST              11 (vendor)
+
+ 55         460 LOAD_GLOBAL             26 (_FACTORY_RE)
+            472 LOAD_METHOD              7 (search)
+            494 LOAD_FAST                5 (full)
+            496 PRECALL                  1
+            500 CALL                     1
+            510 STORE_FAST              12 (factory)
+
+ 56         512 LOAD_GLOBAL             28 (_SHIP_VIA_RE)
+            524 LOAD_METHOD              7 (search)
+            546 LOAD_FAST                5 (full)
+            548 PRECALL                  1
+            552 CALL                     1
+            562 STORE_FAST              13 (ship_via)
+
+ 57         564 LOAD_GLOBAL             30 (_SHIP_DATE_RE)
+            576 LOAD_METHOD              7 (search)
+            598 LOAD_FAST                5 (full)
+            600 PRECALL                  1
+            604 CALL                     1
+            614 STORE_FAST              14 (ship_date)
+
+ 58         616 LOAD_GLOBAL             32 (_CARTON_RE)
+            628 LOAD_METHOD              7 (search)
+            650 LOAD_FAST                5 (full)
+            652 PRECALL                  1
+            656 CALL                     1
+            666 STORE_FAST              15 (carton)
+
+ 60         668 LOAD_GLOBAL             35 (NULL + OrderEntity)
+            680 PRECALL                  0
+            684 CALL                     0
+            694 STORE_FAST              16 (ent)
+
+ 61         696 LOAD_FAST                6 (cmt)
+            698 POP_JUMP_FORWARD_IF_FALSE    21 (to 742)
+            700 LOAD_FAST                6 (cmt)
+            702 LOAD_METHOD             18 (group)
+            724 LOAD_CONST               4 (1)
+            726 PRECALL                  1
+            730 CALL                     1
+            740 JUMP_FORWARD             1 (to 744)
+        >>  742 LOAD_CONST               2 ('')
+        >>  744 LOAD_FAST               16 (ent)
+            746 STORE_ATTR              19 (po_no)
+
+ 62         756 LOAD_FAST                6 (cmt)
+            758 POP_JUMP_FORWARD_IF_FALSE    21 (to 802)
+            760 LOAD_FAST                6 (cmt)
+            762 LOAD_METHOD             18 (group)
+            784 LOAD_CONST               4 (1)
+            786 PRECALL                  1
+            790 CALL                     1
+            800 JUMP_FORWARD             1 (to 804)
+        >>  802 LOAD_CONST               2 ('')
+        >>  804 LOAD_FAST               16 (ent)
+            806 LOAD_ATTR               20 (extra)
+            816 LOAD_CONST               5 ('commitment_no')
+            818 STORE_SUBSCR
+
+ 63         822 LOAD_FAST                7 (ki)
+            824 POP_JUMP_FORWARD_IF_FALSE    21 (to 868)
+            826 LOAD_FAST                7 (ki)
+            828 LOAD_METHOD             18 (group)
+            850 LOAD_CONST               4 (1)
+            852 PRECALL                  1
+            856 CALL                     1
+            866 JUMP_FORWARD             1 (to 870)
+        >>  868 LOAD_CONST               2 ('')
+        >>  870 LOAD_FAST               16 (ent)
+            872 LOAD_ATTR               20 (extra)
+            882 LOAD_CONST               6 ('ki_no')
+            884 STORE_SUBSCR
+
+ 64         888 LOAD_FAST                8 (tp)
+            890 POP_JUMP_FORWARD_IF_FALSE    21 (to 934)
+            892 LOAD_FAST                8 (tp)
+            894 LOAD_METHOD             18 (group)
+            916 LOAD_CONST               4 (1)
+            918 PRECALL                  1
+            922 CALL                     1
+            932 JUMP_FORWARD             1 (to 936)
+        >>  934 LOAD_CONST               2 ('')
+        >>  936 LOAD_FAST               16 (ent)
+            938 LOAD_ATTR               20 (extra)
+            948 LOAD_CONST               7 ('tech_pack_no')
+            950 STORE_SUBSCR
+
+ 65         954 LOAD_FAST                9 (mill)
+            956 POP_JUMP_FORWARD_IF_FALSE    39 (to 1036)
+            958 LOAD_FAST                9 (mill)
+            960 LOAD_METHOD             18 (group)
+            982 LOAD_CONST               4 (1)
+            984 PRECALL                  1
+            988 CALL                     1
+            998 LOAD_METHOD             21 (strip)
+           1020 PRECALL                  0
+           1024 CALL                     0
+           1034 JUMP_FORWARD             1 (to 1038)
+        >> 1036 LOAD_CONST               2 ('')
+        >> 1038 LOAD_FAST               16 (ent)
+           1040 LOAD_ATTR               20 (extra)
+           1050 LOAD_CONST               8 ('mill_name')
+           1052 STORE_SUBSCR
+
+ 66        1056 LOAD_FAST               10 (fabric)
+           1058 POP_JUMP_FORWARD_IF_FALSE    21 (to 1102)
+           1060 LOAD_FAST               10 (fabric)
+           1062 LOAD_METHOD             18 (group)
+           1084 LOAD_CONST               4 (1)
+           1086 PRECALL                  1
+           1090 CALL                     1
+           1100 JUMP_FORWARD             1 (to 1104)
+        >> 1102 LOAD_CONST               2 ('')
+        >> 1104 LOAD_FAST               16 (ent)
+           1106 LOAD_ATTR               20 (extra)
+           1116 LOAD_CONST               9 ('fabric_ref')
+           1118 STORE_SUBSCR
+
+ 67        1122 LOAD_FAST               11 (vendor)
+           1124 POP_JUMP_FORWARD_IF_FALSE    21 (to 1168)
+           1126 LOAD_FAST               11 (vendor)
+           1128 LOAD_METHOD             18 (group)
+           1150 LOAD_CONST               4 (1)
+           1152 PRECALL                  1
+           1156 CALL                     1
+           1166 JUMP_FORWARD             1 (to 1170)
+        >> 1168 LOAD_CONST               2 ('')
+        >> 1170 LOAD_FAST               16 (ent)
+           1172 LOAD_ATTR               20 (extra)
+           1182 LOAD_CONST              10 ('vendor_code')
+           1184 STORE_SUBSCR
+
+ 68        1188 LOAD_FAST               12 (factory)
+           1190 POP_JUMP_FORWARD_IF_FALSE    21 (to 1234)
+           1192 LOAD_FAST               12 (factory)
+           1194 LOAD_METHOD             18 (group)
+           1216 LOAD_CONST               4 (1)
+           1218 PRECALL                  1
+           1222 CALL                     1
+           1232 JUMP_FORWARD             1 (to 1236)
+        >> 1234 LOAD_CONST               2 ('')
+        >> 1236 LOAD_FAST               16 (ent)
+           1238 LOAD_ATTR               20 (extra)
+           1248 LOAD_CONST              11 ('factory_code')
+           1250 STORE_SUBSCR
+
+ 69        1254 LOAD_FAST               13 (ship_via)
+           1256 POP_JUMP_FORWARD_IF_FALSE    39 (to 1336)
+           1258 LOAD_FAST               13 (ship_via)
+           1260 LOAD_METHOD             18 (group)
+           1282 LOAD_CONST               4 (1)
+           1284 PRECALL                  1
+           1288 CALL                     1
+           1298 LOAD_METHOD             21 (strip)
+           1320 PRECALL                  0
+           1324 CALL                     0
+           1334 JUMP_FORWARD             1 (to 1338)
+        >> 1336 LOAD_CONST               2 ('')
+        >> 1338 LOAD_FAST               16 (ent)
+           1340 LOAD_ATTR               20 (extra)
+           1350 LOAD_CONST              12 ('ship_via')
+           1352 STORE_SUBSCR
+
+ 70        1356 LOAD_FAST               14 (ship_date)
+           1358 POP_JUMP_FORWARD_IF_FALSE    21 (to 1402)
+           1360 LOAD_FAST               14 (ship_date)
+           1362 LOAD_METHOD             18 (group)
+           1384 LOAD_CONST               4 (1)
+           1386 PRECALL                  1
+           1390 CALL                     1
+           1400 JUMP_FORWARD             1 (to 1404)
+        >> 1402 LOAD_CONST               2 ('')
+        >> 1404 LOAD_FAST               16 (ent)
+           1406 LOAD_ATTR               20 (extra)
+           1416 LOAD_CONST              13 ('ship_date')
+           1418 STORE_SUBSCR
+
+ 71        1422 LOAD_FAST               15 (carton)
+           1424 POP_JUMP_FORWARD_IF_FALSE    21 (to 1468)
+           1426 LOAD_FAST               15 (carton)
+           1428 LOAD_METHOD             18 (group)
+           1450 LOAD_CONST               4 (1)
+           1452 PRECALL                  1
+           1456 CALL                     1
+           1466 JUMP_FORWARD             1 (to 1470)
+        >> 1468 LOAD_CONST               2 ('')
+        >> 1470 LOAD_FAST               16 (ent)
+           1472 LOAD_ATTR               20 (extra)
+           1482 LOAD_CONST              14 ('carton_std')
+           1484 STORE_SUBSCR
+
+ 73        1488 LOAD_FAST                4 (po)
+           1490 LOAD_ATTR               22 (entities)
+           1500 LOAD_METHOD             23 (append)
+           1522 LOAD_FAST               16 (ent)
+           1524 PRECALL                  1
+           1528 CALL                     1
+           1538 POP_TOP
+
+ 74        1540 LOAD_FAST                4 (po)
+           1542 RETURN_VALUE

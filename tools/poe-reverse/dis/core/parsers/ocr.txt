@@ -1,0 +1,43 @@
+# module: core.parsers.ocr
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\ocr.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/ocr.py - compatibility shim.\n\nThe real OCR bridge now lives in :mod:`core.io.ocr`, next to ``core.io.pdf``,\nbecause turning a document into tokens is an IO concern rather than a parsing\none. This module only re-exports the public names so any older import path\nkeeps working.\n')
+              4 STORE_NAME               0 (__doc__)
+
+  8           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 10          18 LOAD_CONST               3 (2)
+             20 LOAD_CONST               4 (('DEFAULT_DPI', 'DEFAULT_VISION_MODEL', 'SPARSE_WORDS_PER_PAGE', 'local_engine_available', 'ocr_pdf_pages', 'rasterize_pdf', 'text_layer_is_sparse'))
+             22 IMPORT_NAME              3 (io.ocr)
+             24 IMPORT_FROM              4 (DEFAULT_DPI)
+             26 STORE_NAME               4 (DEFAULT_DPI)
+             28 IMPORT_FROM              5 (DEFAULT_VISION_MODEL)
+             30 STORE_NAME               5 (DEFAULT_VISION_MODEL)
+             32 IMPORT_FROM              6 (SPARSE_WORDS_PER_PAGE)
+             34 STORE_NAME               6 (SPARSE_WORDS_PER_PAGE)
+             36 IMPORT_FROM              7 (local_engine_available)
+             38 STORE_NAME               7 (local_engine_available)
+             40 IMPORT_FROM              8 (ocr_pdf_pages)
+             42 STORE_NAME               8 (ocr_pdf_pages)
+             44 IMPORT_FROM              9 (rasterize_pdf)
+             46 STORE_NAME               9 (rasterize_pdf)
+             48 IMPORT_FROM             10 (text_layer_is_sparse)
+             50 STORE_NAME              10 (text_layer_is_sparse)
+             52 POP_TOP
+
+ 20          54 BUILD_LIST               0
+             56 LOAD_CONST               4 (('DEFAULT_DPI', 'DEFAULT_VISION_MODEL', 'SPARSE_WORDS_PER_PAGE', 'local_engine_available', 'ocr_pdf_pages', 'rasterize_pdf', 'text_layer_is_sparse'))
+             58 LIST_EXTEND              1
+             60 STORE_NAME              11 (__all__)
+             62 LOAD_CONST               5 (None)
+             64 RETURN_VALUE

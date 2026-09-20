@@ -1,0 +1,603 @@
+# module: core.store.customer_index
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\store\customer_index.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/store/customer_index.py - customer-level recipe memory.\n\nMirrors the layout-level ``recipe_cache`` but keyed by **CUSTOMER NAME**. This is\nthe missing axis of the closed loop:\n\n* Layout cache (``recipe_cache``) makes a *known layout* parse with zero AI.\n* Customer index makes a *known customer with a NEW layout* still recognizable:\n  when AI infers a fresh recipe for a customer we have seen before, we seed the\n  read with that customer's known style/column conventions so the model produces\n  a correct recipe faster and more reliably, then the new recipe is cached as\n  usual. Persisted as ``customer_recipes.json`` beside ``recipe_cache``.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 13           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 15          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 16          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 18          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('PoRecipe',))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (PoRecipe)
+             42 STORE_NAME               6 (PoRecipe)
+             44 POP_TOP
+
+ 21          46 PUSH_NULL
+             48 LOAD_BUILD_CLASS
+             50 LOAD_CONST               6 (<code object CustomerRecipeIndex at 0x000002BF94A2F230, file "core\store\customer_index.py", line 21>)
+             52 MAKE_FUNCTION            0
+             54 LOAD_CONST               7 ('CustomerRecipeIndex')
+             56 PRECALL                  2
+             60 CALL                     2
+             70 STORE_NAME               7 (CustomerRecipeIndex)
+             72 LOAD_CONST               3 (None)
+             74 RETURN_VALUE
+
+==============================================================================
+## <module>.CustomerRecipeIndex  (args=0, locals=0)
+ 21           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('CustomerRecipeIndex')
+              8 STORE_NAME               2 (__qualname__)
+
+ 22          10 LOAD_CONST              18 ((None,))
+             12 LOAD_CONST              19 (('cache_dir', 'str | None'))
+             14 LOAD_CONST               4 (<code object __init__ at 0x000002BF946C5A10, file "core\store\customer_index.py", line 22>)
+             16 MAKE_FUNCTION            5 (defaults, annotations)
+             18 STORE_NAME               3 (__init__)
+
+ 29          20 LOAD_CONST              20 (('return', 'dict'))
+             22 LOAD_CONST               7 (<code object _load at 0x000002BF94A196B0, file "core\store\customer_index.py", line 29>)
+             24 MAKE_FUNCTION            4 (annotations)
+             26 STORE_NAME               4 (_load)
+
+ 36          28 LOAD_CONST              21 (('return', 'None'))
+             30 LOAD_CONST               9 (<code object _save at 0x000002BF949EE250, file "core\store\customer_index.py", line 36>)
+             32 MAKE_FUNCTION            4 (annotations)
+             34 STORE_NAME               5 (_save)
+
+ 42          36 LOAD_CONST              22 (('',))
+             38 LOAD_CONST              23 (('recipe', 'PoRecipe', 'fingerprint', 'str', 'return', 'None'))
+             40 LOAD_CONST              15 (<code object record at 0x000002BF94464320, file "core\store\customer_index.py", line 42>)
+             42 MAKE_FUNCTION            5 (defaults, annotations)
+             44 STORE_NAME               6 (record)
+
+ 70          46 LOAD_CONST              24 (('text', 'str'))
+             48 LOAD_CONST              17 (<code object seed_for at 0x000002BF940C7410, file "core\store\customer_index.py", line 70>)
+             50 MAKE_FUNCTION            4 (annotations)
+             52 STORE_NAME               7 (seed_for)
+             54 LOAD_CONST               1 (None)
+             56 RETURN_VALUE
+
+==============================================================================
+## <module>.CustomerRecipeIndex.__init__  (args=2, locals=3)
+# varnames: self, cache_dir, RecipeCache
+ 22           0 RESUME                   0
+
+ 23           2 LOAD_FAST                1 (cache_dir)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE    21 (to 48)
+
+ 24           6 LOAD_CONST               1 (1)
+              8 LOAD_CONST               2 (('RecipeCache',))
+             10 IMPORT_NAME              0 (cache)
+             12 IMPORT_FROM              1 (RecipeCache)
+             14 STORE_FAST               2 (RecipeCache)
+             16 POP_TOP
+
+ 25          18 PUSH_NULL
+             20 LOAD_FAST                2 (RecipeCache)
+             22 PRECALL                  0
+             26 CALL                     0
+             36 LOAD_ATTR                2 (dir)
+             46 STORE_FAST               1 (cache_dir)
+
+ 26     >>   48 LOAD_GLOBAL              6 (os)
+             60 LOAD_ATTR                4 (path)
+             70 LOAD_METHOD              5 (join)
+             92 LOAD_FAST                1 (cache_dir)
+             94 LOAD_CONST               3 ('customer_recipes.json')
+             96 PRECALL                  2
+            100 CALL                     2
+            110 LOAD_FAST                0 (self)
+            112 STORE_ATTR               4 (path)
+
+ 27         122 LOAD_FAST                0 (self)
+            124 LOAD_METHOD              6 (_load)
+            146 PRECALL                  0
+            150 CALL                     0
+            160 LOAD_FAST                0 (self)
+            162 STORE_ATTR               7 (_data)
+            172 LOAD_CONST               0 (None)
+            174 RETURN_VALUE
+
+==============================================================================
+## <module>.CustomerRecipeIndex._load  (args=1, locals=2)
+# varnames: self, f
+ 29           0 RESUME                   0
+
+ 30           2 NOP
+
+ 31           4 LOAD_GLOBAL              1 (NULL + open)
+             16 LOAD_FAST                0 (self)
+             18 LOAD_ATTR                1 (path)
+             28 LOAD_CONST               1 ('utf-8')
+             30 KW_NAMES                 2
+             32 PRECALL                  2
+             36 CALL                     2
+             46 BEFORE_WITH
+             48 STORE_FAST               1 (f)
+
+ 32          50 LOAD_GLOBAL              5 (NULL + json)
+             62 LOAD_ATTR                3 (load)
+             72 LOAD_FAST                1 (f)
+             74 PRECALL                  1
+             78 CALL                     1
+
+ 31          88 SWAP                     2
+             90 LOAD_CONST               0 (None)
+             92 LOAD_CONST               0 (None)
+             94 LOAD_CONST               0 (None)
+             96 PRECALL                  2
+            100 CALL                     2
+            110 POP_TOP
+            112 RETURN_VALUE
+        >>  114 PUSH_EXC_INFO
+            116 WITH_EXCEPT_START
+            118 POP_JUMP_FORWARD_IF_TRUE     4 (to 128)
+            120 RERAISE                  2
+        >>  122 COPY                     3
+            124 POP_EXCEPT
+            126 RERAISE                  1
+        >>  128 POP_TOP
+            130 POP_EXCEPT
+            132 POP_TOP
+            134 POP_TOP
+            136 LOAD_CONST               0 (None)
+            138 RETURN_VALUE
+        >>  140 PUSH_EXC_INFO
+
+ 33         142 LOAD_GLOBAL              8 (OSError)
+            154 LOAD_GLOBAL             10 (ValueError)
+            166 BUILD_TUPLE              2
+            168 CHECK_EXC_MATCH
+            170 POP_JUMP_FORWARD_IF_FALSE     5 (to 182)
+            172 POP_TOP
+
+ 34         174 BUILD_MAP                0
+            176 SWAP                     2
+            178 POP_EXCEPT
+            180 RETURN_VALUE
+
+ 33     >>  182 RERAISE                  0
+        >>  184 COPY                     3
+            186 POP_EXCEPT
+            188 RERAISE                  1
+ExceptionTable:
+  4 to 46 -> 140 [0]
+  48 to 86 -> 114 [1] lasti
+  88 to 110 -> 140 [0]
+  114 to 120 -> 122 [3] lasti
+  122 to 126 -> 140 [0]
+  128 to 128 -> 122 [3] lasti
+  130 to 134 -> 140 [0]
+  140 to 176 -> 184 [1] lasti
+  182 to 182 -> 184 [1] lasti
+
+==============================================================================
+## <module>.CustomerRecipeIndex._save  (args=1, locals=3)
+# varnames: self, tmp, f
+ 36           0 RESUME                   0
+
+ 37           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (path)
+             14 LOAD_CONST               1 ('.tmp')
+             16 BINARY_OP                0 (+)
+             20 STORE_FAST               1 (tmp)
+
+ 38          22 LOAD_GLOBAL              3 (NULL + open)
+             34 LOAD_FAST                1 (tmp)
+             36 LOAD_CONST               2 ('w')
+             38 LOAD_CONST               3 ('utf-8')
+             40 KW_NAMES                 4
+             42 PRECALL                  3
+             46 CALL                     3
+             56 BEFORE_WITH
+             58 STORE_FAST               2 (f)
+
+ 39          60 LOAD_GLOBAL              5 (NULL + json)
+             72 LOAD_ATTR                3 (dump)
+             82 LOAD_FAST                0 (self)
+             84 LOAD_ATTR                4 (_data)
+             94 LOAD_FAST                2 (f)
+             96 LOAD_CONST               5 (False)
+             98 LOAD_CONST               6 (2)
+            100 KW_NAMES                 7
+            102 PRECALL                  4
+            106 CALL                     4
+            116 POP_TOP
+
+ 38         118 LOAD_CONST               0 (None)
+            120 LOAD_CONST               0 (None)
+            122 LOAD_CONST               0 (None)
+            124 PRECALL                  2
+            128 CALL                     2
+            138 POP_TOP
+            140 JUMP_FORWARD            11 (to 164)
+        >>  142 PUSH_EXC_INFO
+            144 WITH_EXCEPT_START
+            146 POP_JUMP_FORWARD_IF_TRUE     4 (to 156)
+            148 RERAISE                  2
+        >>  150 COPY                     3
+            152 POP_EXCEPT
+            154 RERAISE                  1
+        >>  156 POP_TOP
+            158 POP_EXCEPT
+            160 POP_TOP
+            162 POP_TOP
+
+ 40     >>  164 LOAD_GLOBAL             11 (NULL + os)
+            176 LOAD_ATTR                6 (replace)
+            186 LOAD_FAST                1 (tmp)
+            188 LOAD_FAST                0 (self)
+            190 LOAD_ATTR                0 (path)
+            200 PRECALL                  2
+            204 CALL                     2
+            214 POP_TOP
+            216 LOAD_CONST               0 (None)
+            218 RETURN_VALUE
+ExceptionTable:
+  58 to 116 -> 142 [1] lasti
+  142 to 148 -> 150 [3] lasti
+  156 to 156 -> 150 [3] lasti
+
+==============================================================================
+## <module>.CustomerRecipeIndex.record  (args=3, locals=9)
+# varnames: self, recipe, fingerprint, cust, entry, fps, known, lt, sd
+ 42           0 RESUME                   0
+
+ 44           2 LOAD_GLOBAL              1 (NULL + getattr)
+             14 LOAD_FAST                1 (recipe)
+             16 LOAD_CONST               1 ('customer')
+             18 LOAD_CONST               2 ('')
+             20 PRECALL                  3
+             24 CALL                     3
+             34 JUMP_IF_TRUE_OR_POP      1 (to 38)
+             36 LOAD_CONST               2 ('')
+        >>   38 LOAD_METHOD              1 (strip)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 STORE_FAST               3 (cust)
+
+ 45          76 LOAD_FAST                3 (cust)
+             78 POP_JUMP_FORWARD_IF_TRUE     2 (to 84)
+
+ 46          80 LOAD_CONST               3 (None)
+             82 RETURN_VALUE
+
+ 47     >>   84 LOAD_FAST                0 (self)
+             86 LOAD_ATTR                2 (_data)
+             96 LOAD_METHOD              3 (setdefault)
+            118 LOAD_FAST                3 (cust)
+            120 BUILD_LIST               0
+            122 BUILD_MAP                0
+            124 LOAD_CONST               4 (('fingerprints', 'known'))
+            126 BUILD_CONST_KEY_MAP      2
+            128 PRECALL                  2
+            132 CALL                     2
+            142 STORE_FAST               4 (entry)
+
+ 48         144 LOAD_FAST                4 (entry)
+            146 LOAD_METHOD              3 (setdefault)
+            168 LOAD_CONST               5 ('fingerprints')
+            170 BUILD_LIST               0
+            172 PRECALL                  2
+            176 CALL                     2
+            186 STORE_FAST               5 (fps)
+
+ 49         188 LOAD_FAST                2 (fingerprint)
+            190 POP_JUMP_FORWARD_IF_FALSE    25 (to 242)
+            192 LOAD_FAST                2 (fingerprint)
+            194 LOAD_FAST                5 (fps)
+            196 CONTAINS_OP              1
+            198 POP_JUMP_FORWARD_IF_FALSE    21 (to 242)
+
+ 50         200 LOAD_FAST                5 (fps)
+            202 LOAD_METHOD              4 (append)
+            224 LOAD_FAST                2 (fingerprint)
+            226 PRECALL                  1
+            230 CALL                     1
+            240 POP_TOP
+
+ 51     >>  242 LOAD_FAST                4 (entry)
+            244 LOAD_METHOD              3 (setdefault)
+            266 LOAD_CONST               6 ('known')
+            268 BUILD_MAP                0
+            270 PRECALL                  2
+            274 CALL                     2
+            284 STORE_FAST               6 (known)
+
+ 52         286 LOAD_GLOBAL              1 (NULL + getattr)
+            298 LOAD_FAST                1 (recipe)
+            300 LOAD_CONST               7 ('layout_type')
+            302 LOAD_CONST               2 ('')
+            304 PRECALL                  3
+            308 CALL                     3
+            318 STORE_FAST               7 (lt)
+
+ 53         320 LOAD_FAST                7 (lt)
+            322 POP_JUMP_FORWARD_IF_FALSE    59 (to 442)
+
+ 54         324 LOAD_FAST                6 (known)
+            326 LOAD_METHOD              3 (setdefault)
+            348 LOAD_CONST               8 ('layout_types')
+            350 BUILD_LIST               0
+            352 PRECALL                  2
+            356 CALL                     2
+            366 POP_TOP
+
+ 55         368 LOAD_FAST                7 (lt)
+            370 LOAD_FAST                6 (known)
+            372 LOAD_CONST               8 ('layout_types')
+            374 BINARY_SUBSCR
+            384 CONTAINS_OP              1
+            386 POP_JUMP_FORWARD_IF_FALSE    27 (to 442)
+
+ 56         388 LOAD_FAST                6 (known)
+            390 LOAD_CONST               8 ('layout_types')
+            392 BINARY_SUBSCR
+            402 LOAD_METHOD              4 (append)
+            424 LOAD_FAST                7 (lt)
+            426 PRECALL                  1
+            430 CALL                     1
+            440 POP_TOP
+
+ 59     >>  442 LOAD_GLOBAL              1 (NULL + getattr)
+            454 LOAD_FAST                1 (recipe)
+            456 LOAD_CONST               9 ('field_defaults')
+            458 BUILD_MAP                0
+            460 PRECALL                  3
+            464 CALL                     3
+            474 JUMP_IF_TRUE_OR_POP      1 (to 478)
+            476 BUILD_MAP                0
+        >>  478 STORE_FAST               8 (sd)
+
+ 60         480 LOAD_FAST                8 (sd)
+            482 LOAD_METHOD              5 (get)
+            504 LOAD_CONST              10 ('style_no')
+            506 PRECALL                  1
+            510 CALL                     1
+            520 POP_JUMP_FORWARD_IF_FALSE    71 (to 664)
+
+ 61         522 LOAD_FAST                6 (known)
+            524 LOAD_METHOD              3 (setdefault)
+            546 LOAD_CONST              11 ('style_samples')
+            548 BUILD_LIST               0
+            550 PRECALL                  2
+            554 CALL                     2
+            564 POP_TOP
+
+ 62         566 LOAD_FAST                8 (sd)
+            568 LOAD_CONST              10 ('style_no')
+            570 BINARY_SUBSCR
+            580 LOAD_FAST                6 (known)
+            582 LOAD_CONST              11 ('style_samples')
+            584 BINARY_SUBSCR
+            594 CONTAINS_OP              1
+            596 POP_JUMP_FORWARD_IF_FALSE    33 (to 664)
+
+ 63         598 LOAD_FAST                6 (known)
+            600 LOAD_CONST              11 ('style_samples')
+            602 BINARY_SUBSCR
+            612 LOAD_METHOD              4 (append)
+            634 LOAD_FAST                8 (sd)
+            636 LOAD_CONST              10 ('style_no')
+            638 BINARY_SUBSCR
+            648 PRECALL                  1
+            652 CALL                     1
+            662 POP_TOP
+
+ 64     >>  664 LOAD_FAST                8 (sd)
+            666 LOAD_METHOD              5 (get)
+            688 LOAD_CONST              12 ('colour')
+            690 PRECALL                  1
+            694 CALL                     1
+            704 POP_JUMP_FORWARD_IF_FALSE    71 (to 848)
+
+ 65         706 LOAD_FAST                6 (known)
+            708 LOAD_METHOD              3 (setdefault)
+            730 LOAD_CONST              13 ('colour_samples')
+            732 BUILD_LIST               0
+            734 PRECALL                  2
+            738 CALL                     2
+            748 POP_TOP
+
+ 66         750 LOAD_FAST                8 (sd)
+            752 LOAD_CONST              12 ('colour')
+            754 BINARY_SUBSCR
+            764 LOAD_FAST                6 (known)
+            766 LOAD_CONST              13 ('colour_samples')
+            768 BINARY_SUBSCR
+            778 CONTAINS_OP              1
+            780 POP_JUMP_FORWARD_IF_FALSE    33 (to 848)
+
+ 67         782 LOAD_FAST                6 (known)
+            784 LOAD_CONST              13 ('colour_samples')
+            786 BINARY_SUBSCR
+            796 LOAD_METHOD              4 (append)
+            818 LOAD_FAST                8 (sd)
+            820 LOAD_CONST              12 ('colour')
+            822 BINARY_SUBSCR
+            832 PRECALL                  1
+            836 CALL                     1
+            846 POP_TOP
+
+ 68     >>  848 LOAD_FAST                0 (self)
+            850 LOAD_METHOD              6 (_save)
+            872 PRECALL                  0
+            876 CALL                     0
+            886 POP_TOP
+            888 LOAD_CONST               3 (None)
+            890 RETURN_VALUE
+
+==============================================================================
+## <module>.CustomerRecipeIndex.seed_for  (args=2, locals=7)
+# varnames: self, text, low, best, cust, known, parts
+ 70           0 RESUME                   0
+
+ 74           2 LOAD_FAST                1 (text)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+ 75           6 LOAD_CONST               1 ((None, ''))
+              8 RETURN_VALUE
+
+ 76     >>   10 LOAD_FAST                1 (text)
+             12 LOAD_METHOD              0 (lower)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 STORE_FAST               2 (low)
+
+ 77          50 LOAD_CONST               2 (None)
+             52 STORE_FAST               3 (best)
+
+ 78          54 LOAD_FAST                0 (self)
+             56 LOAD_ATTR                1 (_data)
+             66 GET_ITER
+        >>   68 FOR_ITER                30 (to 130)
+             70 STORE_FAST               4 (cust)
+
+ 79          72 LOAD_FAST                4 (cust)
+             74 POP_JUMP_FORWARD_IF_FALSE    26 (to 128)
+             76 LOAD_FAST                4 (cust)
+             78 LOAD_METHOD              0 (lower)
+            100 PRECALL                  0
+            104 CALL                     0
+            114 LOAD_FAST                2 (low)
+            116 CONTAINS_OP              0
+            118 POP_JUMP_FORWARD_IF_FALSE     4 (to 128)
+
+ 80         120 LOAD_FAST                4 (cust)
+            122 STORE_FAST               3 (best)
+
+ 81         124 POP_TOP
+            126 JUMP_FORWARD             1 (to 130)
+        >>  128 JUMP_BACKWARD           31 (to 68)
+
+ 82     >>  130 LOAD_FAST                3 (best)
+            132 POP_JUMP_FORWARD_IF_TRUE     2 (to 138)
+
+ 83         134 LOAD_CONST               1 ((None, ''))
+            136 RETURN_VALUE
+
+ 84     >>  138 LOAD_FAST                0 (self)
+            140 LOAD_ATTR                1 (_data)
+            150 LOAD_FAST                3 (best)
+            152 BINARY_SUBSCR
+            162 LOAD_METHOD              2 (get)
+            184 LOAD_CONST               3 ('known')
+            186 BUILD_MAP                0
+            188 PRECALL                  2
+            192 CALL                     2
+            202 STORE_FAST               5 (known)
+
+ 85         204 LOAD_CONST               4 ('客户「')
+            206 LOAD_FAST                3 (best)
+            208 FORMAT_VALUE             0
+            210 LOAD_CONST               5 ('」的历史配方特征（仅供 AI 参考，不作为事实）：')
+            212 BUILD_STRING             3
+            214 BUILD_LIST               1
+            216 STORE_FAST               6 (parts)
+
+ 86         218 LOAD_FAST                5 (known)
+            220 LOAD_METHOD              2 (get)
+            242 LOAD_CONST               6 ('layout_types')
+            244 PRECALL                  1
+            248 CALL                     1
+            258 POP_JUMP_FORWARD_IF_FALSE    49 (to 358)
+
+ 87         260 LOAD_FAST                6 (parts)
+            262 LOAD_METHOD              3 (append)
+            284 LOAD_CONST               7 ('曾见版式: ')
+            286 LOAD_CONST               8 (', ')
+            288 LOAD_METHOD              4 (join)
+            310 LOAD_FAST                5 (known)
+            312 LOAD_CONST               6 ('layout_types')
+            314 BINARY_SUBSCR
+            324 PRECALL                  1
+            328 CALL                     1
+            338 BINARY_OP                0 (+)
+            342 PRECALL                  1
+            346 CALL                     1
+            356 POP_TOP
+
+ 88     >>  358 LOAD_FAST                5 (known)
+            360 LOAD_METHOD              2 (get)
+            382 LOAD_CONST               9 ('style_samples')
+            384 PRECALL                  1
+            388 CALL                     1
+            398 POP_JUMP_FORWARD_IF_FALSE    57 (to 514)
+
+ 89         400 LOAD_FAST                6 (parts)
+            402 LOAD_METHOD              3 (append)
+            424 LOAD_CONST              10 ('款号样例: ')
+            426 LOAD_CONST               8 (', ')
+            428 LOAD_METHOD              4 (join)
+            450 LOAD_FAST                5 (known)
+            452 LOAD_CONST               9 ('style_samples')
+            454 BINARY_SUBSCR
+            464 LOAD_CONST               2 (None)
+            466 LOAD_CONST              11 (5)
+            468 BUILD_SLICE              2
+            470 BINARY_SUBSCR
+            480 PRECALL                  1
+            484 CALL                     1
+            494 BINARY_OP                0 (+)
+            498 PRECALL                  1
+            502 CALL                     1
+            512 POP_TOP
+
+ 90     >>  514 LOAD_FAST                5 (known)
+            516 LOAD_METHOD              2 (get)
+            538 LOAD_CONST              12 ('colour_samples')
+            540 PRECALL                  1
+            544 CALL                     1
+            554 POP_JUMP_FORWARD_IF_FALSE    57 (to 670)
+
+ 91         556 LOAD_FAST                6 (parts)
+            558 LOAD_METHOD              3 (append)
+            580 LOAD_CONST              13 ('颜色样例: ')
+            582 LOAD_CONST               8 (', ')
+            584 LOAD_METHOD              4 (join)
+            606 LOAD_FAST                5 (known)
+            608 LOAD_CONST              12 ('colour_samples')
+            610 BINARY_SUBSCR
+            620 LOAD_CONST               2 (None)
+            622 LOAD_CONST              11 (5)
+            624 BUILD_SLICE              2
+            626 BINARY_SUBSCR
+            636 PRECALL                  1
+            640 CALL                     1
+            650 BINARY_OP                0 (+)
+            654 PRECALL                  1
+            658 CALL                     1
+            668 POP_TOP
+
+ 92     >>  670 LOAD_FAST                3 (best)
+            672 LOAD_CONST              14 ('\n')
+            674 LOAD_METHOD              4 (join)
+            696 LOAD_FAST                6 (parts)
+            698 PRECALL                  1
+            702 CALL                     1
+            712 BUILD_TUPLE              2
+            714 RETURN_VALUE

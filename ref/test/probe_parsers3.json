@@ -1,0 +1,113 @@
+﻿{
+ "Token_is_number": {
+  "500": true,
+  "100": true,
+  "12.50": true,
+  "abc": false,
+  "": false,
+  "3,000": true,
+  "1-1": false,
+  "-": false,
+  ".": false,
+  "0": true,
+  "-3": false,
+  "+5": false
+ },
+ "PageWords_lines": {
+  "nlines": 2,
+  "line0": [
+   "COLOR",
+   "NO",
+   "XS",
+   "S",
+   "M",
+   "TOTAL"
+  ],
+  "line1": [
+   "637JO",
+   "80X",
+   "100",
+   "200",
+   "150",
+   "450"
+  ]
+ },
+ "PageWords_text": "COLOR NO XS S M TOTAL\n637JO 80X 100 200 150 450",
+ "_SHIP_MAP": {
+  "VESSEL": "Sea",
+  "BY SEA": "Sea",
+  "SEA": "Sea",
+  "OCEAN": "Sea",
+  "BY OCEAN": "Sea",
+  "AIR": "Air",
+  "BY AIR": "Air",
+  "AIR FREIGHT": "Air"
+ },
+ "_FOOTER_MARGIN": 2,
+ "size_columns": {
+  "sig": "(tokens, total_token: 'str')",
+  "error": "size_columns() missing 1 required positional argument: 'total_token'",
+  "with_total_err": "'list' object has no attribute 'text'"
+ },
+ "split_row_total": {
+  "sig": "(qty_tokens, cols, total_xc)",
+  "error": "split_row_total() missing 1 required positional argument: 'total_xc'"
+ },
+ "norm_date": {
+  "15.03.2024": "2024-03-15",
+  "15.03.24": "2024-03-15",
+  "2024-03-15": "2024-03-15",
+  "1.5.2024": "2024-05-01",
+  "2024-12-01": "2024-12-01",
+  "": "",
+  "invalid": "invalid"
+ },
+ "is_size_header": {
+  "sig": "(recipe, line_text: 'str') -> 'bool'"
+ },
+ "_to_int": {
+  "100": 100,
+  "200": 200,
+  "3,000": 3000,
+  "12.5": 12,
+  "abc": 0,
+  "": 0,
+  "5.7": 5,
+  "-3": -3
+ },
+ "_to_float": {
+  "10.20": 10.2,
+  "3,000": 3.0,
+  "abc": null,
+  "": null,
+  "5.7": 5.7,
+  "12,50": 12.5
+ },
+ "_looks_like_style": {
+  "637JO": true,
+  "AW11078": true,
+  "1": false,
+  "1-1": false,
+  "AB": true,
+  "ABC123": true,
+  "12345": false,
+  "X-100": true
+ },
+ "_looks_like_sku": {
+  "59J": true,
+  "08X": true,
+  "1": true,
+  "ABC": false,
+  "59J59J": true,
+  "80X": true
+ },
+ "merge_order_lines": {
+  "sig": "(lines)"
+ },
+ "parse_total_row": {
+  "sig": "(tokens_after_first, ref, total_xc)"
+ },
+ "_line_is_priced": {
+  "sig": "(ln) -> 'bool'"
+ }
+}

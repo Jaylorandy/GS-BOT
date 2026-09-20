@@ -1,0 +1,361 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "SIZE_TOKEN",
+   "_nearest",
+   "_to_int",
+   "_to_float",
+   "doc_text",
+   "_FRANKIE_MONTHS",
+   "_frankie_date",
+   "_extract_frankie_ecom_header",
+   "FrankieEcomParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/frankie_ecom.py - FRANKIE ECOM colour x size grid.\n\nWELL WORN / COSTCO TAIWAN ECOM variant (e.g. PO# DW20250807E-S26 - FRANKIE #1399):\n\n    XS S M L XL XXL Total Units Cartons            <- size header\n    BLEACH (LIGHT BLUE) 40 40 40 40 160 4 $8.35 $1,336.00   <- colour row\n    OASIS (MEDIUM BLUE)  40 40 40 40 160 4 $8.35 $1,336.00\n    Total Per Size       80 80 80 80 320 8 $2,672.00         <- sum row\n\nKey differences from matrix_percarton (FRANKIE JAPAN/KOREA/TAIWAN INLINE):\n\n  * the size columns ALREADY carry TOTAL UNITS (40 each, not per-carton);\n  * \"Total Units\" is the real per-colour row total (160) - used for cross-check;\n  * \"Cartons\" (4) is packaging only and is IGNORED;\n  * unit is forced to PCS - our base unit is PCS, never Carton.\n\nThe grid is located structurally, so the recipe only pins ``layout_type`` and the\nparser needs no anchors - making the layout fully cacheable (zero AI on re-runs,\nno confirm dialog).\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "SIZE_TOKEN",
+    "_nearest",
+    "_to_int",
+    "_to_float",
+    "doc_text"
+   ],
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec"
+   ],
+   "s",
+   "str",
+   "return",
+   "text",
+   "dict",
+   "FrankieEcomParser",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 83
+ },
+ "<module>._frankie_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "_FRANKIE_MONTHS",
+   "get",
+   "group",
+   "lower",
+   "len",
+   "int"
+  ],
+  "varnames": [
+   "s",
+   "m",
+   "mo",
+   "y"
+  ],
+  "consts": [
+   "``15-Nov-25`` / ``15-Dec-25`` -> ``2025-11-15`` / ``2025-12-15``.",
+   "",
+   "(\\d{1,2})-([A-Za-z]{3})-(\\d{2,4})$",
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d",
+   1
+  ],
+  "n_instructions": 78
+ },
+ "<module>._extract_frankie_ecom_header": {
+  "names": [
+   "re",
+   "search",
+   "group",
+   "strip",
+   "I",
+   "replace",
+   "_frankie_date"
+  ],
+  "varnames": [
+   "text",
+   "h",
+   "m"
+  ],
+  "consts": [
+   "Read the FRANKIE ECOM header block and return the OSR header fields.\n\n    Every value is read straight from the document. Fields the layout does NOT\n    print (Inseam / Product Group / Destination / Agent) are left ``\"\"`` so the\n    caller writes them blank.\n    ",
+   "PO\\s*Number\\s+(\\S+)",
+   1,
+   "",
+   "po_no",
+   "\\b([A-Z][A-Z0-9&'., \\-]{4,60}?\\bINC\\.)",
+   "customer",
+   "(FRANKIE\\s*#\\s*\\d+)",
+   "style_no",
+   "Unit\\s*Cost\\s*\\(?\\s*FOB\\s*\\)?\\s*\\$?([\\d,]+\\.\\d+)",
+   ",",
+   "unit_price",
+   "\\bUSD\\b",
+   "USD",
+   "currency",
+   "At\\s+Port\\s+Date\\s+(\\d{1,2}-[A-Za-z]{3}-\\d{2,4})",
+   "ship_date",
+   "\\bFOB\\b",
+   "FOB",
+   "price_term",
+   "Ship\\s+Via\\s+(SEA|AIR|OCEAN|VESSEL)",
+   "ship_mode",
+   "Season\\s+(\\S+\\s+\\d{4})",
+   "season"
+  ],
+  "n_instructions": 190
+ },
+ "<module>.FrankieEcomParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "FRANKIE_ECOM",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "FrankieEcomParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.FrankieEcomParser.parse": {
+  "names": [
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "_extract_frankie_ecom_header",
+   "doc_text",
+   "po_no",
+   "style_no",
+   "price_term",
+   "currency",
+   "delivery_date",
+   "ship_mode",
+   "season",
+   "_to_float",
+   "lines",
+   "any",
+   "next",
+   "enumerate",
+   "SIZE_TOKEN",
+   "match",
+   "text",
+   "xc",
+   "upper",
+   "startswith",
+   "abs",
+   "_to_int",
+   "_nearest",
+   "isalpha",
+   "isupper",
+   "len",
+   "append",
+   "SizeQty",
+   "is_number",
+   "join",
+   "strip",
+   "re",
+   "sub",
+   "OrderLine",
+   "printed_size_totals",
+   "printed_total_qty",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "po",
+   "ent",
+   "size_cols",
+   "total_xc",
+   "cartons_xc",
+   "size_totals",
+   "printed_qty",
+   "hdr",
+   "unit_price",
+   "page",
+   "line",
+   "toks",
+   "low",
+   "ti",
+   "j",
+   "end",
+   "start",
+   "t",
+   "nums",
+   "col",
+   "num_toks",
+   "sizes",
+   "row_total",
+   "desc_parts",
+   "idx",
+   "desc"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "customer",
+   "po_no",
+   "style_no",
+   "price_term",
+   "currency",
+   "ship_date",
+   "ship_mode",
+   "season",
+   "unit_price",
+   "TOTAL",
+   "UNITS",
+   "CARTONS",
+   1,
+   0,
+   2,
+   5,
+   30,
+   3,
+   [
+    "size",
+    "qty"
+   ],
+   " ",
+   "\\(\\s+",
+   "(",
+   "\\s+\\)",
+   ")",
+   "PCS",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes",
+    "printed_row_total"
+   ]
+  ],
+  "n_instructions": 619
+ },
+ "<module>.FrankieEcomParser.parse.<listcomp>": {
+  "names": [
+   "is_number"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 14
+ },
+ "<module>.FrankieEcomParser.parse.<genexpr>": {
+  "names": [
+   "text",
+   "startswith"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   "$",
+   null
+  ],
+  "n_instructions": 18
+ }
+}

@@ -1,0 +1,1450 @@
+import React, { useState, useEffect, useRef, useCallback, useMemo, createContext, useContext } from "react";
+import LabelOcrSettings from "./components/LabelOcrSettings";
+import PoCacheManager from "./components/PoCacheManager";
+import { useI18n } from "./utils/i18n";
+import { WIZARD_CONFIG } from "./wizardConfig";
+import {
+  loadSharedLabelOcrProfile,
+  saveSharedLabelOcrProfile,
+  subscribeSharedLabelOcrProfile
+} from "./utils/labelOcrProfileStore";
+import "./ModuleHome.css";
+const PRESET_MODEL_PREFIXES = {
+  glm: ["glm-"],
+  deepseek: ["deepseek-"],
+  qwen: ["qwen-"]
+};
+function looksLikeValidModelName(modelName = "") {
+  const name = String(modelName || "").trim();
+  if (!name) return false;
+  const lastDashIdx = name.lastIndexOf("-");
+  if (lastDashIdx === -1 || lastDashIdx === name.length - 1) return false;
+  const suffix = name.slice(lastDashIdx + 1);
+  if (/^[\d.]+$/.test(suffix)) return false;
+  return true;
+}
+function isValidModelForPreset(modelName = "", presetId = "") {
+  const name = String(modelName || "").trim();
+  if (!name) return false;
+  const prefixes = PRESET_MODEL_PREFIXES[presetId];
+  if (!prefixes || prefixes.length === 0) return true;
+  const lower = name.toLowerCase();
+  const prefixOk = prefixes.some((p) => lower.startsWith(p.toLowerCase()));
+  if (!prefixOk) return false;
+  return looksLikeValidModelName(name);
+}
+const LOG_CHANNELS = {
+  slides: { log: "onSlidesLog", progress: "onSlidesProgress", remove: "removeSlidesListeners" },
+  scraper: { log: "onLog", progress: "onProgress", remove: "removeListeners" },
+  bestseller: { log: "onBestsellerLog", progress: "onBestsellerProgress", remove: "removeBestsellerListeners" },
+  garmentCleaner: { log: "onGarmentCleanerLog", progress: "onGarmentCleanerProgress", remove: "removeGarmentCleanerListeners" },
+  pdfSqueezer: { log: "onPdfSqueezerLog", progress: "onPdfSqueezerProgress", item: "onPdfSqueezerItem", remove: "removePdfSqueezerListeners" },
+  poExtract: { log: "onPoExtractLog", progress: "onPoExtractProgress", remove: "removePoExtractListeners" }
+};
+const PO_SEMANTIC_OPTIONS = [
+  { value: "", label: "\u2014 \u65E0 \u2014" },
+  { value: "orderNo", label: "orderNo \xB7 \u8BA2\u5355\u53F7" },
+  { value: "styleNo", label: "styleNo \xB7 \u6B3E\u53F7" },
+  { value: "modelNo", label: "modelNo \xB7 \u578B\u53F7" },
+  { value: "poNo", label: "poNo \xB7 PO \u53F7" },
+  { value: "colorCode", label: "colorCode \xB7 \u989C\u8272\u7801" },
+  { value: "colorName", label: "colorName \xB7 \u989C\u8272\u540D" },
+  { value: "destinationCode", label: "destinationCode \xB7 \u76EE\u7684\u5730\u7801" },
+  { value: "shipmentDate", label: "shipmentDate \xB7 \u51FA\u8D27\u671F" },
+  { value: "transportType", label: "transportType \xB7 \u8FD0\u8F93\u65B9\u5F0F" },
+  { value: "packingMethod", label: "packingMethod \xB7 \u5305\u88C5\u65B9\u5F0F" },
+  { value: "price", label: "price \xB7 \u5355\u4EF7" },
+  { value: "currency", label: "currency \xB7 \u8D27\u5E01" },
+  { value: "quantity", label: "quantity \xB7 \u6570\u91CF" },
+  { value: "totalQty", label: "totalQty \xB7 \u603B\u6570" },
+  { value: "kiNo", label: "kiNo \xB7 KI No" },
+  { value: "barcode", label: "barcode \xB7 \u6761\u7801" },
+  { value: "inseam", label: "inseam \xB7 \u5185\u957F" },
+  { value: "unknown", label: "unknown \xB7 \u5FFD\u7565" }
+];
+function colLetter(col) {
+  if (!Number.isInteger(col) || col < 0) return "?";
+  let n = col;
+  let s = "";
+  do {
+    s = String.fromCharCode(65 + n % 26) + s;
+    n = Math.floor(n / 26) - 1;
+  } while (n >= 0);
+  return s;
+}
+function FieldRenderer({ field, value, onChange, t, tx, accentRgb, onPresetDeleted }) {
+  const val = value ?? field.default ?? "";
+  if (field.type === "hidden") {
+    return null;
+  }
+  if (field.type === "divider") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field-divider" }, t(field.label));
+  }
+  if (field.type === "source-or-file-picker") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--picker" }, /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), /* @__PURE__ */ React.createElement("div", { className: "wizard-source-options" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-picker-btn",
+        style: { "--accent-rgb": accentRgb },
+        onClick: async () => {
+          const api = window.electronAPI;
+          if (!api) return;
+          const dir = await api.selectDir?.();
+          if (dir) onChange({ path: dir, kind: "folder" });
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__icon" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", style: { width: 20, height: 20 } }, /* @__PURE__ */ React.createElement("path", { d: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" }))),
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__text" }, val?.kind === "folder" ? typeof val.path === "string" ? val.path.split("/").pop().split("\\").pop() : "" : tx("Folder", "\u6587\u4EF6\u5939"))
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-picker-btn",
+        style: { "--accent-rgb": accentRgb },
+        onClick: async () => {
+          const api = window.electronAPI;
+          if (!api) return;
+          const opts = { properties: ["openFile"] };
+          if (field.ext) opts.filters = [{ name: "Images", extensions: field.ext }];
+          const r = await api.selectFile?.(opts);
+          if (r) {
+            const filePath = Array.isArray(r) ? r[0] : r;
+            onChange({ path: filePath, kind: "file" });
+          }
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__icon" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", style: { width: 20, height: 20 } }, /* @__PURE__ */ React.createElement("rect", { x: "3", y: "4", width: "18", height: "16", rx: "2.2" }), /* @__PURE__ */ React.createElement("circle", { cx: "8.8", cy: "9.8", r: "1.6" }), /* @__PURE__ */ React.createElement("path", { d: "m21 16-5-5L6 20" }))),
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__text" }, val?.kind === "file" ? typeof val.path === "string" ? val.path.split("/").pop().split("\\").pop() : "" : tx("File", "\u6587\u4EF6"))
+    )), field.hint && /* @__PURE__ */ React.createElement("span", { className: "wizard-field__hint" }, t(field.hint)));
+  }
+  if (field.type === "dir-picker" || field.type === "file-picker" || field.type === "save-picker") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--picker" }, /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-picker-btn",
+        style: { "--accent-rgb": accentRgb },
+        onClick: async () => {
+          const api = window.electronAPI;
+          if (!api) return;
+          if (field.type === "dir-picker") {
+            const dir = await api.selectDir?.();
+            if (dir) onChange(dir);
+          } else if (field.type === "save-picker") {
+            const r = await api.saveFile?.({
+              filters: [{ name: field.ext?.toUpperCase() || "File", extensions: [field.ext || "pptx"] }]
+            });
+            if (r) onChange(r);
+          } else {
+            const opts = { properties: field.multiple ? ["openFile", "multiSelections"] : ["openFile"] };
+            if (field.ext) opts.filters = [{ name: field.ext.map((e) => e.toUpperCase()).join("/"), extensions: field.ext }];
+            const r = await api.selectFile?.(opts);
+            if (r) onChange(field.multiple ? r : Array.isArray(r) ? r[0] : r);
+          }
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__icon" }, /* @__PURE__ */ React.createElement("svg", { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "1.7", strokeLinecap: "round", strokeLinejoin: "round", style: { width: 20, height: 20 } }, /* @__PURE__ */ React.createElement("path", { d: "M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" }))),
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-picker-btn__text" }, val ? typeof val === "string" ? val.split("/").pop().split("\\").pop() : `${Array.isArray(val) ? val.length : 1} file(s)` : tx("Select\u2026", "\u9009\u62E9\u2026"))
+    ), field.hint && /* @__PURE__ */ React.createElement("span", { className: "wizard-field__hint" }, t(field.hint)));
+  }
+  if (field.type === "select") {
+    const opts = field.options || [];
+    const hasDesc = opts.some((o) => o.desc);
+    const isPresetField = field.key === "presetId";
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--select" }, /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), /* @__PURE__ */ React.createElement("div", { className: `wizard-select-grid ${hasDesc ? "wizard-select-grid--cards" : "wizard-select-grid--pills"}` }, opts.map((opt) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: String(opt.value),
+        type: "button",
+        className: `wizard-option ${val === opt.value ? "active" : ""}`,
+        style: { "--accent-rgb": accentRgb },
+        onClick: () => onChange(opt.value)
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-option__label" }, t(opt.label)),
+      opt.desc && /* @__PURE__ */ React.createElement("span", { className: "wizard-option__desc" }, t(opt.desc))
+    ))), isPresetField && val && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        style: { marginTop: 8, background: "rgba(220, 50, 50, 0.1)", borderColor: "rgba(220, 50, 50, 0.3)", color: "#c0392b" },
+        onClick: async () => {
+          if (!confirm(tx("Delete this preset?", "\u786E\u5B9A\u5220\u9664\u8FD9\u4E2A\u9884\u8BBE\u5417\uFF1F"))) return;
+          const api = window.electronAPI;
+          if (!api?.poDeletePreset) return;
+          const r = await api.poDeletePreset(val);
+          if (r?.success) {
+            onChange("");
+            if (onPresetDeleted) onPresetDeleted();
+          }
+        }
+      },
+      "\u{1F5D1} ",
+      tx("Delete selected preset", "\u5220\u9664\u6240\u9009\u9884\u8BBE")
+    ));
+  }
+  if (field.type === "toggle") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--toggle" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: `wizard-toggle ${val ? "on" : ""}`,
+        style: { "--accent-rgb": accentRgb },
+        onClick: () => onChange(!val)
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-toggle__track" }, /* @__PURE__ */ React.createElement("span", { className: "wizard-toggle__thumb" })),
+      /* @__PURE__ */ React.createElement("span", { className: "wizard-toggle__text" }, /* @__PURE__ */ React.createElement("span", { className: "wizard-toggle__label" }, t(field.label)), field.desc && /* @__PURE__ */ React.createElement("span", { className: "wizard-toggle__desc" }, t(field.desc)))
+    ));
+  }
+  if (field.type === "group") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--group" }, field.label && /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), /* @__PURE__ */ React.createElement("div", { className: "wizard-toggle-group" }, field.toggles.map((tg) => {
+      const tVal = value?.[tg.key] ?? tg.default ?? false;
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: tg.key,
+          type: "button",
+          className: `wizard-mini-toggle ${tVal ? "on" : ""}`,
+          style: { "--accent-rgb": accentRgb },
+          onClick: () => onChange({ ...value, [tg.key]: !tVal })
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "wizard-mini-toggle__dot" }),
+        t(tg.label)
+      );
+    })));
+  }
+  if (field.type === "text" || field.type === "textarea") {
+    const ph = field.placeholder || "";
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--text" }, /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), field.type === "textarea" ? /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        className: "wizard-textarea",
+        value: val,
+        placeholder: ph,
+        onChange: (e) => onChange(e.target.value),
+        rows: 4
+      }
+    ) : /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        className: "wizard-input",
+        value: val,
+        placeholder: ph,
+        onChange: (e) => onChange(e.target.value)
+      }
+    ));
+  }
+  if (field.type === "number") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--number" }, /* @__PURE__ */ React.createElement("label", { className: "wizard-field__label" }, t(field.label)), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "number",
+        className: "wizard-input wizard-input--number",
+        value: val,
+        min: field.min,
+        max: field.max,
+        onChange: (e) => onChange(Number(e.target.value))
+      }
+    ));
+  }
+  if (field.type === "button-action") {
+    return /* @__PURE__ */ React.createElement("div", { className: "wizard-field wizard-field--button-action" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-action-btn",
+        style: { "--accent-rgb": accentRgb },
+        onClick: field.onClick || (() => {
+        })
+      },
+      "\u{1F4BE} ",
+      t(field.label)
+    ));
+  }
+  return null;
+}
+function LayoutMapEditor({ title, rows, semantic, onChange, onRemove, onAdd, accentRgb, tx }) {
+  const rowStyle = {
+    display: "grid",
+    gridTemplateColumns: semantic ? "46px 1fr 150px 26px" : "46px 1fr 26px",
+    gap: "6px",
+    alignItems: "center",
+    marginBottom: "4px"
+  };
+  const inputStyle = {
+    padding: "3px 6px",
+    borderRadius: "4px",
+    border: "1px solid rgba(var(--accent-rgb), 0.3)",
+    background: "rgba(30, 34, 55, 0.8)",
+    color: "#e8e6f0",
+    fontSize: "0.74rem",
+    minWidth: 0
+  };
+  return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: "10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, marginBottom: "4px", fontSize: "0.76rem" } }, title, " ", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.5, fontWeight: 400 } }, "(", rows.length, ")")), (rows || []).map((row, idx) => /* @__PURE__ */ React.createElement("div", { key: idx, style: rowStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: "4px" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "number",
+      value: row.col ?? 0,
+      min: 0,
+      onChange: (e) => onChange(idx, { col: Number(e.target.value) }),
+      style: { ...inputStyle, textAlign: "center", width: 30 },
+      title: tx("Column index (0-based)", "\u5217\u7D22\u5F15\uFF080 \u8D77\uFF09")
+    }
+  ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: "0.68rem", opacity: 0.55, minWidth: 12 } }, colLetter(row.col))), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "text",
+      value: row.label || "",
+      placeholder: tx("label", "\u6807\u7B7E"),
+      onChange: (e) => onChange(idx, { label: e.target.value }),
+      style: inputStyle
+    }
+  ), semantic ? /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      value: row.semantic || "",
+      onChange: (e) => onChange(idx, { semantic: e.target.value }),
+      style: inputStyle
+    },
+    PO_SEMANTIC_OPTIONS.map((opt) => /* @__PURE__ */ React.createElement("option", { key: opt.value, value: opt.value }, opt.label))
+  ) : null, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      title: tx("Remove row", "\u5220\u9664\u6B64\u884C"),
+      style: {
+        background: "transparent",
+        border: "none",
+        cursor: "pointer",
+        color: "rgba(220, 60, 60, 0.8)",
+        fontSize: "0.85rem",
+        lineHeight: 1
+      },
+      onClick: () => onRemove(idx)
+    },
+    "\u2715"
+  ))), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      style: {
+        padding: "3px 10px",
+        borderRadius: "5px",
+        fontSize: "0.74rem",
+        cursor: "pointer",
+        border: "1px dashed rgba(var(--accent-rgb), 0.4)",
+        background: "rgba(var(--accent-rgb), 0.06)",
+        color: "#e8e6f0"
+      },
+      onClick: onAdd
+    },
+    "\uFF0B ",
+    tx("Add row", "\u6DFB\u52A0\u4E00\u884C")
+  ));
+}
+function LabelOcrBridge({ tx }) {
+  const [profile, setProfile] = useState(() => loadSharedLabelOcrProfile());
+  useEffect(() => {
+    return subscribeSharedLabelOcrProfile((next) => setProfile(next));
+  }, []);
+  const handleChange = useCallback((next) => {
+    saveSharedLabelOcrProfile(next);
+  }, []);
+  return /* @__PURE__ */ React.createElement(
+    LabelOcrSettings,
+    {
+      value: profile,
+      onChange: handleChange,
+      tx
+    }
+  );
+}
+export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, onLog, onNavigate }) {
+  const { language, tx } = useI18n();
+  const config = WIZARD_CONFIG[tab.id];
+  const accentRgb = tab.accentRgb || "168, 199, 250";
+  const accentInk = tab.accentInk || "#0a1e30";
+  const t = useCallback((pair) => {
+    if (!pair) return "";
+    if (typeof pair === "string") return pair;
+    return language === "zh" ? pair.zh : pair.en;
+  }, [language]);
+  const [params, setParams] = useState({});
+  const [stepIdx, setStepIdx] = useState(0);
+  const [running, setRunning] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [progressLabel, setProgressLabel] = useState("");
+  const [logs, setLogs] = useState([]);
+  const [done, setDone] = useState(false);
+  const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+  const [direction, setDirection] = useState("forward");
+  const [llmSettings, setLlmSettings] = useState(null);
+  const [aiSource, setAiSource] = useState("cloud");
+  const [poPresets, setPoPresets] = useState([]);
+  const [availableOcrEngines, setAvailableOcrEngines] = useState([]);
+  const [reviewData, setReviewData] = useState(null);
+  const [reviewPath, setReviewPath] = useState(null);
+  const [reviewIdx, setReviewIdx] = useState(0);
+  const [reviewDraft, setReviewDraft] = useState({});
+  const [reviewZoom, setReviewZoom] = useState(1);
+  const [reviewPan, setReviewPan] = useState({ x: 0, y: 0 });
+  const [reviewDragging, setReviewDragging] = useState(false);
+  const [presetSaveInput, setPresetSaveInput] = useState("");
+  const [presetSaveVisible, setPresetSaveVisible] = useState(false);
+  const [presetSaveMsg, setPresetSaveMsg] = useState(null);
+  const [layoutDraft, setLayoutDraft] = useState(null);
+  const [layoutBusy, setLayoutBusy] = useState(false);
+  const [layoutMsg, setLayoutMsg] = useState(null);
+  const [layoutConfirmed, setLayoutConfirmed] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const stageSizeRef = useRef({ w: 400, h: 300 });
+  const stageRef = useRef(null);
+  const imgDisplaySizeRef = useRef({ w: 0, h: 0 });
+  const imgNatSizeRef = useRef({ w: 0, h: 0 });
+  const runningRef = useRef(false);
+  useEffect(() => {
+    runningRef.current = running;
+  }, [running]);
+  const visibleSteps = useMemo(() => {
+    if (!config) return [];
+    const steps = config.steps.filter((step) => {
+      if (!step.showWhen) return true;
+      return step.showWhen(params);
+    });
+    if (tab.id === "poextract" || tab.id === "organizer") {
+      return steps.map((step) => ({
+        ...step,
+        fields: step.fields.map((field) => {
+          if (tab.id === "poextract" && field.key === "llmModel" && llmSettings) {
+            const effectiveSource = params.aiSource || aiSource;
+            let models = [];
+            let defaultModel = "";
+            if (effectiveSource === "apiCloud") {
+              const apiCloudCfg = llmSettings.apiCloud || {};
+              const activePreset = (apiCloudCfg.presets || []).find((p) => p.id === apiCloudCfg.activePresetId) || {};
+              const fetchedModels = Array.isArray(activePreset.availableModels) ? activePreset.availableModels : [];
+              const fallbackModels = Array.isArray(activePreset.fallbackModels) ? activePreset.fallbackModels : [];
+              const known = [...fetchedModels, ...fallbackModels];
+              models = Array.from(new Set(known));
+              defaultModel = activePreset.model || "";
+            } else {
+              const sourceCfg = llmSettings[effectiveSource] || {};
+              models = Array.isArray(sourceCfg.availableModels) ? sourceCfg.availableModels : Array.isArray(sourceCfg.installedModels) ? sourceCfg.installedModels : [];
+              defaultModel = sourceCfg.model || "";
+            }
+            const opts = [
+              { value: "", label: { en: `\u2014 Default: ${defaultModel || "(not set)"} \u2014`, zh: `\u2014 \u9ED8\u8BA4\uFF1A${defaultModel || "\uFF08\u672A\u8BBE\u7F6E\uFF09"} \u2014` } },
+              ...models.map((m) => ({ value: m, label: { en: m, zh: m } }))
+            ];
+            return { ...field, options: opts };
+          }
+          if (tab.id === "poextract" && field.key === "presetId") {
+            const opts = [
+              { value: "", label: { en: "\u2014 Select preset \u2014", zh: "\u2014 \u9009\u62E9\u9884\u8BBE \u2014" } },
+              ...poPresets.map((p) => ({ value: p.id, label: { en: p.name, zh: p.name } }))
+            ];
+            return { ...field, options: opts };
+          }
+          if (field.key === "ocrEngine.engine" && availableOcrEngines.length > 0) {
+            return { ...field, options: availableOcrEngines };
+          }
+          return field;
+        })
+      }));
+    }
+    return steps;
+  }, [config, params, tab.id, llmSettings, aiSource, poPresets, availableOcrEngines]);
+  const isSinglePage = !config?.adaptive || visibleSteps.length <= 1;
+  const currentStep = visibleSteps[stepIdx];
+  useEffect(() => {
+    if (stepIdx >= visibleSteps.length && visibleSteps.length > 0) {
+      setStepIdx(visibleSteps.length - 1);
+    }
+  }, [visibleSteps.length, stepIdx]);
+  useEffect(() => {
+    if (tab.id !== "poextract") return;
+    if (!params.templatePath) return;
+    if (visibleSteps.length <= 1) return;
+    const templateStepIdx = visibleSteps.findIndex((s) => s.title?.en === "Template");
+    if (templateStepIdx >= 0 && stepIdx === templateStepIdx && templateStepIdx < visibleSteps.length - 1) {
+      setTimeout(() => {
+        setDirection("forward");
+        setStepIdx(templateStepIdx + 1);
+      }, 300);
+    }
+  }, [params.templatePath, tab.id]);
+  const setParam = useCallback((key, val) => {
+    setParams((prev) => ({ ...prev, [key]: val }));
+  }, []);
+  const getBaseFitScale = useCallback(() => {
+    const nat = imgNatSizeRef.current;
+    const stage = stageSizeRef.current;
+    if (nat.w <= 0 || nat.h <= 0 || stage.w <= 0 || stage.h <= 0) return 1;
+    return Math.min(stage.w / nat.w, stage.h / nat.h);
+  }, []);
+  const getCenterPan = useCallback((zoom = 1) => {
+    const baseScale = getBaseFitScale();
+    const actualScale = baseScale * zoom;
+    const nat = imgNatSizeRef.current;
+    const stage = stageSizeRef.current;
+    return {
+      x: (stage.w - nat.w * actualScale) / 2,
+      y: (stage.h - nat.h * actualScale) / 2
+    };
+  }, [getBaseFitScale]);
+  const getFocusPan = useCallback((cx, cy, zoom = 1) => {
+    const baseScale = getBaseFitScale();
+    const actualScale = baseScale * zoom;
+    const stage = stageSizeRef.current;
+    return {
+      x: stage.w / 2 - cx * actualScale,
+      y: stage.h / 2 - cy * actualScale
+    };
+  }, [getBaseFitScale]);
+  const getZoomForRoi = useCallback((roiW, roiH, coverage = 0.9) => {
+    const baseScale = getBaseFitScale();
+    const stage = stageSizeRef.current;
+    if (roiW <= 0 || roiH <= 0 || baseScale <= 0) return 2.5;
+    const zoomByW = stage.w * coverage / (roiW * baseScale);
+    const zoomByH = stage.h * coverage / (roiH * baseScale);
+    return Math.min(zoomByW, zoomByH, 5);
+  }, [getBaseFitScale]);
+  useEffect(() => {
+    if (runningRef.current) return;
+    setParams({});
+    setStepIdx(0);
+    setProgress(0);
+    setProgressLabel("");
+    setLogs([]);
+    setDone(false);
+    setResult(null);
+    setError(null);
+    setReviewData(null);
+    setReviewIdx(0);
+    setReviewDraft({});
+    setReviewZoom(1);
+    setReviewPan({ x: 0, y: 0 });
+    setReviewPath(null);
+    setReviewDraft({});
+    setLayoutDraft(null);
+    setLayoutBusy(false);
+    setLayoutMsg(null);
+    setLayoutConfirmed(false);
+  }, [tab.id]);
+  useEffect(() => {
+    if (tab.id !== "poextract" && tab.id !== "organizer") return;
+    const loadSettings = async () => {
+      const api = window.electronAPI;
+      try {
+        if (tab.id === "poextract" && api?.loadLLMConfig) {
+          const cfg = await api.loadLLMConfig();
+          if (cfg) {
+            setLlmSettings(cfg);
+            const mode = cfg.mode === "cloud" ? "cloud" : cfg.mode === "apiCloud" ? "apiCloud" : "local";
+            setAiSource(mode);
+            setParams((prev) => ({ ...prev, aiSource: mode }));
+          }
+        }
+        if (tab.id === "poextract" && api?.poListPresets) {
+          const r = await api.poListPresets();
+          if (r?.success) setPoPresets(r.presets || []);
+        }
+        if (api?.ocrDetectAvailableEngines) {
+          const oe = await api.ocrDetectAvailableEngines();
+          if (oe?.success && oe.engines?.length > 0) {
+            setAvailableOcrEngines(oe.engines);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load settings:", e);
+      }
+    };
+    loadSettings();
+  }, [tab.id]);
+  useEffect(() => {
+    if (params.aiSource && params.aiSource !== aiSource) {
+      setAiSource(params.aiSource);
+    }
+  }, [params.aiSource]);
+  useEffect(() => {
+    if (!config?.logChannel) return;
+    const channel = LOG_CHANNELS[config.logChannel];
+    if (!channel) return;
+    const api = window.electronAPI;
+    if (!api) return;
+    if (runningRef.current) return;
+    const logCb = (entry) => {
+      const line = typeof entry === "string" ? entry : entry?.message || JSON.stringify(entry);
+      const tm = entry?.time || (/* @__PURE__ */ new Date()).toLocaleTimeString();
+      const type = entry?.type || "info";
+      const logEntry = { time: tm, message: line, type };
+      setLogs((prev) => [...prev.slice(-200), logEntry]);
+      onLog?.(logEntry);
+    };
+    const progCb = (p) => {
+      const pct = typeof p === "number" ? p : p?.progress ?? 0;
+      const label = typeof p === "string" ? p : p?.label || p?.message || "";
+      setProgress(pct);
+      if (label) setProgressLabel(label);
+    };
+    api[channel.log]?.(logCb);
+    api[channel.progress]?.(progCb);
+    if (channel.item) api[channel.item]?.((item) => setLogs((prev) => [...prev.slice(-200), { time: (/* @__PURE__ */ new Date()).toLocaleTimeString(), message: `\u{1F4E6} ${item.name || ""}`, type: "item" }]));
+    return () => {
+      if (!runningRef.current) {
+        api[channel.remove]?.();
+      }
+    };
+  }, [config?.logChannel]);
+  useEffect(() => {
+    if (!reviewData) return;
+    const reviewItems = Array.isArray(reviewData) ? reviewData : Array.isArray(reviewData?.styles) ? reviewData.styles : Array.isArray(reviewData?.items) ? reviewData.items : [];
+    if (reviewItems.length === 0) return;
+    const item = reviewItems[reviewIdx];
+    if (!item) return;
+    const labelInfo = item.labelInfo || {};
+    const cropBox = labelInfo.detectorCropBox || labelInfo.cropBox;
+    const fields = labelInfo.fields || {};
+    let roi = null;
+    if (cropBox && cropBox.width > 0 && cropBox.height > 0) {
+      roi = { ...cropBox };
+    } else {
+      const bboxes = Object.values(fields).map((f) => f && (f.bbox || f.box)).filter(Boolean);
+      if (bboxes.length > 0) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        for (const b of bboxes) {
+          const x = b.left ?? b.x ?? 0;
+          const y = b.top ?? b.y ?? 0;
+          const w = b.width ?? b.w ?? 0;
+          const h = b.height ?? b.h ?? 0;
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x + w);
+          maxY = Math.max(maxY, y + h);
+        }
+        if (isFinite(minX)) {
+          roi = { left: minX, top: minY, width: maxX - minX, height: maxY - minY };
+        }
+      }
+    }
+    if (roi && roi.width > 0 && roi.height > 0 && imgNatSizeRef.current.w > 0) {
+      const cx = roi.left + roi.width / 2;
+      const cy = roi.top + roi.height / 2;
+      const targetZoom = getZoomForRoi(roi.width, roi.height, 0.9);
+      setReviewZoom(targetZoom);
+      setReviewPan(getFocusPan(cx, cy, targetZoom));
+    } else {
+      setReviewZoom(1);
+      setReviewPan(getCenterPan(1));
+    }
+    setReviewDraft({});
+  }, [reviewIdx, reviewData, getFocusPan, getCenterPan, getZoomForRoi]);
+  const handleRun = useCallback(async () => {
+    if (!config?.runIPC || running) return;
+    const api = window.electronAPI;
+    if (!api) return;
+    setRunning(true);
+    setDone(false);
+    setError(null);
+    setReviewData(null);
+    setReviewIdx(0);
+    setReviewDraft({});
+    setReviewZoom(1);
+    setReviewPan({ x: 0, y: 0 });
+    setReviewPath(null);
+    setReviewDraft({});
+    setLayoutDraft(null);
+    setLayoutBusy(false);
+    setLayoutMsg(null);
+    setLayoutConfirmed(false);
+    setResult(null);
+    setProgress(0);
+    setProgressLabel(tx("Starting\u2026", "\u6B63\u5728\u542F\u52A8\u2026"));
+    setLogs([]);
+    try {
+      const payload = { ...params };
+      if (tab.id === "slides") {
+        const imageLayout = params.sourceMode === "fabric-images" ? Number(params.fabricPageImageCount) === 2 ? "fabric-pair" : "fabric-single" : `style-gallery-${params.stylePageImageCount}`;
+        payload.config = {
+          sourceMode: params.sourceMode,
+          sourceOrganization: params.sourceOrganization,
+          stylePageImageCount: params.stylePageImageCount,
+          fabricPageImageCount: params.fabricPageImageCount,
+          imageLayout,
+          includeStyleNumber: params.includeStyleNumber,
+          includeName: params.includeName,
+          includePrice: params.includePrice,
+          includeDescription: params.includeDescription,
+          includeFabricCode: params.includeFabricCode,
+          includeComposition: params.includeComposition,
+          includeWidth: params.includeWidth,
+          includeCuttable: params.includeCuttable,
+          includeWeight: params.includeWeight,
+          sortBy: params.sortBy,
+          fillMissingSlots: params.fillMissingSlots
+        };
+        if (params.ollamaEnabled) {
+          payload.ollamaEnabled = true;
+          payload.aiModeOverride = params.aiModeOverride || "local";
+        }
+      }
+      if (tab.id === "organizer") {
+        payload.config = {
+          namingMode: params.namingMode,
+          labelNamingTarget: params.labelNamingTarget,
+          styleNameField: params.styleNameField,
+          organizeOutputMode: params.organizeOutputMode || "single-folder",
+          organizeAction: params.organizeAction || "move",
+          groupSize: params.groupSize || 4,
+          numberStart: params.numberStart,
+          imageSuffixes: params.imageSuffixes || "",
+          labelIndex: params.labelIndex || 4,
+          ocrEngine: params["ocrEngine.engine"] || "guten-ocr"
+        };
+        payload.outputFolder = params.sourceFolder;
+      }
+      if (tab.id === "scraper") {
+        payload.tabConcurrency = 2;
+        payload.zaraBackupMode = params.zaraBackupMode || false;
+        payload.downloadConcurrency = params.downloadConcurrency || 10;
+        if (params.brand === "mixed" && params.mixedBrandInputs) {
+          payload.mixedBrandEntries = params.mixedBrandInputs;
+        } else {
+          payload.styleNumbers = params.styleNumbers || "";
+        }
+        payload.excelPath = params.excelPath || "";
+      }
+      if (tab.id === "bestseller") {
+        payload.brand = params.brand || "newyorker";
+        payload.downloadConcurrency = 6;
+        payload.brandLabel = params.brand === "newyorker" ? "New Yorker" : params.brand || "Brand";
+        payload.genderLabel = params.gender === "female" ? "Women" : "Men";
+      }
+      if (tab.id === "cleaner") {
+        const src = params.sourcePath;
+        if (src && typeof src === "object" && src.path) {
+          payload.sourcePath = src.path;
+          payload.sourceKind = src.kind || "folder";
+        } else if (typeof src === "string") {
+          payload.sourcePath = src;
+          payload.sourceKind = "folder";
+        }
+        payload.options = {
+          cleanerMode: params.cleanerMode || "lite",
+          backgroundMode: params.backgroundMode || "transparent",
+          outputRatio: params.outputRatio || "original"
+        };
+      }
+      if (tab.id === "pdfsqueezer") {
+        payload.config = { preset: params.preset || "balanced" };
+        payload.sourceFiles = Array.isArray(params.sourceFiles) ? params.sourceFiles : params.sourceFiles ? [params.sourceFiles] : [];
+      }
+      if (tab.id === "poextract") {
+        payload.pdfFiles = Array.isArray(params.pdfFiles) ? params.pdfFiles : params.pdfFiles ? [params.pdfFiles] : [];
+        payload.templatePath = params.templatePath || "";
+        payload.presetId = params.presetId || "";
+        payload.outputPath = params.outputPath || "";
+        payload.extractMode = params.extractMode || "llm";
+        payload.aiSource = params.aiSource || "";
+        payload.llmModel = params.llmModel || "";
+        const ocrEngineValue = params["ocrEngine.engine"] || "guten-ocr";
+        payload.ocrEngine = { engine: ocrEngineValue };
+      }
+      const res = await api[config.runIPC]?.(payload);
+      setRunning(false);
+      setProgress(100);
+      setProgressLabel(tx("Done", "\u5B8C\u6210"));
+      if (res?.success === false) {
+        setError(res.error || tx("Task failed.", "\u4EFB\u52A1\u5931\u8D25\u3002"));
+      } else {
+        setDone(true);
+        setResult(res);
+      }
+    } catch (err) {
+      setRunning(false);
+      setError(err.message || tx("Unexpected error.", "\u610F\u5916\u9519\u8BEF\u3002"));
+    }
+  }, [config, params, running, tab.id, tx]);
+  const handleCancel = useCallback(() => {
+    if (!config?.cancelIPC) return;
+    const api = window.electronAPI;
+    api?.[config.cancelIPC]?.(config.cancelArg);
+    setRunning(false);
+    setProgressLabel(tx("Cancelled", "\u5DF2\u53D6\u6D88"));
+  }, [config, tx]);
+  const goNext = () => {
+    if (stepIdx < visibleSteps.length - 1) {
+      setDirection("forward");
+      setStepIdx((i) => i + 1);
+    }
+  };
+  const goPrev = () => {
+    if (stepIdx > 0) {
+      setDirection("backward");
+      setStepIdx((i) => i - 1);
+    }
+  };
+  const handlePresetDeleted = useCallback(async () => {
+    const api = window.electronAPI;
+    if (!api?.poListPresets) return;
+    const r = await api.poListPresets();
+    if (r?.success) setPoPresets(r.presets || []);
+  }, []);
+  useEffect(() => {
+    if (tab.id === "poextract" && result?.specPreview && !result.specConfirmed && !layoutDraft && !layoutConfirmed) {
+      setLayoutDraft(result.specPreview);
+    }
+  }, [result, tab.id, layoutConfirmed]);
+  const setDraftField = useCallback((key, idx, patch) => {
+    setLayoutDraft((prev) => {
+      if (!prev) return prev;
+      const arr = [...prev[key] || []];
+      arr[idx] = { ...arr[idx] || {}, ...patch };
+      return { ...prev, [key]: arr };
+    });
+  }, []);
+  const removeDraftField = useCallback((key, idx) => {
+    setLayoutDraft((prev) => {
+      if (!prev) return prev;
+      return { ...prev, [key]: (prev[key] || []).filter((_, i) => i !== idx) };
+    });
+  }, []);
+  const addDraftField = useCallback((key, template) => {
+    setLayoutDraft((prev) => {
+      if (!prev) return prev;
+      return { ...prev, [key]: [...prev[key] || [], template] };
+    });
+  }, []);
+  const buildConfirmedSpec = useCallback(() => {
+    const base = result?.templateFields?.spec || {};
+    return {
+      ...base,
+      templateFingerprint: base.templateFingerprint || result?.templateFields?.fingerprint || "",
+      poFieldMap: (layoutDraft?.poFields || []).map((f) => ({
+        col: Number(f.col),
+        label: String(f.label || ""),
+        semantic: String(f.semantic || ""),
+        dataType: f.dataType || "",
+        forceText: !!f.forceText
+      })),
+      skuFieldMap: (layoutDraft?.skuFields || []).map((f) => ({
+        col: Number(f.col),
+        label: String(f.label || ""),
+        semantic: String(f.semantic || ""),
+        dataType: f.dataType || "",
+        forceText: !!f.forceText
+      })),
+      sizeColumns: (layoutDraft?.sizeColumns || []).map((sc) => ({
+        col: Number(sc.col),
+        label: String(sc.label || "")
+      })),
+      rowMode: layoutDraft?.rowMode === "perColor" ? "perColor" : "perSku"
+    };
+  }, [result, layoutDraft]);
+  const handleLayoutConfirm = useCallback(async () => {
+    const api = window.electronAPI;
+    if (!api?.poLayoutConfirm || layoutBusy) return;
+    setLayoutBusy(true);
+    setLayoutMsg(null);
+    try {
+      const r = await api.poLayoutConfirm({ fingerprint: result?.templateFields?.fingerprint || "", spec: buildConfirmedSpec() });
+      if (r?.success) {
+        setLayoutConfirmed(true);
+        setLayoutMsg({ type: "success", text: tx("Layout confirmed. Same template will not ask again.", "\u5E03\u5C40\u5DF2\u786E\u8BA4\uFF0C\u540C\u4E00\u6A21\u677F\u4E0B\u6B21\u4E0D\u518D\u8BE2\u95EE\u3002") });
+      } else {
+        setLayoutMsg({ type: "error", text: tx("Confirm failed: ", "\u786E\u8BA4\u5931\u8D25\uFF1A") + (r?.error || "") });
+      }
+    } catch (e) {
+      setLayoutMsg({ type: "error", text: e.message });
+    } finally {
+      setLayoutBusy(false);
+    }
+  }, [layoutBusy, result, buildConfirmedSpec, tx]);
+  const handleLayoutApply = useCallback(async () => {
+    const api = window.electronAPI;
+    if (!api?.poLayoutApplyCorrections || layoutBusy) return;
+    setLayoutBusy(true);
+    setLayoutMsg(null);
+    try {
+      const r = await api.poLayoutApplyCorrections({
+        fingerprint: result?.templateFields?.fingerprint || "",
+        spec: buildConfirmedSpec(),
+        fields: result?.templateFields || {},
+        templatePath: result?.templatePath || "",
+        orders: result?.orders || [],
+        outputPath: result?.outputPath || ""
+      });
+      if (r?.success) {
+        if (r.regenerated && r.outputPath) {
+          setResult((prev) => prev ? { ...prev, outputPath: r.outputPath } : prev);
+        }
+        setLayoutConfirmed(true);
+        setLayoutMsg({ type: "success", text: r.regenerated ? tx("Excel regenerated with corrected layout.", "\u5DF2\u6309\u4FEE\u6B63\u540E\u7684\u5E03\u5C40\u91CD\u65B0\u751F\u6210 Excel\u3002") : tx("Layout saved (regeneration data missing, skipped).", "\u5E03\u5C40\u5DF2\u4FDD\u5B58\uFF08\u7F3A\u5C11\u91CD\u751F\u6210\u6570\u636E\uFF0C\u5DF2\u8DF3\u8FC7\uFF09\u3002") });
+      } else {
+        setLayoutMsg({ type: "error", text: tx("Apply failed: ", "\u5E94\u7528\u5931\u8D25\uFF1A") + (r?.error || "") });
+      }
+    } catch (e) {
+      setLayoutMsg({ type: "error", text: e.message });
+    } finally {
+      setLayoutBusy(false);
+    }
+  }, [layoutBusy, result, buildConfirmedSpec, tx]);
+  const stepValid = (step) => {
+    if (!step?.fields) return true;
+    if (step.requiredAnyOf) {
+      const hasAny = step.requiredAnyOf.some((k) => {
+        const v = params[k];
+        return v !== void 0 && v !== "" && v !== null;
+      });
+      if (!hasAny) return false;
+    }
+    return step.fields.every((f) => {
+      if (!f.required) return true;
+      if (f.showWhen && !f.showWhen(params)) return true;
+      const v = params[f.key];
+      if (v === void 0 || v === "" || v === null) return false;
+      if (typeof v === "object" && !Array.isArray(v)) {
+        return Boolean(v.path);
+      }
+      return true;
+    });
+  };
+  const allValid = visibleSteps.every(stepValid);
+  const reachedLastStep = isSinglePage || stepIdx === visibleSteps.length - 1;
+  const canRun = !running && allValid && reachedLastStep && config?.runIPC;
+  if (!config) return null;
+  if (config.customRender === "labelocr") {
+    return /* @__PURE__ */ React.createElement(
+      "section",
+      {
+        className: "module-home module-home--settings",
+        style: { "--home-accent-rgb": accentRgb, "--home-accent-ink": accentInk }
+      },
+      /* @__PURE__ */ React.createElement("div", { className: "module-home__scroll-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__content module-home__content--wide" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__header" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__badge" }, iconNode), /* @__PURE__ */ React.createElement("h1", { className: "module-home__title" }, tab.label), /* @__PURE__ */ React.createElement("p", { className: "module-home__subtitle" }, tab.description)), /* @__PURE__ */ React.createElement(LabelOcrBridge, { tx })))
+    );
+  }
+  const ctxValue = {
+    params,
+    setParams,
+    llmSettings,
+    aiSource,
+    poPresets,
+    setPoPresets
+  };
+  return /* @__PURE__ */ React.createElement(
+    "section",
+    {
+      className: `module-home ${isSinglePage ? "module-home--single" : "module-home--stepped"} ${running ? "is-running" : ""} ${done ? "is-done" : ""}`,
+      style: { "--home-accent-rgb": accentRgb, "--home-accent-ink": accentInk },
+      "data-direction": direction
+    },
+    /* @__PURE__ */ React.createElement("div", { className: "module-home__scroll-wrap" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__content" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__header" }, /* @__PURE__ */ React.createElement("div", { className: "module-home__badge" }, iconNode), /* @__PURE__ */ React.createElement("h1", { className: "module-home__title" }, tab.label), /* @__PURE__ */ React.createElement("p", { className: "module-home__subtitle" }, tab.description)), (running || done) && !reviewData && /* @__PURE__ */ React.createElement("div", { className: "wizard-progress" }, /* @__PURE__ */ React.createElement("div", { className: "wizard-progress__bar", style: { width: `${progress}%` } }), /* @__PURE__ */ React.createElement("span", { className: "wizard-progress__label" }, progressLabel)), !reviewData && isSinglePage ? /* @__PURE__ */ React.createElement("div", { className: "wizard-body wizard-body--single", key: tab.id }, visibleSteps.map((step) => /* @__PURE__ */ React.createElement("div", { key: step.title?.en, className: "wizard-step-section" }, step.title && /* @__PURE__ */ React.createElement("h3", { className: "wizard-step-section__title" }, t(step.title)), step.desc && /* @__PURE__ */ React.createElement("p", { className: "wizard-step-section__desc" }, t(step.desc)), /* @__PURE__ */ React.createElement("div", { className: "wizard-step-section__fields" }, step.fields.map((field) => {
+      if (field.showWhen && !field.showWhen(params)) return null;
+      return /* @__PURE__ */ React.createElement(
+        FieldRenderer,
+        {
+          key: field.key,
+          field,
+          value: params[field.key],
+          onChange: (v) => setParam(field.key, v),
+          t,
+          tx,
+          accentRgb,
+          onPresetDeleted: handlePresetDeleted
+        }
+      );
+    }))))) : null, !reviewData && !isSinglePage && /* @__PURE__ */ React.createElement("div", { className: "wizard-body wizard-body--stepped", key: `${tab.id}-${stepIdx}` }, /* @__PURE__ */ React.createElement("div", { className: "wizard-step-indicator" }, visibleSteps.map((_, i) => /* @__PURE__ */ React.createElement(
+      "span",
+      {
+        key: i,
+        className: `wizard-step-dot ${i === stepIdx ? "active" : ""} ${i < stepIdx ? "done" : ""}`,
+        style: { "--accent-rgb": accentRgb },
+        onClick: () => {
+          setDirection(i > stepIdx ? "forward" : "backward");
+          setStepIdx(i);
+        }
+      }
+    ))), currentStep && /* @__PURE__ */ React.createElement("div", { className: "wizard-step wizard-step--active", "data-direction": direction }, /* @__PURE__ */ React.createElement("h3", { className: "wizard-step__title" }, t(currentStep.title)), currentStep.desc && /* @__PURE__ */ React.createElement("p", { className: "wizard-step__desc" }, t(currentStep.desc)), /* @__PURE__ */ React.createElement("div", { className: "wizard-step__fields" }, currentStep.fields.map((field) => {
+      if (field.showWhen && !field.showWhen(params)) return null;
+      return /* @__PURE__ */ React.createElement(
+        FieldRenderer,
+        {
+          key: field.key,
+          field,
+          value: params[field.key],
+          onChange: (v) => setParam(field.key, v),
+          t,
+          tx,
+          accentRgb,
+          onPresetDeleted: handlePresetDeleted
+        }
+      );
+    }))), /* @__PURE__ */ React.createElement("div", { className: "wizard-nav" }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-nav__btn wizard-nav__btn--prev",
+        onClick: goPrev,
+        disabled: stepIdx === 0,
+        style: { "--accent-rgb": accentRgb }
+      },
+      "\u2190 ",
+      tx("Previous", "\u4E0A\u4E00\u6B65")
+    ), /* @__PURE__ */ React.createElement("span", { className: "wizard-nav__counter" }, stepIdx + 1, " / ", visibleSteps.length), stepIdx < visibleSteps.length - 1 ? /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-nav__btn wizard-nav__btn--next",
+        onClick: goNext,
+        disabled: !stepValid(currentStep),
+        style: { "--accent-rgb": accentRgb }
+      },
+      tx("Next", "\u4E0B\u4E00\u6B65"),
+      " \u2192"
+    ) : /* @__PURE__ */ React.createElement("span", { className: "wizard-nav__ready", style: { "--accent-rgb": accentRgb } }, "\u2713 ", tx("Ready", "\u5DF2\u5C31\u7EEA")))), tab.id === "poextract" && !reviewData && /* @__PURE__ */ React.createElement(PoCacheManager, { tx }), error && /* @__PURE__ */ React.createElement("div", { className: "wizard-msg wizard-msg--error" }, "\u26A0 ", error), done && result && !reviewData && /* @__PURE__ */ React.createElement("div", { className: "wizard-msg wizard-msg--success", style: { "--accent-rgb": accentRgb } }, "\u2705 ", tx("Task completed.", "\u4EFB\u52A1\u5B8C\u6210\u3002"), result.orders && result.orders.length > 0 && /* @__PURE__ */ React.createElement("span", { className: "wizard-msg__detail" }, tx(`${result.orders.length} order(s) extracted`, `\u5DF2\u63D0\u53D6 ${result.orders.length} \u4E2A\u8BA2\u5355`)), result.outputPath && /* @__PURE__ */ React.createElement("button", { type: "button", className: "wizard-msg__action", onClick: () => window.electronAPI?.openLocalPath?.(result.outputPath) }, tx("Open file", "\u6253\u5F00\u6587\u4EF6")), result.outputDir && /* @__PURE__ */ React.createElement("button", { type: "button", className: "wizard-msg__action", onClick: () => window.electronAPI?.openLocalPath?.(result.outputDir) }, tx("Open folder", "\u6253\u5F00\u6587\u4EF6\u5939")), tab.id === "poextract" && result.orders && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: "8px", width: "100%" } }, result.previewData && /* @__PURE__ */ React.createElement("div", { style: {
+      padding: "12px",
+      background: "rgba(var(--accent-rgb), 0.06)",
+      borderRadius: "10px",
+      border: "1px solid rgba(var(--accent-rgb), 0.2)",
+      fontSize: "0.8rem"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, marginBottom: "8px", fontSize: "0.85rem" } }, "\u{1F4CB} ", tx("Write Preview", "\u5199\u5165\u9884\u89C8")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "6px 12px" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("Template format", "\u6A21\u677F\u683C\u5F0F"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.previewData.info?.templateFormat === "flat" ? tx("Flat (dynamic)", "Flat \u52A8\u6001") : tx("Block (repeating)", "Block \u91CD\u590D\u5757"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("Total SKUs", "\u603B SKU \u6570"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.previewData.info?.totalSkus || 0)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("PO fields", "PO \u5B57\u6BB5"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.previewData.poCells?.length || 0), result.templateFields?.llmAssisted && /* @__PURE__ */ React.createElement("span", { style: { marginLeft: "6px", padding: "1px 6px", background: "rgba(255, 193, 7, 0.2)", borderRadius: "4px", fontSize: "0.72rem" } }, "\u{1F916} ", tx("LLM-assisted", "LLM \u8F85\u52A9"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("SKU fields", "SKU \u5B57\u6BB5"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.previewData.skuCells?.length || 0)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("Size cells", "\u5C3A\u7801\u5355\u5143\u683C"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.previewData.sizeCells?.length || 0)), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, tx("Confidence", "\u7F6E\u4FE1\u5EA6"), ": "), /* @__PURE__ */ React.createElement("strong", null, result.templateFields?.confidence ? (result.templateFields.confidence * 100).toFixed(0) + "%" : "\u2014"))), result.templateFields?.lowConfidenceFields && result.templateFields.lowConfidenceFields.length > 0 && /* @__PURE__ */ React.createElement("div", { style: {
+      marginTop: "10px",
+      padding: "8px 10px",
+      background: "rgba(255, 152, 0, 0.12)",
+      borderRadius: "6px",
+      fontSize: "0.75rem"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, marginBottom: "4px" } }, "\u26A0\uFE0F ", tx("Low confidence fields (please verify)", "\u4F4E\u7F6E\u4FE1\u5EA6\u5B57\u6BB5\uFF08\u8BF7\u6838\u5BF9\uFF09"), ":"), result.templateFields.lowConfidenceFields.slice(0, 5).map((f, i) => /* @__PURE__ */ React.createElement("div", { key: i }, "\u2022 ", f.label, " (", tx("col", "\u5217"), " ", f.col, ") \u2014 ", (f.confidence * 100).toFixed(0), "%")))), result.specPreview && !result.specConfirmed && (layoutConfirmed ? layoutMsg && /* @__PURE__ */ React.createElement("div", { style: {
+      padding: "10px 12px",
+      borderRadius: "8px",
+      fontSize: "0.8rem",
+      fontWeight: 600,
+      background: "rgba(22, 163, 74, 0.12)",
+      border: "1px solid rgba(22, 163, 74, 0.3)",
+      color: "#16a34a"
+    } }, "\u2705 ", layoutMsg.text) : /* @__PURE__ */ React.createElement("div", { style: {
+      padding: "12px",
+      background: "rgba(var(--accent-rgb), 0.06)",
+      borderRadius: "10px",
+      border: "1px solid rgba(var(--accent-rgb), 0.2)",
+      fontSize: "0.8rem"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, marginBottom: "4px", fontSize: "0.85rem" } }, "\u{1F9ED} ", tx("Layout Confirmation", "\u5E03\u5C40\u786E\u8BA4")), /* @__PURE__ */ React.createElement("div", { style: { opacity: 0.65, marginBottom: "10px", fontSize: "0.74rem" } }, tx("Verify the detected column mapping. Corrections are persisted \u2014 the same template will not ask again. Regeneration reuses extracted data (no re-OCR/LLM).", "\u8BF7\u6838\u5BF9\u81EA\u52A8\u8BC6\u522B\u7684\u5217\u6620\u5C04\uFF1B\u4FEE\u6B63\u5C06\u6301\u4E45\u5316\uFF0C\u540C\u4E00\u6A21\u677F\u4E0B\u6B21\u4E0D\u518D\u8BE2\u95EE\u3002\u91CD\u65B0\u751F\u6210\u4F1A\u590D\u7528\u5DF2\u63D0\u53D6\u6570\u636E\uFF08\u4E0D\u91CD\u8DD1 OCR/LLM\uFF09\u3002")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: "4px 14px", marginBottom: "10px", opacity: 0.85, fontSize: "0.74rem" } }, /* @__PURE__ */ React.createElement("span", null, tx("PO header row", "PO \u8868\u5934\u884C"), ": ", /* @__PURE__ */ React.createElement("b", null, 1 + (layoutDraft?.rows?.poHeaderRow ?? -1))), /* @__PURE__ */ React.createElement("span", null, tx("SKU header row", "SKU \u8868\u5934\u884C"), ": ", /* @__PURE__ */ React.createElement("b", null, 1 + (layoutDraft?.rows?.skuHeaderRow ?? -1))), /* @__PURE__ */ React.createElement("span", null, tx("Size header row", "\u5C3A\u7801\u8868\u5934\u884C"), ": ", /* @__PURE__ */ React.createElement("b", null, 1 + (layoutDraft?.rows?.skuSizeHeaderRow ?? -1))), /* @__PURE__ */ React.createElement("span", null, tx("Row mode", "\u884C\u6A21\u5F0F"), ":", /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: layoutDraft?.rowMode || "perSku",
+        onChange: (e) => setLayoutDraft((prev) => ({ ...prev, rowMode: e.target.value })),
+        style: { marginLeft: 4, padding: "2px 6px", borderRadius: 4, border: "1px solid rgba(var(--accent-rgb), 0.35)", background: "var(--bg-primary, #fff)", color: "var(--text-primary, #000)", fontSize: "0.74rem" }
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "perColor" }, tx("perColor \xB7 one row per color", "perColor \xB7 \u6BCF\u8272\u4E00\u884C")),
+      /* @__PURE__ */ React.createElement("option", { value: "perSku" }, tx("perSku \xB7 one row per SKU", "perSku \xB7 \u6BCF SKU \u4E00\u884C"))
+    ))), /* @__PURE__ */ React.createElement(
+      LayoutMapEditor,
+      {
+        title: tx("PO field mapping (col | label | semantic)", "PO \u5B57\u6BB5\u6620\u5C04\uFF08\u5217 | \u6807\u7B7E | \u8BED\u4E49\uFF09"),
+        rows: layoutDraft?.poFields || [],
+        semantic: true,
+        onChange: (idx, patch) => setDraftField("poFields", idx, patch),
+        onRemove: (idx) => removeDraftField("poFields", idx),
+        onAdd: () => addDraftField("poFields", { col: 0, label: "", semantic: "" }),
+        accentRgb,
+        tx
+      }
+    ), /* @__PURE__ */ React.createElement(
+      LayoutMapEditor,
+      {
+        title: tx("SKU field mapping (col | label | semantic)", "SKU \u5B57\u6BB5\u6620\u5C04\uFF08\u5217 | \u6807\u7B7E | \u8BED\u4E49\uFF09"),
+        rows: layoutDraft?.skuFields || [],
+        semantic: true,
+        onChange: (idx, patch) => setDraftField("skuFields", idx, patch),
+        onRemove: (idx) => removeDraftField("skuFields", idx),
+        onAdd: () => addDraftField("skuFields", { col: 0, label: "", semantic: "" }),
+        accentRgb,
+        tx
+      }
+    ), /* @__PURE__ */ React.createElement(
+      LayoutMapEditor,
+      {
+        title: tx("Size columns (col | label)", "\u5C3A\u7801\u5217\uFF08\u5217 | \u6807\u7B7E\uFF09"),
+        rows: layoutDraft?.sizeColumns || [],
+        semantic: false,
+        onChange: (idx, patch) => setDraftField("sizeColumns", idx, patch),
+        onRemove: (idx) => removeDraftField("sizeColumns", idx),
+        onAdd: () => addDraftField("sizeColumns", { col: 0, label: "" }),
+        accentRgb,
+        tx
+      }
+    ), layoutMsg && /* @__PURE__ */ React.createElement("div", { style: {
+      marginTop: "8px",
+      fontSize: "0.76rem",
+      fontWeight: 500,
+      color: layoutMsg.type === "success" ? "#16a34a" : "#dc2626"
+    } }, layoutMsg.type === "error" ? "\u26A0 " : "", layoutMsg.text), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px", marginTop: "10px" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        disabled: layoutBusy,
+        style: { flex: 1, background: "rgba(var(--accent-rgb), 0.18)" },
+        onClick: handleLayoutApply
+      },
+      layoutBusy ? tx("Applying\u2026", "\u5E94\u7528\u4E2D\u2026") : `\u2705 ${tx("Confirm & Regenerate Excel", "\u786E\u8BA4\u5E76\u91CD\u65B0\u751F\u6210 Excel")}`
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        disabled: layoutBusy,
+        style: { flex: 1 },
+        onClick: handleLayoutConfirm
+      },
+      tx("Confirm layout only", "\u4EC5\u786E\u8BA4\u5E03\u5C40")
+    )))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        onClick: () => {
+          setPresetSaveMsg(null);
+          setPresetSaveInput("");
+          setPresetSaveVisible(true);
+        }
+      },
+      "\u{1F4BE} ",
+      tx("Save template as preset", "\u4FDD\u5B58\u6A21\u7248\u4E3A\u9884\u8BBE")
+    ), presetSaveVisible && /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: "8px",
+      padding: "10px 12px",
+      background: "rgba(var(--accent-rgb), 0.08)",
+      borderRadius: "8px",
+      border: "1px solid rgba(var(--accent-rgb), 0.25)"
+    } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: "0.8rem", fontWeight: 600 } }, tx("Enter preset name:", "\u8F93\u5165\u9884\u8BBE\u540D\u79F0\uFF1A")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "text",
+        value: presetSaveInput,
+        onChange: (e) => setPresetSaveInput(e.target.value),
+        onKeyDown: async (e) => {
+          if (e.key === "Enter") {
+            if (!presetSaveInput.trim()) return;
+            const r = await window.electronAPI?.poSavePreset?.({
+              name: presetSaveInput.trim(),
+              templatePath: result.templatePath || params.templatePath || "",
+              fields: result.templateFields || { poFields: [], skuFields: [], sizes: [] }
+            });
+            if (r?.success) {
+              setPresetSaveMsg({ type: "success", text: tx("Preset saved!", "\u9884\u8BBE\u5DF2\u4FDD\u5B58\uFF01") });
+              setPresetSaveVisible(false);
+              setTimeout(() => setPresetSaveMsg(null), 3e3);
+            } else {
+              setPresetSaveMsg({ type: "error", text: tx(`Save failed: ${r?.error || "Unknown error"}`, `\u4FDD\u5B58\u5931\u8D25\uFF1A${r?.error || "\u672A\u77E5\u9519\u8BEF"}`) });
+            }
+          }
+        },
+        placeholder: tx("e.g. Summer PO Template", "\u4F8B\u5982\uFF1A\u590F\u5B63PO\u6A21\u7248"),
+        style: {
+          padding: "8px 10px",
+          borderRadius: "6px",
+          border: "1px solid rgba(var(--accent-rgb), 0.35)",
+          background: "var(--bg-primary, #fff)",
+          color: "var(--text-primary, #000)",
+          fontSize: "0.82rem"
+        }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: "8px" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        style: { flex: 1, background: "rgba(var(--accent-rgb), 0.18)" },
+        onClick: async () => {
+          if (!presetSaveInput.trim()) return;
+          const r = await window.electronAPI?.poSavePreset?.({
+            name: presetSaveInput.trim(),
+            templatePath: result.templatePath || params.templatePath || "",
+            fields: result.templateFields || { poFields: [], skuFields: [], sizes: [] }
+          });
+          if (r?.success) {
+            setPresetSaveMsg({ type: "success", text: tx("Preset saved!", "\u9884\u8BBE\u5DF2\u4FDD\u5B58\uFF01") });
+            setPresetSaveVisible(false);
+            setTimeout(() => setPresetSaveMsg(null), 3e3);
+          } else {
+            setPresetSaveMsg({ type: "error", text: tx(`Save failed: ${r?.error || "Unknown error"}`, `\u4FDD\u5B58\u5931\u8D25\uFF1A${r?.error || "\u672A\u77E5\u9519\u8BEF"}`) });
+          }
+        }
+      },
+      tx("Save", "\u4FDD\u5B58")
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        style: { flex: 0, opacity: 0.7 },
+        onClick: () => {
+          setPresetSaveVisible(false);
+          setPresetSaveMsg(null);
+        }
+      },
+      tx("Cancel", "\u53D6\u6D88")
+    )), presetSaveMsg && /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: "0.75rem",
+      color: presetSaveMsg.type === "success" ? "#16a34a" : "#dc2626",
+      fontWeight: 500
+    } }, presetSaveMsg.text))), tab.id === "organizer" && result.summaryPath && !reviewData && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "wizard-msg__action",
+        style: { background: "rgba(var(--accent-rgb), 0.18)", borderColor: "rgba(var(--accent-rgb), 0.4)" },
+        onClick: async () => {
+          const api = window.electronAPI;
+          console.log("[REVIEW] button clicked, summaryPath:", result.summaryPath);
+          if (!api) {
+            alert("Electron API not available");
+            return;
+          }
+          if (!result.summaryPath) {
+            alert("No summary path");
+            return;
+          }
+          try {
+            const raw = await api.readFile?.(result.summaryPath);
+            console.log("[REVIEW] raw data:", raw);
+            const fileContent = raw && raw.success ? raw.content : raw;
+            if (fileContent) {
+              const parsed = typeof fileContent === "string" ? JSON.parse(fileContent) : fileContent;
+              console.log(
+                "[REVIEW] parsed items count:",
+                Array.isArray(parsed) ? parsed.length : Array.isArray(parsed?.styles) ? parsed.styles.length : Array.isArray(parsed?.items) ? parsed.items.length : 0
+              );
+              setReviewPath(result.summaryPath);
+              setReviewData(parsed);
+            } else {
+              alert(tx("No review data found.", "\u672A\u627E\u5230\u5BA1\u6838\u6570\u636E\u3002"));
+            }
+          } catch (e) {
+            console.error("[REVIEW] error:", e);
+            alert(tx("Failed to load review data: ", "\u52A0\u8F7D\u5BA1\u6838\u6570\u636E\u5931\u8D25\uFF1A") + e.message);
+          }
+        }
+      },
+      "\u{1F50D} ",
+      tx("Review Results", "\u5BA1\u6838\u7ED3\u679C")
+    )), reviewData && (() => {
+      const reviewItems = Array.isArray(reviewData) ? reviewData : Array.isArray(reviewData?.styles) ? reviewData.styles : Array.isArray(reviewData?.items) ? reviewData.items : [];
+      if (reviewItems.length === 0) return null;
+      const item = reviewItems[reviewIdx];
+      if (!item) return null;
+      const labelInfo = item.labelInfo || {};
+      const fields = labelInfo.fields || labelInfo || {};
+      const imgPath = item.files?.label || item.sourceFiles?.label || item.files?.image1 || item.galleryImagePaths?.[0] || "";
+      const imgSrc = imgPath ? `file://${imgPath}` : "";
+      const cropBox = labelInfo.detectorCropBox || labelInfo.cropBox;
+      const FIELD_KEYS = ["fabricCode", "styleNumber", "description", "composition", "width", "cuttable", "weight"];
+      const FIELD_LABELS = {
+        fabricCode: tx("Fabric Code", "\u9762\u6599\u4EE3\u7801"),
+        styleNumber: tx("Style Number", "\u6B3E\u53F7"),
+        description: tx("Description", "\u63CF\u8FF0"),
+        composition: tx("Composition", "\u6210\u5206"),
+        width: tx("Width", "\u95E8\u5E45"),
+        cuttable: tx("Cuttable", "\u53EF\u88C1\u5E45"),
+        weight: tx("Weight", "\u514B\u91CD")
+      };
+      return /* @__PURE__ */ React.createElement("div", { className: "wizard-review" }, /* @__PURE__ */ React.createElement("div", { className: "wizard-review__head" }, /* @__PURE__ */ React.createElement("h3", { className: "wizard-review__title" }, tx("Review OCR Results", "\u5BA1\u6838 OCR \u7ED3\u679C")), /* @__PURE__ */ React.createElement("span", { className: "wizard-review__counter" }, reviewIdx + 1, " / ", reviewItems.length)), (() => {
+        const nat = imgNatSizeRef.current;
+        const stage = stageSizeRef.current;
+        const baseFitScale = nat.w > 0 && nat.h > 0 && stage.w > 0 && stage.h > 0 ? Math.min(stage.w / nat.w, stage.h / nat.h) : 1;
+        const actualScale = baseFitScale * reviewZoom;
+        return /* @__PURE__ */ React.createElement("div", { className: "wizard-review__layout" }, /* @__PURE__ */ React.createElement("div", { className: "wizard-review__viewer" }, imgSrc ? /* @__PURE__ */ React.createElement(
+          "div",
+          {
+            ref: (el) => {
+              if (el && stageRef.current !== el) {
+                stageRef.current = el;
+                const rect = el.getBoundingClientRect();
+                stageSizeRef.current = { w: rect.width, h: rect.height };
+              }
+            },
+            className: "wizard-review__stage",
+            onPointerDown: (e) => {
+              setReviewDragging(true);
+              dragStart.current = { x: e.clientX, y: e.clientY, panX: reviewPan.x, panY: reviewPan.y };
+            },
+            onPointerMove: (e) => {
+              if (reviewDragging) {
+                setReviewPan({ x: dragStart.current.panX + (e.clientX - dragStart.current.x), y: dragStart.current.panY + (e.clientY - dragStart.current.y) });
+              }
+            },
+            onPointerUp: () => setReviewDragging(false),
+            onPointerLeave: () => setReviewDragging(false)
+          },
+          /* @__PURE__ */ React.createElement(
+            "img",
+            {
+              src: imgSrc,
+              alt: item.styleNumber || `Item ${reviewIdx + 1}`,
+              className: "wizard-review__img",
+              style: { width: nat.w > 0 ? nat.w : "auto", height: nat.h > 0 ? nat.h : "auto", transform: `translate(${reviewPan.x}px, ${reviewPan.y}px) scale(${actualScale})` },
+              onLoad: (e) => {
+                const el = e.currentTarget;
+                imgNatSizeRef.current = { w: el.naturalWidth, h: el.naturalHeight };
+                if (stageRef.current) {
+                  const r = stageRef.current.getBoundingClientRect();
+                  stageSizeRef.current = { w: r.width, h: r.height };
+                }
+                setReviewPan((prev) => ({ ...prev }));
+              },
+              draggable: false
+            }
+          ),
+          cropBox && /* @__PURE__ */ React.createElement(
+            "div",
+            {
+              className: "wizard-review__bbox",
+              style: {
+                left: `${cropBox.left * actualScale + reviewPan.x}px`,
+                top: `${cropBox.top * actualScale + reviewPan.y}px`,
+                width: `${cropBox.width * actualScale}px`,
+                height: `${cropBox.height * actualScale}px`
+              }
+            }
+          )
+        ) : /* @__PURE__ */ React.createElement("div", { className: "wizard-review__no-img" }, tx("No image available", "\u65E0\u56FE\u7247")), /* @__PURE__ */ React.createElement("div", { className: "wizard-review__zoom-bar" }, /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setReviewZoom((z) => Math.max(0.3, z - 0.2)) }, "\u2212"), /* @__PURE__ */ React.createElement("span", null, Math.round(reviewZoom * 100), "%"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => setReviewZoom((z) => Math.min(4, z + 0.2)) }, "+"), /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+          setReviewZoom(1);
+          setReviewPan(getCenterPan(1));
+        } }, tx("Fit", "\u9002\u5E94")), cropBox && /* @__PURE__ */ React.createElement("button", { type: "button", onClick: () => {
+          if (cropBox) {
+            const cx = cropBox.left + cropBox.width / 2;
+            const cy = cropBox.top + cropBox.height / 2;
+            const targetZoom = getZoomForRoi(cropBox.width, cropBox.height, 0.9);
+            setReviewZoom(targetZoom);
+            setReviewPan(getFocusPan(cx, cy, targetZoom));
+          }
+        } }, tx("Focus", "\u805A\u7126\u6807\u7B7E")))), /* @__PURE__ */ React.createElement("div", { className: "wizard-review__form" }, /* @__PURE__ */ React.createElement("div", { className: "wizard-review__form-head" }, /* @__PURE__ */ React.createElement("span", { className: "wizard-review__item-name" }, item.styleNumber || item.folderName || `Item ${reviewIdx + 1}`), item.needsReview && /* @__PURE__ */ React.createElement("span", { className: "wizard-review__tag wizard-review__tag--warn" }, tx("Needs Review", "\u9700\u5BA1\u6838"))), /* @__PURE__ */ React.createElement("div", { className: "wizard-review__fields" }, FIELD_KEYS.map((fKey) => /* @__PURE__ */ React.createElement("label", { key: fKey, className: "wizard-review__field" }, /* @__PURE__ */ React.createElement("span", { className: "wizard-review__field-label" }, FIELD_LABELS[fKey] || fKey), /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "text",
+            className: "wizard-input wizard-review__field-input",
+            value: reviewDraft[fKey] ?? fields[fKey] ?? "",
+            onChange: (e) => setReviewDraft((prev) => ({ ...prev, [fKey]: e.target.value }))
+          }
+        ))), /* @__PURE__ */ React.createElement("label", { className: "wizard-review__field" }, /* @__PURE__ */ React.createElement("span", { className: "wizard-review__field-label" }, tx("Style Number", "\u6B3E\u53F7")), /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            type: "text",
+            className: "wizard-input wizard-review__field-input",
+            value: reviewDraft.styleNumber ?? item.styleNumber ?? "",
+            onChange: (e) => setReviewDraft((prev) => ({ ...prev, styleNumber: e.target.value }))
+          }
+        ))), labelInfo.rawText && /* @__PURE__ */ React.createElement("details", { className: "wizard-review__raw" }, /* @__PURE__ */ React.createElement("summary", null, tx("Raw OCR Text", "\u539F\u59CB OCR \u6587\u672C")), /* @__PURE__ */ React.createElement("pre", null, labelInfo.rawText)), /* @__PURE__ */ React.createElement("div", { className: "wizard-review__nav" }, /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn wizard-nav__btn--prev",
+            disabled: reviewIdx === 0,
+            onClick: () => {
+              setReviewIdx((i) => i - 1);
+              setReviewDraft({});
+              setReviewZoom(1);
+              setReviewPan(getCenterPan(1));
+            }
+          },
+          "\u2190 ",
+          tx("Previous", "\u4E0A\u4E00\u5F20")
+        ), /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn wizard-nav__btn--next",
+            style: { "--accent-rgb": accentRgb },
+            disabled: reviewIdx >= reviewItems.length - 1,
+            onClick: () => {
+              setReviewIdx((i) => i + 1);
+              setReviewDraft({});
+              setReviewZoom(1);
+              setReviewPan(getCenterPan(1));
+            }
+          },
+          tx("Next", "\u4E0B\u4E00\u5F20"),
+          " \u2192"
+        )), /* @__PURE__ */ React.createElement("div", { className: "wizard-review__actions" }, /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn",
+            style: { "--accent-rgb": accentRgb },
+            onClick: async () => {
+              const api = window.electronAPI;
+              if (!api || !reviewPath) return;
+              const updatedItems = reviewItems.map((it, i) => i === reviewIdx ? { ...it, labelInfo: { ...it.labelInfo, ...reviewDraft }, styleNumber: reviewDraft.styleNumber || it.styleNumber } : it);
+              const updatedData = reviewData.styles ? { ...reviewData, styles: updatedItems, reviewedAt: (/* @__PURE__ */ new Date()).toISOString() } : updatedItems;
+              await api.saveOrganizeInfo?.({ filePath: reviewPath, content: JSON.stringify(updatedData, null, 2) });
+              if (item.infoPath) {
+                await api.saveOrganizeInfo?.({ filePath: item.infoPath, content: { ...item, labelInfo: { ...labelInfo, ...reviewDraft } } });
+              }
+              setReviewData(updatedData);
+              if (reviewIdx < reviewItems.length - 1) {
+                setReviewIdx((i) => i + 1);
+                setReviewDraft({});
+                setReviewZoom(1);
+                setReviewPan(getCenterPan(1));
+              }
+            }
+          },
+          tx("Save & Next", "\u4FDD\u5B58\u5E76\u4E0B\u4E00\u5F20")
+        ), /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn",
+            style: { "--accent-rgb": accentRgb },
+            onClick: async () => {
+              const api = window.electronAPI;
+              if (!api || !reviewPath) return;
+              await api.applyOrganizeReviewResults?.({ summaryPath: reviewPath });
+              setReviewData(null);
+              setDone(true);
+              setResult({ outputDir: params.sourceFolder });
+            }
+          },
+          "\u2713 ",
+          tx("Apply All", "\u5E94\u7528\u91CD\u547D\u540D")
+        ), /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn",
+            onClick: () => window.electronAPI?.exportOrganizeExcel?.({ summaryPath: reviewPath })
+          },
+          tx("Export Excel", "\u5BFC\u51FA Excel")
+        ), /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            type: "button",
+            className: "wizard-nav__btn wizard-nav__btn--prev",
+            onClick: () => {
+              setReviewData(null);
+            }
+          },
+          tx("Exit", "\u9000\u51FA")
+        ))));
+      })());
+    })())),
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: `module-home__fab ${running ? "is-running" : ""} ${!canRun && !running ? "is-disabled" : ""}`,
+        onClick: running ? handleCancel : handleRun,
+        disabled: !canRun && !running,
+        "aria-label": running ? tx("Cancel", "\u53D6\u6D88") : tx("Run", "\u8FD0\u884C")
+      },
+      running ? /* @__PURE__ */ React.createElement("span", { className: "module-home__fab-icon module-home__fab-icon--cancel" }, "\u2715") : /* @__PURE__ */ React.createElement("span", { className: "module-home__fab-icon" }, fabIconNode),
+      /* @__PURE__ */ React.createElement("span", { className: "module-home__fab-pulse", style: { "--accent-rgb": accentRgb } }),
+      /* @__PURE__ */ React.createElement("span", { className: "module-home__fab-tip" }, running ? tx("Cancel", "\u53D6\u6D88") : tx("Run", "\u8FD0\u884C"))
+    )
+  );
+}

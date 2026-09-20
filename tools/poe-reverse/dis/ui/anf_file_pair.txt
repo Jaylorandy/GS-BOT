@@ -1,0 +1,2175 @@
+# module: ui.anf_file_pair
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\anf_file_pair.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/anf_file_pair.py - ANF 专用「文件配对」对话框（多文件版）。\n\nANF Special Report 需要 PO + Commitment 两个 PDF 成对。本对话框支持：\n  - 多选添加多个 PO 文件 / 多个 Commitment 文件（askopenfilenames multiple）；\n  - 按 Commitment# 自动配对，并展示「配对 N 组 · 仅 PO M · 仅 Commit K」；\n  - 缺失 Commit 时仍可通过「仅基于 PO 生成（忽略 Commit）」输出基于 PO 的报表；\n  - 默认窗口尺寸按自然尺寸 ×1.2（resizable 设定保持不变，但移到 geometry 之后，\n    避免 Windows 提前 clamp 导致高度未生效）；同一文件不重复添加。\n\n返回 {"po":[po_obj...], "cmt":[cmt_obj...], "mode":"full"|"po_only"} 或 None（取消）。\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 12           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 14          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('Dict', 'List', 'Optional'))
+             22 IMPORT_NAME              3 (typing)
+             24 IMPORT_FROM              4 (Dict)
+             26 STORE_NAME               4 (Dict)
+             28 IMPORT_FROM              5 (List)
+             30 STORE_NAME               5 (List)
+             32 IMPORT_FROM              6 (Optional)
+             34 STORE_NAME               6 (Optional)
+             36 POP_TOP
+
+ 16          38 LOAD_CONST               1 (0)
+             40 LOAD_CONST               4 (None)
+             42 IMPORT_NAME              7 (os)
+             44 STORE_NAME               7 (os)
+
+ 18          46 LOAD_CONST               1 (0)
+             48 LOAD_CONST               4 (None)
+             50 IMPORT_NAME              8 (tkinter)
+             52 STORE_NAME               9 (tk)
+
+ 19          54 LOAD_CONST               1 (0)
+             56 LOAD_CONST               5 (('filedialog', 'messagebox'))
+             58 IMPORT_NAME              8 (tkinter)
+             60 IMPORT_FROM             10 (filedialog)
+             62 STORE_NAME              10 (filedialog)
+             64 IMPORT_FROM             11 (messagebox)
+             66 STORE_NAME              11 (messagebox)
+             68 POP_TOP
+
+ 21          70 LOAD_CONST               1 (0)
+             72 LOAD_CONST               4 (None)
+             74 IMPORT_NAME             12 (theme_glass)
+             76 STORE_NAME              13 (tg)
+
+ 23          78 LOAD_CONST               6 ('#7FD17F')
+             80 STORE_NAME              14 (_OK_GREEN)
+
+ 26          82 LOAD_CONST              13 (('return', 'str'))
+             84 LOAD_CONST               9 (<code object _po_label at 0x000002BF949E25B0, file "ui\anf_file_pair.py", line 26>)
+             86 MAKE_FUNCTION            4 (annotations)
+             88 STORE_NAME              15 (_po_label)
+
+ 32          90 LOAD_CONST              13 (('return', 'str'))
+             92 LOAD_CONST              10 (<code object _cmt_label at 0x000002BF9474AA30, file "ui\anf_file_pair.py", line 32>)
+             94 MAKE_FUNCTION            4 (annotations)
+             96 STORE_NAME              16 (_cmt_label)
+
+ 37          98 LOAD_CONST              14 (('return', "'Optional[Dict]'"))
+            100 LOAD_CONST              12 (<code object ask_anf_pair at 0x000002BF940D4860, file "ui\anf_file_pair.py", line 37>)
+            102 MAKE_FUNCTION            4 (annotations)
+            104 STORE_NAME              17 (ask_anf_pair)
+            106 LOAD_CONST               4 (None)
+            108 RETURN_VALUE
+
+==============================================================================
+## <module>._po_label  (args=1, locals=3)
+# varnames: po, pno, cno
+ 26           0 RESUME                   0
+
+ 27           2 LOAD_FAST                0 (po)
+              4 LOAD_ATTR                0 (entities)
+             14 POP_JUMP_FORWARD_IF_FALSE    18 (to 52)
+             16 LOAD_FAST                0 (po)
+             18 LOAD_ATTR                0 (entities)
+             28 LOAD_CONST               1 (0)
+             30 BINARY_SUBSCR
+             40 LOAD_ATTR                1 (po_no)
+             50 JUMP_FORWARD             1 (to 54)
+        >>   52 LOAD_CONST               2 ('?')
+        >>   54 STORE_FAST               1 (pno)
+
+ 28          56 LOAD_FAST                0 (po)
+             58 LOAD_ATTR                0 (entities)
+             68 POP_JUMP_FORWARD_IF_FALSE    57 (to 184)
+             70 LOAD_FAST                0 (po)
+             72 LOAD_ATTR                0 (entities)
+             82 LOAD_CONST               1 (0)
+             84 BINARY_SUBSCR
+             94 LOAD_ATTR                2 (extra)
+            104 LOAD_METHOD              3 (get)
+            126 LOAD_CONST               3 ('commitment_no')
+            128 PRECALL                  1
+            132 CALL                     1
+            142 JUMP_IF_TRUE_OR_POP      1 (to 146)
+            144 LOAD_CONST               4 ('')
+        >>  146 LOAD_METHOD              4 (strip)
+            168 PRECALL                  0
+            172 CALL                     0
+            182 JUMP_FORWARD             1 (to 186)
+        >>  184 LOAD_CONST               4 ('')
+        >>  186 STORE_FAST               2 (cno)
+
+ 29         188 LOAD_FAST                1 (pno)
+            190 FORMAT_VALUE             0
+            192 LOAD_FAST                2 (cno)
+            194 POP_JUMP_FORWARD_IF_FALSE     6 (to 208)
+            196 LOAD_CONST               5 ('  (Commitment# ')
+            198 LOAD_FAST                2 (cno)
+            200 FORMAT_VALUE             0
+            202 LOAD_CONST               6 (')')
+            204 BUILD_STRING             3
+            206 JUMP_FORWARD             1 (to 210)
+        >>  208 LOAD_CONST               7 ('  (无 Commitment#)')
+        >>  210 BINARY_OP                0 (+)
+            214 RETURN_VALUE
+
+==============================================================================
+## <module>._cmt_label  (args=1, locals=2)
+# varnames: po, cno
+ 32           0 RESUME                   0
+
+ 33           2 LOAD_FAST                0 (po)
+              4 LOAD_ATTR                0 (entities)
+             14 POP_JUMP_FORWARD_IF_FALSE    57 (to 130)
+             16 LOAD_FAST                0 (po)
+             18 LOAD_ATTR                0 (entities)
+             28 LOAD_CONST               1 (0)
+             30 BINARY_SUBSCR
+             40 LOAD_ATTR                1 (extra)
+             50 LOAD_METHOD              2 (get)
+             72 LOAD_CONST               2 ('commitment_no')
+             74 PRECALL                  1
+             78 CALL                     1
+             88 JUMP_IF_TRUE_OR_POP      1 (to 92)
+             90 LOAD_CONST               3 ('')
+        >>   92 LOAD_METHOD              3 (strip)
+            114 PRECALL                  0
+            118 CALL                     0
+            128 JUMP_FORWARD             1 (to 132)
+        >>  130 LOAD_CONST               4 ('?')
+        >>  132 STORE_FAST               1 (cno)
+
+ 34         134 LOAD_CONST               5 ('Commitment# ')
+            136 LOAD_FAST                1 (cno)
+            138 FORMAT_VALUE             0
+            140 BUILD_STRING             2
+            142 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair  (args=1, locals=10)
+# varnames: parent, tb, _make_list, bottom, nw, nh, sw, sh, w2, h2
+              0 MAKE_CELL               10 (COL)
+              2 MAKE_CELL               11 (SANS)
+              4 MAKE_CELL               12 (_add)
+              6 MAKE_CELL               13 (_confirm)
+              8 MAKE_CELL               14 (_refresh_lists)
+             10 MAKE_CELL               15 (_refresh_status)
+             12 MAKE_CELL               16 (_remove)
+             14 MAKE_CELL               17 (cancel)
+             16 MAKE_CELL               18 (close)
+             18 MAKE_CELL               19 (cmt_lb)
+             20 MAKE_CELL               20 (gen_full)
+             22 MAKE_CELL               21 (gen_po)
+             24 MAKE_CELL               22 (lists_frame)
+             26 MAKE_CELL               23 (po_lb)
+             28 MAKE_CELL               24 (result)
+             30 MAKE_CELL               25 (state)
+             32 MAKE_CELL               26 (status)
+             34 MAKE_CELL               27 (win)
+
+ 37          36 RESUME                   0
+
+ 39          38 LOAD_GLOBAL              0 (tg)
+             50 LOAD_ATTR                1 (COL)
+             60 STORE_DEREF             10 (COL)
+
+ 40          62 LOAD_GLOBAL              0 (tg)
+             74 LOAD_ATTR                2 (_SANS)
+             84 STORE_DEREF             11 (SANS)
+
+ 41          86 BUILD_LIST               0
+             88 BUILD_LIST               0
+             90 LOAD_CONST               1 (('po', 'cmt'))
+             92 BUILD_CONST_KEY_MAP      2
+             94 STORE_DEREF             25 (state)
+
+ 42          96 LOAD_CONST               2 ('v')
+             98 LOAD_CONST               3 (None)
+            100 BUILD_MAP                1
+            102 STORE_DEREF             24 (result)
+
+ 44         104 LOAD_GLOBAL              7 (NULL + tk)
+            116 LOAD_ATTR                4 (Toplevel)
+            126 LOAD_FAST                0 (parent)
+            128 PRECALL                  1
+            132 CALL                     1
+            142 STORE_DEREF             27 (win)
+
+ 45         144 LOAD_DEREF              27 (win)
+            146 LOAD_METHOD              5 (title)
+            168 LOAD_CONST               4 ('ANF Special · 文件配对')
+            170 PRECALL                  1
+            174 CALL                     1
+            184 POP_TOP
+
+ 46         186 LOAD_DEREF              27 (win)
+            188 LOAD_METHOD              6 (transient)
+            210 LOAD_FAST                0 (parent)
+            212 PRECALL                  1
+            216 CALL                     1
+            226 POP_TOP
+
+ 47         228 LOAD_DEREF              27 (win)
+            230 LOAD_METHOD              7 (grab_set)
+            252 PRECALL                  0
+            256 CALL                     0
+            266 POP_TOP
+
+ 48         268 LOAD_DEREF              27 (win)
+            270 LOAD_METHOD              8 (withdraw)
+            292 PRECALL                  0
+            296 CALL                     0
+            306 POP_TOP
+
+ 49         308 LOAD_DEREF              27 (win)
+            310 LOAD_METHOD              9 (configure)
+            332 LOAD_DEREF              10 (COL)
+            334 LOAD_CONST               5 ('gap')
+            336 BINARY_SUBSCR
+            346 KW_NAMES                 6
+            348 PRECALL                  1
+            352 CALL                     1
+            362 POP_TOP
+
+ 50         364 LOAD_DEREF              27 (win)
+            366 LOAD_METHOD             10 (bind)
+            388 LOAD_CONST               7 ('<Escape>')
+            390 LOAD_CLOSURE            27 (win)
+            392 BUILD_TUPLE              1
+            394 LOAD_CONST               8 (<code object <lambda> at 0x000002BF94A2BF00, file "ui\anf_file_pair.py", line 50>)
+            396 MAKE_FUNCTION            8 (closure)
+            398 PRECALL                  2
+            402 CALL                     2
+            412 POP_TOP
+
+ 53         414 LOAD_GLOBAL              7 (NULL + tk)
+            426 LOAD_ATTR               11 (Frame)
+            436 LOAD_DEREF              27 (win)
+            438 LOAD_DEREF              10 (COL)
+            440 LOAD_CONST               5 ('gap')
+            442 BINARY_SUBSCR
+            452 KW_NAMES                 6
+            454 PRECALL                  2
+            458 CALL                     2
+            468 STORE_FAST               1 (tb)
+
+ 54         470 LOAD_FAST                1 (tb)
+            472 LOAD_METHOD             12 (pack)
+            494 LOAD_CONST               9 ('x')
+            496 LOAD_CONST              10 (18)
+            498 LOAD_CONST              11 ((14, 0))
+            500 KW_NAMES                12
+            502 PRECALL                  3
+            506 CALL                     3
+            516 POP_TOP
+
+ 55         518 LOAD_GLOBAL              7 (NULL + tk)
+            530 LOAD_ATTR               13 (Label)
+            540 LOAD_FAST                1 (tb)
+            542 LOAD_CONST               4 ('ANF Special · 文件配对')
+            544 LOAD_DEREF              10 (COL)
+            546 LOAD_CONST               5 ('gap')
+            548 BINARY_SUBSCR
+            558 LOAD_DEREF              10 (COL)
+            560 LOAD_CONST              13 ('ink')
+            562 BINARY_SUBSCR
+
+ 56         572 LOAD_DEREF              11 (SANS)
+            574 LOAD_CONST              14 (15)
+            576 LOAD_CONST              15 ('bold')
+            578 BUILD_TUPLE              3
+
+ 55         580 KW_NAMES                16
+            582 PRECALL                  5
+            586 CALL                     5
+
+ 56         596 LOAD_METHOD             12 (pack)
+            618 LOAD_CONST              17 ('left')
+            620 KW_NAMES                18
+            622 PRECALL                  1
+            626 CALL                     1
+            636 POP_TOP
+
+ 57         638 LOAD_GLOBAL              7 (NULL + tk)
+            650 LOAD_ATTR               13 (Label)
+            660 LOAD_FAST                1 (tb)
+            662 LOAD_CONST              19 ('×')
+            664 LOAD_DEREF              10 (COL)
+            666 LOAD_CONST               5 ('gap')
+            668 BINARY_SUBSCR
+            678 LOAD_DEREF              10 (COL)
+            680 LOAD_CONST              20 ('ink_3')
+            682 BINARY_SUBSCR
+
+ 58         692 LOAD_DEREF              11 (SANS)
+            694 LOAD_CONST              21 (16)
+            696 BUILD_TUPLE              2
+            698 LOAD_CONST              22 ('hand2')
+
+ 57         700 KW_NAMES                23
+            702 PRECALL                  6
+            706 CALL                     6
+            716 STORE_DEREF             18 (close)
+
+ 59         718 LOAD_DEREF              18 (close)
+            720 LOAD_METHOD             12 (pack)
+            742 LOAD_CONST              24 ('right')
+            744 KW_NAMES                18
+            746 PRECALL                  1
+            750 CALL                     1
+            760 POP_TOP
+
+ 60         762 LOAD_DEREF              18 (close)
+            764 LOAD_METHOD             10 (bind)
+            786 LOAD_CONST              25 ('<Button-1>')
+            788 LOAD_CLOSURE            27 (win)
+            790 BUILD_TUPLE              1
+            792 LOAD_CONST              26 (<code object <lambda> at 0x000002BF94AA84E0, file "ui\anf_file_pair.py", line 60>)
+            794 MAKE_FUNCTION            8 (closure)
+            796 PRECALL                  2
+            800 CALL                     2
+            810 POP_TOP
+
+ 61         812 LOAD_DEREF              18 (close)
+            814 LOAD_METHOD             10 (bind)
+            836 LOAD_CONST              27 ('<Enter>')
+            838 LOAD_CLOSURE            10 (COL)
+            840 LOAD_CLOSURE            18 (close)
+            842 BUILD_TUPLE              2
+            844 LOAD_CONST              28 (<code object <lambda> at 0x000002BF94A2F630, file "ui\anf_file_pair.py", line 61>)
+            846 MAKE_FUNCTION            8 (closure)
+            848 PRECALL                  2
+            852 CALL                     2
+            862 POP_TOP
+
+ 62         864 LOAD_DEREF              18 (close)
+            866 LOAD_METHOD             10 (bind)
+            888 LOAD_CONST              29 ('<Leave>')
+            890 LOAD_CLOSURE            10 (COL)
+            892 LOAD_CLOSURE            18 (close)
+            894 BUILD_TUPLE              2
+            896 LOAD_CONST              30 (<code object <lambda> at 0x000002BF94A2EF30, file "ui\anf_file_pair.py", line 62>)
+            898 MAKE_FUNCTION            8 (closure)
+            900 PRECALL                  2
+            904 CALL                     2
+            914 POP_TOP
+
+ 64         916 LOAD_GLOBAL              7 (NULL + tk)
+            928 LOAD_ATTR               13 (Label)
+            938 LOAD_DEREF              27 (win)
+            940 LOAD_CONST              31 ('可一次选择多个 PO / Commitment 文件；系统按 Commitment# 自动配对。仅缺 Commit 时也可基于 PO 直接生成。')
+
+ 66         942 LOAD_DEREF              10 (COL)
+            944 LOAD_CONST               5 ('gap')
+            946 BINARY_SUBSCR
+            956 LOAD_DEREF              10 (COL)
+            958 LOAD_CONST              32 ('ink_2')
+            960 BINARY_SUBSCR
+            970 LOAD_DEREF              11 (SANS)
+            972 LOAD_CONST              33 (12)
+            974 BUILD_TUPLE              2
+            976 LOAD_CONST              34 (720)
+
+ 67         978 LOAD_CONST              17 ('left')
+
+ 64         980 KW_NAMES                35
+            982 PRECALL                  7
+            986 CALL                     7
+
+ 67         996 LOAD_METHOD             12 (pack)
+           1018 LOAD_CONST              36 ('w')
+           1020 LOAD_CONST              10 (18)
+           1022 LOAD_CONST              37 ((8, 12))
+           1024 KW_NAMES                38
+           1026 PRECALL                  3
+           1030 CALL                     3
+           1040 POP_TOP
+
+ 70        1042 LOAD_GLOBAL              7 (NULL + tk)
+           1054 LOAD_ATTR               11 (Frame)
+           1064 LOAD_DEREF              27 (win)
+           1066 LOAD_DEREF              10 (COL)
+           1068 LOAD_CONST               5 ('gap')
+           1070 BINARY_SUBSCR
+           1080 KW_NAMES                 6
+           1082 PRECALL                  2
+           1086 CALL                     2
+           1096 STORE_DEREF             22 (lists_frame)
+
+ 71        1098 LOAD_DEREF              22 (lists_frame)
+           1100 LOAD_METHOD             12 (pack)
+           1122 LOAD_CONST              39 ('both')
+           1124 LOAD_CONST              40 (True)
+           1126 LOAD_CONST              10 (18)
+           1128 LOAD_CONST              41 ((0, 6))
+           1130 KW_NAMES                42
+           1132 PRECALL                  4
+           1136 CALL                     4
+           1146 POP_TOP
+
+ 73        1148 LOAD_CLOSURE            10 (COL)
+           1150 LOAD_CLOSURE            11 (SANS)
+           1152 LOAD_CLOSURE            12 (_add)
+           1154 LOAD_CLOSURE            16 (_remove)
+           1156 LOAD_CLOSURE            22 (lists_frame)
+           1158 BUILD_TUPLE              5
+           1160 LOAD_CONST              43 (<code object _make_list at 0x000002BF94464320, file "ui\anf_file_pair.py", line 73>)
+           1162 MAKE_FUNCTION            8 (closure)
+           1164 STORE_FAST               2 (_make_list)
+
+101        1166 PUSH_NULL
+           1168 LOAD_FAST                2 (_make_list)
+           1170 LOAD_CONST              44 ('po')
+           1172 LOAD_CONST              45 ('PO 文件')
+           1174 LOAD_DEREF              10 (COL)
+           1176 LOAD_CONST              46 ('accent')
+           1178 BINARY_SUBSCR
+           1188 PRECALL                  3
+           1192 CALL                     3
+           1202 STORE_DEREF             23 (po_lb)
+
+102        1204 PUSH_NULL
+           1206 LOAD_FAST                2 (_make_list)
+           1208 LOAD_CONST              47 ('cmt')
+           1210 LOAD_CONST              48 ('Commitment 文件')
+           1212 LOAD_DEREF              10 (COL)
+           1214 LOAD_CONST              46 ('accent')
+           1216 BINARY_SUBSCR
+           1226 PRECALL                  3
+           1230 CALL                     3
+           1240 STORE_DEREF             19 (cmt_lb)
+
+104        1242 LOAD_CLOSURE            14 (_refresh_lists)
+           1244 LOAD_CLOSURE            15 (_refresh_status)
+           1246 LOAD_CLOSURE            25 (state)
+           1248 BUILD_TUPLE              3
+           1250 LOAD_CONST              49 (<code object _add at 0x000002BF944485C0, file "ui\anf_file_pair.py", line 104>)
+           1252 MAKE_FUNCTION            8 (closure)
+           1254 STORE_DEREF             12 (_add)
+
+130        1256 LOAD_CLOSURE            14 (_refresh_lists)
+           1258 LOAD_CLOSURE            15 (_refresh_status)
+           1260 LOAD_CLOSURE            19 (cmt_lb)
+           1262 LOAD_CLOSURE            23 (po_lb)
+           1264 LOAD_CLOSURE            25 (state)
+           1266 BUILD_TUPLE              5
+           1268 LOAD_CONST              50 (<code object _remove at 0x000002BF94A196B0, file "ui\anf_file_pair.py", line 130>)
+           1270 MAKE_FUNCTION            8 (closure)
+           1272 STORE_DEREF             16 (_remove)
+
+140        1274 LOAD_CLOSURE            19 (cmt_lb)
+           1276 LOAD_CLOSURE            23 (po_lb)
+           1278 LOAD_CLOSURE            25 (state)
+           1280 BUILD_TUPLE              3
+           1282 LOAD_CONST              51 (<code object _refresh_lists at 0x000002BF940D32B0, file "ui\anf_file_pair.py", line 140>)
+           1284 MAKE_FUNCTION            8 (closure)
+           1286 STORE_DEREF             14 (_refresh_lists)
+
+149        1288 LOAD_GLOBAL              7 (NULL + tk)
+           1300 LOAD_ATTR               14 (StringVar)
+           1310 PRECALL                  0
+           1314 CALL                     0
+           1324 STORE_DEREF             26 (status)
+
+150        1326 LOAD_DEREF              26 (status)
+           1328 LOAD_METHOD             15 (set)
+           1350 LOAD_CONST              52 ('请添加 PO 文件（至少 1 个）')
+           1352 PRECALL                  1
+           1356 CALL                     1
+           1366 POP_TOP
+
+151        1368 LOAD_GLOBAL              7 (NULL + tk)
+           1380 LOAD_ATTR               13 (Label)
+           1390 LOAD_DEREF              27 (win)
+           1392 LOAD_DEREF              26 (status)
+           1394 LOAD_DEREF              10 (COL)
+           1396 LOAD_CONST               5 ('gap')
+           1398 BINARY_SUBSCR
+           1408 LOAD_DEREF              10 (COL)
+           1410 LOAD_CONST              32 ('ink_2')
+           1412 BINARY_SUBSCR
+
+152        1422 LOAD_DEREF              11 (SANS)
+           1424 LOAD_CONST              33 (12)
+           1426 BUILD_TUPLE              2
+
+151        1428 KW_NAMES                53
+           1430 PRECALL                  5
+           1434 CALL                     5
+
+152        1444 LOAD_METHOD             12 (pack)
+           1466 LOAD_CONST              36 ('w')
+           1468 LOAD_CONST              10 (18)
+           1470 LOAD_CONST              54 ((2, 10))
+           1472 KW_NAMES                38
+           1474 PRECALL                  3
+           1478 CALL                     3
+           1488 POP_TOP
+
+154        1490 LOAD_CLOSURE            10 (COL)
+           1492 LOAD_CLOSURE            20 (gen_full)
+           1494 LOAD_CLOSURE            21 (gen_po)
+           1496 LOAD_CLOSURE            25 (state)
+           1498 LOAD_CLOSURE            26 (status)
+           1500 BUILD_TUPLE              5
+           1502 LOAD_CONST              55 (<code object _refresh_status at 0x000002BF94461A00, file "ui\anf_file_pair.py", line 154>)
+           1504 MAKE_FUNCTION            8 (closure)
+           1506 STORE_DEREF             15 (_refresh_status)
+
+191        1508 LOAD_GLOBAL              7 (NULL + tk)
+           1520 LOAD_ATTR               11 (Frame)
+           1530 LOAD_DEREF              27 (win)
+           1532 LOAD_DEREF              10 (COL)
+           1534 LOAD_CONST               5 ('gap')
+           1536 BINARY_SUBSCR
+           1546 KW_NAMES                 6
+           1548 PRECALL                  2
+           1552 CALL                     2
+           1562 STORE_FAST               3 (bottom)
+
+192        1564 LOAD_FAST                3 (bottom)
+           1566 LOAD_METHOD             12 (pack)
+           1588 LOAD_CONST              56 ('bottom')
+           1590 LOAD_CONST               9 ('x')
+           1592 LOAD_CONST              10 (18)
+           1594 LOAD_CONST              57 ((0, 14))
+           1596 KW_NAMES                58
+           1598 PRECALL                  4
+           1602 CALL                     4
+           1612 POP_TOP
+
+194        1614 LOAD_CLOSURE            24 (result)
+           1616 LOAD_CLOSURE            25 (state)
+           1618 LOAD_CLOSURE            27 (win)
+           1620 BUILD_TUPLE              3
+           1622 LOAD_CONST              59 (<code object _confirm at 0x000002BF94999E70, file "ui\anf_file_pair.py", line 194>)
+           1624 MAKE_FUNCTION            8 (closure)
+           1626 STORE_DEREF             13 (_confirm)
+
+200        1628 LOAD_GLOBAL              7 (NULL + tk)
+           1640 LOAD_ATTR               13 (Label)
+           1650 LOAD_FAST                3 (bottom)
+           1652 LOAD_CONST              60 ('确认并生成报表')
+           1654 LOAD_CONST              61 ('#444b57')
+           1656 LOAD_DEREF              10 (COL)
+           1658 LOAD_CONST              20 ('ink_3')
+           1660 BINARY_SUBSCR
+
+201        1670 LOAD_DEREF              11 (SANS)
+           1672 LOAD_CONST              62 (13)
+           1674 LOAD_CONST              15 ('bold')
+           1676 BUILD_TUPLE              3
+           1678 LOAD_CONST              63 (20)
+           1680 LOAD_CONST              64 (8)
+           1682 LOAD_CONST              22 ('hand2')
+
+200        1684 KW_NAMES                65
+           1686 PRECALL                  8
+           1690 CALL                     8
+           1700 STORE_DEREF             20 (gen_full)
+
+202        1702 LOAD_DEREF              20 (gen_full)
+           1704 LOAD_METHOD             12 (pack)
+           1726 LOAD_CONST              24 ('right')
+           1728 KW_NAMES                18
+           1730 PRECALL                  1
+           1734 CALL                     1
+           1744 POP_TOP
+
+203        1746 LOAD_DEREF              20 (gen_full)
+           1748 LOAD_METHOD             10 (bind)
+           1770 LOAD_CONST              25 ('<Button-1>')
+           1772 LOAD_CLOSURE            13 (_confirm)
+           1774 LOAD_CLOSURE            20 (gen_full)
+           1776 BUILD_TUPLE              2
+           1778 LOAD_CONST              66 (<code object <lambda> at 0x000002BF94A669A0, file "ui\anf_file_pair.py", line 203>)
+           1780 MAKE_FUNCTION            8 (closure)
+           1782 PRECALL                  2
+           1786 CALL                     2
+           1796 POP_TOP
+
+204        1798 LOAD_DEREF              20 (gen_full)
+           1800 LOAD_METHOD             10 (bind)
+           1822 LOAD_CONST              27 ('<Enter>')
+           1824 LOAD_CLOSURE            10 (COL)
+           1826 LOAD_CLOSURE            20 (gen_full)
+           1828 BUILD_TUPLE              2
+           1830 LOAD_CONST              67 (<code object <lambda> at 0x000002BF9472B340, file "ui\anf_file_pair.py", line 204>)
+           1832 MAKE_FUNCTION            8 (closure)
+           1834 PRECALL                  2
+           1838 CALL                     2
+           1848 POP_TOP
+
+205        1850 LOAD_DEREF              20 (gen_full)
+           1852 LOAD_METHOD             10 (bind)
+           1874 LOAD_CONST              29 ('<Leave>')
+           1876 LOAD_CLOSURE            10 (COL)
+           1878 LOAD_CLOSURE            20 (gen_full)
+           1880 BUILD_TUPLE              2
+           1882 LOAD_CONST              68 (<code object <lambda> at 0x000002BF9472B6D0, file "ui\anf_file_pair.py", line 205>)
+           1884 MAKE_FUNCTION            8 (closure)
+           1886 PRECALL                  2
+           1890 CALL                     2
+           1900 POP_TOP
+
+207        1902 LOAD_GLOBAL              7 (NULL + tk)
+           1914 LOAD_ATTR               13 (Label)
+           1924 LOAD_FAST                3 (bottom)
+           1926 LOAD_CONST              69 ('仅基于 PO 生成（忽略 Commit）')
+           1928 LOAD_CONST              61 ('#444b57')
+           1930 LOAD_DEREF              10 (COL)
+           1932 LOAD_CONST              20 ('ink_3')
+           1934 BINARY_SUBSCR
+
+208        1944 LOAD_DEREF              11 (SANS)
+           1946 LOAD_CONST              33 (12)
+           1948 LOAD_CONST              15 ('bold')
+           1950 BUILD_TUPLE              3
+           1952 LOAD_CONST              21 (16)
+           1954 LOAD_CONST              64 (8)
+           1956 LOAD_CONST              22 ('hand2')
+
+207        1958 KW_NAMES                65
+           1960 PRECALL                  8
+           1964 CALL                     8
+           1974 STORE_DEREF             21 (gen_po)
+
+209        1976 LOAD_DEREF              21 (gen_po)
+           1978 LOAD_METHOD             12 (pack)
+           2000 LOAD_CONST              24 ('right')
+           2002 LOAD_CONST              70 ((0, 12))
+           2004 KW_NAMES                71
+           2006 PRECALL                  2
+           2010 CALL                     2
+           2020 POP_TOP
+
+210        2022 LOAD_DEREF              21 (gen_po)
+           2024 LOAD_METHOD             10 (bind)
+           2046 LOAD_CONST              25 ('<Button-1>')
+           2048 LOAD_CLOSURE            13 (_confirm)
+           2050 LOAD_CLOSURE            21 (gen_po)
+           2052 BUILD_TUPLE              2
+           2054 LOAD_CONST              72 (<code object <lambda> at 0x000002BF94A65680, file "ui\anf_file_pair.py", line 210>)
+           2056 MAKE_FUNCTION            8 (closure)
+           2058 PRECALL                  2
+           2062 CALL                     2
+           2072 POP_TOP
+
+211        2074 LOAD_DEREF              21 (gen_po)
+           2076 LOAD_METHOD             10 (bind)
+           2098 LOAD_CONST              27 ('<Enter>')
+           2100 LOAD_CLOSURE            10 (COL)
+           2102 LOAD_CLOSURE            21 (gen_po)
+           2104 BUILD_TUPLE              2
+           2106 LOAD_CONST              73 (<code object <lambda> at 0x000002BF9472B470, file "ui\anf_file_pair.py", line 211>)
+           2108 MAKE_FUNCTION            8 (closure)
+           2110 PRECALL                  2
+           2114 CALL                     2
+           2124 POP_TOP
+
+212        2126 LOAD_DEREF              21 (gen_po)
+           2128 LOAD_METHOD             10 (bind)
+           2150 LOAD_CONST              29 ('<Leave>')
+           2152 LOAD_CLOSURE            10 (COL)
+           2154 LOAD_CLOSURE            21 (gen_po)
+           2156 BUILD_TUPLE              2
+           2158 LOAD_CONST              74 (<code object <lambda> at 0x000002BF9472B5A0, file "ui\anf_file_pair.py", line 212>)
+           2160 MAKE_FUNCTION            8 (closure)
+           2162 PRECALL                  2
+           2166 CALL                     2
+           2176 POP_TOP
+
+214        2178 LOAD_GLOBAL              7 (NULL + tk)
+           2190 LOAD_ATTR               13 (Label)
+           2200 LOAD_FAST                3 (bottom)
+           2202 LOAD_CONST              75 ('取消')
+           2204 LOAD_DEREF              10 (COL)
+           2206 LOAD_CONST              76 ('field')
+           2208 BINARY_SUBSCR
+           2218 LOAD_DEREF              10 (COL)
+           2220 LOAD_CONST              13 ('ink')
+           2222 BINARY_SUBSCR
+
+215        2232 LOAD_DEREF              11 (SANS)
+           2234 LOAD_CONST              62 (13)
+           2236 BUILD_TUPLE              2
+           2238 LOAD_CONST              63 (20)
+           2240 LOAD_CONST              64 (8)
+           2242 LOAD_CONST              22 ('hand2')
+
+216        2244 LOAD_DEREF              10 (COL)
+           2246 LOAD_CONST              77 ('panel_border')
+           2248 BINARY_SUBSCR
+           2258 LOAD_CONST              78 (1)
+
+214        2260 KW_NAMES                79
+           2262 PRECALL                 10
+           2266 CALL                    10
+           2276 STORE_DEREF             17 (cancel)
+
+217        2278 LOAD_DEREF              17 (cancel)
+           2280 LOAD_METHOD             12 (pack)
+           2302 LOAD_CONST              24 ('right')
+           2304 LOAD_CONST              70 ((0, 12))
+           2306 KW_NAMES                71
+           2308 PRECALL                  2
+           2312 CALL                     2
+           2322 POP_TOP
+
+218        2324 LOAD_DEREF              17 (cancel)
+           2326 LOAD_METHOD             10 (bind)
+           2348 LOAD_CONST              25 ('<Button-1>')
+           2350 LOAD_CLOSURE            27 (win)
+           2352 BUILD_TUPLE              1
+           2354 LOAD_CONST              80 (<code object <lambda> at 0x000002BF94AA85D0, file "ui\anf_file_pair.py", line 218>)
+           2356 MAKE_FUNCTION            8 (closure)
+           2358 PRECALL                  2
+           2362 CALL                     2
+           2372 POP_TOP
+
+219        2374 LOAD_DEREF              17 (cancel)
+           2376 LOAD_METHOD             10 (bind)
+           2398 LOAD_CONST              27 ('<Enter>')
+           2400 LOAD_CLOSURE            10 (COL)
+           2402 LOAD_CLOSURE            17 (cancel)
+           2404 BUILD_TUPLE              2
+           2406 LOAD_CONST              81 (<code object <lambda> at 0x000002BF94A2F430, file "ui\anf_file_pair.py", line 219>)
+           2408 MAKE_FUNCTION            8 (closure)
+           2410 PRECALL                  2
+           2414 CALL                     2
+           2424 POP_TOP
+
+220        2426 LOAD_DEREF              17 (cancel)
+           2428 LOAD_METHOD             10 (bind)
+           2450 LOAD_CONST              29 ('<Leave>')
+           2452 LOAD_CLOSURE            10 (COL)
+           2454 LOAD_CLOSURE            17 (cancel)
+           2456 BUILD_TUPLE              2
+           2458 LOAD_CONST              82 (<code object <lambda> at 0x000002BF94A2F730, file "ui\anf_file_pair.py", line 220>)
+           2460 MAKE_FUNCTION            8 (closure)
+           2462 PRECALL                  2
+           2466 CALL                     2
+           2476 POP_TOP
+
+223        2478 PUSH_NULL
+           2480 LOAD_DEREF              14 (_refresh_lists)
+           2482 PRECALL                  0
+           2486 CALL                     0
+           2496 POP_TOP
+
+224        2498 PUSH_NULL
+           2500 LOAD_DEREF              15 (_refresh_status)
+           2502 PRECALL                  0
+           2506 CALL                     0
+           2516 POP_TOP
+
+225        2518 LOAD_DEREF              27 (win)
+           2520 LOAD_METHOD             16 (update_idletasks)
+           2542 PRECALL                  0
+           2546 CALL                     0
+           2556 POP_TOP
+
+226        2558 LOAD_DEREF              27 (win)
+           2560 LOAD_METHOD             17 (winfo_width)
+           2582 PRECALL                  0
+           2586 CALL                     0
+           2596 LOAD_DEREF              27 (win)
+           2598 LOAD_METHOD             18 (winfo_height)
+           2620 PRECALL                  0
+           2624 CALL                     0
+           2634 STORE_FAST               5 (nh)
+           2636 STORE_FAST               4 (nw)
+
+227        2638 LOAD_DEREF              27 (win)
+           2640 LOAD_METHOD             19 (winfo_screenwidth)
+           2662 PRECALL                  0
+           2666 CALL                     0
+           2676 LOAD_DEREF              27 (win)
+           2678 LOAD_METHOD             20 (winfo_screenheight)
+           2700 PRECALL                  0
+           2704 CALL                     0
+           2714 STORE_FAST               7 (sh)
+           2716 STORE_FAST               6 (sw)
+
+228        2718 LOAD_GLOBAL             43 (NULL + min)
+           2730 LOAD_GLOBAL             45 (NULL + int)
+           2742 LOAD_FAST                4 (nw)
+           2744 PRECALL                  1
+           2748 CALL                     1
+           2758 LOAD_GLOBAL             45 (NULL + int)
+           2770 LOAD_FAST                6 (sw)
+           2772 LOAD_CONST              83 (0.92)
+           2774 BINARY_OP                5 (*)
+           2778 PRECALL                  1
+           2782 CALL                     1
+           2792 PRECALL                  2
+           2796 CALL                     2
+           2806 STORE_FAST               8 (w2)
+
+229        2808 LOAD_GLOBAL             43 (NULL + min)
+           2820 LOAD_GLOBAL             45 (NULL + int)
+           2832 LOAD_FAST                5 (nh)
+           2834 LOAD_CONST              84 (1.2)
+           2836 BINARY_OP                5 (*)
+           2840 PRECALL                  1
+           2844 CALL                     1
+           2854 LOAD_GLOBAL             45 (NULL + int)
+           2866 LOAD_FAST                7 (sh)
+           2868 LOAD_CONST              83 (0.92)
+           2870 BINARY_OP                5 (*)
+           2874 PRECALL                  1
+           2878 CALL                     1
+           2888 PRECALL                  2
+           2892 CALL                     2
+           2902 STORE_FAST               9 (h2)
+
+230        2904 LOAD_DEREF              27 (win)
+           2906 LOAD_METHOD             23 (geometry)
+           2928 LOAD_FAST                8 (w2)
+           2930 FORMAT_VALUE             0
+           2932 LOAD_CONST               9 ('x')
+           2934 LOAD_FAST                9 (h2)
+           2936 FORMAT_VALUE             0
+           2938 BUILD_STRING             3
+           2940 PRECALL                  1
+           2944 CALL                     1
+           2954 POP_TOP
+
+231        2956 LOAD_DEREF              27 (win)
+           2958 LOAD_METHOD             24 (resizable)
+           2980 LOAD_CONST              85 (False)
+           2982 LOAD_CONST              85 (False)
+           2984 PRECALL                  2
+           2988 CALL                     2
+           2998 POP_TOP
+
+232        3000 LOAD_DEREF              27 (win)
+           3002 LOAD_METHOD             25 (deiconify)
+           3024 PRECALL                  0
+           3028 CALL                     0
+           3038 POP_TOP
+
+233        3040 LOAD_DEREF              27 (win)
+           3042 LOAD_METHOD             26 (wait_window)
+           3064 PRECALL                  0
+           3068 CALL                     0
+           3078 POP_TOP
+
+234        3080 LOAD_DEREF              24 (result)
+           3082 LOAD_CONST               2 ('v')
+           3084 BINARY_SUBSCR
+           3094 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+ 50           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+ 60           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 61           2 RESUME                   0
+              4 LOAD_DEREF               2 (close)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 62           2 RESUME                   0
+              4 LOAD_DEREF               2 (close)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('ink_3')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list  (args=3, locals=6)
+# varnames: key, title, color, col, lb, btn_row
+              0 COPY_FREE_VARS           5
+              2 MAKE_CELL                0 (key)
+              4 MAKE_CELL                6 (add)
+              6 MAKE_CELL                7 (rm)
+
+ 73           8 RESUME                   0
+
+ 74          10 LOAD_GLOBAL              1 (NULL + tk)
+             22 LOAD_ATTR                1 (Frame)
+             32 LOAD_DEREF              12 (lists_frame)
+             34 LOAD_DEREF               8 (COL)
+             36 LOAD_CONST               1 ('field')
+             38 BINARY_SUBSCR
+             48 LOAD_DEREF               8 (COL)
+             50 LOAD_CONST               2 ('panel_border')
+             52 BINARY_SUBSCR
+
+ 75          62 LOAD_CONST               3 (1)
+
+ 74          64 KW_NAMES                 4
+             66 PRECALL                  4
+             70 CALL                     4
+             80 STORE_FAST               3 (col)
+
+ 76          82 LOAD_FAST                3 (col)
+             84 LOAD_METHOD              2 (pack)
+            106 LOAD_CONST               5 ('left')
+            108 LOAD_CONST               6 ('both')
+            110 LOAD_CONST               7 (True)
+            112 LOAD_CONST               8 ((0, 8))
+            114 KW_NAMES                 9
+            116 PRECALL                  4
+            120 CALL                     4
+            130 POP_TOP
+
+ 77         132 LOAD_GLOBAL              1 (NULL + tk)
+            144 LOAD_ATTR                3 (Label)
+            154 LOAD_FAST                3 (col)
+            156 LOAD_FAST                1 (title)
+            158 LOAD_DEREF               8 (COL)
+            160 LOAD_CONST               1 ('field')
+            162 BINARY_SUBSCR
+            172 LOAD_DEREF               8 (COL)
+            174 LOAD_CONST              10 ('ink')
+            176 BINARY_SUBSCR
+
+ 78         186 LOAD_DEREF               9 (SANS)
+            188 LOAD_CONST              11 (13)
+            190 LOAD_CONST              12 ('bold')
+            192 BUILD_TUPLE              3
+
+ 77         194 KW_NAMES                13
+            196 PRECALL                  5
+            200 CALL                     5
+
+ 78         210 LOAD_METHOD              2 (pack)
+            232 LOAD_CONST              14 ('w')
+            234 LOAD_CONST              15 (14)
+            236 LOAD_CONST              16 ((10, 4))
+            238 KW_NAMES                17
+            240 PRECALL                  3
+            244 CALL                     3
+            254 POP_TOP
+
+ 79         256 LOAD_GLOBAL              1 (NULL + tk)
+            268 LOAD_ATTR                4 (Listbox)
+            278 LOAD_FAST                3 (col)
+            280 LOAD_CONST              18 (6)
+            282 LOAD_DEREF               8 (COL)
+            284 LOAD_CONST              19 ('panel')
+            286 BINARY_SUBSCR
+            296 LOAD_DEREF               8 (COL)
+            298 LOAD_CONST              10 ('ink')
+            300 BINARY_SUBSCR
+
+ 80         310 LOAD_DEREF               9 (SANS)
+            312 LOAD_CONST              20 (11)
+            314 BUILD_TUPLE              2
+            316 LOAD_DEREF               8 (COL)
+            318 LOAD_CONST              21 ('accent')
+            320 BINARY_SUBSCR
+
+ 81         330 LOAD_DEREF               8 (COL)
+            332 LOAD_CONST              22 ('select_fg')
+            334 BINARY_SUBSCR
+            344 LOAD_CONST              23 ('flat')
+
+ 82         346 LOAD_CONST              24 (0)
+
+ 79         348 KW_NAMES                25
+            350 PRECALL                  9
+            354 CALL                     9
+            364 STORE_FAST               4 (lb)
+
+ 83         366 LOAD_FAST                4 (lb)
+            368 LOAD_METHOD              2 (pack)
+            390 LOAD_CONST               6 ('both')
+            392 LOAD_CONST               7 (True)
+            394 LOAD_CONST              15 (14)
+            396 LOAD_CONST              26 ((0, 6))
+            398 KW_NAMES                27
+            400 PRECALL                  4
+            404 CALL                     4
+            414 POP_TOP
+
+ 84         416 LOAD_GLOBAL              1 (NULL + tk)
+            428 LOAD_ATTR                1 (Frame)
+            438 LOAD_FAST                3 (col)
+            440 LOAD_DEREF               8 (COL)
+            442 LOAD_CONST               1 ('field')
+            444 BINARY_SUBSCR
+            454 KW_NAMES                28
+            456 PRECALL                  2
+            460 CALL                     2
+            470 STORE_FAST               5 (btn_row)
+
+ 85         472 LOAD_FAST                5 (btn_row)
+            474 LOAD_METHOD              2 (pack)
+            496 LOAD_CONST              29 ('x')
+            498 LOAD_CONST              15 (14)
+            500 LOAD_CONST              30 ((0, 10))
+            502 KW_NAMES                31
+            504 PRECALL                  3
+            508 CALL                     3
+            518 POP_TOP
+
+ 86         520 LOAD_GLOBAL              1 (NULL + tk)
+            532 LOAD_ATTR                3 (Label)
+            542 LOAD_FAST                5 (btn_row)
+            544 LOAD_CONST              32 ('＋ 添加文件…')
+            546 LOAD_DEREF               8 (COL)
+            548 LOAD_CONST              21 ('accent')
+            550 BINARY_SUBSCR
+            560 LOAD_DEREF               8 (COL)
+            562 LOAD_CONST              22 ('select_fg')
+            564 BINARY_SUBSCR
+
+ 87         574 LOAD_DEREF               9 (SANS)
+            576 LOAD_CONST              33 (12)
+            578 LOAD_CONST              12 ('bold')
+            580 BUILD_TUPLE              3
+            582 LOAD_CONST              33 (12)
+            584 LOAD_CONST              34 (5)
+            586 LOAD_CONST              35 ('hand2')
+
+ 86         588 KW_NAMES                36
+            590 PRECALL                  8
+            594 CALL                     8
+            604 STORE_DEREF              6 (add)
+
+ 88         606 LOAD_DEREF               6 (add)
+            608 LOAD_METHOD              2 (pack)
+            630 LOAD_CONST               5 ('left')
+            632 KW_NAMES                37
+            634 PRECALL                  1
+            638 CALL                     1
+            648 POP_TOP
+
+ 89         650 LOAD_DEREF               6 (add)
+            652 LOAD_METHOD              5 (bind)
+            674 LOAD_CONST              38 ('<Enter>')
+            676 LOAD_CLOSURE             8 (COL)
+            678 LOAD_CLOSURE             6 (add)
+            680 BUILD_TUPLE              2
+            682 LOAD_CONST              39 (<code object <lambda> at 0x000002BF94A2F030, file "ui\anf_file_pair.py", line 89>)
+            684 MAKE_FUNCTION            8 (closure)
+            686 PRECALL                  2
+            690 CALL                     2
+            700 POP_TOP
+
+ 90         702 LOAD_DEREF               6 (add)
+            704 LOAD_METHOD              5 (bind)
+            726 LOAD_CONST              40 ('<Leave>')
+            728 LOAD_CLOSURE             8 (COL)
+            730 LOAD_CLOSURE             6 (add)
+            732 BUILD_TUPLE              2
+            734 LOAD_CONST              41 (<code object <lambda> at 0x000002BF94A2ED30, file "ui\anf_file_pair.py", line 90>)
+            736 MAKE_FUNCTION            8 (closure)
+            738 PRECALL                  2
+            742 CALL                     2
+            752 POP_TOP
+
+ 91         754 LOAD_DEREF               6 (add)
+            756 LOAD_METHOD              5 (bind)
+            778 LOAD_CONST              42 ('<Button-1>')
+            780 LOAD_CLOSURE            10 (_add)
+            782 LOAD_CLOSURE             0 (key)
+            784 BUILD_TUPLE              2
+            786 LOAD_CONST              43 (<code object <lambda> at 0x000002BF94A6EB10, file "ui\anf_file_pair.py", line 91>)
+            788 MAKE_FUNCTION            8 (closure)
+            790 PRECALL                  2
+            794 CALL                     2
+            804 POP_TOP
+
+ 92         806 LOAD_GLOBAL              1 (NULL + tk)
+            818 LOAD_ATTR                3 (Label)
+            828 LOAD_FAST                5 (btn_row)
+            830 LOAD_CONST              44 ('－ 移除所选')
+            832 LOAD_DEREF               8 (COL)
+            834 LOAD_CONST               1 ('field')
+            836 BINARY_SUBSCR
+            846 LOAD_DEREF               8 (COL)
+            848 LOAD_CONST              10 ('ink')
+            850 BINARY_SUBSCR
+
+ 93         860 LOAD_DEREF               9 (SANS)
+            862 LOAD_CONST              33 (12)
+            864 BUILD_TUPLE              2
+            866 LOAD_CONST              33 (12)
+            868 LOAD_CONST              34 (5)
+            870 LOAD_CONST              35 ('hand2')
+
+ 94         872 LOAD_DEREF               8 (COL)
+            874 LOAD_CONST               2 ('panel_border')
+            876 BINARY_SUBSCR
+            886 LOAD_CONST               3 (1)
+
+ 92         888 KW_NAMES                45
+            890 PRECALL                 10
+            894 CALL                    10
+            904 STORE_DEREF              7 (rm)
+
+ 95         906 LOAD_DEREF               7 (rm)
+            908 LOAD_METHOD              2 (pack)
+            930 LOAD_CONST               5 ('left')
+            932 LOAD_CONST              46 ((8, 0))
+            934 KW_NAMES                47
+            936 PRECALL                  2
+            940 CALL                     2
+            950 POP_TOP
+
+ 96         952 LOAD_DEREF               7 (rm)
+            954 LOAD_METHOD              5 (bind)
+            976 LOAD_CONST              38 ('<Enter>')
+            978 LOAD_CLOSURE             8 (COL)
+            980 LOAD_CLOSURE             7 (rm)
+            982 BUILD_TUPLE              2
+            984 LOAD_CONST              48 (<code object <lambda> at 0x000002BF94A2F130, file "ui\anf_file_pair.py", line 96>)
+            986 MAKE_FUNCTION            8 (closure)
+            988 PRECALL                  2
+            992 CALL                     2
+           1002 POP_TOP
+
+ 97        1004 LOAD_DEREF               7 (rm)
+           1006 LOAD_METHOD              5 (bind)
+           1028 LOAD_CONST              40 ('<Leave>')
+           1030 LOAD_CLOSURE             8 (COL)
+           1032 LOAD_CLOSURE             7 (rm)
+           1034 BUILD_TUPLE              2
+           1036 LOAD_CONST              49 (<code object <lambda> at 0x000002BF94A2F530, file "ui\anf_file_pair.py", line 97>)
+           1038 MAKE_FUNCTION            8 (closure)
+           1040 PRECALL                  2
+           1044 CALL                     2
+           1054 POP_TOP
+
+ 98        1056 LOAD_DEREF               7 (rm)
+           1058 LOAD_METHOD              5 (bind)
+           1080 LOAD_CONST              42 ('<Button-1>')
+           1082 LOAD_CLOSURE            11 (_remove)
+           1084 LOAD_CLOSURE             0 (key)
+           1086 BUILD_TUPLE              2
+           1088 LOAD_CONST              50 (<code object <lambda> at 0x000002BF94A6E5D0, file "ui\anf_file_pair.py", line 98>)
+           1090 MAKE_FUNCTION            8 (closure)
+           1092 PRECALL                  2
+           1096 CALL                     2
+           1106 POP_TOP
+
+ 99        1108 LOAD_FAST                4 (lb)
+           1110 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 89           2 RESUME                   0
+              4 LOAD_DEREF               2 (add)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent_2')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 90           2 RESUME                   0
+              4 LOAD_DEREF               2 (add)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 91           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_add)
+              8 LOAD_DEREF               2 (key)
+             10 PRECALL                  1
+             14 CALL                     1
+             24 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 96           2 RESUME                   0
+              4 LOAD_DEREF               2 (rm)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('hover')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 97           2 RESUME                   0
+              4 LOAD_DEREF               2 (rm)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('field')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._make_list.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+ 98           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_remove)
+              8 LOAD_DEREF               2 (key)
+             10 PRECALL                  1
+             14 CALL                     1
+             24 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._add  (args=1, locals=6)
+# varnames: key, parse_single_anf_pdf, paths, p, kind, po
+              0 COPY_FREE_VARS           3
+              2 MAKE_CELL                6 (norm_p)
+
+104           4 RESUME                   0
+
+105           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('parse_single_anf_pdf',))
+             10 IMPORT_NAME              0 (output.customer_anf)
+             12 IMPORT_FROM              1 (parse_single_anf_pdf)
+             14 STORE_FAST               1 (parse_single_anf_pdf)
+             16 POP_TOP
+
+106          18 LOAD_GLOBAL              5 (NULL + filedialog)
+             30 LOAD_ATTR                3 (askopenfilenames)
+
+107          40 LOAD_CONST               3 ('选择 ANF PDF 文件（可多选）')
+             42 LOAD_CONST               4 (('PDF 文件', '*.pdf'))
+             44 BUILD_LIST               1
+
+106          46 KW_NAMES                 5
+             48 PRECALL                  2
+             52 CALL                     2
+             62 STORE_FAST               2 (paths)
+
+108          64 LOAD_FAST                2 (paths)
+             66 GET_ITER
+        >>   68 FOR_ITER               234 (to 538)
+             70 STORE_FAST               3 (p)
+
+109          72 LOAD_GLOBAL              8 (os)
+             84 LOAD_ATTR                5 (path)
+             94 LOAD_METHOD              6 (normpath)
+            116 LOAD_FAST                3 (p)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 STORE_DEREF              6 (norm_p)
+
+110         134 LOAD_GLOBAL             15 (NULL + any)
+            146 LOAD_CLOSURE             6 (norm_p)
+            148 BUILD_TUPLE              1
+            150 LOAD_CONST               6 (<code object <genexpr> at 0x000002BF9473EAB0, file "ui\anf_file_pair.py", line 110>)
+            152 MAKE_FUNCTION            8 (closure)
+
+111         154 LOAD_DEREF               9 (state)
+            156 LOAD_FAST                0 (key)
+            158 BINARY_SUBSCR
+
+110         168 GET_ITER
+            170 PRECALL                  0
+            174 CALL                     0
+            184 PRECALL                  1
+            188 CALL                     1
+            198 POP_JUMP_FORWARD_IF_FALSE     1 (to 202)
+
+112         200 JUMP_BACKWARD           67 (to 68)
+
+113     >>  202 PUSH_NULL
+            204 LOAD_FAST                1 (parse_single_anf_pdf)
+            206 LOAD_FAST                3 (p)
+            208 LOAD_CONST               0 (None)
+            210 KW_NAMES                 7
+            212 PRECALL                  2
+            216 CALL                     2
+            226 UNPACK_SEQUENCE          2
+            230 STORE_FAST               4 (kind)
+            232 STORE_FAST               5 (po)
+
+114         234 LOAD_FAST                5 (po)
+            236 POP_JUMP_FORWARD_IF_NOT_NONE    54 (to 346)
+
+115         238 LOAD_GLOBAL             17 (NULL + messagebox)
+            250 LOAD_ATTR                9 (showwarning)
+            260 LOAD_CONST               8 ('无法识别')
+
+116         262 LOAD_CONST               9 ('该文件不是 ANF 版式的 PO 或 Commitment：\n')
+            264 LOAD_GLOBAL              8 (os)
+            276 LOAD_ATTR                5 (path)
+            286 LOAD_METHOD             10 (basename)
+            308 LOAD_FAST                3 (p)
+            310 PRECALL                  1
+            314 CALL                     1
+            324 FORMAT_VALUE             0
+            326 BUILD_STRING             2
+
+115         328 PRECALL                  2
+            332 CALL                     2
+            342 POP_TOP
+
+117         344 JUMP_BACKWARD          139 (to 68)
+
+118     >>  346 LOAD_FAST                0 (key)
+            348 LOAD_CONST              10 ('po')
+            350 COMPARE_OP               2 (==)
+            356 POP_JUMP_FORWARD_IF_FALSE    28 (to 414)
+            358 LOAD_FAST                4 (kind)
+            360 LOAD_CONST              10 ('po')
+            362 COMPARE_OP               3 (!=)
+            368 POP_JUMP_FORWARD_IF_FALSE    22 (to 414)
+
+119         370 LOAD_GLOBAL             17 (NULL + messagebox)
+            382 LOAD_ATTR                9 (showwarning)
+            392 LOAD_CONST              11 ('文件类型不符')
+
+120         394 LOAD_CONST              12 ('该文件被识别为 Commitment，请放到右侧「Commitment 文件」列表。')
+
+119         396 PRECALL                  2
+            400 CALL                     2
+            410 POP_TOP
+
+121         412 JUMP_BACKWARD          173 (to 68)
+
+122     >>  414 LOAD_FAST                0 (key)
+            416 LOAD_CONST              13 ('cmt')
+            418 COMPARE_OP               2 (==)
+            424 POP_JUMP_FORWARD_IF_FALSE    28 (to 482)
+            426 LOAD_FAST                4 (kind)
+            428 LOAD_CONST              14 ('commitment')
+            430 COMPARE_OP               3 (!=)
+            436 POP_JUMP_FORWARD_IF_FALSE    22 (to 482)
+
+123         438 LOAD_GLOBAL             17 (NULL + messagebox)
+            450 LOAD_ATTR                9 (showwarning)
+            460 LOAD_CONST              11 ('文件类型不符')
+
+124         462 LOAD_CONST              15 ('该文件被识别为 PO，请放到左侧「PO 文件」列表。')
+
+123         464 PRECALL                  2
+            468 CALL                     2
+            478 POP_TOP
+
+125         480 JUMP_BACKWARD          207 (to 68)
+
+126     >>  482 LOAD_DEREF               9 (state)
+            484 LOAD_FAST                0 (key)
+            486 BINARY_SUBSCR
+            496 LOAD_METHOD             11 (append)
+            518 LOAD_FAST                5 (po)
+            520 PRECALL                  1
+            524 CALL                     1
+            534 POP_TOP
+            536 JUMP_BACKWARD          235 (to 68)
+
+127     >>  538 PUSH_NULL
+            540 LOAD_DEREF               7 (_refresh_lists)
+            542 PRECALL                  0
+            546 CALL                     0
+            556 POP_TOP
+
+128         558 PUSH_NULL
+            560 LOAD_DEREF               8 (_refresh_status)
+            562 PRECALL                  0
+            566 CALL                     0
+            576 POP_TOP
+            578 LOAD_CONST               0 (None)
+            580 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._add.<genexpr>  (args=1, locals=2)
+# varnames: .0, existing
+              0 COPY_FREE_VARS           1
+
+110           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                54 (to 120)
+
+111          12 STORE_FAST               1 (existing)
+
+110          14 LOAD_GLOBAL              0 (os)
+             26 LOAD_ATTR                1 (path)
+             36 LOAD_METHOD              2 (normpath)
+             58 LOAD_GLOBAL              7 (NULL + getattr)
+             70 LOAD_FAST                1 (existing)
+             72 LOAD_CONST               0 ('source_file')
+             74 LOAD_CONST               1 ('')
+             76 PRECALL                  3
+             80 CALL                     3
+             90 PRECALL                  1
+             94 CALL                     1
+            104 LOAD_DEREF               2 (norm_p)
+            106 COMPARE_OP               2 (==)
+            112 YIELD_VALUE
+            114 RESUME                   1
+            116 POP_TOP
+            118 JUMP_BACKWARD           55 (to 10)
+        >>  120 LOAD_CONST               2 (None)
+            122 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._remove  (args=1, locals=4)
+# varnames: key, lb, sel, i
+              0 COPY_FREE_VARS           5
+
+130           2 RESUME                   0
+
+131           4 LOAD_FAST                0 (key)
+              6 LOAD_CONST               1 ('po')
+              8 COMPARE_OP               2 (==)
+             14 POP_JUMP_FORWARD_IF_FALSE     2 (to 20)
+             16 LOAD_DEREF               7 (po_lb)
+             18 JUMP_FORWARD             1 (to 22)
+        >>   20 LOAD_DEREF               6 (cmt_lb)
+        >>   22 STORE_FAST               1 (lb)
+
+132          24 LOAD_GLOBAL              1 (NULL + list)
+             36 LOAD_FAST                1 (lb)
+             38 LOAD_METHOD              1 (curselection)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 PRECALL                  1
+             78 CALL                     1
+             88 STORE_FAST               2 (sel)
+
+133          90 LOAD_FAST                2 (sel)
+             92 POP_JUMP_FORWARD_IF_TRUE     2 (to 98)
+
+134          94 LOAD_CONST               0 (None)
+             96 RETURN_VALUE
+
+135     >>   98 LOAD_GLOBAL              5 (NULL + sorted)
+            110 LOAD_FAST                2 (sel)
+            112 LOAD_CONST               2 (True)
+            114 KW_NAMES                 3
+            116 PRECALL                  2
+            120 CALL                     2
+            130 GET_ITER
+        >>  132 FOR_ITER                11 (to 156)
+            134 STORE_FAST               3 (i)
+
+136         136 LOAD_DEREF               8 (state)
+            138 LOAD_FAST                0 (key)
+            140 BINARY_SUBSCR
+            150 LOAD_FAST                3 (i)
+            152 DELETE_SUBSCR
+            154 JUMP_BACKWARD           12 (to 132)
+
+137     >>  156 PUSH_NULL
+            158 LOAD_DEREF               4 (_refresh_lists)
+            160 PRECALL                  0
+            164 CALL                     0
+            174 POP_TOP
+
+138         176 PUSH_NULL
+            178 LOAD_DEREF               5 (_refresh_status)
+            180 PRECALL                  0
+            184 CALL                     0
+            194 POP_TOP
+            196 LOAD_CONST               0 (None)
+            198 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._refresh_lists  (args=0, locals=1)
+# varnames: po
+              0 COPY_FREE_VARS           3
+
+140           2 RESUME                   0
+
+141           4 LOAD_DEREF               2 (po_lb)
+              6 LOAD_METHOD              0 (delete)
+             28 LOAD_CONST               1 (0)
+             30 LOAD_GLOBAL              2 (tk)
+             42 LOAD_ATTR                2 (END)
+             52 PRECALL                  2
+             56 CALL                     2
+             66 POP_TOP
+
+142          68 LOAD_DEREF               3 (state)
+             70 LOAD_CONST               2 ('po')
+             72 BINARY_SUBSCR
+             82 GET_ITER
+        >>   84 FOR_ITER                47 (to 180)
+             86 STORE_FAST               0 (po)
+
+143          88 LOAD_DEREF               2 (po_lb)
+             90 LOAD_METHOD              3 (insert)
+            112 LOAD_GLOBAL              2 (tk)
+            124 LOAD_ATTR                2 (END)
+            134 LOAD_GLOBAL              9 (NULL + _po_label)
+            146 LOAD_FAST                0 (po)
+            148 PRECALL                  1
+            152 CALL                     1
+            162 PRECALL                  2
+            166 CALL                     2
+            176 POP_TOP
+            178 JUMP_BACKWARD           48 (to 84)
+
+144     >>  180 LOAD_DEREF               1 (cmt_lb)
+            182 LOAD_METHOD              0 (delete)
+            204 LOAD_CONST               1 (0)
+            206 LOAD_GLOBAL              2 (tk)
+            218 LOAD_ATTR                2 (END)
+            228 PRECALL                  2
+            232 CALL                     2
+            242 POP_TOP
+
+145         244 LOAD_DEREF               3 (state)
+            246 LOAD_CONST               3 ('cmt')
+            248 BINARY_SUBSCR
+            258 GET_ITER
+        >>  260 FOR_ITER                47 (to 356)
+            262 STORE_FAST               0 (po)
+
+146         264 LOAD_DEREF               1 (cmt_lb)
+            266 LOAD_METHOD              3 (insert)
+            288 LOAD_GLOBAL              2 (tk)
+            300 LOAD_ATTR                2 (END)
+            310 LOAD_GLOBAL             11 (NULL + _cmt_label)
+            322 LOAD_FAST                0 (po)
+            324 PRECALL                  1
+            328 CALL                     1
+            338 PRECALL                  2
+            342 CALL                     2
+            352 POP_TOP
+            354 JUMP_BACKWARD           48 (to 260)
+
+145     >>  356 LOAD_CONST               0 (None)
+            358 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._refresh_status  (args=0, locals=11)
+# varnames: cmt_by_cno, c, cno, paired, po_only, p, cmt_only, has_po, tail, b, ok
+              0 COPY_FREE_VARS           5
+              2 MAKE_CELL               11 (matched_cnos)
+
+154           4 RESUME                   0
+
+155           6 BUILD_MAP                0
+              8 STORE_FAST               0 (cmt_by_cno)
+
+156          10 LOAD_DEREF              15 (state)
+             12 LOAD_CONST               1 ('cmt')
+             14 BINARY_SUBSCR
+             24 GET_ITER
+        >>   26 FOR_ITER               108 (to 244)
+             28 STORE_FAST               1 (c)
+
+157          30 LOAD_FAST                1 (c)
+             32 LOAD_ATTR                0 (entities)
+             42 POP_JUMP_FORWARD_IF_FALSE    57 (to 158)
+             44 LOAD_FAST                1 (c)
+             46 LOAD_ATTR                0 (entities)
+             56 LOAD_CONST               2 (0)
+             58 BINARY_SUBSCR
+             68 LOAD_ATTR                1 (extra)
+             78 LOAD_METHOD              2 (get)
+            100 LOAD_CONST               3 ('commitment_no')
+            102 PRECALL                  1
+            106 CALL                     1
+            116 JUMP_IF_TRUE_OR_POP      1 (to 120)
+            118 LOAD_CONST               4 ('')
+        >>  120 LOAD_METHOD              3 (strip)
+            142 PRECALL                  0
+            146 CALL                     0
+            156 JUMP_FORWARD             1 (to 160)
+        >>  158 LOAD_CONST               4 ('')
+        >>  160 STORE_FAST               2 (cno)
+
+158         162 LOAD_FAST                2 (cno)
+            164 POP_JUMP_FORWARD_IF_FALSE    38 (to 242)
+
+159         166 LOAD_FAST                0 (cmt_by_cno)
+            168 LOAD_METHOD              4 (setdefault)
+            190 LOAD_FAST                2 (cno)
+            192 LOAD_CONST               2 (0)
+            194 PRECALL                  2
+            198 CALL                     2
+            208 POP_TOP
+
+160         210 LOAD_FAST                0 (cmt_by_cno)
+            212 LOAD_FAST                2 (cno)
+            214 COPY                     2
+            216 COPY                     2
+            218 BINARY_SUBSCR
+            228 LOAD_CONST               5 (1)
+            230 BINARY_OP               13 (+=)
+            234 SWAP                     3
+            236 SWAP                     2
+            238 STORE_SUBSCR
+        >>  242 JUMP_BACKWARD          109 (to 26)
+
+161     >>  244 LOAD_CONST               2 (0)
+            246 STORE_FAST               3 (paired)
+
+162         248 LOAD_CONST               2 (0)
+            250 STORE_FAST               4 (po_only)
+
+163         252 LOAD_DEREF              15 (state)
+            254 LOAD_CONST               6 ('po')
+            256 BINARY_SUBSCR
+            266 GET_ITER
+        >>  268 FOR_ITER               107 (to 484)
+            270 STORE_FAST               5 (p)
+
+164         272 LOAD_FAST                5 (p)
+            274 LOAD_ATTR                0 (entities)
+            284 POP_JUMP_FORWARD_IF_FALSE    57 (to 400)
+            286 LOAD_FAST                5 (p)
+            288 LOAD_ATTR                0 (entities)
+            298 LOAD_CONST               2 (0)
+            300 BINARY_SUBSCR
+            310 LOAD_ATTR                1 (extra)
+            320 LOAD_METHOD              2 (get)
+            342 LOAD_CONST               3 ('commitment_no')
+            344 PRECALL                  1
+            348 CALL                     1
+            358 JUMP_IF_TRUE_OR_POP      1 (to 362)
+            360 LOAD_CONST               4 ('')
+        >>  362 LOAD_METHOD              3 (strip)
+            384 PRECALL                  0
+            388 CALL                     0
+            398 JUMP_FORWARD             1 (to 402)
+        >>  400 LOAD_CONST               4 ('')
+        >>  402 STORE_FAST               2 (cno)
+
+165         404 LOAD_FAST                2 (cno)
+            406 POP_JUMP_FORWARD_IF_FALSE    32 (to 472)
+            408 LOAD_FAST                0 (cmt_by_cno)
+            410 LOAD_METHOD              2 (get)
+            432 LOAD_FAST                2 (cno)
+            434 LOAD_CONST               2 (0)
+            436 PRECALL                  2
+            440 CALL                     2
+            450 LOAD_CONST               2 (0)
+            452 COMPARE_OP               4 (>)
+            458 POP_JUMP_FORWARD_IF_FALSE     6 (to 472)
+
+166         460 LOAD_FAST                3 (paired)
+            462 LOAD_CONST               5 (1)
+            464 BINARY_OP               13 (+=)
+            468 STORE_FAST               3 (paired)
+            470 JUMP_BACKWARD          102 (to 268)
+
+168     >>  472 LOAD_FAST                4 (po_only)
+            474 LOAD_CONST               5 (1)
+            476 BINARY_OP               13 (+=)
+            480 STORE_FAST               4 (po_only)
+            482 JUMP_BACKWARD          108 (to 268)
+
+170     >>  484 LOAD_GLOBAL             11 (NULL + set)
+            496 PRECALL                  0
+            500 CALL                     0
+            510 STORE_DEREF             11 (matched_cnos)
+
+171         512 LOAD_DEREF              15 (state)
+            514 LOAD_CONST               6 ('po')
+            516 BINARY_SUBSCR
+            526 GET_ITER
+        >>  528 FOR_ITER                91 (to 712)
+            530 STORE_FAST               5 (p)
+
+172         532 LOAD_FAST                5 (p)
+            534 LOAD_ATTR                0 (entities)
+            544 POP_JUMP_FORWARD_IF_FALSE    57 (to 660)
+            546 LOAD_FAST                5 (p)
+            548 LOAD_ATTR                0 (entities)
+            558 LOAD_CONST               2 (0)
+            560 BINARY_SUBSCR
+            570 LOAD_ATTR                1 (extra)
+            580 LOAD_METHOD              2 (get)
+            602 LOAD_CONST               3 ('commitment_no')
+            604 PRECALL                  1
+            608 CALL                     1
+            618 JUMP_IF_TRUE_OR_POP      1 (to 622)
+            620 LOAD_CONST               4 ('')
+        >>  622 LOAD_METHOD              3 (strip)
+            644 PRECALL                  0
+            648 CALL                     0
+            658 JUMP_FORWARD             1 (to 662)
+        >>  660 LOAD_CONST               4 ('')
+        >>  662 STORE_FAST               2 (cno)
+
+173         664 LOAD_FAST                2 (cno)
+            666 POP_JUMP_FORWARD_IF_FALSE    21 (to 710)
+
+174         668 LOAD_DEREF              11 (matched_cnos)
+            670 LOAD_METHOD              6 (add)
+            692 LOAD_FAST                2 (cno)
+            694 PRECALL                  1
+            698 CALL                     1
+            708 POP_TOP
+        >>  710 JUMP_BACKWARD           92 (to 528)
+
+175     >>  712 LOAD_GLOBAL             15 (NULL + sum)
+            724 LOAD_CLOSURE            11 (matched_cnos)
+            726 BUILD_TUPLE              1
+            728 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF947158B0, file "ui\anf_file_pair.py", line 175>)
+            730 MAKE_FUNCTION            8 (closure)
+            732 LOAD_DEREF              15 (state)
+            734 LOAD_CONST               1 ('cmt')
+            736 BINARY_SUBSCR
+            746 GET_ITER
+            748 PRECALL                  0
+            752 CALL                     0
+            762 PRECALL                  1
+            766 CALL                     1
+            776 STORE_FAST               6 (cmt_only)
+
+178         778 LOAD_GLOBAL             17 (NULL + bool)
+            790 LOAD_DEREF              15 (state)
+            792 LOAD_CONST               6 ('po')
+            794 BINARY_SUBSCR
+            804 PRECALL                  1
+            808 CALL                     1
+            818 STORE_FAST               7 (has_po)
+
+179         820 LOAD_FAST                7 (has_po)
+            822 POP_JUMP_FORWARD_IF_TRUE    22 (to 868)
+
+180         824 LOAD_DEREF              16 (status)
+            826 LOAD_METHOD              5 (set)
+            848 LOAD_CONST               8 ('请添加 PO 文件（至少 1 个）')
+            850 PRECALL                  1
+            854 CALL                     1
+            864 POP_TOP
+            866 JUMP_FORWARD            36 (to 940)
+
+182     >>  868 LOAD_FAST                3 (paired)
+            870 POP_JUMP_FORWARD_IF_TRUE     2 (to 876)
+            872 LOAD_FAST                4 (po_only)
+            874 POP_JUMP_FORWARD_IF_FALSE     2 (to 880)
+        >>  876 LOAD_CONST               4 ('')
+            878 JUMP_FORWARD             1 (to 882)
+        >>  880 LOAD_CONST               9 ('  -  缺少 Commit 时也可仅基于 PO 生成')
+        >>  882 STORE_FAST               8 (tail)
+
+183         884 LOAD_DEREF              16 (status)
+            886 LOAD_METHOD              5 (set)
+            908 LOAD_CONST              10 ('已配对 %d 组 - 仅 PO %d - 仅 Commitment %d%s')
+
+184         910 LOAD_FAST                3 (paired)
+            912 LOAD_FAST                4 (po_only)
+            914 LOAD_FAST                6 (cmt_only)
+            916 LOAD_FAST                8 (tail)
+            918 BUILD_TUPLE              4
+
+183         920 BINARY_OP                6 (%)
+            924 PRECALL                  1
+            928 CALL                     1
+            938 POP_TOP
+
+185     >>  940 LOAD_DEREF              13 (gen_full)
+            942 LOAD_FAST                7 (has_po)
+            944 BUILD_TUPLE              2
+            946 LOAD_DEREF              14 (gen_po)
+            948 LOAD_FAST                7 (has_po)
+            950 BUILD_TUPLE              2
+            952 BUILD_TUPLE              2
+            954 GET_ITER
+        >>  956 FOR_ITER                59 (to 1076)
+            958 UNPACK_SEQUENCE          2
+            962 STORE_FAST               9 (b)
+            964 STORE_FAST              10 (ok)
+
+186         966 LOAD_FAST                9 (b)
+            968 LOAD_METHOD              9 (configure)
+            990 LOAD_FAST               10 (ok)
+            992 POP_JUMP_FORWARD_IF_FALSE     2 (to 998)
+            994 LOAD_CONST              11 ('normal')
+            996 JUMP_FORWARD             1 (to 1000)
+        >>  998 LOAD_CONST              12 ('disabled')
+
+187     >> 1000 LOAD_FAST               10 (ok)
+           1002 POP_JUMP_FORWARD_IF_FALSE     8 (to 1020)
+           1004 LOAD_DEREF              12 (COL)
+           1006 LOAD_CONST              13 ('accent')
+           1008 BINARY_SUBSCR
+           1018 JUMP_FORWARD             1 (to 1022)
+        >> 1020 LOAD_CONST              14 ('#444b57')
+
+188     >> 1022 LOAD_FAST               10 (ok)
+           1024 POP_JUMP_FORWARD_IF_FALSE     8 (to 1042)
+           1026 LOAD_DEREF              12 (COL)
+           1028 LOAD_CONST              15 ('select_fg')
+           1030 BINARY_SUBSCR
+           1040 JUMP_FORWARD             7 (to 1056)
+        >> 1042 LOAD_DEREF              12 (COL)
+           1044 LOAD_CONST              16 ('ink_3')
+           1046 BINARY_SUBSCR
+
+186     >> 1056 KW_NAMES                17
+           1058 PRECALL                  3
+           1062 CALL                     3
+           1072 POP_TOP
+           1074 JUMP_BACKWARD           60 (to 956)
+
+185     >> 1076 LOAD_CONST               0 (None)
+           1078 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._refresh_status.<genexpr>  (args=1, locals=2)
+# varnames: .0, c
+              0 COPY_FREE_VARS           1
+
+175           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER               122 (to 256)
+             12 STORE_FAST               1 (c)
+
+176          14 LOAD_FAST                1 (c)
+             16 LOAD_ATTR                0 (entities)
+             26 LOAD_CONST               0 (0)
+             28 BINARY_SUBSCR
+             38 LOAD_ATTR                1 (extra)
+             48 LOAD_METHOD              2 (get)
+             70 LOAD_CONST               1 ('commitment_no')
+             72 PRECALL                  1
+             76 CALL                     1
+             86 JUMP_IF_TRUE_OR_POP      1 (to 90)
+             88 LOAD_CONST               2 ('')
+        >>   90 LOAD_METHOD              3 (strip)
+            112 PRECALL                  0
+            116 CALL                     0
+
+175         126 POP_JUMP_FORWARD_IF_FALSE    63 (to 254)
+
+177         128 LOAD_FAST                1 (c)
+            130 LOAD_ATTR                0 (entities)
+            140 LOAD_CONST               0 (0)
+            142 BINARY_SUBSCR
+            152 LOAD_ATTR                1 (extra)
+            162 LOAD_METHOD              2 (get)
+            184 LOAD_CONST               1 ('commitment_no')
+            186 PRECALL                  1
+            190 CALL                     1
+            200 JUMP_IF_TRUE_OR_POP      1 (to 204)
+            202 LOAD_CONST               2 ('')
+        >>  204 LOAD_METHOD              3 (strip)
+            226 PRECALL                  0
+            230 CALL                     0
+            240 LOAD_DEREF               2 (matched_cnos)
+            242 CONTAINS_OP              1
+            244 POP_JUMP_BACKWARD_IF_FALSE   118 (to 10)
+
+175         246 LOAD_CONST               3 (1)
+
+177         248 YIELD_VALUE
+            250 RESUME                   1
+            252 POP_TOP
+        >>  254 JUMP_BACKWARD          123 (to 10)
+
+175     >>  256 LOAD_CONST               4 (None)
+            258 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair._confirm  (args=1, locals=1)
+# varnames: mode
+              0 COPY_FREE_VARS           3
+
+194           2 RESUME                   0
+
+195           4 LOAD_DEREF               2 (state)
+              6 LOAD_CONST               1 ('po')
+              8 BINARY_SUBSCR
+             18 POP_JUMP_FORWARD_IF_TRUE     2 (to 24)
+
+196          20 LOAD_CONST               0 (None)
+             22 RETURN_VALUE
+
+197     >>   24 LOAD_GLOBAL              1 (NULL + list)
+             36 LOAD_DEREF               2 (state)
+             38 LOAD_CONST               1 ('po')
+             40 BINARY_SUBSCR
+             50 PRECALL                  1
+             54 CALL                     1
+             64 LOAD_GLOBAL              1 (NULL + list)
+             76 LOAD_DEREF               2 (state)
+             78 LOAD_CONST               2 ('cmt')
+             80 BINARY_SUBSCR
+             90 PRECALL                  1
+             94 CALL                     1
+            104 LOAD_FAST                0 (mode)
+            106 LOAD_CONST               3 (('po', 'cmt', 'mode'))
+            108 BUILD_CONST_KEY_MAP      3
+            110 LOAD_DEREF               1 (result)
+            112 LOAD_CONST               4 ('v')
+            114 STORE_SUBSCR
+
+198         118 LOAD_DEREF               3 (win)
+            120 LOAD_METHOD              1 (destroy)
+            142 PRECALL                  0
+            146 CALL                     0
+            156 POP_TOP
+            158 LOAD_CONST               0 (None)
+            160 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+203           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_full)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    11 (to 76)
+             54 PUSH_NULL
+             56 LOAD_DEREF               1 (_confirm)
+             58 LOAD_CONST               3 ('full')
+             60 PRECALL                  1
+             64 CALL                     1
+             74 JUMP_FORWARD             1 (to 78)
+        >>   76 LOAD_CONST               0 (None)
+        >>   78 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+204           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_full)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    28 (to 110)
+             54 LOAD_DEREF               2 (gen_full)
+             56 LOAD_METHOD              1 (configure)
+             78 LOAD_DEREF               1 (COL)
+             80 LOAD_CONST               3 ('accent_2')
+             82 BINARY_SUBSCR
+             92 KW_NAMES                 4
+             94 PRECALL                  1
+             98 CALL                     1
+            108 JUMP_FORWARD             1 (to 112)
+        >>  110 LOAD_CONST               0 (None)
+        >>  112 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+205           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_full)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    28 (to 110)
+             54 LOAD_DEREF               2 (gen_full)
+             56 LOAD_METHOD              1 (configure)
+             78 LOAD_DEREF               1 (COL)
+             80 LOAD_CONST               3 ('accent')
+             82 BINARY_SUBSCR
+             92 KW_NAMES                 4
+             94 PRECALL                  1
+             98 CALL                     1
+            108 JUMP_FORWARD             1 (to 112)
+        >>  110 LOAD_CONST               0 (None)
+        >>  112 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+210           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_po)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    11 (to 76)
+             54 PUSH_NULL
+             56 LOAD_DEREF               1 (_confirm)
+             58 LOAD_CONST               3 ('po_only')
+             60 PRECALL                  1
+             64 CALL                     1
+             74 JUMP_FORWARD             1 (to 78)
+        >>   76 LOAD_CONST               0 (None)
+        >>   78 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+211           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_po)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    28 (to 110)
+             54 LOAD_DEREF               2 (gen_po)
+             56 LOAD_METHOD              1 (configure)
+             78 LOAD_DEREF               1 (COL)
+             80 LOAD_CONST               3 ('accent_2')
+             82 BINARY_SUBSCR
+             92 KW_NAMES                 4
+             94 PRECALL                  1
+             98 CALL                     1
+            108 JUMP_FORWARD             1 (to 112)
+        >>  110 LOAD_CONST               0 (None)
+        >>  112 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+212           2 RESUME                   0
+              4 LOAD_DEREF               2 (gen_po)
+              6 LOAD_METHOD              0 (cget)
+             28 LOAD_CONST               1 ('state')
+             30 PRECALL                  1
+             34 CALL                     1
+             44 LOAD_CONST               2 ('normal')
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_FORWARD_IF_FALSE    28 (to 110)
+             54 LOAD_DEREF               2 (gen_po)
+             56 LOAD_METHOD              1 (configure)
+             78 LOAD_DEREF               1 (COL)
+             80 LOAD_CONST               3 ('accent')
+             82 BINARY_SUBSCR
+             92 KW_NAMES                 4
+             94 PRECALL                  1
+             98 CALL                     1
+            108 JUMP_FORWARD             1 (to 112)
+        >>  110 LOAD_CONST               0 (None)
+        >>  112 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+218           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+219           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('hover')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_anf_pair.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+220           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('field')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE

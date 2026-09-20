@@ -1,0 +1,228 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "typing",
+   "Callable",
+   "List",
+   "Optional",
+   "compile",
+   "I",
+   "_TOTAL_KW",
+   "_ORDER_KW",
+   "_PACK_KW",
+   "_NUM",
+   "_DECIMAL",
+   "HEAD_LINES",
+   "KEEP_PRICED",
+   "KEEP_PLAIN",
+   "KEEP_BOILER",
+   "SAMPLE_CEILING",
+   "_token_shape",
+   "_is_priced",
+   "compress_doc_text"
+  ],
+  "varnames": [],
+  "consts": [
+   "Shrink the document text sent to the AI reader - losslessly for our purpose.\n\nWhy\n---\n``acquire_recipe`` only needs the model to (a) name the layout, (b) read the\nheader fields, (c) report a REPRESENTATIVE SAMPLE of real order lines, and\n(d) report each block's printed TOTAL. It explicitly does NOT need every row:\nthe offline parser re-extracts all rows from the full ``pages`` tokens.\n\nReal POs are dominated by material the prompt already tells the model to\nignore - per-page boilerplate notices, pack break-up tables, bare\nsub-breakdown restatements. On a 48-page LPP order that is ~80% of the text,\nand it costs real wall-time twice over: prefill on the way in, and a slower,\nmore distracted answer on the way out.\n\nThis module drops those repeats while guaranteeing that everything the\nsynthesis step depends on survives:\n\n* every TOTAL / SUBTOTAL / SUMMARY row              -> block_total_qty gate\n* every order-block marker (Order No / Entity ...)  -> entity_anchor + po_nos\n* the first ``keep_priced`` rows of each distinct   -> line_pattern samples\n  priced-row shape, counted per order block\n* the head of the document                          -> header anchors\n\nLines are only ever DROPPED, never rewritten, so any ``raw_line`` the model\ncopies from the compressed text is still findable verbatim in the full text.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Callable",
+    "List",
+    "Optional"
+   ],
+   "\\b(TOTAL|SUBTOTAL|SUB-TOTAL|SUMMARY|GRAND)\\b",
+   "(ORDER\\s*(NO|NUMBER|ID)|ENTITY\\s*\\d|PO\\s*(NO|NUMBER)|CONTRACT\\s*(NO|NUMBER))",
+   "\\bPACK\\b",
+   "^[+-]?[\\d.,]+$",
+   "^\\d{1,3}(?:[.,]\\d{3})*[.,]\\d{2}$|^\\d+[.,]\\d{2}$",
+   40,
+   6,
+   2,
+   1,
+   600,
+   "line",
+   "str",
+   "return",
+   "bool",
+   [
+    "keep_priced",
+    "keep_plain",
+    "log"
+   ],
+   "text",
+   "keep_priced",
+   "int",
+   "keep_plain",
+   "log",
+   "Optional[Callable[[str], None]]",
+   [
+    "line",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "line",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "text",
+    "str",
+    "keep_priced",
+    "int",
+    "keep_plain",
+    "int",
+    "log",
+    "Optional[Callable[[str], None]]",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 93
+ },
+ "<module>._token_shape": {
+  "names": [
+   "split",
+   "_DECIMAL",
+   "match",
+   "append",
+   "_NUM",
+   "any",
+   "join"
+  ],
+  "varnames": [
+   "line",
+   "out",
+   "tok"
+  ],
+  "consts": [
+   "Structural signature of a row: values collapse, structure survives.\n\n    ``014KK-89X-L LADIES` TROUSERS 89X 89X DARK BROWN PCS 310 8.77 2,718.70``\n    and the same row for another colour/size share a signature, so only the\n    first few of that shape are kept.\n    ",
+   "D",
+   "N",
+   "X",
+   "A",
+   " "
+  ],
+  "n_instructions": 66
+ },
+ "<module>._token_shape.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._is_priced": {
+  "names": [
+   "split",
+   "len",
+   "any"
+  ],
+  "varnames": [
+   "line",
+   "toks",
+   "nums"
+  ],
+  "consts": [
+   "A real order row carries a unit price: >=2 numbers, >=1 decimal.",
+   2
+  ],
+  "n_instructions": 30
+ },
+ "<module>._is_priced.<listcomp>": {
+  "names": [
+   "_NUM",
+   "match"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>._is_priced.<genexpr>": {
+  "names": [
+   "_DECIMAL",
+   "match"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>.compress_doc_text": {
+  "names": [
+   "split",
+   "len",
+   "enumerate",
+   "strip",
+   "HEAD_LINES",
+   "_TOTAL_KW",
+   "search",
+   "_ORDER_KW",
+   "clear",
+   "append",
+   "SAMPLE_CEILING",
+   "get",
+   "KEEP_BOILER",
+   "_token_shape",
+   "_is_priced",
+   "_PACK_KW",
+   "min",
+   "join"
+  ],
+  "varnames": [
+   "text",
+   "keep_priced",
+   "keep_plain",
+   "log",
+   "raw_lines",
+   "kept",
+   "boiler",
+   "shapes",
+   "dropped",
+   "sample_kept",
+   "i",
+   "raw",
+   "line",
+   "n_boiler",
+   "shape",
+   "quota",
+   "n_shape",
+   "out"
+  ],
+  "consts": [
+   "Return a shorter equivalent of ``text`` for the AI read.\n\n    Never edits a line, so ``raw_line`` round-trips against the full document.\n    ",
+   "\n",
+   120,
+   0,
+   1,
+   "    · 送 AI 文本压缩：",
+   " → ",
+   " 字符（丢弃 ",
+   " 行重复/样板行）"
+  ],
+  "n_instructions": 204
+ }
+}

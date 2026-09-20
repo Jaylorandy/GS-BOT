@@ -1,0 +1,157 @@
+﻿{
+ "Token": {
+  "fields": [
+   "is_number",
+   "page",
+   "x0",
+   "x1",
+   "xc",
+   "y0",
+   "y1",
+   "yc"
+  ],
+  "slots": null,
+  "sample": {
+   "text": "hello",
+   "x0": 1.0,
+   "y0": 2.0,
+   "x1": 3.0,
+   "y1": 4.0,
+   "page": 0
+  },
+  "repr": "Token(text='hello', x0=1.0, y0=2.0, x1=3.0, y1=4.0, page=0)",
+  "eq_same": true,
+  "eq_diff": false
+ },
+ "PageWords": {
+  "fields": [
+   "lines",
+   "text"
+  ],
+  "slots": null,
+  "sample": {
+   "page": 0,
+   "width": 100,
+   "height": 100,
+   "ntokens": 4
+  },
+  "group_lines_error": "'PageWords' object has no attribute 'group_lines'"
+ },
+ "functions": {
+  "is_total_line": null,
+  "is_data_line": null,
+  "is_plausible_style": null,
+  "is_noise_line": null,
+  "split_packed_line": null,
+  "merge_wrapped_rows": {
+   "sig": "(text: 'str') -> 'List[str]'"
+  },
+  "whole_document_text": null,
+  "extract_color_from_combined": {
+   "sig": "(combined: 'str') -> 'str'"
+  }
+ },
+ "is_total_line": {},
+ "is_plausible_style": {},
+ "is_noise_line": {},
+ "extract_color_from_combined": {
+  "59J 59J DARK BLUE JEANS": "DARK BLUE",
+  "55J 99J LIGHT BLUE": "LIGHT BLUE",
+  "DARK BLUE JEANS": "DARK BLUE",
+  "LIGHT BLUE": "LIGHT BLUE",
+  "AW11078 BLACK": "BLACK",
+  "08X 08X SAND": "SAND",
+  "SILVER CLOUD": "SILVER CLOUD"
+ },
+ "BaseParser": {
+  "methods": [
+   "_channel",
+   "_first",
+   "layout_type",
+   "parse"
+  ],
+  "init_sig": "(self, /, *args, **kwargs)"
+ },
+ "LineItemsParser": {
+  "methods": [
+   "_SIZE_TOKEN",
+   "_build_entity",
+   "_channel",
+   "_first",
+   "_scoped",
+   "layout_type",
+   "parse"
+  ],
+  "bases": [
+   "BaseParser"
+  ],
+  "init_sig": "(self, /, *args, **kwargs)",
+  "parse_sig": "(self, pages, recipe: 'PoRecipe', *, source_file: 'str' = '') -> 'PurchaseOrder'"
+ },
+ "_normalize_date": {},
+ "size_regex": {
+  "SIZE_TOKEN": "^(?:\\d{1,3}(?:[./-]\\d{1,3})?|X{0,4}S|M|X{0,4}L)$",
+  "_COMBINED_ITEM": "(?<!\\S)(\\d+[/-]\\d+)\\s+([A-Z]{1,3}\\d{3,})",
+  "_PRICE_RE": "^\\d+\\.\\d{2}$",
+  "_SEQ_NUM_RE": "\\d+|\\d+[\\-./]\\d+",
+  "_STYLE_CODE_RE": "^[A-Za-z0-9][A-Za-z0-9\\-./_]{1,15}$",
+  "_TJX_LABEL": "^[A-Z][A-Za-z0-9 .&/#'()-]*:",
+  "_TJX_LINE_NO": "^\\d+\\s",
+  "_TJX_MARKER": "^\\d{1,2}[-/]\\d{1,2}\\s",
+  "_TJX_STANDALONE": "^(PURCHASE|Page|VENDOR|VAT|REGNO|DEPTNO|THE CONTRACT|THIS PURCHASE|PLEASE|TJX|BUYER|FOR EVERY|GENERAL|YOU CAN|INDIVIDUAL|TO AVOID|STEP|IN ADDITION|FULL|BOOKING|UPLOADING|PLEASE NOTE|FOR IN DEPTH|ANY INFORMATION|IF YOU|DOCUMENTATION|PACKING|GENERAL LOGISTICS)",
+  "_TOTAL_KW": "TOTAL|GRAND|SUBTOTAL|SUM\\b|合计|小计|总计",
+  "_UK_LEAD": "^\\d{1,2}\\s+[A-Z]"
+ },
+ "_PRODUCT_NAME_PATTERNS": [
+  "jeans",
+  "jean",
+  "shirt",
+  "t-shirt",
+  "tee",
+  "polo",
+  "sweater",
+  "hoodie",
+  "jacket",
+  "coat",
+  "blazer",
+  "vest",
+  "cardigan",
+  "pullover",
+  "trousers",
+  "pant",
+  "pants",
+  "short",
+  "shorts",
+  "skirt",
+  "dress",
+  "jumpsuit",
+  "overall",
+  "overalls",
+  "jogger",
+  "joggers",
+  "legging",
+  "leggings",
+  "chino",
+  "chinos",
+  "denim",
+  "sweatshirt",
+  "sweatpant",
+  "sweatpants",
+  "parka",
+  "blouson",
+  "tunic",
+  "bomber",
+  "windbreaker",
+  "fleece",
+  "track",
+  "tracksuit",
+  "footwear",
+  "sneaker",
+  "boot",
+  "capsule",
+  "pack",
+  "set",
+  "combo",
+  "bundle"
+ ]
+}

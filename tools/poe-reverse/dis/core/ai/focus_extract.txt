@@ -1,0 +1,469 @@
+# module: core.ai.focus_extract
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\focus_extract.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/ai/focus_extract.py - targeted, single-call extraction of a SMALL set\nof fields the cached regex recipe left blank.\n\nThis is the "AI 自愈" second call. The first (cached) parse was zero-AI, but if a\nheader / entity field is empty while its human-readable label is clearly in the\ndocument, we ask the model ONCE for just those fields instead of re-reading the\nwhole PO. Reuses the same transport (_chat_online / chat_local) and the same\nthinking-off / input-compression levers as the full read, so it is cheap and\nfast. When no AI is configured (offline, or local model missing) it returns {}\nimmediately - the caller then leaves the value blank, exactly as before.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 12           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 14          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 15          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('Dict', 'List', 'Optional'))
+             30 IMPORT_NAME              4 (typing)
+             32 IMPORT_FROM              5 (Dict)
+             34 STORE_NAME               5 (Dict)
+             36 IMPORT_FROM              6 (List)
+             38 STORE_NAME               6 (List)
+             40 IMPORT_FROM              7 (Optional)
+             42 STORE_NAME               7 (Optional)
+             44 POP_TOP
+
+ 17          46 LOAD_CONST               5 (1)
+             48 LOAD_CONST               6 (('compress_doc_text',))
+             50 IMPORT_NAME              8 (doc_compress)
+             52 IMPORT_FROM              9 (compress_doc_text)
+             54 STORE_NAME               9 (compress_doc_text)
+             56 POP_TOP
+
+ 18          58 LOAD_CONST               5 (1)
+             60 LOAD_CONST               7 (('_chat_online', 'load_ai_config', 'MAX_INPUT_CHARS', '_extract_json', '_load_json_lenient', '_as_str'))
+             62 IMPORT_NAME             10 (data_extract)
+             64 IMPORT_FROM             11 (_chat_online)
+             66 STORE_NAME              11 (_chat_online)
+             68 IMPORT_FROM             12 (load_ai_config)
+             70 STORE_NAME              12 (load_ai_config)
+             72 IMPORT_FROM             13 (MAX_INPUT_CHARS)
+             74 STORE_NAME              13 (MAX_INPUT_CHARS)
+             76 IMPORT_FROM             14 (_extract_json)
+             78 STORE_NAME              14 (_extract_json)
+             80 IMPORT_FROM             15 (_load_json_lenient)
+             82 STORE_NAME              15 (_load_json_lenient)
+             84 IMPORT_FROM             16 (_as_str)
+             86 STORE_NAME              16 (_as_str)
+             88 POP_TOP
+
+ 22          90 LOAD_CONST               8 ('You are a purchase-order field FILLER. The document was\nalready parsed by a rule engine, but a few specific fields came back blank. Your\njob is to read ONLY the document text below and return those fields. Do NOT\nre-list order lines or totals. Output ONE compact JSON object, no prose, no\nmarkdown outside the JSON.\n\nSchema:\n{\n  "header": {\n    "customer": "", "season": "", "currency": "", "price_term": "", "payment_terms": "",\n    "port_loading": "", "port_discharge": "", "ship_mode": "",\n    "vendor_name": "", "agent_name": "", "product_desc": "", "style_no": "",\n    "import_po_no": "", "reference_no": "", "cir_no": "",\n    "freight_terms": "", "country_of_origin": "", "dc_address": ""\n  },\n  "orders": [\n    {"po_no": "", "delivery_date": "YYYY-MM-DD"}\n  ]\n}\n\nRules:\n1. Only fill a field if you can SEE it in the document text. Use "" otherwise.\n   NEVER invent a value.\n2. For delivery_date, report it per order (po_no). If the whole document shares\n   one shipment / delivery date, repeat it under every po_no you can identify.\n3. European number format: a DOT is thousands, a COMMA is decimal. Only relevant\n   if a field carries a number.\n4. Season / style / vendor strings: copy exactly as printed.\n5. Output valid JSON only.')
+             92 STORE_NAME              17 (FOCUS_SYSTEM_PROMPT)
+
+ 53          94 LOAD_CONST              22 (('cfg', 'dict', 'return', 'bool'))
+             96 LOAD_CONST              13 (<code object _ai_available at 0x000002BF94A01960, file "core\ai\focus_extract.py", line 53>)
+             98 MAKE_FUNCTION            4 (annotations)
+            100 STORE_NAME              18 (_ai_available)
+
+ 63         102 NOP
+
+ 62         104 LOAD_CONST              23 ((None, None))
+            106 LOAD_CONST              24 (('doc_text', 'str', 'fields', 'List[str]', 'cfg', 'dict | None', 'return', 'dict'))
+            108 LOAD_CONST              19 (<code object extract_focused_fields at 0x000002BF94447FA0, file "core\ai\focus_extract.py", line 62>)
+            110 MAKE_FUNCTION            5 (defaults, annotations)
+            112 STORE_NAME              19 (extract_focused_fields)
+
+ 95         114 LOAD_CONST              25 (('content', 'str', 'fields', 'List[str]', 'return', 'dict'))
+            116 LOAD_CONST              21 (<code object _parse_focused at 0x000002BF94449200, file "core\ai\focus_extract.py", line 95>)
+            118 MAKE_FUNCTION            4 (annotations)
+            120 STORE_NAME              20 (_parse_focused)
+            122 LOAD_CONST               3 (None)
+            124 RETURN_VALUE
+
+==============================================================================
+## <module>._ai_available  (args=1, locals=2)
+# varnames: cfg, p
+ 53           0 RESUME                   0
+
+ 56           2 LOAD_FAST                0 (cfg)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('infer_engine')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 LOAD_CONST               2 ('local')
+             44 COMPARE_OP               2 (==)
+             50 POP_JUMP_FORWARD_IF_FALSE    69 (to 190)
+
+ 57          52 LOAD_FAST                0 (cfg)
+             54 LOAD_METHOD              0 (get)
+             76 LOAD_CONST               3 ('local_model_path')
+             78 PRECALL                  1
+             82 CALL                     1
+             92 JUMP_IF_TRUE_OR_POP      1 (to 96)
+             94 LOAD_CONST               4 ('')
+        >>   96 STORE_FAST               1 (p)
+
+ 58          98 LOAD_GLOBAL              3 (NULL + bool)
+            110 LOAD_FAST                1 (p)
+            112 PRECALL                  1
+            116 CALL                     1
+            126 JUMP_IF_FALSE_OR_POP    30 (to 188)
+            128 LOAD_GLOBAL              4 (os)
+            140 LOAD_ATTR                3 (path)
+            150 LOAD_METHOD              4 (exists)
+            172 LOAD_FAST                1 (p)
+            174 PRECALL                  1
+            178 CALL                     1
+        >>  188 RETURN_VALUE
+
+ 59     >>  190 LOAD_GLOBAL              3 (NULL + bool)
+            202 LOAD_FAST                0 (cfg)
+            204 LOAD_METHOD              0 (get)
+            226 LOAD_CONST               5 ('api_key')
+            228 PRECALL                  1
+            232 CALL                     1
+            242 JUMP_IF_FALSE_OR_POP    20 (to 284)
+            244 LOAD_FAST                0 (cfg)
+            246 LOAD_METHOD              0 (get)
+            268 LOAD_CONST               6 ('base_url')
+            270 PRECALL                  1
+            274 CALL                     1
+        >>  284 PRECALL                  1
+            288 CALL                     1
+            298 RETURN_VALUE
+
+==============================================================================
+## <module>.extract_focused_fields  (args=4, locals=10)
+# varnames: doc_text, fields, cfg, log, text, wanted, user, chat_local, content, e
+ 62           0 RESUME                   0
+
+ 70           2 LOAD_FAST                2 (cfg)
+              4 JUMP_IF_TRUE_OR_POP     13 (to 32)
+              6 LOAD_GLOBAL              1 (NULL + load_ai_config)
+             18 PRECALL                  0
+             22 CALL                     0
+        >>   32 STORE_FAST               2 (cfg)
+
+ 71          34 LOAD_GLOBAL              3 (NULL + _ai_available)
+             46 LOAD_FAST                2 (cfg)
+             48 PRECALL                  1
+             52 CALL                     1
+             62 POP_JUMP_FORWARD_IF_TRUE    15 (to 94)
+
+ 72          64 LOAD_FAST                3 (log)
+             66 POP_JUMP_FORWARD_IF_FALSE    11 (to 90)
+
+ 73          68 PUSH_NULL
+             70 LOAD_FAST                3 (log)
+             72 LOAD_CONST               1 ('  [自愈] 未配置可用 AI（离线 / 本地模型缺失），跳过定向补抓')
+             74 PRECALL                  1
+             78 CALL                     1
+             88 POP_TOP
+
+ 74     >>   90 BUILD_MAP                0
+             92 RETURN_VALUE
+
+ 75     >>   94 LOAD_FAST                2 (cfg)
+             96 LOAD_METHOD              2 (get)
+            118 LOAD_CONST               2 ('compress_input')
+            120 LOAD_CONST               3 (True)
+            122 PRECALL                  2
+            126 CALL                     2
+            136 POP_JUMP_FORWARD_IF_FALSE    15 (to 168)
+            138 LOAD_GLOBAL              7 (NULL + compress_doc_text)
+            150 LOAD_FAST                0 (doc_text)
+            152 PRECALL                  1
+            156 CALL                     1
+            166 JUMP_FORWARD             1 (to 170)
+        >>  168 LOAD_FAST                0 (doc_text)
+        >>  170 STORE_FAST               4 (text)
+
+ 76         172 LOAD_GLOBAL              9 (NULL + len)
+            184 LOAD_FAST                4 (text)
+            186 PRECALL                  1
+            190 CALL                     1
+            200 LOAD_GLOBAL             10 (MAX_INPUT_CHARS)
+            212 COMPARE_OP               4 (>)
+            218 POP_JUMP_FORWARD_IF_FALSE    15 (to 250)
+
+ 77         220 LOAD_FAST                4 (text)
+            222 LOAD_CONST               4 (None)
+            224 LOAD_GLOBAL             10 (MAX_INPUT_CHARS)
+            236 BUILD_SLICE              2
+            238 BINARY_SUBSCR
+            248 STORE_FAST               4 (text)
+
+ 78     >>  250 LOAD_CONST               5 (', ')
+            252 LOAD_METHOD              6 (join)
+            274 LOAD_FAST                1 (fields)
+            276 PRECALL                  1
+            280 CALL                     1
+            290 STORE_FAST               5 (wanted)
+
+ 79         292 LOAD_CONST               6 ("Fill ONLY these fields if present (use '' if not): ")
+            294 LOAD_FAST                5 (wanted)
+            296 FORMAT_VALUE             0
+            298 LOAD_CONST               7 ('\n\nPurchase-order text, one visual line per line:\n----\n')
+            300 BUILD_STRING             3
+
+ 81         302 LOAD_FAST                4 (text)
+
+ 79         304 BINARY_OP                0 (+)
+
+ 81         308 LOAD_CONST               8 ('\n----\n')
+
+ 79         310 BINARY_OP                0 (+)
+            314 STORE_FAST               6 (user)
+
+ 82         316 NOP
+
+ 83         318 LOAD_FAST                2 (cfg)
+            320 LOAD_METHOD              2 (get)
+            342 LOAD_CONST               9 ('infer_engine')
+            344 PRECALL                  1
+            348 CALL                     1
+            358 LOAD_CONST              10 ('local')
+            360 COMPARE_OP               2 (==)
+            366 POP_JUMP_FORWARD_IF_FALSE    26 (to 420)
+
+ 84         368 LOAD_CONST              11 (1)
+            370 LOAD_CONST              12 (('chat_local',))
+            372 IMPORT_NAME              7 (local_infer)
+            374 IMPORT_FROM              8 (chat_local)
+            376 STORE_FAST               7 (chat_local)
+            378 POP_TOP
+
+ 85         380 PUSH_NULL
+            382 LOAD_FAST                7 (chat_local)
+            384 LOAD_GLOBAL             18 (FOCUS_SYSTEM_PROMPT)
+            396 LOAD_FAST                6 (user)
+            398 LOAD_FAST                2 (cfg)
+            400 KW_NAMES                13
+            402 PRECALL                  3
+            406 CALL                     3
+            416 STORE_FAST               8 (content)
+            418 JUMP_FORWARD            22 (to 464)
+
+ 87     >>  420 LOAD_GLOBAL             21 (NULL + _chat_online)
+            432 LOAD_GLOBAL             18 (FOCUS_SYSTEM_PROMPT)
+            444 LOAD_FAST                6 (user)
+            446 LOAD_FAST                2 (cfg)
+            448 PRECALL                  3
+            452 CALL                     3
+            462 STORE_FAST               8 (content)
+        >>  464 JUMP_FORWARD            41 (to 548)
+        >>  466 PUSH_EXC_INFO
+
+ 88         468 LOAD_GLOBAL             22 (Exception)
+            480 CHECK_EXC_MATCH
+            482 POP_JUMP_FORWARD_IF_FALSE    28 (to 540)
+            484 STORE_FAST               9 (e)
+
+ 89         486 LOAD_FAST                3 (log)
+            488 POP_JUMP_FORWARD_IF_FALSE    14 (to 518)
+
+ 90         490 PUSH_NULL
+            492 LOAD_FAST                3 (log)
+            494 LOAD_CONST              14 ('  [自愈] 定向补抓 AI 调用失败（忽略，保持空白）：')
+            496 LOAD_FAST                9 (e)
+            498 FORMAT_VALUE             0
+            500 BUILD_STRING             2
+            502 PRECALL                  1
+            506 CALL                     1
+            516 POP_TOP
+
+ 91     >>  518 BUILD_MAP                0
+            520 SWAP                     2
+            522 POP_EXCEPT
+            524 LOAD_CONST               4 (None)
+            526 STORE_FAST               9 (e)
+            528 DELETE_FAST              9 (e)
+            530 RETURN_VALUE
+        >>  532 LOAD_CONST               4 (None)
+            534 STORE_FAST               9 (e)
+            536 DELETE_FAST              9 (e)
+            538 RERAISE                  1
+
+ 88     >>  540 RERAISE                  0
+        >>  542 COPY                     3
+            544 POP_EXCEPT
+            546 RERAISE                  1
+
+ 92     >>  548 LOAD_GLOBAL             25 (NULL + _parse_focused)
+            560 LOAD_FAST                8 (content)
+            562 LOAD_FAST                1 (fields)
+            564 PRECALL                  2
+            568 CALL                     2
+            578 RETURN_VALUE
+ExceptionTable:
+  318 to 462 -> 466 [0]
+  466 to 484 -> 542 [1] lasti
+  486 to 518 -> 532 [1] lasti
+  520 to 520 -> 542 [1] lasti
+  532 to 540 -> 542 [1] lasti
+
+==============================================================================
+## <module>._parse_focused  (args=2, locals=6)
+# varnames: content, fields, d, header, orders, o
+              0 MAKE_CELL                6 (header_raw)
+
+ 95           2 RESUME                   0
+
+ 96           4 NOP
+
+ 97           6 LOAD_GLOBAL              1 (NULL + _load_json_lenient)
+             18 LOAD_GLOBAL              3 (NULL + _extract_json)
+             30 LOAD_FAST                0 (content)
+             32 PRECALL                  1
+             36 CALL                     1
+             46 PRECALL                  1
+             50 CALL                     1
+             60 STORE_FAST               2 (d)
+             62 JUMP_FORWARD            18 (to 100)
+        >>   64 PUSH_EXC_INFO
+
+ 98          66 LOAD_GLOBAL              4 (Exception)
+             78 CHECK_EXC_MATCH
+             80 POP_JUMP_FORWARD_IF_FALSE     5 (to 92)
+             82 POP_TOP
+
+ 99          84 BUILD_MAP                0
+             86 SWAP                     2
+             88 POP_EXCEPT
+             90 RETURN_VALUE
+
+ 98     >>   92 RERAISE                  0
+        >>   94 COPY                     3
+             96 POP_EXCEPT
+             98 RERAISE                  1
+
+100     >>  100 LOAD_GLOBAL              7 (NULL + isinstance)
+            112 LOAD_FAST                2 (d)
+            114 LOAD_GLOBAL              8 (dict)
+            126 PRECALL                  2
+            130 CALL                     2
+            140 POP_JUMP_FORWARD_IF_TRUE     2 (to 146)
+
+101         142 BUILD_MAP                0
+            144 RETURN_VALUE
+
+102     >>  146 LOAD_GLOBAL              7 (NULL + isinstance)
+            158 LOAD_FAST                2 (d)
+            160 LOAD_METHOD              5 (get)
+            182 LOAD_CONST               1 ('header')
+            184 PRECALL                  1
+            188 CALL                     1
+            198 LOAD_GLOBAL              8 (dict)
+            210 PRECALL                  2
+            214 CALL                     2
+            224 POP_JUMP_FORWARD_IF_FALSE    21 (to 268)
+            226 LOAD_FAST                2 (d)
+            228 LOAD_METHOD              5 (get)
+            250 LOAD_CONST               1 ('header')
+            252 PRECALL                  1
+            256 CALL                     1
+            266 JUMP_FORWARD             1 (to 270)
+        >>  268 BUILD_MAP                0
+        >>  270 STORE_DEREF              6 (header_raw)
+
+103         272 LOAD_CLOSURE             6 (header_raw)
+            274 BUILD_TUPLE              1
+            276 LOAD_CONST               2 (<code object <dictcomp> at 0x000002BF94A6A1F0, file "core\ai\focus_extract.py", line 103>)
+            278 MAKE_FUNCTION            8 (closure)
+
+104         280 LOAD_FAST                1 (fields)
+
+103         282 GET_ITER
+            284 PRECALL                  0
+            288 CALL                     0
+            298 STORE_FAST               3 (header)
+
+105         300 BUILD_LIST               0
+            302 STORE_FAST               4 (orders)
+
+106         304 LOAD_FAST                2 (d)
+            306 LOAD_METHOD              5 (get)
+            328 LOAD_CONST               3 ('orders')
+            330 PRECALL                  1
+            334 CALL                     1
+            344 JUMP_IF_TRUE_OR_POP      1 (to 348)
+            346 BUILD_LIST               0
+        >>  348 GET_ITER
+        >>  350 FOR_ITER               112 (to 576)
+            352 STORE_FAST               5 (o)
+
+107         354 LOAD_GLOBAL              7 (NULL + isinstance)
+            366 LOAD_FAST                5 (o)
+            368 LOAD_GLOBAL              8 (dict)
+            380 PRECALL                  2
+            384 CALL                     2
+            394 POP_JUMP_FORWARD_IF_TRUE     1 (to 398)
+
+108         396 JUMP_BACKWARD           24 (to 350)
+
+109     >>  398 LOAD_FAST                4 (orders)
+            400 LOAD_METHOD              6 (append)
+            422 LOAD_GLOBAL             15 (NULL + _as_str)
+            434 LOAD_FAST                5 (o)
+            436 LOAD_METHOD              5 (get)
+            458 LOAD_CONST               4 ('po_no')
+            460 PRECALL                  1
+            464 CALL                     1
+            474 PRECALL                  1
+            478 CALL                     1
+
+110         488 LOAD_GLOBAL             15 (NULL + _as_str)
+            500 LOAD_FAST                5 (o)
+            502 LOAD_METHOD              5 (get)
+            524 LOAD_CONST               5 ('delivery_date')
+            526 PRECALL                  1
+            530 CALL                     1
+            540 PRECALL                  1
+            544 CALL                     1
+
+109         554 LOAD_CONST               6 (('po_no', 'delivery_date'))
+            556 BUILD_CONST_KEY_MAP      2
+            558 PRECALL                  1
+            562 CALL                     1
+            572 POP_TOP
+            574 JUMP_BACKWARD          113 (to 350)
+
+111     >>  576 LOAD_FAST                3 (header)
+            578 LOAD_FAST                4 (orders)
+            580 LOAD_CONST               7 (('header', 'orders'))
+            582 BUILD_CONST_KEY_MAP      2
+            584 RETURN_VALUE
+ExceptionTable:
+  6 to 60 -> 64 [0]
+  64 to 86 -> 94 [1] lasti
+  92 to 92 -> 94 [1] lasti
+
+==============================================================================
+## <module>._parse_focused.<dictcomp>  (args=1, locals=2)
+# varnames: .0, k
+              0 COPY_FREE_VARS           1
+
+103           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                44 (to 98)
+
+104          10 STORE_FAST               1 (k)
+             12 LOAD_FAST                1 (k)
+             14 LOAD_CONST               0 ('delivery_date')
+             16 COMPARE_OP               3 (!=)
+             22 POP_JUMP_BACKWARD_IF_FALSE     8 (to 8)
+
+103          24 LOAD_FAST                1 (k)
+             26 LOAD_GLOBAL              1 (NULL + _as_str)
+             38 LOAD_DEREF               2 (header_raw)
+             40 LOAD_METHOD              1 (get)
+             62 LOAD_FAST                1 (k)
+             64 LOAD_CONST               1 ('')
+             66 PRECALL                  2
+             70 CALL                     2
+             80 PRECALL                  1
+             84 CALL                     1
+
+104          94 MAP_ADD                  2
+             96 JUMP_BACKWARD           45 (to 8)
+        >>   98 RETURN_VALUE

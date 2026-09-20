@@ -1,0 +1,618 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "re",
+   "collections",
+   "Counter",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "store.config",
+   "user_config_dir",
+   "STORAGE_BASENAME",
+   "DEFAULT_AGREEMENT",
+   "OSR_FIELD_MAP",
+   "values",
+   "ENTITY_FIELDS",
+   "_PORT_FIELDS",
+   "_SHIP_MODE_WORDS",
+   "_SHIP_MODE_CANON",
+   "compile",
+   "_PRICE_RE",
+   "_ISO3_RE",
+   "_looks_like_price",
+   "_is_valid_currency",
+   "_FIELD_ACCEPTORS",
+   "_field_ok",
+   "_store_path",
+   "_clean",
+   "_fp_of",
+   "signature_from_po",
+   "consensus_defaults",
+   "learn_from_osr",
+   "load_learning",
+   "save_learning",
+   "lookup_consensus",
+   "apply_consensus"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/osr_learn.py - turn historical OSR exports into per-layout consensus.\n\nV2.0.19.12: close the learning loop. The OSR (``OSR-Sales Order Summary\nReport.xlsx``) is a write-only sink today; this module reads it BACK and derives,\nfor each template, the stable header fields that were CONSISTENTLY the same\nacross past POs (country of origin, currency, price term, product group, ...).\nThose consensus values are then used at extraction time to FILL BLANKS (never\noverwrite a parsed value) on POs of the same layout - zero AI - which also\nreplaces the self-heal AI loop for stable fields.\n\nDesign\n------\n- The consensus store is ``%APPDATA%/Purchase Order Extractor V2/osr_learning.json``\n  (kept SEPARATE from the recipe cache so it never pollutes a ``PoRecipe`` and\n  never triggers the overwrite semantics of ``apply_field_defaults``).\n- Grouping key: ``fp::<fingerprint>`` when the OSR carries the ``_Fingerprint``\n  meta column (V2.0.19.12+ exports), else ``sig::<customer>`` as a best-effort\n  fallback for already-saved 31-column files (in practice one customer == one\n  template; the LPP family shares one fingerprint AND one customer).\n- A field is learned only when its value agrees across >= ``agreement`` fraction\n  of that group's rows (default 0.9), so an occasional wrong/stray value is never\n  propagated across POs.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Counter"
+   ],
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   1,
+   [
+    "user_config_dir"
+   ],
+   "osr_learning.json",
+   0.9,
+   "customer",
+   "season",
+   "price_term",
+   "currency",
+   "delivery_date",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "destination_code",
+   "payment_terms",
+   "country_of_origin",
+   [
+    "A",
+    "D",
+    "M",
+    "N",
+    "O",
+    "P",
+    "Q",
+    "R",
+    "S",
+    "T",
+    "U"
+   ],
+   [
+    "<frozenset>",
+    "AIR",
+    "AIR FREIGHT",
+    "AIRFREIGHT",
+    "BOAT",
+    "BY AIR",
+    "BY RAIL",
+    "BY SEA",
+    "BY TRUCK",
+    "COMBINED",
+    "COURIER",
+    "EXPRESS",
+    "MULTIMODAL",
+    "OCEAN",
+    "OCEAN FREIGHT",
+    "PLANE",
+    "RAIL",
+    "ROAD",
+    "SEA",
+    "SEA FREIGHT",
+    "SEA SHIPMENT",
+    "SEAFREIGHT",
+    "SHIP",
+    "TRAIN",
+    "TRUCK",
+    "VESSEL"
+   ],
+   "VESSEL",
+   "SEA",
+   "SHIP",
+   "BOAT",
+   "BY SEA",
+   "OCEAN",
+   "SEA FREIGHT",
+   "SEAFREIGHT",
+   "SEA SHIPMENT",
+   "OCEAN FREIGHT",
+   "AIR",
+   "BY AIR",
+   "AIR FREIGHT",
+   "AIRFREIGHT",
+   "PLANE",
+   "TRUCK",
+   "BY TRUCK",
+   "RAIL",
+   "COURIER",
+   "EXPRESS",
+   "COMBINED",
+   [
+    "ROAD",
+    "RAIL",
+    "BY RAIL",
+    "TRAIN",
+    "COURIER",
+    "EXPRESS",
+    "COMBINED",
+    "MULTIMODAL"
+   ],
+   "[€£¥$\\s,.\\-\\d]",
+   "^[A-Z]{3}$",
+   "v",
+   "str",
+   "return",
+   "bool",
+   [
+    "price_term",
+    "payment_terms",
+    "currency"
+   ],
+   "fld",
+   "row",
+   "dict",
+   "agreement",
+   "float",
+   "Dict[str, str]",
+   "store_path",
+   "Optional[str]",
+   "store",
+   "None",
+   "learning",
+   "fp",
+   "",
+   true,
+   "fill_only",
+   "warn_on_conflict",
+   "List[str]",
+   [
+    "v",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "fld",
+    "str",
+    "v",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "row",
+    "dict",
+    "return",
+    "str"
+   ],
+   [
+    "agreement",
+    "float",
+    "return",
+    "Dict[str, str]"
+   ],
+   [
+    "agreement",
+    "float",
+    "store_path",
+    "Optional[str]",
+    "return",
+    "dict"
+   ],
+   [
+    null
+   ],
+   [
+    "store_path",
+    "Optional[str]",
+    "return",
+    "dict"
+   ],
+   [
+    "store",
+    "dict",
+    "store_path",
+    "Optional[str]",
+    "return",
+    "None"
+   ],
+   [
+    "learning",
+    "dict",
+    "fp",
+    "str",
+    "return",
+    "Dict[str, str]"
+   ],
+   [
+    "",
+    true,
+    true
+   ],
+   [
+    "learning",
+    "dict",
+    "fp",
+    "str",
+    "fill_only",
+    "bool",
+    "warn_on_conflict",
+    "bool",
+    "return",
+    "List[str]"
+   ]
+  ],
+  "n_instructions": 231
+ },
+ "<module>.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "f"
+  ],
+  "consts": [
+   "customer"
+  ],
+  "n_instructions": 13
+ },
+ "<module>._looks_like_price": {
+  "names": [
+   "strip",
+   "_PRICE_RE",
+   "sub"
+  ],
+  "varnames": [
+   "v",
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ".",
+   false,
+   ""
+  ],
+  "n_instructions": 27
+ },
+ "<module>._is_valid_currency": {
+  "names": [
+   "bool",
+   "_ISO3_RE",
+   "match",
+   "strip",
+   "upper"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.<lambda>": {
+  "names": [
+   "_looks_like_price"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>._field_ok": {
+  "names": [
+   "_FIELD_ACCEPTORS",
+   "get"
+  ],
+  "varnames": [
+   "fld",
+   "v",
+   "fn"
+  ],
+  "consts": [
+   "True if v is a plausible value for the header field fld.",
+   null,
+   true
+  ],
+  "n_instructions": 17
+ },
+ "<module>._store_path": {
+  "names": [
+   "os",
+   "path",
+   "join",
+   "str",
+   "user_config_dir",
+   "STORAGE_BASENAME"
+  ],
+  "varnames": [],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>._clean": {
+  "names": [
+   "str",
+   "strip"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 13
+ },
+ "<module>._fp_of": {
+  "names": [
+   "get",
+   "_clean"
+  ],
+  "varnames": [
+   "row",
+   "aa"
+  ],
+  "consts": [
+   null,
+   "AA",
+   ""
+  ],
+  "n_instructions": 16
+ },
+ "<module>.signature_from_po": {
+  "names": [
+   "_clean",
+   "getattr"
+  ],
+  "varnames": [
+   "po"
+  ],
+  "consts": [
+   "Best-effort fallback group key for a live PO (used when no fingerprint).",
+   "sig::",
+   "customer",
+   ""
+  ],
+  "n_instructions": 14
+ },
+ "<module>.consensus_defaults": {
+  "names": [
+   "OSR_FIELD_MAP",
+   "items",
+   "isinstance",
+   "dict",
+   "_clean",
+   "get",
+   "_field_ok",
+   "upper",
+   "_PORT_FIELDS",
+   "_SHIP_MODE_WORDS",
+   "_SHIP_MODE_CANON",
+   "append",
+   "Counter",
+   "most_common",
+   "len"
+  ],
+  "varnames": [
+   "rows",
+   "agreement",
+   "out",
+   "col",
+   "fld",
+   "vals",
+   "r",
+   "v",
+   "up",
+   "cnt",
+   "val",
+   "n"
+  ],
+  "consts": [
+   "Return {field: modal_value} for stable fields with >= agreement consistency.\n\n    V2.0.19.15 FIX: Port columns skip transport-mode / vessel words entirely, and\n    ``ship_mode`` is canonicalised (VESSEL -> SEA) so polluted history can never\n    become a \"consensus\" that re-infects future POs.\n    ",
+   "ship_mode",
+   1,
+   0
+  ],
+  "n_instructions": 112
+ },
+ "<module>.learn_from_osr": {
+  "names": [
+   "isinstance",
+   "dict",
+   "_fp_of",
+   "_clean",
+   "get",
+   "setdefault",
+   "append",
+   "load_learning",
+   "len",
+   "enumerate",
+   "items",
+   "consensus_defaults",
+   "max",
+   "int",
+   "save_learning"
+  ],
+  "varnames": [
+   "rows_list",
+   "agreement",
+   "store_path",
+   "on_progress",
+   "groups",
+   "r",
+   "fp",
+   "key",
+   "store",
+   "_n",
+   "_i",
+   "grp",
+   "cons",
+   "bucket"
+  ],
+  "consts": [
+   "Aggregate historical OSR rows into the persistent consensus store.\n\n    ``rows_list`` is a flat list of letter-keyed row dicts (as produced by\n    ``output.template_b.read_rawdata_rows``). Rows are grouped by fingerprint\n    (column AA, the ``_Fingerprint`` meta column) when present, else by customer.\n    Returns summary counts.\n\n    ``on_progress(i, total)`` is called once per group (for a linear progress\n    bar). Optional.\n    ",
+   "fp::",
+   "sig::",
+   "A",
+   1,
+   null,
+   0,
+   [
+    "fields",
+    "n_rows"
+   ],
+   "fields",
+   "n_rows",
+   [
+    "groups",
+    "total_rows"
+   ]
+  ],
+  "n_instructions": 162
+ },
+ "<module>.load_learning": {
+  "names": [
+   "_store_path",
+   "open",
+   "json",
+   "load",
+   "OSError",
+   "ValueError"
+  ],
+  "varnames": [
+   "store_path",
+   "p",
+   "f"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 57
+ },
+ "<module>.save_learning": {
+  "names": [
+   "_store_path",
+   "os",
+   "makedirs",
+   "path",
+   "dirname",
+   "open",
+   "json",
+   "dump"
+  ],
+  "varnames": [
+   "store",
+   "store_path",
+   "p",
+   "f"
+  ],
+  "consts": [
+   null,
+   true,
+   [
+    "exist_ok"
+   ],
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ]
+  ],
+  "n_instructions": 60
+ },
+ "<module>.lookup_consensus": {
+  "names": [
+   "get",
+   "signature_from_po"
+  ],
+  "varnames": [
+   "learning",
+   "fp",
+   "po",
+   "bucket"
+  ],
+  "consts": [
+   "Return the best-matching consensus field map for a live PO, or {}.",
+   "fp::",
+   "fields"
+  ],
+  "n_instructions": 39
+ },
+ "<module>.apply_consensus": {
+  "names": [
+   "lookup_consensus",
+   "items",
+   "_clean",
+   "_field_ok",
+   "_PORT_FIELDS",
+   "upper",
+   "_SHIP_MODE_WORDS",
+   "_SHIP_MODE_CANON",
+   "get",
+   "getattr",
+   "append",
+   "setattr",
+   "enumerate"
+  ],
+  "varnames": [
+   "po",
+   "learning",
+   "fp",
+   "fill_only",
+   "warn_on_conflict",
+   "fields",
+   "lines",
+   "fld",
+   "val",
+   "cur",
+   "ei",
+   "ent"
+  ],
+  "consts": [
+   "Fill blank stable fields from historical consensus; warn on conflicts.\n\n    ``fill_only=True`` means a value that the anchor already parsed is NEVER\n    overwritten (the safety property that lets us trust statistical consensus\n    without per-field human confirmation). Returns human-readable strings.\n    Never raises.\n    ",
+   "ship_mode",
+   "customer",
+   "",
+   "customer: 当前 '",
+   "' ≠ 历史共识 '",
+   "'（未覆盖）",
+   "customer: '' → '",
+   "'",
+   "entities",
+   "H",
+   1,
+   "·",
+   ": 当前 '",
+   ": '' → '"
+  ],
+  "n_instructions": 211
+ }
+}

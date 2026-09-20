@@ -1,0 +1,1028 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "sys",
+   "tkinter",
+   "tk",
+   "datetime",
+   "pathlib",
+   "Path",
+   "filedialog",
+   "messagebox",
+   "ttk",
+   "core.models",
+   "PoRecipe",
+   "core.store.cache",
+   "RecipeCache",
+   "theme_glass",
+   "getattr",
+   "COL",
+   "FONT_BODY",
+   "FONT_HEAD",
+   "FONT_BUTTON",
+   "FONT_BUTTON_BOLD",
+   "FONT_HINT",
+   "Exception",
+   "get",
+   "_C_GAP",
+   "_C_PANEL",
+   "_C_INK",
+   "_C_INK2",
+   "_C_INK3",
+   "_C_HOVER",
+   "_C_ACCENT",
+   "_C_SELECT_FG",
+   "_C_DEL_FG",
+   "_C_DEL_ACTIVE",
+   "PRIMARY_KW",
+   "Toplevel",
+   "FingerprintManager"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/fingerprint_manager.py - 事后编辑已缓存的指纹配方（布局指纹管理面板）。\n\n痛点：V2 的配方只在「首份 PO 走 AI」时由确认框写入；命中缓存后若要改，要么\n整批清空（清除布局指纹），要么重导 PDF 并开「人工确认配方」。这里给一个独立\n入口，列出 recipe_cache 下所有 <fp>.json，并支持三种事后操作：\n\n  1) 重新核对 —— 选一个同版式 PDF，复用现有 RecipeConfirmDialog 改完回写缓存。\n     有 PDF 时锚点自动重合成照常工作，完全复用主流程链路。\n  2) 删除 —— 单条 invalidate（不必整批清空）。\n  3) 查看 / 导出 JSON —— 直接看 recipe.to_json()，可另存为文件。\n  4) 高级编辑 —— 无 PDF 直编锚点正则（见 recipe_raw_editor）。\n\n缓存格式不变，纯增量；老用户升级无副作用。\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "datetime"
+   ],
+   [
+    "Path"
+   ],
+   [
+    "filedialog",
+    "messagebox",
+    "ttk"
+   ],
+   [
+    "PoRecipe"
+   ],
+   [
+    "RecipeCache"
+   ],
+   "COL",
+   "FONT_BODY",
+   [
+    "Segoe UI",
+    12
+   ],
+   "FONT_HEAD_BOLD",
+   [
+    "Segoe UI",
+    13,
+    "bold"
+   ],
+   "FONT_BUTTON",
+   [
+    "Segoe UI",
+    13
+   ],
+   "FONT_BUTTON_BOLD",
+   "FONT_HINT",
+   [
+    "Segoe UI",
+    11
+   ],
+   "gap",
+   "#2a2e35",
+   "panel",
+   "#343841",
+   "ink",
+   "#ECEEF1",
+   "ink_2",
+   "#B7BDC6",
+   "ink_3",
+   "#8A909B",
+   "hover",
+   "#3C424C",
+   "accent",
+   "#C2A878",
+   "select_fg",
+   "#23262D",
+   "#E5736B",
+   "#4A2A28",
+   "flat",
+   "accent_2",
+   "#A98C5F",
+   [
+    "bg",
+    "fg",
+    "relief",
+    "borderwidth",
+    "highlightthickness",
+    "activebackground",
+    "activeforeground"
+   ],
+   "FingerprintManager"
+  ],
+  "n_instructions": 221
+ },
+ "<module>.FingerprintManager": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__init__",
+   "_set_icon",
+   "_center",
+   "_build",
+   "_refresh",
+   "_selected_fp",
+   "_recheck",
+   "_raw_edit",
+   "_view_json",
+   "_delete",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "FingerprintManager",
+   "cache",
+   "RecipeCache",
+   [
+    "cache",
+    "RecipeCache"
+   ]
+  ],
+  "n_instructions": 43
+ },
+ "<module>.FingerprintManager.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "title",
+   "_cache",
+   "set",
+   "_fps",
+   "transient",
+   "grab_set",
+   "_set_icon",
+   "_build",
+   "_center",
+   "_refresh",
+   "protocol",
+   "destroy",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "cache"
+  ],
+  "consts": [
+   null,
+   "管理指纹配方",
+   "WM_DELETE_WINDOW"
+  ],
+  "n_instructions": 72
+ },
+ "<module>.FingerprintManager._set_icon": {
+  "names": [
+   "Path",
+   "getattr",
+   "sys",
+   "__file__",
+   "parent",
+   "iconbitmap",
+   "str",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "base"
+  ],
+  "consts": [
+   null,
+   "_MEIPASS",
+   "app.ico"
+  ],
+  "n_instructions": 42
+ },
+ "<module>.FingerprintManager._center": {
+  "names": [
+   "update_idletasks",
+   "winfo_rootx",
+   "max",
+   "winfo_width",
+   "winfo_rooty",
+   "winfo_height",
+   "geometry",
+   "minsize"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "w",
+   "h",
+   "x",
+   "y"
+  ],
+  "consts": [
+   null,
+   [
+    720,
+    560
+   ],
+   0,
+   2,
+   "x",
+   "+",
+   620,
+   420
+  ],
+  "n_instructions": 72
+ },
+ "<module>.FingerprintManager._build": {
+  "names": [
+   "ttk",
+   "Frame",
+   "pack",
+   "columnconfigure",
+   "rowconfigure",
+   "tk",
+   "_C_GAP",
+   "grid",
+   "Label",
+   "FONT_HEAD",
+   "_C_INK",
+   "FONT_HINT",
+   "_C_INK2",
+   "_C_INK3",
+   "theme_glass",
+   "ge_treeview_style",
+   "Style",
+   "configure",
+   "_C_PANEL",
+   "FONT_BODY",
+   "map",
+   "_C_ACCENT",
+   "_C_SELECT_FG",
+   "Exception",
+   "Treeview",
+   "tree",
+   "heading",
+   "column",
+   "Scrollbar",
+   "yview",
+   "set",
+   "bind",
+   "Button",
+   "_recheck",
+   "FONT_BUTTON",
+   "_C_HOVER",
+   "_raw_edit",
+   "_view_json",
+   "_delete",
+   "_C_DEL_FG",
+   "_C_DEL_ACTIVE",
+   "_refresh",
+   "destroy",
+   "PRIMARY_KW"
+  ],
+  "varnames": [
+   "self",
+   "outer",
+   "head",
+   "list_frame",
+   "style",
+   "vsb",
+   "btns"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "padding"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   1,
+   [
+    "weight"
+   ],
+   20,
+   12,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   "ew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   "管理指纹配方",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "w",
+   [
+    "anchor"
+   ],
+   "列出全部已缓存版式配方。改动只影响之后导入的同版式 PO；已导出的旧 Excel 不会回填。",
+   680,
+   "left",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "wraplength",
+    "justify"
+   ],
+   [
+    4,
+    0
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   "中间「指纹前缀」列可直接区分同一客户的不同版式配方。",
+   [
+    2,
+    0
+   ],
+   8,
+   "nsew",
+   "FP.Treeview",
+   34,
+   "flat",
+   [
+    "background",
+    "foreground",
+    "fieldbackground",
+    "font",
+    "rowheight",
+    "borderwidth",
+    "relief"
+   ],
+   "FP.Treeview.Heading",
+   [
+    "background",
+    "foreground",
+    "font",
+    "borderwidth"
+   ],
+   "selected",
+   [
+    "background",
+    "foreground"
+   ],
+   [
+    "customer",
+    "fp",
+    "layout",
+    "updated"
+   ],
+   "headings",
+   "browse",
+   [
+    "columns",
+    "show",
+    "selectmode",
+    "style"
+   ],
+   "customer",
+   "客户名称",
+   "center",
+   [
+    "text",
+    "anchor"
+   ],
+   "fp",
+   "指纹前缀",
+   "layout",
+   "版式",
+   "updated",
+   "更新时间",
+   120,
+   [
+    "anchor",
+    "stretch",
+    "minwidth",
+    "width"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   [
+    "yscrollcommand"
+   ],
+   "ns",
+   "<Double-1>",
+   2,
+   "重新核对…",
+   14,
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady",
+    "bg",
+    "fg",
+    "relief",
+    "activebackground"
+   ],
+   4,
+   [
+    "side",
+    "padx"
+   ],
+   "高级编辑…",
+   "查看 / 导出",
+   "删除",
+   "刷新",
+   "关闭",
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "right",
+   [
+    "side"
+   ]
+  ],
+  "n_instructions": 516
+ },
+ "<module>.FingerprintManager._build.<lambda>": {
+  "names": [
+   "_raw_edit"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.FingerprintManager._refresh": {
+  "names": [
+   "tree",
+   "get_children",
+   "delete",
+   "set",
+   "_fps",
+   "sorted",
+   "_cache",
+   "dir_list",
+   "Exception",
+   "insert",
+   "get",
+   "customer",
+   "strip",
+   "layout_type",
+   "os",
+   "path",
+   "getmtime",
+   "_path",
+   "datetime",
+   "fromtimestamp",
+   "strftime",
+   "add"
+  ],
+  "varnames": [
+   "self",
+   "it",
+   "names",
+   "n",
+   "fp",
+   "customer",
+   "layout",
+   "updated",
+   "recipe",
+   "os",
+   "mtime"
+  ],
+  "consts": [
+   null,
+   "",
+   "end",
+   "__empty__",
+   [
+    "（暂无已缓存的版式配方）",
+    "",
+    "",
+    ""
+   ],
+   [
+    "iid",
+    "values"
+   ],
+   -5,
+   "（无客户名）",
+   "?",
+   0,
+   "%Y-%m-%d %H:%M",
+   "（损坏）",
+   8
+  ],
+  "n_instructions": 174
+ },
+ "<module>.FingerprintManager._refresh.<genexpr>": {
+  "names": [
+   "endswith"
+  ],
+  "varnames": [
+   ".0",
+   "n"
+  ],
+  "consts": [
+   ".json",
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>.FingerprintManager._selected_fp": {
+  "names": [
+   "tree",
+   "selection",
+   "messagebox",
+   "showinfo",
+   "_fps"
+  ],
+  "varnames": [
+   "self",
+   "sel",
+   "fp"
+  ],
+  "consts": [
+   null,
+   "请选择",
+   "先在列表里选中一条版式配方。",
+   [
+    "parent"
+   ],
+   0
+  ],
+  "n_instructions": 33
+ },
+ "<module>.FingerprintManager._recheck": {
+  "names": [
+   "_selected_fp",
+   "filedialog",
+   "askopenfilename",
+   "core.io.pdf",
+   "pdf_to_pages",
+   "core.store.cache",
+   "layout_fingerprint",
+   "core.parsers.registry",
+   "parse",
+   "core.parsers.base",
+   "doc_text",
+   "ui.recipe_dialog",
+   "RecipeConfirmDialog",
+   "print",
+   "sum",
+   "RuntimeError",
+   "join",
+   "_cache",
+   "get",
+   "messagebox",
+   "askyesno",
+   "str",
+   "result",
+   "Exception",
+   "showerror",
+   "showinfo",
+   "dict",
+   "field_overrides",
+   "customer",
+   "field_defaults",
+   "clear",
+   "apply_recipe_overrides",
+   "put",
+   "_refresh"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "path",
+   "pdf_to_pages",
+   "layout_fingerprint",
+   "parse_doc",
+   "doc_text",
+   "RecipeConfirmDialog",
+   "pages",
+   "raw_text",
+   "new_fp",
+   "recipe",
+   "doc_lines",
+   "po",
+   "dlg",
+   "res",
+   "e",
+   "overrides",
+   "po2"
+  ],
+  "consts": [
+   "选一个同版式 PDF，复用确认框改完回写缓存。",
+   null,
+   "选择一份同版式 PDF（用于重新核对配方）",
+   [
+    "PDF",
+    "*.pdf"
+   ],
+   [
+    "所有文件",
+    "*.*"
+   ],
+   [
+    "title",
+    "filetypes",
+    "parent"
+   ],
+   0,
+   [
+    "pdf_to_pages"
+   ],
+   [
+    "layout_fingerprint"
+   ],
+   [
+    "parse"
+   ],
+   [
+    "doc_text"
+   ],
+   [
+    "RecipeConfirmDialog"
+   ],
+   [
+    "cfg",
+    "log"
+   ],
+   "该 PDF 抽词为空（可能是纯图片扫描件且 OCR 未配置）。",
+   "\n",
+   "指纹不符",
+   "所选 PDF 的指纹（",
+   16,
+   "…）与选中的配方（",
+   "…）不一致，可能不是同一版式。\n仍要加载选中配方并用这份 PDF 测试吗？",
+   [
+    "parent"
+   ],
+   [
+    "source_file"
+   ],
+   "重新核对失败",
+   "RETRY",
+   "提示",
+   "重新核对模式不支持「重新识别」；请用主界面的正常提取流程（开启人工确认配方）重试。",
+   "customer",
+   "保存失败",
+   "写入缓存失败：",
+   "已更新",
+   "配方 ",
+   "… 已按核对结果回写缓存。\n后续同版式 PO 将套用新配方。"
+  ],
+  "n_instructions": 338
+ },
+ "<module>.FingerprintManager._recheck.<genexpr>": {
+  "names": [
+   "join",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "pg"
+  ],
+  "consts": [
+   " ",
+   null
+  ],
+  "n_instructions": 23
+ },
+ "<module>.FingerprintManager._recheck.<genexpr>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.FingerprintManager._recheck.<listcomp>": {
+  "names": [
+   "lines",
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "pg",
+   "line"
+  ],
+  "consts": [
+   " "
+  ],
+  "n_instructions": 26
+ },
+ "<module>.FingerprintManager._recheck.<listcomp>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.FingerprintManager._raw_edit": {
+  "names": [
+   "_selected_fp",
+   "ui.recipe_raw_editor",
+   "RecipeRawEditor",
+   "_cache",
+   "get",
+   "Exception",
+   "messagebox",
+   "showerror",
+   "result",
+   "showinfo",
+   "_refresh"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "RecipeRawEditor",
+   "recipe",
+   "dlg",
+   "e"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "RecipeRawEditor"
+   ],
+   "打开失败",
+   [
+    "parent"
+   ],
+   "已更新",
+   "配方 ",
+   16,
+   "… 的锚点已回写缓存。"
+  ],
+  "n_instructions": 93
+ },
+ "<module>.FingerprintManager._view_json": {
+  "names": [
+   "_selected_fp",
+   "_cache",
+   "get",
+   "to_json",
+   "Exception",
+   "messagebox",
+   "showerror",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "grab_set",
+   "Path",
+   "getattr",
+   "sys",
+   "__file__",
+   "parent",
+   "iconbitmap",
+   "str",
+   "Frame",
+   "pack",
+   "Text",
+   "_C_PANEL",
+   "_C_INK",
+   "insert",
+   "configure",
+   "Button",
+   "FONT_BUTTON",
+   "_C_GAP",
+   "destroy",
+   "PRIMARY_KW",
+   "update_idletasks",
+   "winfo_rootx",
+   "max",
+   "winfo_width",
+   "winfo_rooty",
+   "winfo_height",
+   "geometry",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "e",
+   "base",
+   "f",
+   "txt",
+   "bf",
+   "_save_as",
+   "winw",
+   "winh",
+   "x",
+   "y"
+  ],
+  "consts": [
+   null,
+   "读取失败",
+   [
+    "parent"
+   ],
+   "配方 JSON · ",
+   16,
+   "…",
+   "_MEIPASS",
+   "app.ico",
+   12,
+   [
+    "padx",
+    "pady"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   [
+    "Consolas",
+    10
+   ],
+   "flat",
+   "none",
+   [
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "wrap"
+   ],
+   "1.0",
+   "disabled",
+   [
+    "state"
+   ],
+   "top",
+   [
+    "fill",
+    "expand",
+    "side"
+   ],
+   "x",
+   [
+    8,
+    0
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "另存为…",
+   14,
+   6,
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady",
+    "bg",
+    "fg",
+    "relief"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "关闭",
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "right",
+   [
+    560,
+    460
+   ],
+   0,
+   2,
+   "+"
+  ],
+  "n_instructions": 310
+ },
+ "<module>.FingerprintManager._view_json._save_as": {
+  "names": [
+   "filedialog",
+   "asksaveasfilename",
+   "open",
+   "write",
+   "messagebox",
+   "showinfo",
+   "Exception",
+   "showerror"
+  ],
+  "varnames": [
+   "out",
+   "fh",
+   "e"
+  ],
+  "consts": [
+   null,
+   "另存为配方 JSON",
+   ".json",
+   [
+    "JSON",
+    "*.json"
+   ],
+   [
+    "所有文件",
+    "*.*"
+   ],
+   [
+    "title",
+    "defaultextension",
+    "initialfile",
+    "filetypes",
+    "parent"
+   ],
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   "已保存",
+   "已导出到：\n",
+   [
+    "parent"
+   ],
+   "保存失败"
+  ],
+  "n_instructions": 99
+ },
+ "<module>.FingerprintManager._delete": {
+  "names": [
+   "_selected_fp",
+   "messagebox",
+   "askyesno",
+   "_cache",
+   "invalidate",
+   "Exception",
+   "showerror",
+   "showinfo",
+   "_refresh"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "e"
+  ],
+  "consts": [
+   null,
+   "删除配方",
+   "确定删除版式配方 ",
+   16,
+   "… 吗？\n删除后该版式下次导入会重新 AI 推断（只删这一条）。",
+   [
+    "parent"
+   ],
+   "删除失败",
+   "已删除",
+   "已删除配方 ",
+   "…"
+  ],
+  "n_instructions": 91
+ }
+}

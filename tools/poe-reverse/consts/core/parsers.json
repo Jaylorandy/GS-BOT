@@ -1,0 +1,56 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "base",
+   "BaseParser",
+   "PageWords",
+   "Token",
+   "registry",
+   "get_parser",
+   "parse",
+   "line_items",
+   "LineItemsParser",
+   "matrix_2axis",
+   "Matrix2AxisParser",
+   "matrix_1axis",
+   "Matrix1AxisParser",
+   "__all__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers package.",
+   1,
+   [
+    "BaseParser",
+    "PageWords",
+    "Token"
+   ],
+   [
+    "get_parser",
+    "parse"
+   ],
+   [
+    "LineItemsParser"
+   ],
+   [
+    "Matrix2AxisParser"
+   ],
+   [
+    "Matrix1AxisParser"
+   ],
+   [
+    "BaseParser",
+    "PageWords",
+    "Token",
+    "get_parser",
+    "parse",
+    "LineItemsParser",
+    "Matrix2AxisParser",
+    "Matrix1AxisParser"
+   ],
+   null
+  ],
+  "n_instructions": 45
+ }
+}

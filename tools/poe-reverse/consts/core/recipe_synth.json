@@ -1,0 +1,3523 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "typing",
+   "Callable",
+   "Dict",
+   "List",
+   "Optional",
+   "Sequence",
+   "Set",
+   "Tuple",
+   "ai.data_extract",
+   "ExtractedData",
+   "ExtractedLine",
+   "extract_po_data",
+   "models",
+   "LayoutType",
+   "PoRecipe",
+   "PurchaseOrder",
+   "numutil",
+   "thousands_match",
+   "_thousands_match",
+   "parsers",
+   "registry",
+   "parsers.base",
+   "doc_text",
+   "merge_wrapped_rows",
+   "str",
+   "Logger",
+   "RuntimeError",
+   "SynthesisError",
+   "UnsupportedLayout",
+   "compile",
+   "_NUMERIC_TOKEN",
+   "_HAS_DIGIT",
+   "_APOSTROPHES",
+   "_RATIO_BLOCK",
+   "_is_numeric_token",
+   "_num",
+   "_norm_ws",
+   "_doc_lines",
+   "_date_variants",
+   "Sample",
+   "locate_samples",
+   "_locate_one",
+   "_REQUIRED_ROLES",
+   "_OPTIONAL_ROLES",
+   "_role_hits",
+   "_all_assignments",
+   "_order_sig",
+   "assign_roles",
+   "_shape_of",
+   "_role_pattern",
+   "_looks_like_data",
+   "_other_pattern",
+   "synthesize_line_pattern",
+   "_generalize_prefix",
+   "synthesize_entity_anchor",
+   "MAX_PREFIX_TOKENS",
+   "_is_data_token",
+   "_label_tokens",
+   "_trim_to_keyword",
+   "synthesize_field_anchor",
+   "_FIELD_LABEL_HINTS",
+   "_HEADER_ANCHORS",
+   "apply_header_anchors",
+   "synthesize_recipe",
+   "_CONTROL_SHEET_FIELDS",
+   "is_control_sheet",
+   "synthesize_control_sheet_recipe",
+   "is_matrix_percarton",
+   "synthesize_matrix_percarton_recipe",
+   "is_line_items_eu",
+   "is_costco_ecom",
+   "is_costco_hybrid",
+   "is_celio",
+   "_synthesize_structural_recipe",
+   "synthesize_line_items_eu_recipe",
+   "synthesize_costco_hybrid_recipe",
+   "synthesize_costco_ecom_recipe",
+   "synthesize_celio_recipe",
+   "is_frankie_ecom",
+   "synthesize_frankie_ecom_recipe",
+   "is_bass_pro_ack",
+   "synthesize_bass_pro_ack_recipe",
+   "is_import_po",
+   "synthesize_import_po_recipe",
+   "is_anf_commitment",
+   "synthesize_anf_commitment_recipe",
+   "is_anf_po",
+   "synthesize_anf_po_recipe",
+   "VerifyReport",
+   "I",
+   "_TOTAL_LABEL",
+   "_QTY_TOKEN",
+   "_MONEY_TOKEN",
+   "_amount_misread_rows",
+   "_explains_amount_misread",
+   "verify_recipe",
+   "_rows_only_the_rule_found",
+   "MAX_AI_TRIES",
+   "MAX_MATRIX_TRIES",
+   "_ESCAPE_HATCH",
+   "_short_json_err",
+   "LINE_ITEMS_EU",
+   "value",
+   "COSTCO_ECOM",
+   "COSTCO_HYBRID",
+   "CELIO",
+   "FRANKIE_ECOM",
+   "BASS_PRO_ACK",
+   "IMPORT_PO",
+   "ANF_COMMITMENT",
+   "ANF_PO",
+   "_STRUCTURAL_DETECTORS",
+   "detect_structural_layout",
+   "acquire_recipe",
+   "__name__",
+   "os",
+   "sys",
+   "PageWords",
+   "Token",
+   "_make_page",
+   "path",
+   "dirname",
+   "abspath",
+   "__file__",
+   "here",
+   "join",
+   "probe",
+   "exists",
+   "print",
+   "exit",
+   "open",
+   "f",
+   "read",
+   "blob",
+   "pages",
+   "cur",
+   "splitlines",
+   "ln",
+   "match",
+   "strip",
+   "append",
+   "len",
+   "row",
+   "ent",
+   "orders",
+   "cur_o",
+   "me",
+   "ExtractedOrder",
+   "group",
+   "mr",
+   "idx",
+   "lines",
+   "split",
+   "int",
+   "float",
+   "data",
+   "summary",
+   "line_count",
+   "total_qty",
+   "rec",
+   "po",
+   "rep",
+   "text",
+   "ok",
+   "problems",
+   "parsed_rows",
+   "parsed_qty",
+   "sorted",
+   "entities",
+   "e0",
+   "po_no",
+   "channel",
+   "season",
+   "currency",
+   "price_term",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "delivery_date",
+   "packing_method",
+   "product_desc",
+   "l0",
+   "style_no",
+   "color_code",
+   "repr",
+   "color_desc",
+   "su",
+   "unit_price",
+   "sizes",
+   "size",
+   "qty",
+   "to_json"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/recipe_synth.py - turn AI-read ORDER DATA into a VERIFIED, cacheable PoRecipe.\n\nWhy this module exists\n----------------------\nV2.0.0 asked the LLM to *author* the ``line_pattern`` regex. Measured on one real\nLPP PO, 5 independent inferences produced 4 unusable recipes (0 matched rows).\nWriting a character-exact regex blind is simply not something an LLM does\nreliably, and it has no way to test its own answer before replying.\n\nSo the labour is split the way V1.5 split it - and then taken one step further:\n\n    AI    (core/ai/data_extract.py)  -> READS the PO, returns the order DATA.\n    code  (this module)              -> SYNTHESIZES the extraction rule from the\n                                        AI's verbatim sample rows, then REPLAYS\n                                        that rule offline and hard-compares the\n                                        result against the AI's data.\n\nOnly a rule that reproduces the AI's reading exactly is allowed into the\nfingerprint cache. That replay gate is what makes the manual confirmation dialog\nunnecessary: a broken recipe physically cannot be cached, so the next PO of the\nsame layout is parsed offline, zero-AI, with confidence.\n\nPipeline\n--------\n    doc_text ──► AI reads ──► ExtractedData (ground truth)\n                                   │\n                    locate each verbatim row back in doc_text\n                                   │\n              token-align the real rows: constant token -> literal,\n              varying token -> named group  ⇒  line_pattern\n                                   │\n              same trick for the entity/PO anchor and every header field\n                                   │\n                        PoRecipe (candidate)\n                                   │\n                 replay offline: registry.parse(pages, recipe)\n                                   │\n        rows / total qty / per-PO qty / PO-number set must ALL match\n                    ├── match    -> cache it, never call AI for this layout again\n                    └── mismatch -> retry AI once with a concrete hint,\n                                    then raise (never silently export bad data)\n\nNo customer name is hardcoded anywhere: everything comes from the document.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass",
+    "field"
+   ],
+   [
+    "Callable",
+    "Dict",
+    "List",
+    "Optional",
+    "Sequence",
+    "Set",
+    "Tuple"
+   ],
+   1,
+   [
+    "ExtractedData",
+    "ExtractedLine",
+    "extract_po_data"
+   ],
+   [
+    "LayoutType",
+    "PoRecipe",
+    "PurchaseOrder"
+   ],
+   [
+    "thousands_match"
+   ],
+   [
+    "registry"
+   ],
+   [
+    "doc_text",
+    "merge_wrapped_rows"
+   ],
+   "SynthesisError",
+   "UnsupportedLayout",
+   "^[\\d.,]+$",
+   "\\d",
+   "'‘’‛`´ʼˮ",
+   "\\b([A-Za-z]{1,4}:\\d+)(?:\\s*,\\s*[A-Za-z]{1,4}:\\d+)+",
+   "tok",
+   "str",
+   "return",
+   "bool",
+   "Optional[float]",
+   "s",
+   "text",
+   "List[str]",
+   "iso",
+   "Sample",
+   "lines",
+   "Sequence[str]",
+   "data",
+   "ExtractedData",
+   "Tuple[List[Sample], List[ExtractedLine]]",
+   "norm_index",
+   "Dict[str, str]",
+   "el",
+   "ExtractedLine",
+   "Optional[str]",
+   [
+    "style",
+    "unit",
+    "qty",
+    "unit_price"
+   ],
+   [
+    "color_code",
+    "size"
+   ],
+   "tokens",
+   "role",
+   "List[int]",
+   400,
+   "cands",
+   "Dict[str, List[int]]",
+   "roles",
+   "cap",
+   "int",
+   "List[Dict[str, int]]",
+   "assign",
+   "Dict[str, int]",
+   "Tuple[str, ...]",
+   "samples",
+   "Sequence[Sample]",
+   "Tuple[List[Dict[str, int]], List[str]]",
+   "Tuple[Tuple[str, ...], List[List[str]]]",
+   "vals",
+   "runs",
+   "Sequence[Sequence[str]]",
+   "is_first",
+   "is_last",
+   "want_middle",
+   "Tuple[str, bool]",
+   "Tuple[str, str, int]",
+   "soft",
+   "Set[str]",
+   "Tuple[List[str], bool]",
+   "po_nos",
+   "doc",
+   "Tuple[str, str]",
+   6,
+   "prefix",
+   "prefer",
+   [],
+   "value",
+   "season",
+   [
+    "Season",
+    "Saison"
+   ],
+   "currency",
+   [
+    "Currency",
+    "Währung"
+   ],
+   "price_term",
+   [
+    "Incoterm",
+    "Trade term",
+    "Price term",
+    "Lieferbedingung"
+   ],
+   "port_discharge",
+   [
+    "Port of discharge",
+    "Discharge",
+    "Hafen"
+   ],
+   "port_loading",
+   [
+    "Port of loading",
+    "Loading",
+    "Ladeport"
+   ],
+   "ship_mode",
+   [
+    "Transport",
+    "Ship mode",
+    "Mode",
+    "Versand"
+   ],
+   "vendor_name",
+   [
+    "Supplier",
+    "Vendor",
+    "Manufacturer",
+    "Lieferant"
+   ],
+   "agent_name",
+   [
+    "Agent",
+    "Representative",
+    "Vertreter"
+   ],
+   "product_desc",
+   [
+    "VPN",
+    "Product",
+    "Description",
+    "Artikel"
+   ],
+   "style_no",
+   [
+    "Style",
+    "Modell"
+   ],
+   "delivery_date",
+   [
+    "Shipment",
+    "Delivery",
+    "Lieferdatum"
+   ],
+   "import_po_no",
+   [
+    "Import PO",
+    "Import Purchase Order"
+   ],
+   "reference_no",
+   [
+    "Reference"
+   ],
+   "cir_no",
+   [
+    "CIR"
+   ],
+   "freight_terms",
+   [
+    "Freight",
+    "Freight Terms",
+    "Shipping Terms"
+   ],
+   "country_of_origin",
+   [
+    "Country of Origin",
+    "Origin Country",
+    "Exiting Country"
+   ],
+   "dc_address",
+   [
+    "DC Address",
+    "Distribution Center",
+    "Deliver to"
+   ],
+   [
+    [
+     "season",
+     "season_anchor"
+    ],
+    [
+     "currency",
+     "currency_anchor"
+    ],
+    [
+     "price_term",
+     "price_term_anchor"
+    ],
+    [
+     "payment_terms",
+     "payment_terms_anchor"
+    ],
+    [
+     "port_discharge",
+     "port_discharge_anchor"
+    ],
+    [
+     "port_loading",
+     "port_loading_anchor"
+    ],
+    [
+     "ship_mode",
+     "ship_mode_anchor"
+    ],
+    [
+     "vendor_name",
+     "vendor_anchor"
+    ],
+    [
+     "agent_name",
+     "agent_anchor"
+    ],
+    [
+     "product_desc",
+     "style_anchor"
+    ],
+    [
+     "import_po_no",
+     "import_po_no_anchor"
+    ],
+    [
+     "reference_no",
+     "reference_no_anchor"
+    ],
+    [
+     "cir_no",
+     "cir_no_anchor"
+    ],
+    [
+     "freight_terms",
+     "freight_terms_anchor"
+    ],
+    [
+     "country_of_origin",
+     "country_of_origin_anchor"
+    ],
+    [
+     "dc_address",
+     "dc_address_anchor"
+    ]
+   ],
+   "recipe",
+   "PoRecipe",
+   "log",
+   "Logger",
+   "",
+   [
+    "fingerprint",
+    "log"
+   ],
+   "fingerprint",
+   "entity",
+   "PO#\\s*:\\s*(\\S+)",
+   "po_no",
+   "style",
+   "Style\\s*:\\s*([A-Z0-9][A-Za-z0-9]*)",
+   "Style\\s*:\\s*[A-Z0-9][A-Za-z0-9]*\\s+([A-Za-z][A-Za-z0-9&./\\- ]*?)(?=\\s+[A-Z][A-Za-z]+(?:\\s+[A-Za-z]+)?\\s*:|\\s*$)",
+   "color_code",
+   "Color\\s*:\\s*(\\S+)",
+   "color_desc",
+   "Fashion\\s+Color\\s*:\\s*([A-Z][A-Za-z]+(?:\\s+[A-Z][A-Za-z]+)*?)(?=\\s+\\S*[/:]|\\s*$)",
+   "quantity",
+   "Quantity\\s*:\\s*([\\d.,]+)",
+   "unit_price",
+   "Cost\\s*:\\s*([\\d.,]+)",
+   "total_amount",
+   "PO\\s+Total\\$\\s*:\\s*([\\d.,]+)",
+   "ship_date",
+   "Ship\\s+Date\\s*:\\s*(\\S+)",
+   "Season\\s*:\\s*([A-Za-z]\\s+\\d{4})",
+   "country",
+   "Country\\s*:\\s*(\\S+)",
+   "size_rng",
+   "Size\\s+Rng\\s*:\\s*(\\S+)",
+   "Cost\\s+Type\\s*:\\s*(\\S+)",
+   "ETD\\s+Port\\s*:\\s*(\\S+)",
+   "ETA\\s+Port\\s*:\\s*([A-Z][A-Z]+(?:\\s+[A-Z][A-Z]+)?)",
+   "Air/Boat\\s+(Air|Boat)",
+   "Payment\\s+Type\\s*:\\s*(\\S+)",
+   "Days\\s*:\\s*(\\d+)",
+   [
+    "payment_type",
+    "payment_days"
+   ],
+   "VerifyReport",
+   "^(total|totals|sum|summe|suma|razem|gesamt|toplam|итого)[:.]?$",
+   "^\\d{1,3}(?:[.,]\\d{3})*$|^\\d+$",
+   "^\\d{1,3}(?:[.,]\\d{3})*[.,]\\d{2}$|^\\d+[.,]\\d{2}$",
+   "Dict[int, float]",
+   "mis",
+   "parsed",
+   "expected",
+   [
+    "source_file"
+   ],
+   "source_file",
+   "Tuple[Optional[PurchaseOrder], VerifyReport]",
+   3,
+   2,
+   "\n如需人工介入，可在左栏勾选『高级：推断后人工确认配方』，再次导入该 PDF 即可手动核对/修改解析规则。",
+   "e",
+   "Exception",
+   "欧式行项目",
+   "Costco US .com",
+   "Costco US 混合",
+   "CELIO France",
+   "FRANKIE ECOM",
+   "BASS PRO 订单确认",
+   "Import PO 固定列",
+   "ANF Commitment",
+   "ANF PO",
+   [
+    "customer",
+    "cfg",
+    "source_file",
+    "max_tries",
+    "log",
+    "seed_hint"
+   ],
+   "customer",
+   "cfg",
+   "Optional[dict]",
+   "max_tries",
+   "seed_hint",
+   "Tuple[PoRecipe, PurchaseOrder, ExtractedData]",
+   "__main__",
+   [
+    "PageWords",
+    "Token"
+   ],
+   "_probe",
+   "LPP_637JO.txt",
+   "probe text missing:",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   "^=====\\s+.*PAGE\\s+\\d+/\\d+\\s+=====$",
+   "pages: ",
+   "^(\\S+-\\S+-\\S+)\\s+(.*?)\\s+(PCS)\\s+(\\d+)\\s+([\\d.]+)\\s+[\\d,.]+$",
+   "^Entity\\s+\\d+\\s+Order No:\\s*(\\S+)(?:\\s+(\\S+))?$",
+   [
+    "ExtractedOrder"
+   ],
+   "2026-03-02",
+   [
+    "po_no",
+    "channel",
+    "delivery_date"
+   ],
+   "-",
+   4,
+   5,
+   [
+    "raw_line",
+    "index_no",
+    "style",
+    "color_code",
+    "color_desc",
+    "size",
+    "unit",
+    "qty",
+    "unit_price"
+   ],
+   "LPP SA",
+   "line_items",
+   "SS 2026",
+   "USD",
+   "FOB",
+   "Sihanoukville",
+   "Gdynia",
+   "Sea",
+   "Gs Global Sourcing Co.,Ltd",
+   "MULTIPACK",
+   "MEN`S TROUSERS",
+   "637JO",
+   "2025-11-28",
+   [
+    "season",
+    "currency",
+    "price_term",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "packing_method",
+    "product_desc",
+    "style_no",
+    "payment_terms",
+    "order_date"
+   ],
+   [
+    "customer",
+    "layout_type",
+    "header",
+    "orders"
+   ],
+   "stand-in AI ->",
+   24,
+   9000,
+   "selftest",
+   "LPP_637JO.pdf",
+   "verify:",
+   "11321589",
+   "11352123",
+   "entity0:",
+   "|",
+   "entity1 channel:",
+   "line0:",
+   "80X",
+   "S",
+   "BEIGE",
+   "\nSELF-TEST OK - recipe below is what would be cached\n",
+   [
+    "tok",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "tok",
+    "str",
+    "return",
+    "Optional[float]"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "List[str]"
+   ],
+   [
+    "iso",
+    "str",
+    "return",
+    "List[str]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "data",
+    "ExtractedData",
+    "return",
+    "Tuple[List[Sample], List[ExtractedLine]]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "norm_index",
+    "Dict[str, str]",
+    "el",
+    "ExtractedLine",
+    "return",
+    "Optional[str]"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "el",
+    "ExtractedLine",
+    "role",
+    "str",
+    "return",
+    "List[int]"
+   ],
+   [
+    400
+   ],
+   [
+    "cands",
+    "Dict[str, List[int]]",
+    "roles",
+    "Sequence[str]",
+    "cap",
+    "int",
+    "return",
+    "List[Dict[str, int]]"
+   ],
+   [
+    "assign",
+    "Dict[str, int]",
+    "return",
+    "Tuple[str, ...]"
+   ],
+   [
+    "samples",
+    "Sequence[Sample]",
+    "return",
+    "Tuple[List[Dict[str, int]], List[str]]"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "assign",
+    "Dict[str, int]",
+    "return",
+    "Tuple[Tuple[str, ...], List[List[str]]]"
+   ],
+   [
+    "role",
+    "str",
+    "vals",
+    "Sequence[str]",
+    "return",
+    "str"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "return",
+    "bool"
+   ],
+   [
+    "runs",
+    "Sequence[Sequence[str]]",
+    "is_first",
+    "bool",
+    "is_last",
+    "bool",
+    "want_middle",
+    "bool",
+    "return",
+    "Tuple[str, bool]"
+   ],
+   [
+    "samples",
+    "Sequence[Sample]",
+    "return",
+    "Tuple[str, str, int]"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "soft",
+    "Set[str]",
+    "return",
+    "Tuple[List[str], bool]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "po_nos",
+    "Sequence[str]",
+    "doc",
+    "str",
+    "return",
+    "Tuple[str, str]"
+   ],
+   [
+    "tok",
+    "str",
+    "soft",
+    "Set[str]",
+    "return",
+    "bool"
+   ],
+   [
+    "prefix",
+    "Sequence[str]",
+    "soft",
+    "Set[str]",
+    "return",
+    "List[str]"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "prefer",
+    "Sequence[str]",
+    "return",
+    "List[str]"
+   ],
+   [
+    []
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "doc",
+    "str",
+    "value",
+    "str",
+    "soft",
+    "Set[str]",
+    "prefer",
+    "Sequence[str]",
+    "return",
+    "str"
+   ],
+   [
+    null
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "lines",
+    "Sequence[str]",
+    "doc",
+    "str",
+    "data",
+    "ExtractedData",
+    "log",
+    "Logger",
+    "return",
+    "List[str]"
+   ],
+   [
+    "data",
+    "ExtractedData",
+    "fingerprint",
+    "str",
+    "log",
+    "Logger",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "fingerprint",
+    "str",
+    "log",
+    "Logger",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "return",
+    "Dict[int, float]"
+   ],
+   [
+    "mis",
+    "Dict[int, float]",
+    "parsed",
+    "int",
+    "expected",
+    "int",
+    "return",
+    "bool"
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "data",
+    "ExtractedData",
+    "source_file",
+    "str",
+    "return",
+    "Tuple[Optional[PurchaseOrder], VerifyReport]"
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "data",
+    "ExtractedData",
+    "return",
+    "List[str]"
+   ],
+   [
+    "e",
+    "Exception",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "Optional[str]"
+   ],
+   [
+    "fingerprint",
+    "str",
+    "customer",
+    "str",
+    "cfg",
+    "Optional[dict]",
+    "source_file",
+    "str",
+    "max_tries",
+    "int",
+    "log",
+    "Logger",
+    "seed_hint",
+    "str",
+    "return",
+    "Tuple[PoRecipe, PurchaseOrder, ExtractedData]"
+   ]
+  ],
+  "n_instructions": 1358
+ },
+ "<module>.SynthesisError": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "SynthesisError",
+   "No verified recipe could be produced. ``str(e)`` is user-facing.\n\n    ``ai_hint`` (when set) is fed back to the model on the next attempt so it can\n    self-correct instead of repeating the same mistake.\n    ",
+   "",
+   "message",
+   "str",
+   "ai_hint",
+   [
+    ""
+   ],
+   [
+    "message",
+    "str",
+    "ai_hint",
+    "str"
+   ]
+  ],
+  "n_instructions": 19
+ },
+ "<module>.SynthesisError.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "ai_hint"
+  ],
+  "varnames": [
+   "self",
+   "message",
+   "ai_hint"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>.UnsupportedLayout": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "UnsupportedLayout",
+   "This layout cannot be handled by rule synthesis (matrix grids).\n\n    The caller should fall back to the legacy ``core.ai.recipe_infer`` path.\n    ``data`` carries the AI's already-read :class:`ExtractedData` so the caller\n    can hand the known ``layout_type`` to the legacy path and skip a re-read.\n    ",
+   null,
+   "",
+   [
+    "data",
+    "ai_hint"
+   ],
+   "message",
+   "str",
+   "ai_hint",
+   [
+    "message",
+    "str",
+    "ai_hint",
+    "str"
+   ]
+  ],
+  "n_instructions": 22
+ },
+ "<module>.UnsupportedLayout.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "data"
+  ],
+  "varnames": [
+   "self",
+   "message",
+   "data",
+   "ai_hint"
+  ],
+  "consts": [
+   null,
+   [
+    "ai_hint"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>._is_numeric_token": {
+  "names": [
+   "bool",
+   "_NUMERIC_TOKEN",
+   "match"
+  ],
+  "varnames": [
+   "tok"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 12
+ },
+ "<module>._num": {
+  "names": [
+   "re",
+   "sub",
+   "strip",
+   "_HAS_DIGIT",
+   "search",
+   "rfind",
+   "replace",
+   "rsplit",
+   "len",
+   "float",
+   "ValueError"
+  ],
+  "varnames": [
+   "tok",
+   "s",
+   "tail"
+  ],
+  "consts": [
+   "Parse a printed number: 1,234 / 10,20 / 7,588.80 / 1.068 all handled.",
+   "[^\\d.,\\-]",
+   "",
+   null,
+   ",",
+   ".",
+   1,
+   2
+  ],
+  "n_instructions": 112
+ },
+ "<module>._norm_ws": {
+  "names": [
+   "re",
+   "sub",
+   "strip"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   "\\s+",
+   " ",
+   ""
+  ],
+  "n_instructions": 14
+ },
+ "<module>._doc_lines": {
+  "names": [
+   "splitlines",
+   "strip",
+   "append"
+  ],
+  "varnames": [
+   "text",
+   "out",
+   "ln"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 26
+ },
+ "<module>._date_variants": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "group",
+   "int"
+  ],
+  "varnames": [
+   "iso",
+   "m",
+   "y",
+   "mo",
+   "d"
+  ],
+  "consts": [
+   "Renderings of a YYYY-MM-DD date that might appear in the document.",
+   "(\\d{4})-(\\d{2})-(\\d{2})$",
+   "",
+   1,
+   2,
+   3,
+   "-",
+   ".",
+   "/"
+  ],
+  "n_instructions": 120
+ },
+ "<module>.Sample": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__annotations__",
+   "field",
+   "list",
+   "tokens"
+  ],
+  "varnames": [],
+  "consts": [
+   "Sample",
+   "An AI-read order line paired with the REAL document line it came from.",
+   "ExtractedLine",
+   "el",
+   "str",
+   "line",
+   [
+    "default_factory"
+   ],
+   "List[str]",
+   "tokens",
+   null
+  ],
+  "n_instructions": 29
+ },
+ "<module>.locate_samples": {
+  "names": [
+   "setdefault",
+   "_norm_ws",
+   "all_lines",
+   "_locate_one",
+   "append",
+   "Sample",
+   "split"
+  ],
+  "varnames": [
+   "lines",
+   "data",
+   "norm_index",
+   "ln",
+   "samples",
+   "missing",
+   "el",
+   "hit"
+  ],
+  "consts": [
+   "Pair every ``ExtractedLine`` with its real document line.\n\n    The regex must be grown from the DOCUMENT's own text, never from the model's\n    rendition of it - the model may drop a backtick or collapse a space. Returns\n    ``(samples, unlocated)``.\n    ",
+   null,
+   [
+    "el",
+    "line",
+    "tokens"
+   ]
+  ],
+  "n_instructions": 65
+ },
+ "<module>._locate_one": {
+  "names": [
+   "_norm_ws",
+   "raw_line",
+   "locator",
+   "int",
+   "qty",
+   "set",
+   "split",
+   "any",
+   "unit",
+   "unit_price",
+   "len"
+  ],
+  "varnames": [
+   "lines",
+   "norm_index",
+   "el",
+   "raw",
+   "loc",
+   "best",
+   "best_score",
+   "want",
+   "ln",
+   "toks",
+   "score"
+  ],
+  "consts": [
+   null,
+   0,
+   -1
+  ],
+  "n_instructions": 200
+ },
+ "<module>._locate_one.<genexpr>": {
+  "names": [
+   "_is_numeric_token",
+   "_num"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>._role_hits": {
+  "names": [
+   "enumerate",
+   "locator",
+   "style",
+   "append",
+   "unit",
+   "upper",
+   "_is_numeric_token",
+   "_num",
+   "float",
+   "qty",
+   "unit_price",
+   "abs",
+   "color_code",
+   "size"
+  ],
+  "varnames": [
+   "tokens",
+   "el",
+   "role",
+   "out",
+   "i",
+   "t"
+  ],
+  "consts": [
+   null,
+   "style",
+   "unit",
+   "qty",
+   "unit_price",
+   0.005,
+   "color_code",
+   "size"
+  ],
+  "n_instructions": 169
+ },
+ "<module>._all_assignments": {
+  "names": [
+   "set",
+   "values",
+   "dict",
+   "append",
+   "len"
+  ],
+  "varnames": [
+   "cands",
+   "roles",
+   "cap",
+   "out",
+   "r",
+   "nxt",
+   "base",
+   "used",
+   "i",
+   "d"
+  ],
+  "consts": [
+   "Every distinct-index role->position assignment (bounded)."
+  ],
+  "n_instructions": 79
+ },
+ "<module>._order_sig": {
+  "names": [
+   "tuple",
+   "sorted",
+   "items"
+  ],
+  "varnames": [
+   "assign"
+  ],
+  "consts": [
+   null,
+   [
+    "key"
+   ]
+  ],
+  "n_instructions": 20
+ },
+ "<module>._order_sig.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "r",
+   "_"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>._order_sig.<lambda>": {
+  "names": [],
+  "varnames": [
+   "kv"
+  ],
+  "consts": [
+   null,
+   1
+  ],
+  "n_instructions": 5
+ },
+ "<module>.assign_roles": {
+  "names": [
+   "SynthesisError",
+   "list",
+   "_REQUIRED_ROLES",
+   "append",
+   "_OPTIONAL_ROLES",
+   "all",
+   "any",
+   "min"
+  ],
+  "varnames": [
+   "samples",
+   "common",
+   "alist",
+   "sigs",
+   "_cost",
+   "chosen",
+   "picks"
+  ],
+  "consts": [
+   "Decide, consistently across all sample rows, which column is which field.\n\n    A field is only used when it can be pinned down on EVERY row and the columns\n    appear in the same left-to-right order everywhere - otherwise the synthesized\n    pattern would be a coincidence rather than a rule.\n    ",
+   "没有可用的样例行，无法合成解析规则。",
+   "qty",
+   "在文档原文里找不到 AI 报告的数量列——AI 读到的数字与 PDF 上的不一致。",
+   "For at least one line the quantity you reported does not appear as its own column on that row. Copy 'raw_line' verbatim and report 'qty' exactly as printed.",
+   [
+    "ai_hint"
+   ],
+   "style",
+   "在文档原文里找不到 AI 报告的款号/Index No. 列。",
+   "For at least one line the 'index_no'/'style' you reported does not appear as a token on that row. Copy it exactly as printed.",
+   "同一行里多个字段落在同一列上，无法区分。",
+   null,
+   "各订单行的字段列顺序不一致，无法归纳出统一的行规则。",
+   "The rows you reported do not share one consistent column order. Re-read the table and report only rows that belong to the same order table.",
+   "sig",
+   "Tuple[str, ...]",
+   "return",
+   "Tuple[int, Tuple[str, ...]]",
+   [
+    "key"
+   ],
+   [
+    "sig",
+    "Tuple[str, ...]",
+    "return",
+    "Tuple[int, Tuple[str, ...]]"
+   ]
+  ],
+  "n_instructions": 195
+ },
+ "<module>.assign_roles.<dictcomp>": {
+  "names": [
+   "_role_hits",
+   "tokens",
+   "el"
+  ],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [],
+  "n_instructions": 18
+ },
+ "<module>.assign_roles.<listcomp>": {
+  "names": [
+   "_order_sig"
+  ],
+  "varnames": [
+   ".0",
+   "a"
+  ],
+  "consts": [],
+  "n_instructions": 17
+ },
+ "<module>.assign_roles.<listcomp>.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.assign_roles.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "a"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.assign_roles.<setcomp>": {
+  "names": [
+   "_order_sig"
+  ],
+  "varnames": [
+   ".0",
+   "a"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>.assign_roles._cost": {
+  "names": [
+   "min"
+  ],
+  "varnames": [
+   "sig",
+   "total",
+   "alist",
+   "picks"
+  ],
+  "consts": [
+   null,
+   0
+  ],
+  "n_instructions": 35
+ },
+ "<module>.assign_roles._cost.<listcomp>": {
+  "names": [
+   "_order_sig"
+  ],
+  "varnames": [
+   ".0",
+   "a"
+  ],
+  "consts": [],
+  "n_instructions": 17
+ },
+ "<module>.assign_roles._cost.<genexpr>": {
+  "names": [
+   "sum",
+   "values"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>.assign_roles.<lambda>": {
+  "names": [
+   "sum",
+   "values"
+  ],
+  "varnames": [
+   "a"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>._shape_of": {
+  "names": [
+   "items",
+   "enumerate",
+   "get",
+   "append",
+   "tuple"
+  ],
+  "varnames": [
+   "tokens",
+   "assign",
+   "idx2role",
+   "shape",
+   "runs",
+   "cur",
+   "i",
+   "t",
+   "r"
+  ],
+  "consts": [
+   "Collapse a row into (shape, runs).\n\n    shape is e.g. ``(\"style\", \"*\", \"unit\", \"qty\", \"unit_price\", \"*\")`` where\n    ``*`` is a run of unclassified tokens; runs holds the tokens of each segment.\n    ",
+   null,
+   "*"
+  ],
+  "n_instructions": 92
+ },
+ "<module>._shape_of.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "r",
+   "i"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._role_pattern": {
+  "names": [
+   "min",
+   "len",
+   "set",
+   "re",
+   "escape"
+  ],
+  "varnames": [
+   "role",
+   "vals",
+   "dashes",
+   "core"
+  ],
+  "consts": [
+   null,
+   "style",
+   2,
+   "\\S+-\\S+-\\S+",
+   1,
+   "\\S+-\\S+",
+   "\\S+",
+   "(?P<style>",
+   ")",
+   "unit",
+   "(?P<unit>",
+   0,
+   "(?P<unit>[A-Za-z]+)",
+   [
+    "qty",
+    "unit_price"
+   ],
+   "(?P<",
+   ">[\\d.,]+)",
+   ">\\S+)"
+  ],
+  "n_instructions": 79
+ },
+ "<module>._role_pattern.<genexpr>": {
+  "names": [
+   "count"
+  ],
+  "varnames": [
+   ".0",
+   "v"
+  ],
+  "consts": [
+   "-",
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>._looks_like_data": {
+  "names": [
+   "any",
+   "len",
+   "isalpha",
+   "isascii"
+  ],
+  "varnames": [
+   "tokens",
+   "t"
+  ],
+  "consts": [
+   "True when a run of unclassified tokens is product/colour DATA, not a\n    structural label. A data word is one with an apostrophe (MEN'S / LADIES'),\n    a non-ASCII token (Turkish/Cyrillic names), or a long alphabetic word\n    (product nouns like TROUSERS / JACKET / BEIGE). Freezing these into a\n    line_pattern literal is what makes a cached recipe die on the next PO that\n    shares the layout fingerprint but carries a different product.",
+   true,
+   5,
+   false
+  ],
+  "n_instructions": 54
+ },
+ "<module>._looks_like_data.<genexpr>": {
+  "names": [
+   "ord"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   127,
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>._other_pattern": {
+  "names": [
+   "len",
+   "set",
+   "any",
+   "_looks_like_data",
+   "join",
+   "all"
+  ],
+  "varnames": [
+   "runs",
+   "is_first",
+   "is_last",
+   "want_middle",
+   "texts",
+   "constant",
+   "has_digit"
+  ],
+  "consts": [
+   "Pattern for a run of unclassified tokens. Returns (pattern, is_variable).\n\n    A run is kept as a LITERAL only when it is identical on every sample row AND\n    carries no digits - digits are data, and freezing data into the rule is what\n    makes a cached recipe die on the next PO. Product/colour words are data too,\n    so a constant run of them becomes a wildcard, not a literal. Anything else\n    becomes a group.\n    ",
+   1,
+   2,
+   0,
+   [
+    ".*?",
+    true
+   ],
+   "\\s+",
+   false,
+   [
+    "[\\d.,]+",
+    true
+   ],
+   [
+    "\\S+",
+    true
+   ],
+   [
+    "",
+    true
+   ],
+   "(?P<middle>.*?)",
+   ".*?",
+   true
+  ],
+  "n_instructions": 103
+ },
+ "<module>._other_pattern.<listcomp>": {
+  "names": [
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [
+   " "
+  ],
+  "n_instructions": 13
+ },
+ "<module>._other_pattern.<genexpr>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [
+   1,
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.synthesize_line_pattern": {
+  "names": [
+   "assign_roles",
+   "zip",
+   "get",
+   "max",
+   "items",
+   "SynthesisError",
+   "enumerate",
+   "_other_pattern",
+   "len",
+   "append",
+   "_role_pattern",
+   "join",
+   "any",
+   "_RATIO_BLOCK",
+   "pattern",
+   "re",
+   "compile",
+   "error",
+   "set"
+  ],
+  "varnames": [
+   "samples",
+   "assigns",
+   "_roles",
+   "shaped",
+   "tally",
+   "shape",
+   "_",
+   "kept",
+   "parts",
+   "want_middle",
+   "seg",
+   "pat",
+   "variable",
+   "pattern",
+   "e",
+   "units",
+   "unit"
+  ],
+  "consts": [
+   "Grow a ``line_pattern`` from the real rows. Returns (pattern, unit, used).",
+   0,
+   1,
+   [
+    "key"
+   ],
+   "无法从订单行归纳出统一结构。",
+   true,
+   "*",
+   [
+    "is_first",
+    "is_last",
+    "want_middle"
+   ],
+   "(?P<middle>",
+   false,
+   "\\s+",
+   "(?=.*",
+   ")",
+   "合成的行正则非法：",
+   "\n",
+   null,
+   ""
+  ],
+  "n_instructions": 244
+ },
+ "<module>.synthesize_line_pattern.<listcomp>": {
+  "names": [
+   "enumerate"
+  ],
+  "varnames": [
+   ".0",
+   "runs",
+   "i",
+   "seg"
+  ],
+  "consts": [
+   "unit",
+   0
+  ],
+  "n_instructions": 28
+ },
+ "<module>.synthesize_line_pattern.<lambda>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   "kv"
+  ],
+  "consts": [
+   null,
+   1,
+   0
+  ],
+  "n_instructions": 13
+ },
+ "<module>.synthesize_line_pattern.<genexpr>": {
+  "names": [
+   "_RATIO_BLOCK",
+   "search",
+   "line"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>._generalize_prefix": {
+  "names": [
+   "append",
+   "_is_numeric_token",
+   "re",
+   "escape"
+  ],
+  "varnames": [
+   "tokens",
+   "soft",
+   "out",
+   "literal",
+   "t"
+  ],
+  "consts": [
+   "Escape prefix tokens, but replace data-looking ones with a wildcard.\n\n    ``soft`` holds values that belong to OTHER extracted fields - freezing those\n    into a label would make the anchor collapse the moment the next PO carries a\n    different value (e.g. ``Incoterms: FOB x`` vs ``Incoterms: CIF x``).\n    ",
+   false,
+   "\\S+",
+   "\\d+",
+   true
+  ],
+  "n_instructions": 49
+ },
+ "<module>.synthesize_entity_anchor": {
+  "names": [
+   "split",
+   "index",
+   "append",
+   "any",
+   "range",
+   "len",
+   "set",
+   "_is_numeric_token",
+   "re",
+   "escape",
+   "all",
+   "join",
+   "finditer",
+   "sorted"
+  ],
+  "varnames": [
+   "lines",
+   "po_nos",
+   "doc",
+   "wanted",
+   "rows",
+   "po",
+   "found",
+   "ln",
+   "toks",
+   "prefix_cols",
+   "_",
+   "i",
+   "parts",
+   "literal",
+   "col",
+   "head",
+   "po_no_anchor",
+   "entity_anchor",
+   "got"
+  ],
+  "consts": [
+   "Build (entity_anchor, po_no_anchor) from where the PO numbers actually sit.",
+   [
+    "",
+    ""
+   ],
+   null,
+   0,
+   1,
+   false,
+   true,
+   "\\d+",
+   "\\S+",
+   "\\s+",
+   "\\s+(?P<po_no>\\S+)",
+   "(?:[ \\t]+\\S+)*"
+  ],
+  "n_instructions": 226
+ },
+ "<module>.synthesize_entity_anchor.<listcomp>": {
+  "names": [
+   "group"
+  ],
+  "varnames": [
+   ".0",
+   "m"
+  ],
+  "consts": [
+   "po_no"
+  ],
+  "n_instructions": 13
+ },
+ "<module>.synthesize_entity_anchor.<genexpr>": {
+  "names": [
+   "_is_numeric_token"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._is_data_token": {
+  "names": [
+   "bool",
+   "_HAS_DIGIT",
+   "search"
+  ],
+  "varnames": [
+   "tok",
+   "soft"
+  ],
+  "consts": [
+   "A token that carries a VALUE rather than naming one."
+  ],
+  "n_instructions": 14
+ },
+ "<module>._label_tokens": {
+  "names": [
+   "len",
+   "MAX_PREFIX_TOKENS",
+   "_is_data_token",
+   "append",
+   "endswith",
+   "reverse"
+  ],
+  "varnames": [
+   "prefix",
+   "soft",
+   "taken",
+   "i",
+   "saw_colon",
+   "t"
+  ],
+  "consts": [
+   "The label sitting in front of a value, read right-to-left.\n\n    Two phases, because a value is not always glued to its label:\n\n        Supplier: 10098881 Gs Global Sourcing Co.,Ltd\n        ^label^   ^phase 1^ ^value\n\n    phase 1 swallows the data tokens wedged between the label and the value (they\n    become wildcards, so a different supplier code still matches); phase 2 takes\n    the label proper - its ``:`` terminator plus the words in front of it - and\n    stops at the next ``:`` or the next data token, so a neighbouring field never\n    leaks into the label.\n    ",
+   1,
+   0,
+   false,
+   ":",
+   true
+  ],
+  "n_instructions": 123
+ },
+ "<module>._trim_to_keyword": {
+  "names": [
+   "lower",
+   "split",
+   "range",
+   "len",
+   "list"
+  ],
+  "varnames": [
+   "tokens",
+   "prefer",
+   "norm",
+   "p",
+   "pw",
+   "i"
+  ],
+  "consts": [
+   "Drop leading tokens that sit in front of the expected field keyword.\n\n    ``LPP SA Supplier: 10098881`` -> ``Supplier: 10098881``: the brand tag ``LPP SA``\n    is a *different* field riding the same line, so we keep only from the field\n    keyword onward. Tokens are compared after stripping a trailing ``:``.\n    ",
+   1,
+   null
+  ],
+  "n_instructions": 70
+ },
+ "<module>._trim_to_keyword.<listcomp>": {
+  "names": [
+   "rstrip",
+   "lower"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   ":"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.synthesize_field_anchor": {
+  "names": [
+   "strip",
+   "re",
+   "compile",
+   "escape",
+   "len",
+   "split",
+   "enumerate",
+   "search",
+   "start",
+   "_label_tokens",
+   "end",
+   "rstrip",
+   "range",
+   "_generalize_prefix",
+   "join",
+   "any",
+   "_trim_to_keyword",
+   "error",
+   "group",
+   "append",
+   "sort"
+  ],
+  "varnames": [
+   "lines",
+   "doc",
+   "value",
+   "soft",
+   "prefer",
+   "pat_val",
+   "nwords",
+   "combos",
+   "oi",
+   "ln",
+   "m",
+   "prefix",
+   "ptoks",
+   "grp",
+   "take",
+   "ttk",
+   "parts",
+   "has_literal",
+   "pref_rank",
+   "_",
+   "anchor",
+   "mm"
+  ],
+  "consts": [
+   "``Label: value`` -> a regex whose group(1) captures exactly ``value``.\n\n    A value usually appears several times in a PO (multi-entity documents repeat\n    the header block). We keep the LONGEST label that round-trips (most specific,\n    least likely to grab the wrong field), but the *field* is chosen by the prefer\n    hint: LPP prints the vendor both as ``Supplier:`` and ``Agent:`` with the same\n    value - without the hint we would lock onto the shorter ``Agent:`` label and\n    capture the wrong party next time. A foreign brand tag in front of the field\n    keyword (``LPP SA`` before ``Supplier:``) is trimmed away.\n    ",
+   "",
+   "(?<!\\S)",
+   "(?!\\S)",
+   null,
+   1,
+   "(\\S+)",
+   "(.+)",
+   "(\\S+(?:\\s+\\S+){%d})",
+   0,
+   -1,
+   " ",
+   "\\s+",
+   "\\s*",
+   [
+    "key"
+   ],
+   3
+  ],
+  "n_instructions": 268
+ },
+ "<module>.synthesize_field_anchor.<genexpr>": {
+  "names": [
+   "lower"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 22
+ },
+ "<module>.synthesize_field_anchor.<lambda>": {
+  "names": [],
+  "varnames": [
+   "c"
+  ],
+  "consts": [
+   null,
+   0,
+   1,
+   2
+  ],
+  "n_instructions": 12
+ },
+ "<module>.apply_header_anchors": {
+  "names": [
+   "header",
+   "values",
+   "po_nos",
+   "all_lines",
+   "_HEADER_ANCHORS",
+   "get",
+   "strip",
+   "synthesize_field_anchor",
+   "_FIELD_LABEL_HINTS",
+   "setattr",
+   "append",
+   "orders",
+   "_date_variants",
+   "delivery_date",
+   "delivery_anchor",
+   "any",
+   "upper",
+   "packing_anchor",
+   "packing_method",
+   "len",
+   "set",
+   "channel_value",
+   "channel_anchor",
+   "re",
+   "escape"
+  ],
+  "varnames": [
+   "recipe",
+   "lines",
+   "doc",
+   "data",
+   "log",
+   "hdr",
+   "soft",
+   "done",
+   "key",
+   "attr",
+   "val",
+   "anchor",
+   "o",
+   "cand",
+   "pack",
+   "chans",
+   "nonblank"
+  ],
+  "consts": [
+   "Synthesize every header anchor we can; leave the rest at their defaults.",
+   "",
+   "product_desc",
+   "style_no",
+   [],
+   [
+    "prefer"
+   ],
+   "=",
+   "    · 表头 ",
+   " 未能定位到标签，沿用默认锚点",
+   "delivery_date",
+   "delivery=",
+   "packing_method",
+   "MULTIPACK",
+   "packing=",
+   1,
+   0,
+   "channel="
+  ],
+  "n_instructions": 297
+ },
+ "<module>.apply_header_anchors.<setcomp>": {
+  "names": [
+   "style"
+  ],
+  "varnames": [
+   ".0",
+   "l"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>.apply_header_anchors.<genexpr>": {
+  "names": [
+   "startswith"
+  ],
+  "varnames": [
+   ".0",
+   "d"
+  ],
+  "consts": [
+   "delivery=",
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>.apply_header_anchors.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>.synthesize_recipe": {
+  "names": [
+   "layout_type",
+   "LayoutType",
+   "LINE_ITEMS",
+   "value",
+   "UnsupportedLayout",
+   "doc_text",
+   "merge_wrapped_rows",
+   "locate_samples",
+   "line_count",
+   "len",
+   "join",
+   "SynthesisError",
+   "synthesize_line_pattern",
+   "PoRecipe",
+   "customer",
+   "bool",
+   "has_color_total",
+   "has_size_total",
+   "synthesize_entity_anchor",
+   "po_nos",
+   "entity_anchor",
+   "po_no_anchor",
+   "apply_header_anchors",
+   "any",
+   "size_encoding",
+   "dedup_style_size",
+   "header",
+   "values",
+   "synthesize_field_anchor"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "doc",
+   "lines",
+   "samples",
+   "missing",
+   "total",
+   "shown",
+   "pattern",
+   "unit",
+   "used",
+   "recipe",
+   "entity_anchor",
+   "po_no_anchor",
+   "done",
+   "soft",
+   "po",
+   "anc"
+  ],
+  "consts": [
+   "Build a candidate ``PoRecipe`` from the AI's reading. Not yet trusted.",
+   "版式 ",
+   " 是网格型，规则合成暂不支持（走旧推断链路）。",
+   [
+    "data"
+   ],
+   2,
+   "\n",
+   null,
+   5,
+   "AI 报告的 ",
+   " 行里只有 ",
+   " 行能在 PDF 原文中对上号，无法据此合成规则。",
+   "These lines you reported could NOT be found in the document text:\n",
+   "\n'raw_line' must be copied character-for-character from the document, tokens separated by single spaces.",
+   [
+    "ai_hint"
+   ],
+   "    · ",
+   " 行未能在原文定位，已从样例中剔除",
+   "    · 行规则由 ",
+   "/",
+   " 条真实样例归纳而成",
+   "    · line_pattern = ",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version",
+    "line_pattern",
+    "order_unit"
+   ],
+   "    · entity_anchor = ",
+   "",
+   "    · 未找到可复用的订单号标签，按单一订单处理",
+   [
+    "log"
+   ],
+   "    · 表头锚点：",
+   ", ",
+   "ratio_units",
+   "    · 检测到尺码比例/每码件数编码 (size_encoding=ratio_units)",
+   "MERCH FIRST VENDOR",
+   "STYLE UNITS CODE",
+   true,
+   "    · 检测到重复明细/汇总双表，开启按 (款/色/码) 去重",
+   "    · po_no_anchor = "
+  ],
+  "n_instructions": 335
+ },
+ "<module>.synthesize_recipe.<genexpr>": {
+  "names": [
+   "_RATIO_BLOCK",
+   "search",
+   "line"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.synthesize_recipe.<setcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>.is_control_sheet": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for the A&F Control Sheet architecture.",
+   "Control Sheet",
+   "Quantity:",
+   "Pack Ratio"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.synthesize_control_sheet_recipe": {
+  "names": [
+   "getattr",
+   "PoRecipe",
+   "LayoutType",
+   "CONTROL_SHEET",
+   "value",
+   "_CONTROL_SHEET_FIELDS",
+   "dict",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "customer",
+   "recipe"
+  ],
+  "consts": [
+   "Build a Control Sheet recipe. The anchors are generic ``Label: value``\n    patterns (see :data:`_CONTROL_SHEET_FIELDS`); no customer logic is hardcoded.\n    ``data`` may be None (structural path skips the AI read entirely).\n    ",
+   null,
+   "customer",
+   "",
+   "2",
+   "entity",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version",
+    "entity_anchor",
+    "field_map"
+   ],
+   false,
+   "  · 控制表版式：按 Label: value 表头字段解析（独立 control_sheet 规则）"
+  ],
+  "n_instructions": 46
+ },
+ "<module>.is_matrix_percarton": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for the FRANKIE per-carton matrix (size columns are\n    units-per-carton + a \"Total Units\" column).",
+   "Units / Carton",
+   "Units/Carton"
+  ],
+  "n_instructions": 12
+ },
+ "<module>.synthesize_matrix_percarton_recipe": {
+  "names": [
+   "getattr",
+   "PoRecipe",
+   "LayoutType",
+   "MATRIX_PERCARTON",
+   "value",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "customer",
+   "recipe"
+  ],
+  "consts": [
+   "Build a per-carton matrix recipe. The parser locates the grid structurally,\n    so the recipe only pins the layout_type (no anchors needed).",
+   null,
+   "customer",
+   "",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   false,
+   true,
+   "  · 每箱件数矩阵版式：按独立 matrix_percarton 规则解析"
+  ],
+  "n_instructions": 39
+ },
+ "<module>.is_line_items_eu": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for the Tally Weijl ORDER FORM (European line_items).",
+   "Tally Weijl",
+   "ORDER FORM"
+  ],
+  "n_instructions": 12
+ },
+ "<module>.is_costco_ecom": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for Costco US .com (line items + colour x label grid).",
+   "5 STAR APPAREL",
+   "US - ECOM",
+   "US-ECOM"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.is_costco_hybrid": {
+  "names": [
+   "bool",
+   "re",
+   "search",
+   "is_costco_ecom"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for Costco US 3-page hybrid (colour x size per-carton grid).",
+   "5 STAR APPAREL",
+   "Costco\\s+US\\s+in"
+  ],
+  "n_instructions": 21
+ },
+ "<module>.is_celio": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for CELIO France Implant-order PO (header fields +\n    two packaging blocks + size-breakdown matrix, EU decimals).",
+   "CELIO FRANCE",
+   "PURCHASE ORDER"
+  ],
+  "n_instructions": 12
+ },
+ "<module>._synthesize_structural_recipe": {
+  "names": [
+   "PoRecipe",
+   "value",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "fingerprint",
+   "layout_type",
+   "log",
+   "label",
+   "recipe"
+  ],
+  "consts": [
+   null,
+   "",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   false,
+   "  · ",
+   "版式：按独立 ",
+   " 规则解析"
+  ],
+  "n_instructions": 35
+ },
+ "<module>.synthesize_line_items_eu_recipe": {
+  "names": [
+   "_synthesize_structural_recipe",
+   "LayoutType",
+   "LINE_ITEMS_EU"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log"
+  ],
+  "consts": [
+   null,
+   "欧式行项目"
+  ],
+  "n_instructions": 10
+ },
+ "<module>.synthesize_costco_hybrid_recipe": {
+  "names": [
+   "_synthesize_structural_recipe",
+   "LayoutType",
+   "COSTCO_HYBRID"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log"
+  ],
+  "consts": [
+   null,
+   "Costco US 混合"
+  ],
+  "n_instructions": 10
+ },
+ "<module>.synthesize_costco_ecom_recipe": {
+  "names": [
+   "_synthesize_structural_recipe",
+   "LayoutType",
+   "COSTCO_ECOM",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "recipe"
+  ],
+  "consts": [
+   null,
+   "Costco US .com",
+   true
+  ],
+  "n_instructions": 15
+ },
+ "<module>.synthesize_celio_recipe": {
+  "names": [
+   "_synthesize_structural_recipe",
+   "LayoutType",
+   "CELIO"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log"
+  ],
+  "consts": [
+   null,
+   "CELIO France"
+  ],
+  "n_instructions": 10
+ },
+ "<module>.is_frankie_ecom": {
+  "names": [
+   "bool"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for the FRANKIE ECOM variant (WELL WORN / COSTCO TAIWAN\n    ECOM): the size columns carry TOTAL UNITS (not per-carton) and there is a\n    separate ``Cartons`` packing column beside ``Total Units``.\n\n    Deliberately excludes the per-carton FRANKIE matrix (handled by\n    :func:`is_matrix_percarton`, which is checked first and keys on\n    ``Units / Carton``). This variant prints ``Number of Units per Cartons`` and a\n    ``Total Units`` / ``Cartons`` header instead, so the two never collide.\n    ",
+   "Units / Carton",
+   "Units/Carton",
+   false,
+   "FRANKIE",
+   "Total Units",
+   "Cartons"
+  ],
+  "n_instructions": 26
+ },
+ "<module>.synthesize_frankie_ecom_recipe": {
+  "names": [
+   "getattr",
+   "PoRecipe",
+   "LayoutType",
+   "FRANKIE_ECOM",
+   "value",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "customer",
+   "recipe"
+  ],
+  "consts": [
+   "Build a FRANKIE ECOM recipe. The grid is located structurally, so the recipe\n    only pins the layout_type (no anchors needed, fully cacheable, zero AI).",
+   null,
+   "customer",
+   "",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   false,
+   true,
+   "  · FRANKIE ECOM 版式：按独立 frankie_ecom 规则解析（尺寸列即 PCS 总量，Cartons 列忽略）"
+  ],
+  "n_instructions": 39
+ },
+ "<module>.is_bass_pro_ack": {
+  "names": [
+   "bool",
+   "re",
+   "search"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for a Bass Pro Shops Order Acknowledgement: an\n    ``Order Acknowledgement`` header, the ``SKU/Cust Style`` grid label, and the\n    ``Size >`` / ``Qty >`` colour x size rows (no TOTAL column).",
+   "Order Acknowledgement",
+   "SKU/Cust Style",
+   "Size\\s*>",
+   "Qty\\s*>"
+  ],
+  "n_instructions": 26
+ },
+ "<module>.synthesize_bass_pro_ack_recipe": {
+  "names": [
+   "PoRecipe",
+   "LayoutType",
+   "BASS_PRO_ACK",
+   "value",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "recipe"
+  ],
+  "consts": [
+   "Build a Bass Pro Order Acknowledgement recipe. The grid is located\n    structurally, so the recipe only pins the layout_type (no anchors needed).",
+   "BASS PRO SHOPS",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   true,
+   false,
+   "  · BASS PRO 订单确认版式：按独立 bass_pro_ack 规则解析（SKU 行 + Size>/Qty> 色×码矩阵）"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.is_import_po": {
+  "names": [
+   "re",
+   "search",
+   "bool",
+   "M"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for a TJX-style Import PO fixed-column item table:\n    the ``PG/LN ... COLOR ... DETAILED DESCRIPTION ... UNITS SETS BOX`` header\n    AND at least one item row (``N/N CATG LOCAL COST COLOR ...``). Deliberately\n    excludes the FRANKIE / BPS / matrix layouts.",
+   "PG/LN",
+   "DETAILED DESCRIPTION",
+   "\\bUNITS\\b",
+   "\\bSETS\\b",
+   "\\bBOX\\b",
+   false,
+   "^\\d+[/-]\\d+\\s+\\d+\\s+\\d+\\s+[\\d.,]+\\s+\\S+"
+  ],
+  "n_instructions": 50
+ },
+ "<module>.synthesize_import_po_recipe": {
+  "names": [
+   "getattr",
+   "PoRecipe",
+   "LayoutType",
+   "IMPORT_PO",
+   "value",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "customer",
+   "recipe"
+  ],
+  "consts": [
+   "Build a TJX Import PO recipe. The item table is column-fixed and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).",
+   null,
+   "customer",
+   "",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   false,
+   "  · Import PO 固定列版式：按独立 import_po 规则解析（COLOR 列即颜色代码）"
+  ],
+  "n_instructions": 39
+ },
+ "<module>.is_anf_commitment": {
+  "names": [
+   "bool",
+   "re",
+   "search"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   "Structural signal for an A&F Commitment sheet: a ``Commitment #`` number,\n    a ``Key Item`` number, and a ``Tech Pack #`` - one commitment per file. A PO\n    PDF uses ``Commitment:`` (colon) and never carries ``Key Item`` / ``Tech Pack #``,\n    so the two layouts are disjoint.",
+   "Commitment\\s*#\\s*\\d+",
+   "Key\\s+Item\\s+\\d+",
+   "Tech\\s+Pack\\s*#"
+  ],
+  "n_instructions": 25
+ },
+ "<module>.synthesize_anf_commitment_recipe": {
+  "names": [
+   "PoRecipe",
+   "LayoutType",
+   "ANF_COMMITMENT",
+   "value"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "recipe"
+  ],
+  "consts": [
+   "Build an A&F Commitment recipe. The sheet is header-only and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).",
+   "Abercrombie & Fitch",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   "  · ANF Commitment 版式：结构化抽取（Commitment # / Key Item / Tech Pack #）"
+  ],
+  "n_instructions": 22
+ },
+ "<module>.is_anf_po": {
+  "names": [
+   "lower",
+   "re",
+   "search"
+  ],
+  "varnames": [
+   "text",
+   "t",
+   "brand"
+  ],
+  "consts": [
+   "Structural signal for an A&F Purchase Order: A&F / AFH / Hollister\n    issuer, a ``Purchase Order:`` header, a ``Commitment:`` reference, and at\n    least one long-SKU summary row (``ddd-ddd-ddddd-STYLE-COLOR-SIZECODE``).",
+   "abercrombie",
+   "hollister",
+   "\\bafh\\b",
+   false,
+   "purchase order:",
+   "commitment:",
+   "\\d+-\\d+-\\d+-\\d+-\\d+-\\d+",
+   true
+  ],
+  "n_instructions": 48
+ },
+ "<module>.synthesize_anf_po_recipe": {
+  "names": [
+   "getattr",
+   "PoRecipe",
+   "LayoutType",
+   "ANF_PO",
+   "value"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "customer",
+   "recipe"
+  ],
+  "consts": [
+   "Build an A&F PO recipe. The SKU summary rows are column-fixed and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).",
+   null,
+   "customer",
+   "",
+   "Abercrombie & Fitch",
+   "2",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version"
+   ],
+   "  · ANF PO 版式：结构化抽取（PO SKU Summary 长 SKU 行）"
+  ],
+  "n_instructions": 35
+ },
+ "<module>.VerifyReport": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "ok",
+   "__annotations__",
+   "field",
+   "list",
+   "problems",
+   "parsed_rows",
+   "expected_rows",
+   "parsed_qty",
+   "expected_qty",
+   "parsed_pos",
+   "expected_pos",
+   "extra_rows",
+   "notes",
+   "text",
+   "ai_hint"
+  ],
+  "varnames": [],
+  "consts": [
+   "VerifyReport",
+   false,
+   "bool",
+   "ok",
+   [
+    "default_factory"
+   ],
+   "List[str]",
+   "problems",
+   0,
+   "int",
+   "parsed_rows",
+   "expected_rows",
+   "parsed_qty",
+   "expected_qty",
+   "parsed_pos",
+   "expected_pos",
+   "extra_rows",
+   "notes",
+   "return",
+   "str",
+   null,
+   [
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 101
+ },
+ "<module>.VerifyReport.text": {
+  "names": [
+   "parsed_rows",
+   "parsed_qty",
+   "expected_rows",
+   "expected_qty",
+   "problems",
+   "join",
+   "notes"
+  ],
+  "varnames": [
+   "self",
+   "head",
+   "body"
+  ],
+  "consts": [
+   null,
+   "离线回放 ",
+   " 行 / ",
+   " 件（AI 读到 ",
+   " 件）",
+   "；",
+   ""
+  ],
+  "n_instructions": 52
+ },
+ "<module>.VerifyReport.ai_hint": {
+  "names": [
+   "parsed_rows",
+   "parsed_qty",
+   "sorted",
+   "set",
+   "parsed_pos",
+   "expected_rows",
+   "expected_qty",
+   "expected_pos",
+   "problems",
+   "append",
+   "join"
+  ],
+  "varnames": [
+   "self",
+   "bits"
+  ],
+  "consts": [
+   null,
+   "A rule was synthesized from your answer and replayed over the same document. The result does NOT agree with what you reported:",
+   "  rule found : ",
+   " order rows, ",
+   " pcs total, PO numbers ",
+   "  you  said  : ",
+   " sample rows, ",
+   " pcs (printed total), PO numbers ",
+   "Problems found:",
+   8,
+   "Re-read the document: report 'block_total_qty' from the printed TOTAL row for each PO, and a representative SAMPLE of order lines (you do not need to list every line). Answer again with corrected JSON.",
+   "\n"
+  ],
+  "n_instructions": 77
+ },
+ "<module>.VerifyReport.ai_hint.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   "  - "
+  ],
+  "n_instructions": 12
+ },
+ "<module>._amount_misread_rows": {
+  "names": [
+   "_doc_lines",
+   "doc_text",
+   "split",
+   "_TOTAL_LABEL",
+   "match",
+   "len",
+   "_QTY_TOKEN",
+   "_MONEY_TOKEN",
+   "_num",
+   "int",
+   "setdefault"
+  ],
+  "varnames": [
+   "pages",
+   "out",
+   "ln",
+   "toks",
+   "qty",
+   "amt"
+  ],
+  "consts": [
+   "Map ``{printed quantity -> printed amount}`` for two-number total rows.\n\n    An LPP block total prints as a bare, UNLABELLED two-number row::\n\n        8000 81,600.00        <- Quantity | Total Amount\n\n    Nothing on that row names its columns, so a model asked for the block total\n    sometimes copies the AMOUNT instead of the QUANTITY. Collect every row of\n    that exact shape, so :func:`verify_recipe` can recognise the misread rather\n    than blame the parser - whose figure is the sum of the printed detail rows\n    and is the correct one.\n\n    The shape is deliberately narrow (an optional TOTAL-ish word, then exactly\n    one bare integer and one 2-decimal money token) so genuine detail rows,\n    which always carry a style code, a colour and a unit, can never match.\n    ",
+   0,
+   1,
+   null,
+   2
+  ],
+  "n_instructions": 120
+ },
+ "<module>._explains_amount_misread": {
+  "names": [
+   "get",
+   "abs",
+   "max"
+  ],
+  "varnames": [
+   "mis",
+   "parsed",
+   "expected",
+   "amt"
+  ],
+  "consts": [
+   "True when ``expected`` is the AMOUNT printed beside quantity ``parsed``.\n\n    That combination means the document itself corroborates the parser: the row\n    it summed to ``parsed`` is printed verbatim, and the model's disagreeing\n    figure is simply the neighbouring money column.\n    ",
+   0,
+   false,
+   null,
+   2.0,
+   0.02
+  ],
+  "n_instructions": 56
+ },
+ "<module>.verify_recipe": {
+  "names": [
+   "VerifyReport",
+   "line_count",
+   "total_qty",
+   "po_nos",
+   "registry",
+   "parse",
+   "Exception",
+   "problems",
+   "append",
+   "sum",
+   "entities",
+   "parsed_rows",
+   "parsed_qty",
+   "parsed_pos",
+   "expected_rows",
+   "get",
+   "po_no",
+   "qty_by_po",
+   "bool",
+   "expected_pos",
+   "set",
+   "_amount_misread_rows",
+   "expected_qty",
+   "sorted",
+   "_explains_amount_misread",
+   "notes",
+   "_thousands_match",
+   "validate",
+   "validate_breakdown",
+   "message",
+   "ok"
+  ],
+  "varnames": [
+   "pages",
+   "recipe",
+   "data",
+   "source_file",
+   "rep",
+   "po",
+   "e",
+   "got",
+   "ent",
+   "want",
+   "pos_match",
+   "mis",
+   "exp_total",
+   "k",
+   "g",
+   "w",
+   "validate_breakdown",
+   "bp"
+  ],
+  "consts": [
+   "Replay the candidate recipe offline and hard-compare against the AI data.",
+   [
+    "expected_rows",
+    "expected_qty",
+    "expected_pos"
+   ],
+   [
+    "source_file"
+   ],
+   "回放解析异常：",
+   null,
+   "回放仅得 ",
+   " 行，少于 AI 样本数 ",
+   "，规则可能过严（漏抽真实行）",
+   0,
+   "订单 ",
+   " 的 AI 合计 ",
+   " 实为金额列（同行数量列 ",
+   "），已按文档校正",
+   "AI 合计 ",
+   "总数量不符（",
+   " vs ",
+   "）",
+   "订单号集合不符（",
+   " 数量不符（",
+   1,
+   [
+    "validate_breakdown"
+   ]
+  ],
+  "n_instructions": 381
+ },
+ "<module>.verify_recipe.<listcomp>": {
+  "names": [
+   "po_no"
+  ],
+  "varnames": [
+   ".0",
+   "ent"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>.verify_recipe.<genexpr>": {
+  "names": [
+   "lines",
+   "len",
+   "sizes"
+  ],
+  "varnames": [
+   ".0",
+   "ent",
+   "ln"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 23
+ },
+ "<module>._rows_only_the_rule_found": {
+  "names": [
+   "all_lines",
+   "re",
+   "compile",
+   "line_pattern",
+   "error",
+   "_doc_lines",
+   "doc_text",
+   "match",
+   "_norm_ws",
+   "split",
+   "any",
+   "append"
+  ],
+  "varnames": [
+   "pages",
+   "recipe",
+   "data",
+   "seen",
+   "out",
+   "rx",
+   "ln",
+   "n",
+   "toks"
+  ],
+  "consts": [
+   "Document rows the synthesized rule matched but the AI never reported."
+  ],
+  "n_instructions": 113
+ },
+ "<module>._rows_only_the_rule_found.<setcomp>": {
+  "names": [
+   "locator"
+  ],
+  "varnames": [
+   ".0",
+   "l"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>._rows_only_the_rule_found.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._short_json_err": {
+  "names": [
+   "str",
+   "len"
+  ],
+  "varnames": [
+   "e",
+   "msg"
+  ],
+  "consts": [
+   "Compress a parse error into a concise hint for the model's next attempt.",
+   400,
+   null,
+   "…"
+  ],
+  "n_instructions": 23
+ },
+ "<module>.detect_structural_layout": {
+  "names": [
+   "is_control_sheet",
+   "LayoutType",
+   "CONTROL_SHEET",
+   "value",
+   "is_matrix_percarton",
+   "MATRIX_PERCARTON",
+   "_STRUCTURAL_DETECTORS"
+  ],
+  "varnames": [
+   "text",
+   "_detect",
+   "_label",
+   "_synth",
+   "_layout"
+  ],
+  "consts": [
+   "Return the layout_type the current structural detectors would choose.\n\n    This is a cheap, parser-free mirror of the structural branch in\n    ``acquire_recipe``. It lets the UI invalidate a cached recipe when the\n    app's detector set has changed (e.g. a new layout is added or an old one\n    is split), so a stale ``matrix_percarton`` cache can never block the new\n    ``frankie_ecom`` detector.\n    ",
+   null
+  ],
+  "n_instructions": 40
+ },
+ "<module>.acquire_recipe": {
+  "names": [
+   "matrix_synth",
+   "synthesize_matrix_recipe",
+   "doc_text",
+   "is_control_sheet",
+   "parsers",
+   "registry",
+   "synthesize_control_sheet_recipe",
+   "parse",
+   "entities",
+   "customer",
+   "len",
+   "total_qty",
+   "note",
+   "is_matrix_percarton",
+   "synthesize_matrix_percarton_recipe",
+   "sum",
+   "_STRUCTURAL_DETECTORS",
+   "layout_type",
+   "range",
+   "extract_po_data",
+   "ValueError",
+   "_short_json_err",
+   "summary",
+   "synthesize_recipe",
+   "UnsupportedLayout",
+   "SynthesisError",
+   "str",
+   "ai_hint",
+   "MAX_MATRIX_TRIES",
+   "parsed_rows",
+   "parsed_qty",
+   "verify_recipe",
+   "ok",
+   "text",
+   "_ESCAPE_HATCH"
+  ],
+  "varnames": [
+   "pages",
+   "fingerprint",
+   "customer",
+   "cfg",
+   "source_file",
+   "max_tries",
+   "log",
+   "seed_hint",
+   "_log",
+   "synthesize_matrix_recipe",
+   "text",
+   "_registry",
+   "recipe",
+   "po",
+   "_detect",
+   "_label",
+   "_synth",
+   "_layout",
+   "hint",
+   "last",
+   "json_failed",
+   "matrix_tries",
+   "last_data",
+   "attempt",
+   "data",
+   "e",
+   "unsupported",
+   "rep"
+  ],
+  "consts": [
+   "AI reads the PO -> code synthesizes a rule -> the rule must replay exactly.\n\n    On success the returned recipe is safe to cache: every later PO of the same\n    layout is parsed offline with zero AI calls. On failure this raises rather\n    than exporting numbers nobody has checked.\n    ",
+   "msg",
+   "str",
+   "return",
+   "None",
+   1,
+   [
+    "synthesize_matrix_recipe"
+   ],
+   "  · 控制表版式：纯结构化抽取（Label: value，无需 AI）…",
+   [
+    "registry"
+   ],
+   [
+    "fingerprint",
+    "log"
+   ],
+   [
+    "source_file"
+   ],
+   "auto-synth control_sheet · ",
+   " POs / ",
+   " pcs · structural (no AI)",
+   "  ✓ 控制表结构化抽取：",
+   " 份 PO / ",
+   " 件",
+   null,
+   "  × 控制表结构化抽取为空，回退常规 AI 流程…",
+   "  · 每箱件数矩阵版式：纯结构化抽取（无需 AI）…",
+   "auto-synth matrix_percarton · ",
+   " colors / ",
+   " pcs (per-carton) · structural (no AI)",
+   "  ✓ 每箱件数矩阵抽取：",
+   " 色 / 每箱合计 ",
+   "  × 每箱件数矩阵抽取为空，回退常规 AI 流程…",
+   "  · ",
+   "版式：纯结构化抽取（无需 AI）…",
+   "auto-synth ",
+   " · ",
+   "  ✓ ",
+   "抽取：",
+   " 实体 / ",
+   "  × ",
+   "抽取为空，回退常规 AI 流程…",
+   "",
+   false,
+   0,
+   "  AI 读单（第 ",
+   "/",
+   " 次）…",
+   [
+    "customer",
+    "cfg",
+    "extra_hint",
+    "seed_hint"
+   ],
+   true,
+   "  × AI 返回无法解析（第 ",
+   " 次）：",
+   "  AI 读到：",
+   "  · 版式为网格型，改用结构化网格定位（无需二次 AI）…",
+   [
+    "fingerprint",
+    "source_file",
+    "log"
+   ],
+   "  × 网格规则自动合成失败：",
+   "  ✓ 网格规则自动合成并通过回放校验：",
+   " 行 / ",
+   "  × 规则合成失败：",
+   "  ✓ 离线回放校验通过：",
+   "auto-synth v2 · ",
+   " rows / ",
+   " pcs · verified by offline replay",
+   "  × 回放校验不通过：",
+   "  ✓ 改按网格版式自动合成并通过回放校验：",
+   "已连续 ",
+   " 次尝试，AI 返回的内容仍无法解析为有效 JSON（可能输出被截断或缺少逗号）。请稍后重试，或在左栏勾选『高级：推断后人工确认配方』手动处理该 PDF。\n最后一次错误：",
+   " 次尝试，合成的解析规则仍无法复现 AI 读到的数据，为避免导出错误数字，已停止处理该文件。\n最后一次差异：",
+   [
+    "msg",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 727
+ },
+ "<module>.acquire_recipe._log": {
+  "names": [],
+  "varnames": [
+   "msg"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.acquire_recipe.<genexpr>": {
+  "names": [
+   "len",
+   "lines"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>._make_page": {
+  "names": [
+   "enumerate",
+   "split",
+   "append",
+   "Token",
+   "PageWords",
+   "max",
+   "len"
+  ],
+  "varnames": [
+   "lines",
+   "pi",
+   "toks",
+   "yi",
+   "line",
+   "xi",
+   "w"
+  ],
+  "consts": [
+   "Build a real PageWords from probe text (tokens with synthetic coords).",
+   40.0,
+   12.0,
+   30.0,
+   10.0,
+   [
+    "text",
+    "x0",
+    "y0",
+    "x1",
+    "y1",
+    "page"
+   ],
+   0.0,
+   [
+    "default"
+   ],
+   [
+    "page",
+    "width",
+    "height",
+    "tokens"
+   ]
+  ],
+  "n_instructions": 81
+ },
+ "<module>._make_page.<genexpr>": {
+  "names": [
+   "x1"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.<lambda>": {
+  "names": [
+   "print",
+   "strip"
+  ],
+  "varnames": [
+   "m"
+  ],
+  "consts": [
+   null,
+   "   "
+  ],
+  "n_instructions": 10
+ },
+ "<module>.<setcomp>": {
+  "names": [
+   "po_no"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [],
+  "n_instructions": 10
+ }
+}

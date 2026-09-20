@@ -1,0 +1,2509 @@
+# module: core.ai.data_extract
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\data_extract.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/ai/data_extract.py - the AI READS the purchase order and returns DATA.\n\nWhy this module exists\n----------------------\nV2.0.0 asked the model to *author* a ``line_pattern`` regular expression. Measured\non one real LPP PO with GLM-4.6V, five independent inferences produced four\nunusable recipes (0 matched rows) and one correct one. Regex authoring is a\nbrittle task for an LLM: the output must be character-exact and the model has no\nway to verify it before answering.\n\nV1.5 - which was reliable in production - never asked the model for a regex. It\nasked for the ORDER DATA and let code do the structural work. This module\nrestores that division of labour:\n\n    AI    -> reading comprehension: which rows are real order lines, and what do\n             they say.\n    code  -> rule synthesis (``core/recipe_synth.py`` turns the AI's verbatim\n             sample lines into a cacheable ``PoRecipe``) and verification.\n\nThe returned object is deliberately NOT a ``PurchaseOrder``. It is the ground\ntruth used first to SYNTHESIZE a recipe and then to VERIFY that recipe by\nreplaying it offline. Only a recipe that reproduces this data exactly is allowed\ninto the fingerprint cache.\n\nOnly stdlib (urllib) is used for the online call, matching ``recipe_infer``.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 27           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 29          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 30          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 31          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (re)
+             40 STORE_NAME               5 (re)
+
+ 32          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (('dataclass', 'field'))
+             46 IMPORT_NAME              6 (dataclasses)
+             48 IMPORT_FROM              7 (dataclass)
+             50 STORE_NAME               7 (dataclass)
+             52 IMPORT_FROM              8 (field)
+             54 STORE_NAME               8 (field)
+             56 POP_TOP
+
+ 33          58 LOAD_CONST               1 (0)
+             60 LOAD_CONST               5 (('Dict', 'List', 'Optional'))
+             62 IMPORT_NAME              9 (typing)
+             64 IMPORT_FROM             10 (Dict)
+             66 STORE_NAME              10 (Dict)
+             68 IMPORT_FROM             11 (List)
+             70 STORE_NAME              11 (List)
+             72 IMPORT_FROM             12 (Optional)
+             74 STORE_NAME              12 (Optional)
+             76 POP_TOP
+
+ 35          78 LOAD_CONST               6 (1)
+             80 LOAD_CONST               7 (('compress_doc_text',))
+             82 IMPORT_NAME             13 (doc_compress)
+             84 IMPORT_FROM             14 (compress_doc_text)
+             86 STORE_NAME              14 (compress_doc_text)
+             88 POP_TOP
+
+ 36          90 LOAD_CONST               6 (1)
+             92 LOAD_CONST               8 (('post_json',))
+             94 IMPORT_NAME             15 (http_util)
+             96 IMPORT_FROM             16 (post_json)
+             98 STORE_NAME              16 (post_json)
+            100 POP_TOP
+
+ 38         102 LOAD_CONST               9 ('Purchase Order Extractor V2')
+            104 STORE_NAME              17 (APP_NAME)
+
+ 42         106 LOAD_CONST              10 (('season', 'currency', 'price_term', 'payment_terms', 'port_loading', 'port_discharge', 'ship_mode', 'vendor_name', 'agent_name', 'packing_method', 'product_desc', 'style_no', 'order_date', 'import_po_no', 'reference_no', 'cir_no', 'freight_terms', 'country_of_origin', 'dc_address'))
+            108 STORE_NAME              18 (HEADER_FIELDS)
+
+ 52         110 LOAD_CONST              11 ('You are a purchase-order READER.\nYou do NOT write code. You do NOT write regular expressions. You only read the\ndocument and report what it says, as one JSON object. No prose, no markdown\noutside the JSON.\n\nOutput schema:\n{\n  "customer": "sold-to / brand name, e.g. LPP SA",\n  "layout_type": "line_items" | "matrix_2axis" | "matrix_1axis",\n  "has_color_total": true,\n  "has_size_total": true,\n    "header": {\n    "season": "", "currency": "", "price_term": "", "payment_terms": "",\n    "port_loading": "", "port_discharge": "", "ship_mode": "",\n    "vendor_name": "", "agent_name": "", "packing_method": "",\n    "product_desc": "", "style_no": "", "order_date": "",\n    "import_po_no": "", "reference_no": "", "cir_no": "",\n    "freight_terms": "", "country_of_origin": "", "dc_address": ""\n  },\n  "orders": [\n    {\n      "po_no": "the ORDER NUMBER itself, never the block index",\n      "channel": "",\n      "delivery_date": "YYYY-MM-DD",\n      "block_total_qty": "the printed TOTAL quantity for this PO, read from its TOTAL/subtotal row. IMPORTANT number format: in these documents a DOT is a THOUSANDS separator and a COMMA is a decimal point (European notation). So \'26.000\' means 26000 pieces (NOT 26.0) and \'158,00\' means 158.00. Always report the full integer - e.g. 26000, never drop the thousands.",\n      "lines": [\n        {\n          "raw_line": "the COMPLETE original text line, copied VERBATIM",\n          "index_no": "the item/index code exactly as printed",\n          "style": "", "color_code": "", "color_desc": "", "size": "",\n          "unit": "PCS",\n          "qty": 744,\n          "unit_price": 10.20\n        }\n      ]\n    }\n  ]\n}\n\nlayout_type meanings:\n  line_items   - one row per style/colour/size with a quantity (e.g. LPP SA).\n  matrix_2axis - colour blocks, each a size x inseam grid (e.g. COLIN\'S trousers).\n  matrix_1axis - colour blocks, each a single row of sizes (e.g. SAKHA).\n\n"has_color_total" / "has_size_total": whether the document prints SUBTOTALS the\n  system can cross-check its own extraction against.\n    * line_items layouts print ONLY a block GRAND TOTAL - set BOTH to false.\n    * matrix (colour-grid) layouts print a per-row/per-colour TOTAL column and a\n      bottom TOTAL row per size -> set BOTH to true.\n  When unsure, true is the safer choice (the system still verifies the totals\n  agree with what it parses before trusting them).\n\nHARD RULES - breaking any of these makes the whole answer useless:\n\n1. "raw_line" MUST be copied character-for-character from the document text\n   below: same tokens, same order, same spelling, single spaces between tokens.\n   Do NOT reformat, translate, abbreviate, re-order or "clean up" anything.\n   This string is used to find the row again in the document.\n\n2. List EVERY order block in "orders" with its "po_no" and its\n   "block_total_qty" - none may be omitted; these totals are the reference the\n   system checks its own extraction against.\n   Order LINES, by contrast, are only a REPRESENTATIVE SAMPLE - just enough to\n   infer the row structure. Report AT MOST 8 lines per order block AND AT MOST\n   24 lines for the WHOLE document (fewer is fine). When a document has many\n   blocks, sample a few lines from a couple of blocks and leave "lines" empty\n   for the rest - the blocks repeat the same row structure, and the system\n   extracts every row itself from the document. Prefer rows that differ in\n   shape over near-identical ones.\n   Always report "block_total_qty" (the printed total for that PO, its TOTAL row).\n   A total row is often UNLABELLED and prints two numbers - the QUANTITY first,\n   the MONEY amount second, matching the column header "... Quantity Price\n   Total Amount". For "8000 81,600.00" the block_total_qty is 8000, NOT 81600:\n   the token carrying decimals is money, never a quantity. Quantities are whole\n   pieces, so block_total_qty must equal the sum of that block\'s line\n   quantities - check it before you answer.\n\n3. A REAL order line is a PRICED DETAIL ROW: it carries a description/colour\n   block AND a unit price. Example:\n       637JO-80X-S MEN`S TROUSERS 80X 80X BEIGE PCS 744 10.20 7,588.80\n   These look-alike rows are NOT order lines - never report them:\n     * pack break-up rows, e.g.  637JO-80X-T01 PACK 2 186 372\n       (the "2" is pieces-per-pack, not an ordered quantity)\n     * bare sub-breakdown rows, e.g.  637JO-80X-S PCS 372\n       (no description, no colour, no unit price - a partial restatement)\n     * TOTAL / SUBTOTAL / SUMMARY / grand-total rows.\n\n4. "qty" is a plain integer, no thousands separator. "unit_price" is a plain\n   number (e.g. 10.20 not "$10.20"). Report unit_price for EVERY order line\n   that shows one - it is the per-piece price of that SKU/colour/size. If the\n   document prints a UNIT PRICE column or a per-line price token, include it.\n   If the document does not print unit prices at all for a given line, use null\n   (the system will then use the header-level price if one is available).\n\n5. TOTALS use European number format: a DOT groups thousands, a COMMA is the\n   decimal point. "26.000" = 26000 pieces, "1.234" = 1234, "158,00" = 158.00.\n   When you report "block_total_qty" (or any "qty") copy the full integer the\n   printed TOTAL row shows - "26.000" must be reported as 26000, never as 26.\n\n6. Group the lines under the order (PO) they belong to. A document that repeats\n   blocks like "Entity 1 Order No: 11321589" has ONE order per block, and the\n   order number is 11321589 - the "1" is only a block index. If the document\n   holds a single order, return one element in "orders".\n\n7. Use "" for anything the document does not state. NEVER invent a value.\n\n8. Output ONE compact JSON object: no indentation, no line breaks inside the\n   JSON, no comments, no trailing commas, no "...". Every key and string value\n   must be double-quoted. Keep it valid and complete - a dropped comma or a\n   cut-off tail is the most common failure.\n\nReturn only the JSON object.')
+            112 STORE_NAME              19 (DATA_SYSTEM_PROMPT)
+
+169         114 LOAD_NAME                7 (dataclass)
+
+170         116 PUSH_NULL
+            118 LOAD_BUILD_CLASS
+            120 LOAD_CONST              12 (<code object ExtractedLine at 0x000002BF946C5CF0, file "core\ai\data_extract.py", line 169>)
+            122 MAKE_FUNCTION            0
+            124 LOAD_CONST              13 ('ExtractedLine')
+            126 PRECALL                  2
+            130 CALL                     2
+
+169         140 PRECALL                  0
+            144 CALL                     0
+
+170         154 STORE_NAME              20 (ExtractedLine)
+
+188         156 LOAD_NAME                7 (dataclass)
+
+189         158 PUSH_NULL
+            160 LOAD_BUILD_CLASS
+            162 LOAD_CONST              14 (<code object ExtractedOrder at 0x000002BF9473D7F0, file "core\ai\data_extract.py", line 188>)
+            164 MAKE_FUNCTION            0
+            166 LOAD_CONST              15 ('ExtractedOrder')
+            168 PRECALL                  2
+            172 CALL                     2
+
+188         182 PRECALL                  0
+            186 CALL                     0
+
+189         196 STORE_NAME              21 (ExtractedOrder)
+
+203         198 LOAD_NAME                7 (dataclass)
+
+204         200 PUSH_NULL
+            202 LOAD_BUILD_CLASS
+            204 LOAD_CONST              16 (<code object ExtractedData at 0x000002BF946C1E90, file "core\ai\data_extract.py", line 203>)
+            206 MAKE_FUNCTION            0
+            208 LOAD_CONST              17 ('ExtractedData')
+            210 PRECALL                  2
+            214 CALL                     2
+
+203         224 PRECALL                  0
+            228 CALL                     0
+
+204         238 STORE_NAME              22 (ExtractedData)
+
+248         240 LOAD_CONST              57 (('content', 'str', 'return', 'str'))
+            242 LOAD_CONST              21 (<code object _extract_json at 0x000002BF94A01960, file "core\ai\data_extract.py", line 248>)
+            244 MAKE_FUNCTION            4 (annotations)
+            246 STORE_NAME              23 (_extract_json)
+
+261         248 LOAD_CONST              58 (('return', 'int'))
+            250 LOAD_CONST              23 (<code object _as_int at 0x000002BF944645E0, file "core\ai\data_extract.py", line 261>)
+            252 MAKE_FUNCTION            4 (annotations)
+            254 STORE_NAME              24 (_as_int)
+
+277         256 LOAD_CONST              59 (('return', 'Optional[float]'))
+            258 LOAD_CONST              25 (<code object _as_float at 0x000002BF940DE240, file "core\ai\data_extract.py", line 277>)
+            260 MAKE_FUNCTION            4 (annotations)
+            262 STORE_NAME              25 (_as_float)
+
+295         264 LOAD_CONST              60 (('return', 'str'))
+            266 LOAD_CONST              26 (<code object _as_str at 0x000002BF946AAA30, file "core\ai\data_extract.py", line 295>)
+            268 MAKE_FUNCTION            4 (annotations)
+            270 STORE_NAME              26 (_as_str)
+
+304         272 LOAD_CONST              61 (('return', 'bool'))
+            274 LOAD_CONST              28 (<code object _as_bool at 0x000002BF946C21F0, file "core\ai\data_extract.py", line 304>)
+            276 MAKE_FUNCTION            4 (annotations)
+            278 STORE_NAME              27 (_as_bool)
+
+316         280 LOAD_CONST              62 (('js', 'str', 'return', 'str'))
+            282 LOAD_CONST              30 (<code object _strip_trailing_commas at 0x000002BF94AA8E40, file "core\ai\data_extract.py", line 316>)
+            284 MAKE_FUNCTION            4 (annotations)
+            286 STORE_NAME              28 (_strip_trailing_commas)
+
+323         288 PUSH_NULL
+            290 LOAD_NAME                5 (re)
+            292 LOAD_ATTR               29 (compile)
+            302 LOAD_CONST              31 ('([}\\]"])(\\s*)([{["\\d-])')
+            304 PRECALL                  1
+            308 CALL                     1
+            318 STORE_NAME              30 (_MISSING_COMMA)
+
+326         320 LOAD_CONST              62 (('js', 'str', 'return', 'str'))
+            322 LOAD_CONST              32 (<code object _repair_missing_commas at 0x000002BF94AA95C0, file "core\ai\data_extract.py", line 326>)
+            324 MAKE_FUNCTION            4 (annotations)
+            326 STORE_NAME              31 (_repair_missing_commas)
+
+335         328 LOAD_CONST              62 (('js', 'str', 'return', 'str'))
+            330 LOAD_CONST              33 (<code object _maybe_close at 0x000002BF940DE4A0, file "core\ai\data_extract.py", line 335>)
+            332 MAKE_FUNCTION            4 (annotations)
+            334 STORE_NAME              32 (_maybe_close)
+
+362         336 LOAD_CONST              63 (('js', 'str', 'return', 'dict'))
+            338 LOAD_CONST              35 (<code object _load_json_lenient at 0x000002BF940C7410, file "core\ai\data_extract.py", line 362>)
+            340 MAKE_FUNCTION            4 (annotations)
+            342 STORE_NAME              33 (_load_json_lenient)
+
+388         344 LOAD_CONST              64 (('content', 'str', 'return', 'ExtractedData'))
+            346 LOAD_CONST              36 (<code object parse_data_response at 0x000002BF940D1850, file "core\ai\data_extract.py", line 388>)
+            348 MAKE_FUNCTION            4 (annotations)
+            350 STORE_NAME              34 (parse_data_response)
+
+474         352 LOAD_CONST              65 (('', ''))
+            354 LOAD_CONST              66 (('doc_text', 'str', 'customer', 'str', 'extra_hint', 'str', 'return', 'tuple'))
+            356 LOAD_CONST              42 (<code object build_data_prompt at 0x000002BF94A65680, file "core\ai\data_extract.py", line 474>)
+            358 MAKE_FUNCTION            5 (defaults, annotations)
+            360 STORE_NAME              35 (build_data_prompt)
+
+490         362 LOAD_CONST              67 (('return', 'dict'))
+            364 LOAD_CONST              43 (<code object load_ai_config at 0x000002BF940800D0, file "core\ai\data_extract.py", line 490>)
+            366 MAKE_FUNCTION            4 (annotations)
+            368 STORE_NAME              36 (load_ai_config)
+
+504         370 LOAD_CONST              44 (60000)
+            372 STORE_NAME              37 (MAX_INPUT_CHARS)
+
+505         374 LOAD_CONST              45 (16384)
+            376 STORE_NAME              38 (MAX_OUTPUT_TOKENS)
+
+506         378 LOAD_CONST              46 (300)
+            380 STORE_NAME              39 (HTTP_TIMEOUT)
+
+516         382 LOAD_CONST              47 (118.0)
+            384 STORE_NAME              40 (READ_BUDGET)
+
+519         386 LOAD_CONST              68 (('cfg', 'dict', 'return', 'dict'))
+            388 LOAD_CONST              49 (<code object _thinking_off at 0x000002BF94741F00, file "core\ai\data_extract.py", line 519>)
+            390 MAKE_FUNCTION            4 (annotations)
+            392 STORE_NAME              41 (_thinking_off)
+
+540         394 LOAD_CONST              69 (('system', 'str', 'user', 'str', 'cfg', 'dict', 'return', 'str'))
+            396 LOAD_CONST              52 (<code object _chat_online at 0x000002BF940D22A0, file "core\ai\data_extract.py", line 540>)
+            398 MAKE_FUNCTION            4 (annotations)
+            400 STORE_NAME              42 (_chat_online)
+
+579         402 LOAD_CONST              37 ('')
+            404 LOAD_CONST               3 (None)
+
+580         406 LOAD_CONST              37 ('')
+            408 LOAD_CONST              37 ('')
+
+579         410 LOAD_CONST              53 (('customer', 'cfg', 'extra_hint', 'seed_hint'))
+            412 BUILD_CONST_KEY_MAP      4
+            414 LOAD_CONST              70 (('doc_text', 'str', 'customer', 'str', 'cfg', 'dict | None', 'extra_hint', 'str', 'seed_hint', 'str', 'return', 'ExtractedData'))
+            416 LOAD_CONST              56 (<code object extract_po_data at 0x000002BF940F9730, file "core\ai\data_extract.py", line 579>)
+            418 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            420 STORE_NAME              43 (extract_po_data)
+            422 LOAD_CONST               3 (None)
+            424 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedLine  (args=0, locals=0)
+169           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('ExtractedLine')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+171          12 LOAD_CONST               1 ('One real order line as the model read it.')
+             14 STORE_NAME               3 (__doc__)
+
+172          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (raw_line)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('raw_line')
+             26 STORE_SUBSCR
+
+173          30 LOAD_CONST               2 ('')
+             32 STORE_NAME               6 (index_no)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               5 ('index_no')
+             40 STORE_SUBSCR
+
+174          44 LOAD_CONST               2 ('')
+             46 STORE_NAME               7 (style)
+             48 LOAD_CONST               3 ('str')
+             50 LOAD_NAME                5 (__annotations__)
+             52 LOAD_CONST               6 ('style')
+             54 STORE_SUBSCR
+
+175          58 LOAD_CONST               2 ('')
+             60 STORE_NAME               8 (color_code)
+             62 LOAD_CONST               3 ('str')
+             64 LOAD_NAME                5 (__annotations__)
+             66 LOAD_CONST               7 ('color_code')
+             68 STORE_SUBSCR
+
+176          72 LOAD_CONST               2 ('')
+             74 STORE_NAME               9 (color_desc)
+             76 LOAD_CONST               3 ('str')
+             78 LOAD_NAME                5 (__annotations__)
+             80 LOAD_CONST               8 ('color_desc')
+             82 STORE_SUBSCR
+
+177          86 LOAD_CONST               2 ('')
+             88 STORE_NAME              10 (size)
+             90 LOAD_CONST               3 ('str')
+             92 LOAD_NAME                5 (__annotations__)
+             94 LOAD_CONST               9 ('size')
+             96 STORE_SUBSCR
+
+178         100 LOAD_CONST               2 ('')
+            102 STORE_NAME              11 (unit)
+            104 LOAD_CONST               3 ('str')
+            106 LOAD_NAME                5 (__annotations__)
+            108 LOAD_CONST              10 ('unit')
+            110 STORE_SUBSCR
+
+179         114 LOAD_CONST              11 (0)
+            116 STORE_NAME              12 (qty)
+            118 LOAD_CONST              12 ('int')
+            120 LOAD_NAME                5 (__annotations__)
+            122 LOAD_CONST              13 ('qty')
+            124 STORE_SUBSCR
+
+180         128 LOAD_CONST              14 (None)
+            130 STORE_NAME              13 (unit_price)
+            132 LOAD_CONST              15 ('Optional[float]')
+            134 LOAD_NAME                5 (__annotations__)
+            136 LOAD_CONST              16 ('unit_price')
+            138 STORE_SUBSCR
+
+182         142 LOAD_NAME               14 (property)
+
+183         144 LOAD_CONST              19 (('return', 'str'))
+            146 LOAD_CONST              18 (<code object locator at 0x000002BF94A6EE90, file "core\ai\data_extract.py", line 182>)
+            148 MAKE_FUNCTION            4 (annotations)
+
+182         150 PRECALL                  0
+            154 CALL                     0
+
+183         164 STORE_NAME              15 (locator)
+            166 LOAD_CONST              14 (None)
+            168 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedLine.locator  (args=1, locals=1)
+# varnames: self
+182           0 RESUME                   0
+
+185           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (index_no)
+             14 JUMP_IF_TRUE_OR_POP      6 (to 28)
+             16 LOAD_FAST                0 (self)
+             18 LOAD_ATTR                1 (style)
+        >>   28 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedOrder  (args=0, locals=0)
+188           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('ExtractedOrder')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+190          12 LOAD_CONST               1 ('')
+             14 STORE_NAME               3 (po_no)
+             16 LOAD_CONST               2 ('str')
+             18 LOAD_NAME                4 (__annotations__)
+             20 LOAD_CONST               3 ('po_no')
+             22 STORE_SUBSCR
+
+191          26 LOAD_CONST               1 ('')
+             28 STORE_NAME               5 (channel)
+             30 LOAD_CONST               2 ('str')
+             32 LOAD_NAME                4 (__annotations__)
+             34 LOAD_CONST               4 ('channel')
+             36 STORE_SUBSCR
+
+192          40 LOAD_CONST               1 ('')
+             42 STORE_NAME               6 (delivery_date)
+             44 LOAD_CONST               2 ('str')
+             46 LOAD_NAME                4 (__annotations__)
+             48 LOAD_CONST               5 ('delivery_date')
+             50 STORE_SUBSCR
+
+193          54 LOAD_CONST               6 (0)
+             56 STORE_NAME               7 (block_total_qty)
+             58 LOAD_CONST               7 ('int')
+             60 LOAD_NAME                4 (__annotations__)
+             62 LOAD_CONST               8 ('block_total_qty')
+             64 STORE_SUBSCR
+
+194          68 PUSH_NULL
+             70 LOAD_NAME                8 (field)
+             72 LOAD_NAME                9 (list)
+             74 KW_NAMES                 9
+             76 PRECALL                  1
+             80 CALL                     1
+             90 STORE_NAME              10 (lines)
+             92 LOAD_CONST              10 ('List[ExtractedLine]')
+             94 LOAD_NAME                4 (__annotations__)
+             96 LOAD_CONST              11 ('lines')
+             98 STORE_SUBSCR
+
+196         102 LOAD_NAME               11 (property)
+
+197         104 LOAD_CONST              15 (('return', 'int'))
+            106 LOAD_CONST              13 (<code object total_qty at 0x000002BF94A65AC0, file "core\ai\data_extract.py", line 196>)
+            108 MAKE_FUNCTION            4 (annotations)
+
+196         110 PRECALL                  0
+            114 CALL                     0
+
+197         124 STORE_NAME              12 (total_qty)
+            126 LOAD_CONST              14 (None)
+            128 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedOrder.total_qty  (args=1, locals=1)
+# varnames: self
+196           0 RESUME                   0
+
+200           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (block_total_qty)
+             14 JUMP_IF_TRUE_OR_POP     29 (to 74)
+             16 LOAD_GLOBAL              3 (NULL + sum)
+             28 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2FE30, file "core\ai\data_extract.py", line 200>)
+             30 MAKE_FUNCTION            0
+             32 LOAD_FAST                0 (self)
+             34 LOAD_ATTR                2 (lines)
+             44 GET_ITER
+             46 PRECALL                  0
+             50 CALL                     0
+             60 PRECALL                  1
+             64 CALL                     1
+        >>   74 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedOrder.total_qty.<genexpr>  (args=1, locals=2)
+# varnames: .0, l
+200           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                26 (to 62)
+             10 STORE_FAST               1 (l)
+             12 LOAD_GLOBAL              1 (NULL + int)
+             24 LOAD_FAST                1 (l)
+             26 LOAD_ATTR                1 (qty)
+             36 JUMP_IF_TRUE_OR_POP      1 (to 40)
+             38 LOAD_CONST               0 (0)
+        >>   40 PRECALL                  1
+             44 CALL                     1
+             54 YIELD_VALUE
+             56 RESUME                   1
+             58 POP_TOP
+             60 JUMP_BACKWARD           27 (to 8)
+        >>   62 LOAD_CONST               1 (None)
+             64 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData  (args=0, locals=0)
+203           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('ExtractedData')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+205          12 LOAD_CONST               1 ('Ground truth read by the AI; the yardstick a synthesized recipe must match.')
+             14 STORE_NAME               3 (__doc__)
+
+206          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (customer)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('customer')
+             26 STORE_SUBSCR
+
+207          30 LOAD_CONST               5 ('line_items')
+             32 STORE_NAME               6 (layout_type)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               6 ('layout_type')
+             40 STORE_SUBSCR
+
+208          44 PUSH_NULL
+             46 LOAD_NAME                7 (field)
+             48 LOAD_NAME                8 (dict)
+             50 KW_NAMES                 7
+             52 PRECALL                  1
+             56 CALL                     1
+             66 STORE_NAME               9 (header)
+             68 LOAD_CONST               8 ('Dict[str, str]')
+             70 LOAD_NAME                5 (__annotations__)
+             72 LOAD_CONST               9 ('header')
+             74 STORE_SUBSCR
+
+209          78 PUSH_NULL
+             80 LOAD_NAME                7 (field)
+             82 LOAD_NAME               10 (list)
+             84 KW_NAMES                 7
+             86 PRECALL                  1
+             90 CALL                     1
+            100 STORE_NAME              11 (orders)
+            102 LOAD_CONST              10 ('List[ExtractedOrder]')
+            104 LOAD_NAME                5 (__annotations__)
+            106 LOAD_CONST              11 ('orders')
+            108 STORE_SUBSCR
+
+215         112 LOAD_CONST              12 (False)
+            114 STORE_NAME              12 (has_color_total)
+            116 LOAD_CONST              13 ('bool')
+            118 LOAD_NAME                5 (__annotations__)
+            120 LOAD_CONST              14 ('has_color_total')
+            122 STORE_SUBSCR
+
+216         126 LOAD_CONST              12 (False)
+            128 STORE_NAME              13 (has_size_total)
+            130 LOAD_CONST              13 ('bool')
+            132 LOAD_NAME                5 (__annotations__)
+            134 LOAD_CONST              15 ('has_size_total')
+            136 STORE_SUBSCR
+
+218         140 LOAD_NAME               14 (property)
+
+219         142 LOAD_CONST              28 (('return', 'List[str]'))
+            144 LOAD_CONST              18 (<code object po_nos at 0x000002BF94A6E410, file "core\ai\data_extract.py", line 218>)
+            146 MAKE_FUNCTION            4 (annotations)
+
+218         148 PRECALL                  0
+            152 CALL                     0
+
+219         162 STORE_NAME              15 (po_nos)
+
+222         164 LOAD_NAME               14 (property)
+
+223         166 LOAD_CONST              29 (('return', 'int'))
+            168 LOAD_CONST              20 (<code object total_qty at 0x000002BF94A2EF30, file "core\ai\data_extract.py", line 222>)
+            170 MAKE_FUNCTION            4 (annotations)
+
+222         172 PRECALL                  0
+            176 CALL                     0
+
+223         186 STORE_NAME              16 (total_qty)
+
+226         188 LOAD_NAME               14 (property)
+
+227         190 LOAD_CONST              29 (('return', 'int'))
+            192 LOAD_CONST              21 (<code object line_count at 0x000002BF94A2F630, file "core\ai\data_extract.py", line 226>)
+            194 MAKE_FUNCTION            4 (annotations)
+
+226         196 PRECALL                  0
+            200 CALL                     0
+
+227         210 STORE_NAME              17 (line_count)
+
+230         212 LOAD_CONST              30 (('return', 'List[ExtractedLine]'))
+            214 LOAD_CONST              23 (<code object all_lines at 0x000002BF94A6E790, file "core\ai\data_extract.py", line 230>)
+            216 MAKE_FUNCTION            4 (annotations)
+            218 STORE_NAME              18 (all_lines)
+
+233         220 LOAD_CONST              31 (('return', 'Dict[str, int]'))
+            222 LOAD_CONST              25 (<code object qty_by_po at 0x000002BF9472B470, file "core\ai\data_extract.py", line 233>)
+            224 MAKE_FUNCTION            4 (annotations)
+            226 STORE_NAME              19 (qty_by_po)
+
+239         228 LOAD_CONST              32 (('return', 'str'))
+            230 LOAD_CONST              26 (<code object summary at 0x000002BF9472B6D0, file "core\ai\data_extract.py", line 239>)
+            232 MAKE_FUNCTION            4 (annotations)
+            234 STORE_NAME              20 (summary)
+            236 LOAD_CONST              27 (None)
+            238 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.po_nos  (args=1, locals=1)
+# varnames: self
+218           0 RESUME                   0
+
+220           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6EB10, file "core\ai\data_extract.py", line 220>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (orders)
+             18 GET_ITER
+             20 PRECALL                  0
+             24 CALL                     0
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.po_nos.<listcomp>  (args=1, locals=2)
+# varnames: .0, o
+220           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 9 (to 26)
+              8 STORE_FAST               1 (o)
+             10 LOAD_FAST                1 (o)
+             12 LOAD_ATTR                0 (po_no)
+             22 LIST_APPEND              2
+             24 JUMP_BACKWARD           10 (to 6)
+        >>   26 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.total_qty  (args=1, locals=1)
+# varnames: self
+222           0 RESUME                   0
+
+224           2 LOAD_GLOBAL              1 (NULL + sum)
+             14 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6E950, file "core\ai\data_extract.py", line 224>)
+             16 MAKE_FUNCTION            0
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (orders)
+             30 GET_ITER
+             32 PRECALL                  0
+             36 CALL                     0
+             46 PRECALL                  1
+             50 CALL                     1
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.total_qty.<genexpr>  (args=1, locals=2)
+# varnames: .0, o
+224           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (o)
+             12 LOAD_FAST                1 (o)
+             14 LOAD_ATTR                0 (total_qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.line_count  (args=1, locals=1)
+# varnames: self
+226           0 RESUME                   0
+
+228           2 LOAD_GLOBAL              1 (NULL + sum)
+             14 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2F530, file "core\ai\data_extract.py", line 228>)
+             16 MAKE_FUNCTION            0
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (orders)
+             30 GET_ITER
+             32 PRECALL                  0
+             36 CALL                     0
+             46 PRECALL                  1
+             50 CALL                     1
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.line_count.<genexpr>  (args=1, locals=2)
+# varnames: .0, o
+228           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (o)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (o)
+             26 LOAD_ATTR                1 (lines)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.all_lines  (args=1, locals=1)
+# varnames: self
+230           0 RESUME                   0
+
+231           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6EA30, file "core\ai\data_extract.py", line 231>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (orders)
+             18 GET_ITER
+             20 PRECALL                  0
+             24 CALL                     0
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.all_lines.<listcomp>  (args=1, locals=3)
+# varnames: .0, o, l
+231           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                14 (to 36)
+              8 STORE_FAST               1 (o)
+             10 LOAD_FAST                1 (o)
+             12 LOAD_ATTR                0 (lines)
+             22 GET_ITER
+        >>   24 FOR_ITER                 4 (to 34)
+             26 STORE_FAST               2 (l)
+             28 LOAD_FAST                2 (l)
+             30 LIST_APPEND              3
+             32 JUMP_BACKWARD            5 (to 24)
+        >>   34 JUMP_BACKWARD           15 (to 6)
+        >>   36 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.qty_by_po  (args=1, locals=3)
+# varnames: self, out, o
+233           0 RESUME                   0
+
+234           2 BUILD_MAP                0
+              4 STORE_FAST               1 (out)
+
+235           6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (orders)
+             18 GET_ITER
+        >>   20 FOR_ITER                45 (to 112)
+             22 STORE_FAST               2 (o)
+
+236          24 LOAD_FAST                1 (out)
+             26 LOAD_METHOD              1 (get)
+             48 LOAD_FAST                2 (o)
+             50 LOAD_ATTR                2 (po_no)
+             60 LOAD_CONST               1 (0)
+             62 PRECALL                  2
+             66 CALL                     2
+             76 LOAD_FAST                2 (o)
+             78 LOAD_ATTR                3 (total_qty)
+             88 BINARY_OP                0 (+)
+             92 LOAD_FAST                1 (out)
+             94 LOAD_FAST                2 (o)
+             96 LOAD_ATTR                2 (po_no)
+            106 STORE_SUBSCR
+            110 JUMP_BACKWARD           46 (to 20)
+
+237     >>  112 LOAD_FAST                1 (out)
+            114 RETURN_VALUE
+
+==============================================================================
+## <module>.ExtractedData.summary  (args=1, locals=1)
+# varnames: self
+239           0 RESUME                   0
+
+240           2 LOAD_CONST               1 ('customer=')
+              4 LOAD_FAST                0 (self)
+              6 LOAD_ATTR                0 (customer)
+             16 FORMAT_VALUE             0
+             18 LOAD_CONST               2 (' layout=')
+             20 LOAD_FAST                0 (self)
+             22 LOAD_ATTR                1 (layout_type)
+             32 FORMAT_VALUE             0
+             34 LOAD_CONST               3 (' orders=')
+
+241          36 LOAD_GLOBAL              5 (NULL + len)
+             48 LOAD_FAST                0 (self)
+             50 LOAD_ATTR                3 (orders)
+             60 PRECALL                  1
+             64 CALL                     1
+
+240          74 FORMAT_VALUE             0
+             76 LOAD_CONST               4 (' lines=')
+
+241          78 LOAD_FAST                0 (self)
+             80 LOAD_ATTR                4 (line_count)
+
+240          90 FORMAT_VALUE             0
+             92 LOAD_CONST               5 (' total_qty=')
+
+242          94 LOAD_FAST                0 (self)
+             96 LOAD_ATTR                5 (total_qty)
+
+240         106 FORMAT_VALUE             0
+            108 BUILD_STRING            10
+            110 RETURN_VALUE
+
+==============================================================================
+## <module>._extract_json  (args=1, locals=4)
+# varnames: content, m, s, e
+248           0 RESUME                   0
+
+250           2 LOAD_FAST                0 (content)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_CONST               1 ('')
+        >>    8 LOAD_METHOD              0 (strip)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 STORE_FAST               0 (content)
+
+251          46 LOAD_GLOBAL              3 (NULL + re)
+             58 LOAD_ATTR                2 (search)
+             68 LOAD_CONST               2 ('```(?:json)?\\s*(\\{.*\\})\\s*```')
+             70 LOAD_FAST                0 (content)
+             72 LOAD_GLOBAL              2 (re)
+             84 LOAD_ATTR                3 (DOTALL)
+             94 PRECALL                  3
+             98 CALL                     3
+            108 STORE_FAST               1 (m)
+
+252         110 LOAD_FAST                1 (m)
+            112 POP_JUMP_FORWARD_IF_FALSE    21 (to 156)
+
+253         114 LOAD_FAST                1 (m)
+            116 LOAD_METHOD              4 (group)
+            138 LOAD_CONST               3 (1)
+            140 PRECALL                  1
+            144 CALL                     1
+            154 RETURN_VALUE
+
+254     >>  156 LOAD_FAST                0 (content)
+            158 LOAD_METHOD              5 (find)
+            180 LOAD_CONST               4 ('{')
+            182 PRECALL                  1
+            186 CALL                     1
+            196 STORE_FAST               2 (s)
+
+255         198 LOAD_FAST                0 (content)
+            200 LOAD_METHOD              6 (rfind)
+            222 LOAD_CONST               5 ('}')
+            224 PRECALL                  1
+            228 CALL                     1
+            238 STORE_FAST               3 (e)
+
+256         240 LOAD_FAST                2 (s)
+            242 LOAD_CONST               6 (-1)
+            244 COMPARE_OP               3 (!=)
+            250 POP_JUMP_FORWARD_IF_FALSE    25 (to 302)
+            252 LOAD_FAST                3 (e)
+            254 LOAD_CONST               6 (-1)
+            256 COMPARE_OP               3 (!=)
+            262 POP_JUMP_FORWARD_IF_FALSE    19 (to 302)
+            264 LOAD_FAST                3 (e)
+            266 LOAD_FAST                2 (s)
+            268 COMPARE_OP               4 (>)
+            274 POP_JUMP_FORWARD_IF_FALSE    13 (to 302)
+
+257         276 LOAD_FAST                0 (content)
+            278 LOAD_FAST                2 (s)
+            280 LOAD_FAST                3 (e)
+            282 LOAD_CONST               3 (1)
+            284 BINARY_OP                0 (+)
+            288 BUILD_SLICE              2
+            290 BINARY_SUBSCR
+            300 RETURN_VALUE
+
+258     >>  302 LOAD_FAST                0 (content)
+            304 RETURN_VALUE
+
+==============================================================================
+## <module>._as_int  (args=1, locals=2)
+# varnames: v, s
+261           0 RESUME                   0
+
+262           2 LOAD_FAST                0 (v)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 10)
+
+263           6 LOAD_CONST               1 (0)
+              8 RETURN_VALUE
+
+264     >>   10 LOAD_GLOBAL              1 (NULL + isinstance)
+             22 LOAD_FAST                0 (v)
+             24 LOAD_GLOBAL              2 (bool)
+             36 PRECALL                  2
+             40 CALL                     2
+             50 POP_JUMP_FORWARD_IF_FALSE     2 (to 56)
+
+265          52 LOAD_CONST               1 (0)
+             54 RETURN_VALUE
+
+266     >>   56 LOAD_GLOBAL              1 (NULL + isinstance)
+             68 LOAD_FAST                0 (v)
+             70 LOAD_GLOBAL              4 (int)
+             82 LOAD_GLOBAL              6 (float)
+             94 BUILD_TUPLE              2
+             96 PRECALL                  2
+            100 CALL                     2
+            110 POP_JUMP_FORWARD_IF_FALSE    15 (to 142)
+
+267         112 LOAD_GLOBAL              5 (NULL + int)
+            124 LOAD_FAST                0 (v)
+            126 PRECALL                  1
+            130 CALL                     1
+            140 RETURN_VALUE
+
+268     >>  142 LOAD_GLOBAL              9 (NULL + str)
+            154 LOAD_FAST                0 (v)
+            156 PRECALL                  1
+            160 CALL                     1
+            170 LOAD_METHOD              5 (strip)
+            192 PRECALL                  0
+            196 CALL                     0
+            206 LOAD_METHOD              6 (replace)
+            228 LOAD_CONST               2 (',')
+            230 LOAD_CONST               3 ('')
+            232 PRECALL                  2
+            236 CALL                     2
+            246 LOAD_METHOD              6 (replace)
+            268 LOAD_CONST               4 (' ')
+            270 LOAD_CONST               3 ('')
+            272 PRECALL                  2
+            276 CALL                     2
+            286 STORE_FAST               1 (s)
+
+269         288 LOAD_FAST                1 (s)
+            290 POP_JUMP_FORWARD_IF_TRUE     2 (to 296)
+
+270         292 LOAD_CONST               1 (0)
+            294 RETURN_VALUE
+
+271     >>  296 NOP
+
+272         298 LOAD_GLOBAL              5 (NULL + int)
+            310 LOAD_GLOBAL              7 (NULL + float)
+            322 LOAD_FAST                1 (s)
+            324 PRECALL                  1
+            328 CALL                     1
+            338 PRECALL                  1
+            342 CALL                     1
+            352 RETURN_VALUE
+        >>  354 PUSH_EXC_INFO
+
+273         356 LOAD_GLOBAL             14 (TypeError)
+            368 LOAD_GLOBAL             16 (ValueError)
+            380 BUILD_TUPLE              2
+            382 CHECK_EXC_MATCH
+            384 POP_JUMP_FORWARD_IF_FALSE     4 (to 394)
+            386 POP_TOP
+
+274         388 POP_EXCEPT
+            390 LOAD_CONST               1 (0)
+            392 RETURN_VALUE
+
+273     >>  394 RERAISE                  0
+        >>  396 COPY                     3
+            398 POP_EXCEPT
+            400 RERAISE                  1
+ExceptionTable:
+  298 to 350 -> 354 [0]
+  354 to 386 -> 396 [1] lasti
+  394 to 394 -> 396 [1] lasti
+
+==============================================================================
+## <module>._as_float  (args=1, locals=2)
+# varnames: v, s
+277           0 RESUME                   0
+
+278           2 LOAD_FAST                0 (v)
+              4 POP_JUMP_FORWARD_IF_NONE    21 (to 48)
+              6 LOAD_GLOBAL              1 (NULL + isinstance)
+             18 LOAD_FAST                0 (v)
+             20 LOAD_GLOBAL              2 (bool)
+             32 PRECALL                  2
+             36 CALL                     2
+             46 POP_JUMP_FORWARD_IF_FALSE     2 (to 52)
+
+279     >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+280     >>   52 LOAD_GLOBAL              1 (NULL + isinstance)
+             64 LOAD_FAST                0 (v)
+             66 LOAD_GLOBAL              4 (int)
+             78 LOAD_GLOBAL              6 (float)
+             90 BUILD_TUPLE              2
+             92 PRECALL                  2
+             96 CALL                     2
+            106 POP_JUMP_FORWARD_IF_FALSE    15 (to 138)
+
+281         108 LOAD_GLOBAL              7 (NULL + float)
+            120 LOAD_FAST                0 (v)
+            122 PRECALL                  1
+            126 CALL                     1
+            136 RETURN_VALUE
+
+282     >>  138 LOAD_GLOBAL              9 (NULL + str)
+            150 LOAD_FAST                0 (v)
+            152 PRECALL                  1
+            156 CALL                     1
+            166 LOAD_METHOD              5 (strip)
+            188 PRECALL                  0
+            192 CALL                     0
+            202 STORE_FAST               1 (s)
+
+283         204 LOAD_FAST                1 (s)
+            206 POP_JUMP_FORWARD_IF_TRUE     2 (to 212)
+
+284         208 LOAD_CONST               0 (None)
+            210 RETURN_VALUE
+
+285     >>  212 LOAD_CONST               1 (',')
+            214 LOAD_FAST                1 (s)
+            216 CONTAINS_OP              0
+            218 POP_JUMP_FORWARD_IF_FALSE    27 (to 274)
+            220 LOAD_CONST               2 ('.')
+            222 LOAD_FAST                1 (s)
+            224 CONTAINS_OP              1
+            226 POP_JUMP_FORWARD_IF_FALSE    23 (to 274)
+
+286         228 LOAD_FAST                1 (s)
+            230 LOAD_METHOD              6 (replace)
+            252 LOAD_CONST               1 (',')
+            254 LOAD_CONST               2 ('.')
+            256 PRECALL                  2
+            260 CALL                     2
+            270 STORE_FAST               1 (s)
+            272 JUMP_FORWARD            30 (to 334)
+
+287     >>  274 LOAD_CONST               1 (',')
+            276 LOAD_FAST                1 (s)
+            278 CONTAINS_OP              0
+            280 POP_JUMP_FORWARD_IF_FALSE    26 (to 334)
+            282 LOAD_CONST               2 ('.')
+            284 LOAD_FAST                1 (s)
+            286 CONTAINS_OP              0
+            288 POP_JUMP_FORWARD_IF_FALSE    22 (to 334)
+
+288         290 LOAD_FAST                1 (s)
+            292 LOAD_METHOD              6 (replace)
+            314 LOAD_CONST               1 (',')
+            316 LOAD_CONST               3 ('')
+            318 PRECALL                  2
+            322 CALL                     2
+            332 STORE_FAST               1 (s)
+
+289     >>  334 NOP
+
+290         336 LOAD_GLOBAL              7 (NULL + float)
+            348 LOAD_FAST                1 (s)
+            350 PRECALL                  1
+            354 CALL                     1
+            364 RETURN_VALUE
+        >>  366 PUSH_EXC_INFO
+
+291         368 LOAD_GLOBAL             14 (TypeError)
+            380 LOAD_GLOBAL             16 (ValueError)
+            392 BUILD_TUPLE              2
+            394 CHECK_EXC_MATCH
+            396 POP_JUMP_FORWARD_IF_FALSE     4 (to 406)
+            398 POP_TOP
+
+292         400 POP_EXCEPT
+            402 LOAD_CONST               0 (None)
+            404 RETURN_VALUE
+
+291     >>  406 RERAISE                  0
+        >>  408 COPY                     3
+            410 POP_EXCEPT
+            412 RERAISE                  1
+ExceptionTable:
+  336 to 362 -> 366 [0]
+  366 to 398 -> 408 [1] lasti
+  406 to 406 -> 408 [1] lasti
+
+==============================================================================
+## <module>._as_str  (args=1, locals=1)
+# varnames: v
+295           0 RESUME                   0
+
+296           2 LOAD_FAST                0 (v)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 10)
+
+297           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+298     >>   10 LOAD_GLOBAL              1 (NULL + isinstance)
+             22 LOAD_FAST                0 (v)
+             24 LOAD_GLOBAL              2 (int)
+             36 LOAD_GLOBAL              4 (float)
+             48 BUILD_TUPLE              2
+             50 PRECALL                  2
+             54 CALL                     2
+             64 POP_JUMP_FORWARD_IF_FALSE    97 (to 260)
+             66 LOAD_GLOBAL              1 (NULL + isinstance)
+             78 LOAD_FAST                0 (v)
+             80 LOAD_GLOBAL              6 (bool)
+             92 PRECALL                  2
+             96 CALL                     2
+            106 POP_JUMP_FORWARD_IF_TRUE    76 (to 260)
+
+300         108 LOAD_GLOBAL              5 (NULL + float)
+            120 LOAD_FAST                0 (v)
+            122 PRECALL                  1
+            126 CALL                     1
+            136 LOAD_METHOD              4 (is_integer)
+            158 PRECALL                  0
+            162 CALL                     0
+            172 POP_JUMP_FORWARD_IF_FALSE    28 (to 230)
+            174 LOAD_GLOBAL             11 (NULL + str)
+            186 LOAD_GLOBAL              3 (NULL + int)
+            198 LOAD_FAST                0 (v)
+            200 PRECALL                  1
+            204 CALL                     1
+            214 PRECALL                  1
+            218 CALL                     1
+            228 JUMP_FORWARD            14 (to 258)
+        >>  230 LOAD_GLOBAL             11 (NULL + str)
+            242 LOAD_FAST                0 (v)
+            244 PRECALL                  1
+            248 CALL                     1
+        >>  258 RETURN_VALUE
+
+301     >>  260 LOAD_GLOBAL             11 (NULL + str)
+            272 LOAD_FAST                0 (v)
+            274 PRECALL                  1
+            278 CALL                     1
+            288 LOAD_METHOD              6 (strip)
+            310 PRECALL                  0
+            314 CALL                     0
+            324 RETURN_VALUE
+
+==============================================================================
+## <module>._as_bool  (args=1, locals=2)
+# varnames: v, s
+304           0 RESUME                   0
+
+305           2 LOAD_GLOBAL              1 (NULL + isinstance)
+             14 LOAD_FAST                0 (v)
+             16 LOAD_GLOBAL              2 (bool)
+             28 PRECALL                  2
+             32 CALL                     2
+             42 POP_JUMP_FORWARD_IF_FALSE     2 (to 48)
+
+306          44 LOAD_FAST                0 (v)
+             46 RETURN_VALUE
+
+307     >>   48 LOAD_GLOBAL              1 (NULL + isinstance)
+             60 LOAD_FAST                0 (v)
+             62 LOAD_GLOBAL              4 (int)
+             74 LOAD_GLOBAL              6 (float)
+             86 BUILD_TUPLE              2
+             88 PRECALL                  2
+             92 CALL                     2
+            102 POP_JUMP_FORWARD_IF_FALSE    15 (to 134)
+
+308         104 LOAD_GLOBAL              3 (NULL + bool)
+            116 LOAD_FAST                0 (v)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 RETURN_VALUE
+
+309     >>  134 LOAD_GLOBAL              9 (NULL + str)
+            146 LOAD_FAST                0 (v)
+            148 PRECALL                  1
+            152 CALL                     1
+            162 JUMP_IF_TRUE_OR_POP      1 (to 166)
+            164 LOAD_CONST               1 ('')
+        >>  166 LOAD_METHOD              5 (strip)
+            188 PRECALL                  0
+            192 CALL                     0
+            202 LOAD_METHOD              6 (lower)
+            224 PRECALL                  0
+            228 CALL                     0
+            238 STORE_FAST               1 (s)
+
+310         240 LOAD_FAST                1 (s)
+            242 LOAD_CONST               2 (('true', '1', 'yes', 'y', 't'))
+            244 CONTAINS_OP              0
+            246 RETURN_VALUE
+
+==============================================================================
+## <module>._strip_trailing_commas  (args=1, locals=1)
+# varnames: js
+316           0 RESUME                   0
+
+318           2 LOAD_GLOBAL              1 (NULL + re)
+             14 LOAD_ATTR                1 (sub)
+             24 LOAD_CONST               1 (',(\\s*[}\\]])')
+             26 LOAD_CONST               2 ('\\1')
+             28 LOAD_FAST                0 (js)
+             30 PRECALL                  3
+             34 CALL                     3
+             44 RETURN_VALUE
+
+==============================================================================
+## <module>._repair_missing_commas  (args=1, locals=1)
+# varnames: js
+326           0 RESUME                   0
+
+332           2 LOAD_GLOBAL              0 (_MISSING_COMMA)
+             14 LOAD_METHOD              1 (sub)
+             36 LOAD_CONST               1 ('\\1,\\2\\3')
+             38 LOAD_FAST                0 (js)
+             40 PRECALL                  2
+             44 CALL                     2
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>._maybe_close  (args=1, locals=5)
+# varnames: js, depth, in_str, esc, ch
+335           0 RESUME                   0
+
+337           2 BUILD_LIST               0
+              4 STORE_FAST               1 (depth)
+
+338           6 LOAD_CONST               1 (False)
+              8 STORE_FAST               2 (in_str)
+
+339          10 LOAD_CONST               1 (False)
+             12 STORE_FAST               3 (esc)
+
+340          14 LOAD_FAST                0 (js)
+             16 GET_ITER
+        >>   18 FOR_ITER               143 (to 306)
+             20 STORE_FAST               4 (ch)
+
+341          22 LOAD_FAST                2 (in_str)
+             24 POP_JUMP_FORWARD_IF_FALSE    23 (to 72)
+
+342          26 LOAD_FAST                3 (esc)
+             28 POP_JUMP_FORWARD_IF_FALSE     3 (to 36)
+
+343          30 LOAD_CONST               1 (False)
+             32 STORE_FAST               3 (esc)
+             34 JUMP_FORWARD            17 (to 70)
+
+344     >>   36 LOAD_FAST                4 (ch)
+             38 LOAD_CONST               2 ('\\')
+             40 COMPARE_OP               2 (==)
+             46 POP_JUMP_FORWARD_IF_FALSE     3 (to 54)
+
+345          48 LOAD_CONST               3 (True)
+             50 STORE_FAST               3 (esc)
+             52 JUMP_FORWARD             8 (to 70)
+
+346     >>   54 LOAD_FAST                4 (ch)
+             56 LOAD_CONST               4 ('"')
+             58 COMPARE_OP               2 (==)
+             64 POP_JUMP_FORWARD_IF_FALSE     2 (to 70)
+
+347          66 LOAD_CONST               1 (False)
+             68 STORE_FAST               2 (in_str)
+
+348     >>   70 JUMP_BACKWARD           27 (to 18)
+
+349     >>   72 LOAD_FAST                4 (ch)
+             74 LOAD_CONST               4 ('"')
+             76 COMPARE_OP               2 (==)
+             82 POP_JUMP_FORWARD_IF_FALSE     3 (to 90)
+
+350          84 LOAD_CONST               3 (True)
+             86 STORE_FAST               2 (in_str)
+             88 JUMP_BACKWARD           36 (to 18)
+
+351     >>   90 LOAD_FAST                4 (ch)
+             92 LOAD_CONST               5 ('[{')
+             94 CONTAINS_OP              0
+             96 POP_JUMP_FORWARD_IF_FALSE    22 (to 142)
+
+352          98 LOAD_FAST                1 (depth)
+            100 LOAD_METHOD              0 (append)
+            122 LOAD_FAST                4 (ch)
+            124 PRECALL                  1
+            128 CALL                     1
+            138 POP_TOP
+            140 JUMP_BACKWARD           62 (to 18)
+
+353     >>  142 LOAD_FAST                4 (ch)
+            144 LOAD_CONST               6 (']')
+            146 COMPARE_OP               2 (==)
+            152 POP_JUMP_FORWARD_IF_FALSE    35 (to 224)
+
+354         154 LOAD_FAST                1 (depth)
+            156 POP_JUMP_FORWARD_IF_FALSE    32 (to 222)
+            158 LOAD_FAST                1 (depth)
+            160 LOAD_CONST               7 (-1)
+            162 BINARY_SUBSCR
+            172 LOAD_CONST               8 ('[')
+            174 COMPARE_OP               2 (==)
+            180 POP_JUMP_FORWARD_IF_FALSE    20 (to 222)
+
+355         182 LOAD_FAST                1 (depth)
+            184 LOAD_METHOD              1 (pop)
+            206 PRECALL                  0
+            210 CALL                     0
+            220 POP_TOP
+        >>  222 JUMP_BACKWARD          103 (to 18)
+
+356     >>  224 LOAD_FAST                4 (ch)
+            226 LOAD_CONST               9 ('}')
+            228 COMPARE_OP               2 (==)
+            234 POP_JUMP_FORWARD_IF_FALSE    34 (to 304)
+
+357         236 LOAD_FAST                1 (depth)
+            238 POP_JUMP_FORWARD_IF_FALSE    32 (to 304)
+            240 LOAD_FAST                1 (depth)
+            242 LOAD_CONST               7 (-1)
+            244 BINARY_SUBSCR
+            254 LOAD_CONST              10 ('{')
+            256 COMPARE_OP               2 (==)
+            262 POP_JUMP_FORWARD_IF_FALSE    20 (to 304)
+
+358         264 LOAD_FAST                1 (depth)
+            266 LOAD_METHOD              1 (pop)
+            288 PRECALL                  0
+            292 CALL                     0
+            302 POP_TOP
+        >>  304 JUMP_BACKWARD          144 (to 18)
+
+359     >>  306 LOAD_FAST                0 (js)
+            308 LOAD_CONST              11 ('')
+            310 LOAD_METHOD              2 (join)
+            332 LOAD_CONST              12 (<code object <genexpr> at 0x000002BF94AA8120, file "core\ai\data_extract.py", line 359>)
+            334 MAKE_FUNCTION            0
+            336 LOAD_GLOBAL              7 (NULL + reversed)
+            348 LOAD_FAST                1 (depth)
+            350 PRECALL                  1
+            354 CALL                     1
+            364 GET_ITER
+            366 PRECALL                  0
+            370 CALL                     0
+            380 PRECALL                  1
+            384 CALL                     1
+            394 BINARY_OP                0 (+)
+            398 RETURN_VALUE
+
+==============================================================================
+## <module>._maybe_close.<genexpr>  (args=1, locals=2)
+# varnames: .0, c
+359           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                14 (to 38)
+             10 STORE_FAST               1 (c)
+             12 LOAD_FAST                1 (c)
+             14 LOAD_CONST               0 ('{')
+             16 COMPARE_OP               2 (==)
+             22 POP_JUMP_FORWARD_IF_FALSE     2 (to 28)
+             24 LOAD_CONST               1 ('}')
+             26 JUMP_FORWARD             1 (to 30)
+        >>   28 LOAD_CONST               2 (']')
+        >>   30 YIELD_VALUE
+             32 RESUME                   1
+             34 POP_TOP
+             36 JUMP_BACKWARD           15 (to 8)
+        >>   38 LOAD_CONST               3 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>._load_json_lenient  (args=1, locals=6)
+# varnames: js, candidates, last_err, cand, obj, e
+362           0 RESUME                   0
+
+370           2 LOAD_FAST                0 (js)
+
+371           4 LOAD_GLOBAL              1 (NULL + _strip_trailing_commas)
+             16 LOAD_FAST                0 (js)
+             18 PRECALL                  1
+             22 CALL                     1
+
+372          32 LOAD_GLOBAL              3 (NULL + _repair_missing_commas)
+             44 LOAD_GLOBAL              1 (NULL + _strip_trailing_commas)
+             56 LOAD_FAST                0 (js)
+             58 PRECALL                  1
+             62 CALL                     1
+             72 PRECALL                  1
+             76 CALL                     1
+
+373          86 LOAD_GLOBAL              5 (NULL + _maybe_close)
+             98 LOAD_GLOBAL              3 (NULL + _repair_missing_commas)
+            110 LOAD_GLOBAL              1 (NULL + _strip_trailing_commas)
+            122 LOAD_FAST                0 (js)
+            124 PRECALL                  1
+            128 CALL                     1
+            138 PRECALL                  1
+            142 CALL                     1
+            152 PRECALL                  1
+            156 CALL                     1
+
+369         166 BUILD_LIST               4
+            168 STORE_FAST               1 (candidates)
+
+375         170 LOAD_CONST               1 (None)
+            172 STORE_FAST               2 (last_err)
+
+376         174 LOAD_FAST                1 (candidates)
+            176 GET_ITER
+        >>  178 FOR_ITER                94 (to 368)
+            180 STORE_FAST               3 (cand)
+
+377         182 NOP
+
+378         184 LOAD_GLOBAL              7 (NULL + json)
+            196 LOAD_ATTR                4 (loads)
+            206 LOAD_FAST                3 (cand)
+            208 PRECALL                  1
+            212 CALL                     1
+            222 STORE_FAST               4 (obj)
+            224 JUMP_FORWARD            30 (to 286)
+        >>  226 PUSH_EXC_INFO
+
+379         228 LOAD_GLOBAL              6 (json)
+            240 LOAD_ATTR                5 (JSONDecodeError)
+            250 CHECK_EXC_MATCH
+            252 POP_JUMP_FORWARD_IF_FALSE    12 (to 278)
+            254 STORE_FAST               5 (e)
+
+380         256 LOAD_FAST                5 (e)
+            258 STORE_FAST               2 (last_err)
+
+381         260 POP_EXCEPT
+            262 LOAD_CONST               1 (None)
+            264 STORE_FAST               5 (e)
+            266 DELETE_FAST              5 (e)
+            268 JUMP_BACKWARD           46 (to 178)
+        >>  270 LOAD_CONST               1 (None)
+            272 STORE_FAST               5 (e)
+            274 DELETE_FAST              5 (e)
+            276 RERAISE                  1
+
+379     >>  278 RERAISE                  0
+        >>  280 COPY                     3
+            282 POP_EXCEPT
+            284 RERAISE                  1
+
+382     >>  286 LOAD_GLOBAL             13 (NULL + isinstance)
+            298 LOAD_FAST                4 (obj)
+            300 LOAD_GLOBAL             14 (dict)
+            312 PRECALL                  2
+            316 CALL                     2
+            326 POP_JUMP_FORWARD_IF_FALSE     4 (to 336)
+
+383         328 LOAD_FAST                4 (obj)
+            330 SWAP                     2
+            332 POP_TOP
+            334 RETURN_VALUE
+
+384     >>  336 LOAD_GLOBAL             17 (NULL + ValueError)
+            348 LOAD_CONST               2 ('top-level JSON value is not an object')
+            350 PRECALL                  1
+            354 CALL                     1
+            364 STORE_FAST               2 (last_err)
+            366 JUMP_BACKWARD           95 (to 178)
+
+385     >>  368 LOAD_GLOBAL             17 (NULL + ValueError)
+            380 LOAD_FAST                2 (last_err)
+            382 FORMAT_VALUE             0
+            384 PRECALL                  1
+            388 CALL                     1
+            398 RAISE_VARARGS            1
+ExceptionTable:
+  184 to 222 -> 226 [1]
+  226 to 254 -> 280 [2] lasti
+  256 to 258 -> 270 [2] lasti
+  270 to 278 -> 280 [2] lasti
+
+==============================================================================
+## <module>.parse_data_response  (args=1, locals=14)
+# varnames: content, js, d, e, header, orders, orders_raw, o, lines_raw, lines, l, qty, layout, data
+              0 MAKE_CELL               14 (header_raw)
+
+388           2 RESUME                   0
+
+397           4 LOAD_GLOBAL              1 (NULL + _extract_json)
+             16 LOAD_FAST                0 (content)
+             18 PRECALL                  1
+             22 CALL                     1
+             32 STORE_FAST               1 (js)
+
+398          34 NOP
+
+399          36 LOAD_GLOBAL              3 (NULL + _load_json_lenient)
+             48 LOAD_FAST                1 (js)
+             50 PRECALL                  1
+             54 CALL                     1
+             64 STORE_FAST               2 (d)
+             66 JUMP_FORWARD            50 (to 168)
+        >>   68 PUSH_EXC_INFO
+
+400          70 LOAD_GLOBAL              4 (ValueError)
+             82 CHECK_EXC_MATCH
+             84 POP_JUMP_FORWARD_IF_FALSE    37 (to 160)
+             86 STORE_FAST               3 (e)
+
+402          88 LOAD_GLOBAL              5 (NULL + ValueError)
+
+403         100 LOAD_CONST               1 ('AI data response is not valid JSON: ')
+            102 LOAD_FAST                3 (e)
+            104 FORMAT_VALUE             0
+            106 LOAD_CONST               2 ('\n---raw---\n')
+            108 LOAD_FAST                0 (content)
+            110 JUMP_IF_TRUE_OR_POP      1 (to 114)
+            112 LOAD_CONST               3 ('')
+        >>  114 LOAD_CONST               4 (None)
+            116 LOAD_CONST               5 (2000)
+            118 BUILD_SLICE              2
+            120 BINARY_SUBSCR
+            130 FORMAT_VALUE             0
+            132 BUILD_STRING             4
+
+402         134 PRECALL                  1
+            138 CALL                     1
+
+404         148 LOAD_FAST                3 (e)
+
+402         150 RAISE_VARARGS            2
+        >>  152 LOAD_CONST               4 (None)
+            154 STORE_FAST               3 (e)
+            156 DELETE_FAST              3 (e)
+            158 RERAISE                  1
+
+400     >>  160 RERAISE                  0
+        >>  162 COPY                     3
+            164 POP_EXCEPT
+            166 RERAISE                  1
+
+405     >>  168 LOAD_GLOBAL              7 (NULL + isinstance)
+            180 LOAD_FAST                2 (d)
+            182 LOAD_GLOBAL              8 (dict)
+            194 PRECALL                  2
+            198 CALL                     2
+            208 POP_JUMP_FORWARD_IF_TRUE    15 (to 240)
+
+406         210 LOAD_GLOBAL              5 (NULL + ValueError)
+            222 LOAD_CONST               6 ('AI data response is not a JSON object')
+            224 PRECALL                  1
+            228 CALL                     1
+            238 RAISE_VARARGS            1
+
+408     >>  240 LOAD_CONST               7 ('orders')
+            242 LOAD_FAST                2 (d)
+            244 CONTAINS_OP              1
+            246 POP_JUMP_FORWARD_IF_FALSE    48 (to 344)
+            248 LOAD_GLOBAL              7 (NULL + isinstance)
+            260 LOAD_FAST                2 (d)
+            262 LOAD_METHOD              5 (get)
+            284 LOAD_CONST               8 ('result')
+            286 PRECALL                  1
+            290 CALL                     1
+            300 LOAD_GLOBAL              8 (dict)
+            312 PRECALL                  2
+            316 CALL                     2
+            326 POP_JUMP_FORWARD_IF_FALSE     8 (to 344)
+
+409         328 LOAD_FAST                2 (d)
+            330 LOAD_CONST               8 ('result')
+            332 BINARY_SUBSCR
+            342 STORE_FAST               2 (d)
+
+411     >>  344 LOAD_GLOBAL              7 (NULL + isinstance)
+            356 LOAD_FAST                2 (d)
+            358 LOAD_METHOD              5 (get)
+            380 LOAD_CONST               9 ('header')
+            382 PRECALL                  1
+            386 CALL                     1
+            396 LOAD_GLOBAL              8 (dict)
+            408 PRECALL                  2
+            412 CALL                     2
+            422 POP_JUMP_FORWARD_IF_FALSE    21 (to 466)
+            424 LOAD_FAST                2 (d)
+            426 LOAD_METHOD              5 (get)
+            448 LOAD_CONST               9 ('header')
+            450 PRECALL                  1
+            454 CALL                     1
+            464 JUMP_FORWARD             1 (to 468)
+        >>  466 BUILD_MAP                0
+        >>  468 STORE_DEREF             14 (header_raw)
+
+412         470 LOAD_CLOSURE            14 (header_raw)
+            472 BUILD_TUPLE              1
+            474 LOAD_CONST              10 (<code object <dictcomp> at 0x000002BF94A66AB0, file "core\ai\data_extract.py", line 412>)
+            476 MAKE_FUNCTION            8 (closure)
+            478 LOAD_GLOBAL             12 (HEADER_FIELDS)
+            490 GET_ITER
+            492 PRECALL                  0
+            496 CALL                     0
+            506 STORE_FAST               4 (header)
+
+414         508 BUILD_LIST               0
+            510 STORE_FAST               5 (orders)
+
+415         512 LOAD_FAST                2 (d)
+            514 LOAD_METHOD              5 (get)
+            536 LOAD_CONST               7 ('orders')
+            538 PRECALL                  1
+            542 CALL                     1
+            552 STORE_FAST               6 (orders_raw)
+
+416         554 LOAD_GLOBAL              7 (NULL + isinstance)
+            566 LOAD_FAST                6 (orders_raw)
+            568 LOAD_GLOBAL             14 (list)
+            580 PRECALL                  2
+            584 CALL                     2
+            594 POP_JUMP_FORWARD_IF_TRUE    47 (to 690)
+
+418         596 LOAD_FAST                2 (d)
+            598 LOAD_METHOD              5 (get)
+            620 LOAD_CONST              11 ('lines')
+            622 PRECALL                  1
+            626 CALL                     1
+            636 POP_JUMP_FORWARD_IF_TRUE    21 (to 680)
+            638 LOAD_FAST                2 (d)
+            640 LOAD_METHOD              5 (get)
+            662 LOAD_CONST              12 ('po_no')
+            664 PRECALL                  1
+            668 CALL                     1
+            678 POP_JUMP_FORWARD_IF_FALSE     3 (to 686)
+        >>  680 LOAD_FAST                2 (d)
+            682 BUILD_LIST               1
+            684 JUMP_FORWARD             1 (to 688)
+        >>  686 BUILD_LIST               0
+        >>  688 STORE_FAST               6 (orders_raw)
+
+419     >>  690 LOAD_FAST                6 (orders_raw)
+            692 GET_ITER
+        >>  694 EXTENDED_ARG             2
+            696 FOR_ITER               692 (to 2082)
+            698 STORE_FAST               7 (o)
+
+420         700 LOAD_GLOBAL              7 (NULL + isinstance)
+            712 LOAD_FAST                7 (o)
+            714 LOAD_GLOBAL              8 (dict)
+            726 PRECALL                  2
+            730 CALL                     2
+            740 POP_JUMP_FORWARD_IF_TRUE     1 (to 744)
+
+421         742 JUMP_BACKWARD           25 (to 694)
+
+422     >>  744 LOAD_FAST                7 (o)
+            746 LOAD_METHOD              5 (get)
+            768 LOAD_CONST              11 ('lines')
+            770 PRECALL                  1
+            774 CALL                     1
+            784 STORE_FAST               8 (lines_raw)
+
+423         786 LOAD_GLOBAL              7 (NULL + isinstance)
+            798 LOAD_FAST                8 (lines_raw)
+            800 LOAD_GLOBAL             14 (list)
+            812 PRECALL                  2
+            816 CALL                     2
+            826 POP_JUMP_FORWARD_IF_TRUE    63 (to 954)
+
+424         828 LOAD_GLOBAL              7 (NULL + isinstance)
+            840 LOAD_FAST                7 (o)
+            842 LOAD_METHOD              5 (get)
+            864 LOAD_CONST              13 ('product_list')
+            866 PRECALL                  1
+            870 CALL                     1
+            880 LOAD_GLOBAL             14 (list)
+            892 PRECALL                  2
+            896 CALL                     2
+            906 POP_JUMP_FORWARD_IF_FALSE    21 (to 950)
+            908 LOAD_FAST                7 (o)
+            910 LOAD_METHOD              5 (get)
+            932 LOAD_CONST              13 ('product_list')
+            934 PRECALL                  1
+            938 CALL                     1
+            948 JUMP_FORWARD             1 (to 952)
+        >>  950 BUILD_LIST               0
+        >>  952 STORE_FAST               8 (lines_raw)
+
+425     >>  954 BUILD_LIST               0
+            956 STORE_FAST               9 (lines)
+
+426         958 LOAD_FAST                8 (lines_raw)
+            960 GET_ITER
+        >>  962 EXTENDED_ARG             1
+            964 FOR_ITER               385 (to 1736)
+            966 STORE_FAST              10 (l)
+
+427         968 LOAD_GLOBAL              7 (NULL + isinstance)
+            980 LOAD_FAST               10 (l)
+            982 LOAD_GLOBAL              8 (dict)
+            994 PRECALL                  2
+            998 CALL                     2
+           1008 POP_JUMP_FORWARD_IF_TRUE     1 (to 1012)
+
+428        1010 JUMP_BACKWARD           25 (to 962)
+
+429     >> 1012 LOAD_GLOBAL             17 (NULL + _as_int)
+           1024 LOAD_FAST               10 (l)
+           1026 LOAD_METHOD              5 (get)
+           1048 LOAD_CONST              14 ('qty')
+           1050 LOAD_FAST               10 (l)
+           1052 LOAD_METHOD              5 (get)
+           1074 LOAD_CONST              15 ('quantity')
+           1076 PRECALL                  1
+           1080 CALL                     1
+           1090 PRECALL                  2
+           1094 CALL                     2
+           1104 PRECALL                  1
+           1108 CALL                     1
+           1118 STORE_FAST              11 (qty)
+
+430        1120 LOAD_FAST               11 (qty)
+           1122 LOAD_CONST              16 (0)
+           1124 COMPARE_OP               1 (<=)
+           1130 POP_JUMP_FORWARD_IF_FALSE     1 (to 1134)
+
+431        1132 JUMP_BACKWARD           86 (to 962)
+
+432     >> 1134 LOAD_FAST                9 (lines)
+           1136 LOAD_METHOD              9 (append)
+           1158 LOAD_GLOBAL             21 (NULL + ExtractedLine)
+
+433        1170 LOAD_GLOBAL             23 (NULL + _as_str)
+           1182 LOAD_FAST               10 (l)
+           1184 LOAD_METHOD              5 (get)
+           1206 LOAD_CONST              17 ('raw_line')
+           1208 PRECALL                  1
+           1212 CALL                     1
+           1222 PRECALL                  1
+           1226 CALL                     1
+
+434        1236 LOAD_GLOBAL             23 (NULL + _as_str)
+           1248 LOAD_FAST               10 (l)
+           1250 LOAD_METHOD              5 (get)
+           1272 LOAD_CONST              18 ('index_no')
+           1274 PRECALL                  1
+           1278 CALL                     1
+           1288 PRECALL                  1
+           1292 CALL                     1
+
+435        1302 LOAD_GLOBAL             23 (NULL + _as_str)
+           1314 LOAD_FAST               10 (l)
+           1316 LOAD_METHOD              5 (get)
+           1338 LOAD_CONST              19 ('style')
+           1340 PRECALL                  1
+           1344 CALL                     1
+           1354 PRECALL                  1
+           1358 CALL                     1
+
+436        1368 LOAD_GLOBAL             23 (NULL + _as_str)
+           1380 LOAD_FAST               10 (l)
+           1382 LOAD_METHOD              5 (get)
+           1404 LOAD_CONST              20 ('color_code')
+           1406 PRECALL                  1
+           1410 CALL                     1
+           1420 PRECALL                  1
+           1424 CALL                     1
+
+437        1434 LOAD_GLOBAL             23 (NULL + _as_str)
+           1446 LOAD_FAST               10 (l)
+           1448 LOAD_METHOD              5 (get)
+           1470 LOAD_CONST              21 ('color_desc')
+           1472 PRECALL                  1
+           1476 CALL                     1
+           1486 PRECALL                  1
+           1490 CALL                     1
+
+438        1500 LOAD_GLOBAL             23 (NULL + _as_str)
+           1512 LOAD_FAST               10 (l)
+           1514 LOAD_METHOD              5 (get)
+           1536 LOAD_CONST              22 ('size')
+           1538 PRECALL                  1
+           1542 CALL                     1
+           1552 PRECALL                  1
+           1556 CALL                     1
+
+439        1566 LOAD_GLOBAL             23 (NULL + _as_str)
+           1578 LOAD_FAST               10 (l)
+           1580 LOAD_METHOD              5 (get)
+           1602 LOAD_CONST              23 ('unit')
+           1604 PRECALL                  1
+           1608 CALL                     1
+           1618 PRECALL                  1
+           1622 CALL                     1
+
+440        1632 LOAD_FAST               11 (qty)
+
+441        1634 LOAD_GLOBAL             25 (NULL + _as_float)
+           1646 LOAD_FAST               10 (l)
+           1648 LOAD_METHOD              5 (get)
+           1670 LOAD_CONST              24 ('unit_price')
+           1672 PRECALL                  1
+           1676 CALL                     1
+           1686 PRECALL                  1
+           1690 CALL                     1
+
+432        1700 KW_NAMES                25
+           1702 PRECALL                  9
+           1706 CALL                     9
+           1716 PRECALL                  1
+           1720 CALL                     1
+           1730 POP_TOP
+           1732 EXTENDED_ARG             1
+           1734 JUMP_BACKWARD          387 (to 962)
+
+443     >> 1736 LOAD_FAST                9 (lines)
+           1738 POP_JUMP_FORWARD_IF_TRUE     2 (to 1744)
+
+444        1740 EXTENDED_ARG             2
+           1742 JUMP_BACKWARD          525 (to 694)
+
+445     >> 1744 LOAD_FAST                5 (orders)
+           1746 LOAD_METHOD              9 (append)
+           1768 LOAD_GLOBAL             27 (NULL + ExtractedOrder)
+
+446        1780 LOAD_GLOBAL             23 (NULL + _as_str)
+           1792 LOAD_FAST                7 (o)
+           1794 LOAD_METHOD              5 (get)
+           1816 LOAD_CONST              12 ('po_no')
+           1818 PRECALL                  1
+           1822 CALL                     1
+           1832 PRECALL                  1
+           1836 CALL                     1
+
+447        1846 LOAD_GLOBAL             23 (NULL + _as_str)
+           1858 LOAD_FAST                7 (o)
+           1860 LOAD_METHOD              5 (get)
+           1882 LOAD_CONST              26 ('channel')
+           1884 PRECALL                  1
+           1888 CALL                     1
+           1898 PRECALL                  1
+           1902 CALL                     1
+
+448        1912 LOAD_GLOBAL             23 (NULL + _as_str)
+           1924 LOAD_FAST                7 (o)
+           1926 LOAD_METHOD              5 (get)
+           1948 LOAD_CONST              27 ('delivery_date')
+           1950 PRECALL                  1
+           1954 CALL                     1
+           1964 PRECALL                  1
+           1968 CALL                     1
+
+449        1978 LOAD_GLOBAL             17 (NULL + _as_int)
+           1990 LOAD_FAST                7 (o)
+           1992 LOAD_METHOD              5 (get)
+           2014 LOAD_CONST              28 ('block_total_qty')
+           2016 PRECALL                  1
+           2020 CALL                     1
+           2030 PRECALL                  1
+           2034 CALL                     1
+
+450        2044 LOAD_FAST                9 (lines)
+
+445        2046 KW_NAMES                29
+           2048 PRECALL                  5
+           2052 CALL                     5
+           2062 PRECALL                  1
+           2066 CALL                     1
+           2076 POP_TOP
+           2078 EXTENDED_ARG             2
+           2080 JUMP_BACKWARD          694 (to 694)
+
+453     >> 2082 LOAD_GLOBAL             23 (NULL + _as_str)
+           2094 LOAD_FAST                2 (d)
+           2096 LOAD_METHOD              5 (get)
+           2118 LOAD_CONST              30 ('layout_type')
+           2120 PRECALL                  1
+           2124 CALL                     1
+           2134 PRECALL                  1
+           2138 CALL                     1
+           2148 JUMP_IF_TRUE_OR_POP      1 (to 2152)
+           2150 LOAD_CONST              31 ('line_items')
+        >> 2152 STORE_FAST              12 (layout)
+
+454        2154 LOAD_FAST               12 (layout)
+           2156 LOAD_CONST              32 (('line_items', 'matrix_2axis', 'matrix_1axis'))
+           2158 CONTAINS_OP              1
+           2160 POP_JUMP_FORWARD_IF_FALSE     2 (to 2166)
+
+455        2162 LOAD_CONST              31 ('line_items')
+           2164 STORE_FAST              12 (layout)
+
+457     >> 2166 LOAD_GLOBAL             29 (NULL + ExtractedData)
+
+458        2178 LOAD_GLOBAL             23 (NULL + _as_str)
+           2190 LOAD_FAST                2 (d)
+           2192 LOAD_METHOD              5 (get)
+           2214 LOAD_CONST              33 ('customer')
+           2216 PRECALL                  1
+           2220 CALL                     1
+           2230 PRECALL                  1
+           2234 CALL                     1
+
+459        2244 LOAD_FAST               12 (layout)
+
+460        2246 LOAD_FAST                4 (header)
+
+461        2248 LOAD_FAST                5 (orders)
+
+462        2250 LOAD_GLOBAL             31 (NULL + _as_bool)
+           2262 LOAD_FAST                2 (d)
+           2264 LOAD_METHOD              5 (get)
+           2286 LOAD_CONST              34 ('has_color_total')
+           2288 PRECALL                  1
+           2292 CALL                     1
+           2302 PRECALL                  1
+           2306 CALL                     1
+
+463        2316 LOAD_GLOBAL             31 (NULL + _as_bool)
+           2328 LOAD_FAST                2 (d)
+           2330 LOAD_METHOD              5 (get)
+           2352 LOAD_CONST              35 ('has_size_total')
+           2354 PRECALL                  1
+           2358 CALL                     1
+           2368 PRECALL                  1
+           2372 CALL                     1
+
+457        2382 KW_NAMES                36
+           2384 PRECALL                  6
+           2388 CALL                     6
+           2398 STORE_FAST              13 (data)
+
+465        2400 LOAD_FAST               13 (data)
+           2402 LOAD_ATTR               16 (orders)
+           2412 POP_JUMP_FORWARD_IF_TRUE    15 (to 2444)
+
+466        2414 LOAD_GLOBAL              5 (NULL + ValueError)
+           2426 LOAD_CONST              37 ("AI returned no usable order lines (every 'orders[].lines[]' entry was empty or had qty<=0)")
+           2428 PRECALL                  1
+           2432 CALL                     1
+           2442 RAISE_VARARGS            1
+
+468     >> 2444 LOAD_FAST               13 (data)
+           2446 RETURN_VALUE
+ExceptionTable:
+  36 to 64 -> 68 [0]
+  68 to 86 -> 162 [1] lasti
+  88 to 150 -> 152 [1] lasti
+  152 to 160 -> 162 [1] lasti
+
+==============================================================================
+## <module>.parse_data_response.<dictcomp>  (args=1, locals=2)
+# varnames: .0, k
+              0 COPY_FREE_VARS           1
+
+412           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                38 (to 86)
+             10 STORE_FAST               1 (k)
+             12 LOAD_FAST                1 (k)
+             14 LOAD_GLOBAL              1 (NULL + _as_str)
+             26 LOAD_DEREF               2 (header_raw)
+             28 LOAD_METHOD              1 (get)
+             50 LOAD_FAST                1 (k)
+             52 LOAD_CONST               0 ('')
+             54 PRECALL                  2
+             58 CALL                     2
+             68 PRECALL                  1
+             72 CALL                     1
+             82 MAP_ADD                  2
+             84 JUMP_BACKWARD           39 (to 8)
+        >>   86 RETURN_VALUE
+
+==============================================================================
+## <module>.build_data_prompt  (args=3, locals=6)
+# varnames: doc_text, customer, extra_hint, retry, hint, user
+474           0 RESUME                   0
+
+477           2 LOAD_CONST               1 ('')
+              4 STORE_FAST               3 (retry)
+
+478           6 LOAD_FAST                2 (extra_hint)
+              8 POP_JUMP_FORWARD_IF_FALSE     6 (to 22)
+
+479          10 LOAD_CONST               2 ('\nYOUR PREVIOUS ANSWER WAS REJECTED. Reason:\n')
+
+480          12 LOAD_FAST                2 (extra_hint)
+
+479          14 FORMAT_VALUE             0
+             16 LOAD_CONST               3 ('\nRe-read the document below and answer again, obeying the hard rules exactly. Output the corrected JSON only.\n')
+             18 BUILD_STRING             3
+             20 STORE_FAST               3 (retry)
+
+483     >>   22 LOAD_FAST                1 (customer)
+             24 POP_JUMP_FORWARD_IF_FALSE     6 (to 38)
+             26 LOAD_CONST               4 ('Customer hint: ')
+             28 LOAD_FAST                1 (customer)
+             30 FORMAT_VALUE             0
+             32 LOAD_CONST               5 ('\n')
+             34 BUILD_STRING             3
+             36 JUMP_FORWARD             1 (to 40)
+        >>   38 LOAD_CONST               1 ('')
+        >>   40 STORE_FAST               4 (hint)
+
+484          42 LOAD_FAST                4 (hint)
+             44 FORMAT_VALUE             0
+             46 LOAD_FAST                3 (retry)
+             48 FORMAT_VALUE             0
+             50 LOAD_CONST               6 ('\nPurchase-order text, one visual line per line:\n----\n')
+             52 BUILD_STRING             3
+
+486          54 LOAD_FAST                0 (doc_text)
+
+484          56 BINARY_OP                0 (+)
+
+486          60 LOAD_CONST               7 ('\n----\n')
+
+484          62 BINARY_OP                0 (+)
+             66 STORE_FAST               5 (user)
+
+487          68 LOAD_GLOBAL              0 (DATA_SYSTEM_PROMPT)
+             80 LOAD_FAST                5 (user)
+             82 BUILD_TUPLE              2
+             84 RETURN_VALUE
+
+==============================================================================
+## <module>.load_ai_config  (args=0, locals=3)
+# varnames: base, p, f
+490           0 RESUME                   0
+
+491           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (environ)
+             24 LOAD_METHOD              2 (get)
+             46 LOAD_CONST               1 ('APPDATA')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 JUMP_IF_TRUE_OR_POP     30 (to 124)
+             64 LOAD_GLOBAL              0 (os)
+             76 LOAD_ATTR                3 (path)
+             86 LOAD_METHOD              4 (expanduser)
+            108 LOAD_CONST               2 ('~/.config')
+            110 PRECALL                  1
+            114 CALL                     1
+        >>  124 STORE_FAST               0 (base)
+
+492         126 LOAD_GLOBAL              0 (os)
+            138 LOAD_ATTR                3 (path)
+            148 LOAD_METHOD              5 (join)
+            170 LOAD_FAST                0 (base)
+            172 LOAD_GLOBAL             12 (APP_NAME)
+            184 LOAD_CONST               3 ('config.json')
+            186 PRECALL                  3
+            190 CALL                     3
+            200 STORE_FAST               1 (p)
+
+493         202 LOAD_GLOBAL              0 (os)
+            214 LOAD_ATTR                3 (path)
+            224 LOAD_METHOD              7 (exists)
+            246 LOAD_FAST                1 (p)
+            248 PRECALL                  1
+            252 CALL                     1
+            262 POP_JUMP_FORWARD_IF_TRUE     2 (to 268)
+
+494         264 BUILD_MAP                0
+            266 RETURN_VALUE
+
+495     >>  268 NOP
+
+496         270 LOAD_GLOBAL             17 (NULL + open)
+            282 LOAD_FAST                1 (p)
+            284 LOAD_CONST               4 ('utf-8')
+            286 KW_NAMES                 5
+            288 PRECALL                  2
+            292 CALL                     2
+            302 BEFORE_WITH
+            304 STORE_FAST               2 (f)
+
+497         306 LOAD_GLOBAL             19 (NULL + json)
+            318 LOAD_ATTR               10 (load)
+            328 LOAD_FAST                2 (f)
+            330 PRECALL                  1
+            334 CALL                     1
+
+496         344 SWAP                     2
+            346 LOAD_CONST               0 (None)
+            348 LOAD_CONST               0 (None)
+            350 LOAD_CONST               0 (None)
+            352 PRECALL                  2
+            356 CALL                     2
+            366 POP_TOP
+            368 RETURN_VALUE
+        >>  370 PUSH_EXC_INFO
+            372 WITH_EXCEPT_START
+            374 POP_JUMP_FORWARD_IF_TRUE     4 (to 384)
+            376 RERAISE                  2
+        >>  378 COPY                     3
+            380 POP_EXCEPT
+            382 RERAISE                  1
+        >>  384 POP_TOP
+            386 POP_EXCEPT
+            388 POP_TOP
+            390 POP_TOP
+            392 LOAD_CONST               0 (None)
+            394 RETURN_VALUE
+        >>  396 PUSH_EXC_INFO
+
+498         398 LOAD_GLOBAL             22 (Exception)
+            410 CHECK_EXC_MATCH
+            412 POP_JUMP_FORWARD_IF_FALSE     5 (to 424)
+            414 POP_TOP
+
+499         416 BUILD_MAP                0
+            418 SWAP                     2
+            420 POP_EXCEPT
+            422 RETURN_VALUE
+
+498     >>  424 RERAISE                  0
+        >>  426 COPY                     3
+            428 POP_EXCEPT
+            430 RERAISE                  1
+ExceptionTable:
+  270 to 302 -> 396 [0]
+  304 to 342 -> 370 [1] lasti
+  344 to 366 -> 396 [0]
+  370 to 376 -> 378 [3] lasti
+  378 to 382 -> 396 [0]
+  384 to 384 -> 378 [3] lasti
+  386 to 390 -> 396 [0]
+  396 to 418 -> 426 [1] lasti
+  424 to 424 -> 426 [1] lasti
+
+==============================================================================
+## <module>._thinking_off  (args=1, locals=3)
+# varnames: cfg, model, base
+519           0 RESUME                   0
+
+527           2 LOAD_GLOBAL              1 (NULL + str)
+             14 LOAD_FAST                0 (cfg)
+             16 LOAD_METHOD              1 (get)
+             38 LOAD_CONST               1 ('model')
+             40 LOAD_CONST               2 ('')
+             42 PRECALL                  2
+             46 CALL                     2
+             56 PRECALL                  1
+             60 CALL                     1
+             70 LOAD_METHOD              2 (lower)
+             92 PRECALL                  0
+             96 CALL                     0
+            106 STORE_FAST               1 (model)
+
+528         108 LOAD_GLOBAL              1 (NULL + str)
+            120 LOAD_FAST                0 (cfg)
+            122 LOAD_METHOD              1 (get)
+            144 LOAD_CONST               3 ('base_url')
+            146 LOAD_CONST               2 ('')
+            148 PRECALL                  2
+            152 CALL                     2
+            162 PRECALL                  1
+            166 CALL                     1
+            176 LOAD_METHOD              2 (lower)
+            198 PRECALL                  0
+            202 CALL                     0
+            212 STORE_FAST               2 (base)
+
+529         214 LOAD_CONST               4 ('qwen')
+            216 LOAD_FAST                1 (model)
+            218 CONTAINS_OP              0
+            220 POP_JUMP_FORWARD_IF_TRUE     4 (to 230)
+            222 LOAD_CONST               5 ('dashscope')
+            224 LOAD_FAST                2 (base)
+            226 CONTAINS_OP              0
+            228 POP_JUMP_FORWARD_IF_FALSE     4 (to 238)
+
+530     >>  230 LOAD_CONST               6 ('enable_thinking')
+            232 LOAD_CONST               7 (False)
+            234 BUILD_MAP                1
+            236 RETURN_VALUE
+
+535     >>  238 LOAD_CONST               8 ('glm')
+            240 LOAD_FAST                1 (model)
+            242 CONTAINS_OP              0
+            244 POP_JUMP_FORWARD_IF_TRUE     4 (to 254)
+            246 LOAD_CONST               9 ('bigmodel')
+            248 LOAD_FAST                2 (base)
+            250 CONTAINS_OP              0
+            252 POP_JUMP_FORWARD_IF_FALSE     6 (to 266)
+
+536     >>  254 LOAD_CONST              10 ('thinking')
+            256 LOAD_CONST              11 ('type')
+            258 LOAD_CONST              12 ('disabled')
+            260 BUILD_MAP                1
+            262 BUILD_MAP                1
+            264 RETURN_VALUE
+
+537     >>  266 BUILD_MAP                0
+            268 RETURN_VALUE
+
+==============================================================================
+## <module>._chat_online  (args=3, locals=11)
+# varnames: system, user, cfg, url, body, extra, kw, data, e, msg, k
+540           0 RESUME                   0
+
+541           2 LOAD_FAST                2 (cfg)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('api_key')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 POP_JUMP_FORWARD_IF_FALSE    21 (to 86)
+             44 LOAD_FAST                2 (cfg)
+             46 LOAD_METHOD              0 (get)
+             68 LOAD_CONST               2 ('base_url')
+             70 PRECALL                  1
+             74 CALL                     1
+             84 POP_JUMP_FORWARD_IF_TRUE    15 (to 116)
+
+542     >>   86 LOAD_GLOBAL              3 (NULL + RuntimeError)
+
+543          98 LOAD_CONST               3 ('在线 AI 未配置完整。请在左侧『联网模型配置』填写 API Key / 模型 / Base URL 并『保存配置』后重试。')
+
+542         100 PRECALL                  1
+            104 CALL                     1
+            114 RAISE_VARARGS            1
+
+545     >>  116 LOAD_FAST                2 (cfg)
+            118 LOAD_CONST               2 ('base_url')
+            120 BINARY_SUBSCR
+            130 LOAD_METHOD              2 (rstrip)
+            152 LOAD_CONST               4 ('/')
+            154 PRECALL                  1
+            158 CALL                     1
+            168 LOAD_CONST               5 ('/chat/completions')
+            170 BINARY_OP                0 (+)
+            174 STORE_FAST               3 (url)
+
+547         176 LOAD_FAST                2 (cfg)
+            178 LOAD_METHOD              0 (get)
+            200 LOAD_CONST               6 ('model')
+            202 LOAD_CONST               7 ('gpt-4o-mini')
+            204 PRECALL                  2
+            208 CALL                     2
+
+549         218 LOAD_CONST               8 ('system')
+            220 LOAD_FAST                0 (system)
+            222 LOAD_CONST               9 (('role', 'content'))
+            224 BUILD_CONST_KEY_MAP      2
+
+550         226 LOAD_CONST              10 ('user')
+            228 LOAD_FAST                1 (user)
+            230 LOAD_CONST               9 (('role', 'content'))
+            232 BUILD_CONST_KEY_MAP      2
+
+548         234 BUILD_LIST               2
+
+552         236 LOAD_CONST              11 (0.0)
+
+553         238 LOAD_GLOBAL              6 (MAX_OUTPUT_TOKENS)
+
+554         250 LOAD_CONST              12 ('type')
+            252 LOAD_CONST              13 ('json_object')
+            254 BUILD_MAP                1
+
+546         256 LOAD_CONST              14 (('model', 'messages', 'temperature', 'max_tokens', 'response_format'))
+            258 BUILD_CONST_KEY_MAP      5
+            260 STORE_FAST               4 (body)
+
+556         262 LOAD_FAST                2 (cfg)
+            264 LOAD_METHOD              0 (get)
+            286 LOAD_CONST              15 ('allow_thinking')
+            288 PRECALL                  1
+            292 CALL                     1
+            302 POP_JUMP_FORWARD_IF_FALSE     2 (to 308)
+            304 BUILD_MAP                0
+            306 JUMP_FORWARD            14 (to 336)
+        >>  308 LOAD_GLOBAL              9 (NULL + _thinking_off)
+            320 LOAD_FAST                2 (cfg)
+            322 PRECALL                  1
+            326 CALL                     1
+        >>  336 STORE_FAST               5 (extra)
+
+557         338 LOAD_FAST                4 (body)
+            340 LOAD_METHOD              5 (update)
+            362 LOAD_FAST                5 (extra)
+            364 PRECALL                  1
+            368 CALL                     1
+            378 POP_TOP
+
+558         380 LOAD_GLOBAL             13 (NULL + dict)
+
+559         392 LOAD_FAST                2 (cfg)
+            394 LOAD_METHOD              0 (get)
+            416 LOAD_CONST              16 ('data_timeout')
+            418 LOAD_GLOBAL             14 (HTTP_TIMEOUT)
+            430 PRECALL                  2
+            434 CALL                     2
+
+560         444 LOAD_FAST                2 (cfg)
+            446 LOAD_METHOD              0 (get)
+            468 LOAD_CONST              17 ('http_retries')
+            470 LOAD_CONST              18 (3)
+            472 PRECALL                  2
+            476 CALL                     2
+
+561         486 LOAD_FAST                2 (cfg)
+            488 LOAD_METHOD              0 (get)
+            510 LOAD_CONST              19 ('http_backoff')
+            512 LOAD_CONST              20 (5)
+            514 PRECALL                  2
+            518 CALL                     2
+
+562         528 LOAD_FAST                2 (cfg)
+            530 LOAD_METHOD              0 (get)
+            552 LOAD_CONST              21 ('read_budget')
+            554 LOAD_GLOBAL             16 (READ_BUDGET)
+            566 PRECALL                  2
+            570 CALL                     2
+
+558         580 KW_NAMES                22
+            582 PRECALL                  4
+            586 CALL                     4
+            596 STORE_FAST               6 (kw)
+
+564         598 NOP
+
+565         600 LOAD_GLOBAL             19 (NULL + post_json)
+            612 LOAD_FAST                3 (url)
+            614 LOAD_FAST                2 (cfg)
+            616 LOAD_CONST               1 ('api_key')
+            618 BINARY_SUBSCR
+            628 LOAD_FAST                4 (body)
+            630 BUILD_TUPLE              3
+            632 BUILD_MAP                0
+            634 LOAD_FAST                6 (kw)
+            636 DICT_MERGE               1
+            638 CALL_FUNCTION_EX         1
+            640 STORE_FAST               7 (data)
+            642 JUMP_FORWARD           126 (to 896)
+        >>  644 PUSH_EXC_INFO
+
+566         646 LOAD_GLOBAL              2 (RuntimeError)
+            658 CHECK_EXC_MATCH
+            660 POP_JUMP_FORWARD_IF_FALSE   113 (to 888)
+            662 STORE_FAST               8 (e)
+
+569         664 LOAD_GLOBAL             21 (NULL + str)
+            676 LOAD_FAST                8 (e)
+            678 PRECALL                  1
+            682 CALL                     1
+            692 STORE_FAST               9 (msg)
+
+570         694 LOAD_FAST                5 (extra)
+            696 POP_JUMP_FORWARD_IF_FALSE     8 (to 714)
+            698 LOAD_CONST              23 ('HTTP 400')
+            700 LOAD_FAST                9 (msg)
+            702 CONTAINS_OP              0
+            704 POP_JUMP_FORWARD_IF_TRUE     5 (to 716)
+            706 LOAD_CONST              24 ('HTTP 422')
+            708 LOAD_FAST                9 (msg)
+            710 CONTAINS_OP              0
+            712 POP_JUMP_FORWARD_IF_TRUE     1 (to 716)
+
+571     >>  714 RAISE_VARARGS            0
+
+572     >>  716 LOAD_GLOBAL             23 (NULL + print)
+            728 LOAD_CONST              25 ('[thinking-off] API rejected thinking param (')
+            730 LOAD_FAST                9 (msg)
+            732 LOAD_CONST               0 (None)
+            734 LOAD_CONST              26 (120)
+            736 BUILD_SLICE              2
+            738 BINARY_SUBSCR
+            748 FORMAT_VALUE             0
+            750 LOAD_CONST              27 ('), retrying without it')
+            752 BUILD_STRING             3
+            754 LOAD_CONST              28 (True)
+            756 KW_NAMES                29
+            758 PRECALL                  2
+            762 CALL                     2
+            772 POP_TOP
+
+573         774 LOAD_FAST                5 (extra)
+            776 GET_ITER
+        >>  778 FOR_ITER                24 (to 828)
+            780 STORE_FAST              10 (k)
+
+574         782 LOAD_FAST                4 (body)
+            784 LOAD_METHOD             12 (pop)
+            806 LOAD_FAST               10 (k)
+            808 LOAD_CONST               0 (None)
+            810 PRECALL                  2
+            814 CALL                     2
+            824 POP_TOP
+            826 JUMP_BACKWARD           25 (to 778)
+
+575     >>  828 LOAD_GLOBAL             19 (NULL + post_json)
+            840 LOAD_FAST                3 (url)
+            842 LOAD_FAST                2 (cfg)
+            844 LOAD_CONST               1 ('api_key')
+            846 BINARY_SUBSCR
+            856 LOAD_FAST                4 (body)
+            858 BUILD_TUPLE              3
+            860 BUILD_MAP                0
+            862 LOAD_FAST                6 (kw)
+            864 DICT_MERGE               1
+            866 CALL_FUNCTION_EX         1
+            868 STORE_FAST               7 (data)
+            870 POP_EXCEPT
+            872 LOAD_CONST               0 (None)
+            874 STORE_FAST               8 (e)
+            876 DELETE_FAST              8 (e)
+            878 JUMP_FORWARD             8 (to 896)
+        >>  880 LOAD_CONST               0 (None)
+            882 STORE_FAST               8 (e)
+            884 DELETE_FAST              8 (e)
+            886 RERAISE                  1
+
+566     >>  888 RERAISE                  0
+        >>  890 COPY                     3
+            892 POP_EXCEPT
+            894 RERAISE                  1
+
+576     >>  896 LOAD_FAST                7 (data)
+            898 LOAD_CONST              30 ('choices')
+            900 BINARY_SUBSCR
+            910 LOAD_CONST              31 (0)
+            912 BINARY_SUBSCR
+            922 LOAD_CONST              32 ('message')
+            924 BINARY_SUBSCR
+            934 LOAD_CONST              33 ('content')
+            936 BINARY_SUBSCR
+            946 RETURN_VALUE
+ExceptionTable:
+  600 to 640 -> 644 [0]
+  644 to 662 -> 890 [1] lasti
+  664 to 868 -> 880 [1] lasti
+  880 to 888 -> 890 [1] lasti
+
+==============================================================================
+## <module>.extract_po_data  (args=1, locals=12)
+# varnames: doc_text, customer, cfg, extra_hint, seed_hint, text, _hint, system, user, chat_local, lcfg, content
+579           0 RESUME                   0
+
+586           2 LOAD_FAST                2 (cfg)
+              4 JUMP_IF_TRUE_OR_POP     13 (to 32)
+              6 LOAD_GLOBAL              1 (NULL + load_ai_config)
+             18 PRECALL                  0
+             22 CALL                     0
+        >>   32 STORE_FAST               2 (cfg)
+
+592          34 LOAD_FAST                2 (cfg)
+             36 LOAD_METHOD              1 (get)
+             58 LOAD_CONST               1 ('compress_input')
+             60 LOAD_CONST               2 (True)
+             62 PRECALL                  2
+             66 CALL                     2
+             76 POP_JUMP_FORWARD_IF_FALSE    16 (to 110)
+
+593          78 LOAD_GLOBAL              5 (NULL + compress_doc_text)
+             90 LOAD_FAST                0 (doc_text)
+             92 PRECALL                  1
+             96 CALL                     1
+            106 STORE_FAST               5 (text)
+            108 JUMP_FORWARD             2 (to 114)
+
+595     >>  110 LOAD_FAST                0 (doc_text)
+            112 STORE_FAST               5 (text)
+
+596     >>  114 LOAD_GLOBAL              7 (NULL + len)
+            126 LOAD_FAST                5 (text)
+            128 PRECALL                  1
+            132 CALL                     1
+            142 LOAD_GLOBAL              8 (MAX_INPUT_CHARS)
+            154 COMPARE_OP               4 (>)
+            160 POP_JUMP_FORWARD_IF_FALSE    15 (to 192)
+
+597         162 LOAD_FAST                5 (text)
+            164 LOAD_CONST               3 (None)
+            166 LOAD_GLOBAL              8 (MAX_INPUT_CHARS)
+            178 BUILD_SLICE              2
+            180 BINARY_SUBSCR
+            190 STORE_FAST               5 (text)
+
+602     >>  192 LOAD_FAST                3 (extra_hint)
+            194 STORE_FAST               6 (_hint)
+
+603         196 LOAD_FAST                4 (seed_hint)
+            198 POP_JUMP_FORWARD_IF_FALSE    12 (to 224)
+
+604         200 LOAD_FAST                3 (extra_hint)
+            202 POP_JUMP_FORWARD_IF_FALSE     5 (to 214)
+            204 LOAD_FAST                3 (extra_hint)
+            206 LOAD_CONST               4 ('\n')
+            208 BINARY_OP                0 (+)
+            212 JUMP_FORWARD             1 (to 216)
+        >>  214 LOAD_CONST               5 ('')
+        >>  216 LOAD_FAST                4 (seed_hint)
+            218 BINARY_OP                0 (+)
+            222 STORE_FAST               6 (_hint)
+
+605     >>  224 LOAD_GLOBAL             11 (NULL + build_data_prompt)
+            236 LOAD_FAST                5 (text)
+            238 LOAD_FAST                1 (customer)
+            240 LOAD_FAST                6 (_hint)
+            242 PRECALL                  3
+            246 CALL                     3
+            256 UNPACK_SEQUENCE          2
+            260 STORE_FAST               7 (system)
+            262 STORE_FAST               8 (user)
+
+606         264 LOAD_FAST                2 (cfg)
+            266 LOAD_METHOD              1 (get)
+            288 LOAD_CONST               6 ('infer_engine')
+            290 PRECALL                  1
+            294 CALL                     1
+            304 LOAD_CONST               7 ('local')
+            306 COMPARE_OP               2 (==)
+            312 POP_JUMP_FORWARD_IF_FALSE    90 (to 494)
+
+607         314 LOAD_CONST               8 (1)
+            316 LOAD_CONST               9 (('chat_local',))
+            318 IMPORT_NAME              6 (local_infer)
+            320 IMPORT_FROM              7 (chat_local)
+            322 STORE_FAST               9 (chat_local)
+            324 POP_TOP
+
+610         326 LOAD_GLOBAL             17 (NULL + dict)
+            338 LOAD_FAST                2 (cfg)
+            340 PRECALL                  1
+            344 CALL                     1
+            354 STORE_FAST              10 (lcfg)
+
+611         356 LOAD_GLOBAL             19 (NULL + max)
+            368 LOAD_GLOBAL             21 (NULL + int)
+            380 LOAD_FAST                2 (cfg)
+            382 LOAD_METHOD              1 (get)
+            404 LOAD_CONST              10 ('local_max_tokens')
+            406 LOAD_CONST              11 (2048)
+            408 PRECALL                  2
+            412 CALL                     2
+            422 JUMP_IF_TRUE_OR_POP      1 (to 426)
+            424 LOAD_CONST              11 (2048)
+        >>  426 PRECALL                  1
+            430 CALL                     1
+            440 LOAD_CONST              12 (4096)
+            442 PRECALL                  2
+            446 CALL                     2
+            456 LOAD_FAST               10 (lcfg)
+            458 LOAD_CONST              10 ('local_max_tokens')
+            460 STORE_SUBSCR
+
+612         464 PUSH_NULL
+            466 LOAD_FAST                9 (chat_local)
+            468 LOAD_FAST                7 (system)
+            470 LOAD_FAST                8 (user)
+            472 LOAD_FAST               10 (lcfg)
+            474 KW_NAMES                13
+            476 PRECALL                  3
+            480 CALL                     3
+            490 STORE_FAST              11 (content)
+            492 JUMP_FORWARD            17 (to 528)
+
+614     >>  494 LOAD_GLOBAL             23 (NULL + _chat_online)
+            506 LOAD_FAST                7 (system)
+            508 LOAD_FAST                8 (user)
+            510 LOAD_FAST                2 (cfg)
+            512 PRECALL                  3
+            516 CALL                     3
+            526 STORE_FAST              11 (content)
+
+615     >>  528 LOAD_GLOBAL             25 (NULL + parse_data_response)
+            540 LOAD_FAST               11 (content)
+            542 PRECALL                  1
+            546 CALL                     1
+            556 RETURN_VALUE

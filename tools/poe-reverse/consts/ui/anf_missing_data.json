@@ -1,0 +1,422 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "Tuple",
+   "tkinter",
+   "tk",
+   "messagebox",
+   "theme_glass",
+   "tg",
+   "_FIELDS",
+   "ask_missing_data"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/anf_missing_data.py - 缺失资料手动补录弹窗。\n\n扫描 ANF 文件夹后，若某些 PO 的「资料」（PO + 经 Commitment# 关联出的\nKI / Mill / Fabric）不完整，弹出此窗让用户逐条补录。确认后返回\nfixes 字典，键为 (po_no, entity_index)，值为各字段值。\n\n返回 None 表示取消（中止生成）。\n",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "Dict",
+    "List",
+    "Optional",
+    "Tuple"
+   ],
+   null,
+   [
+    "messagebox"
+   ],
+   [
+    [
+     "commitment_no",
+     "Commitment#"
+    ],
+    [
+     "ki_no",
+     "KI"
+    ],
+    [
+     "mill_name",
+     "Mill"
+    ],
+    [
+     "fabric_ref",
+     "Fabric"
+    ]
+   ],
+   "issues",
+   "List[dict]",
+   "return",
+   "'Optional[Dict[Tuple[str, int], dict]]'",
+   [
+    "issues",
+    "List[dict]",
+    "return",
+    "'Optional[Dict[Tuple[str, int], dict]]'"
+   ]
+  ],
+  "n_instructions": 45
+ },
+ "<module>.ask_missing_data": {
+  "names": [
+   "tg",
+   "COL",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "grab_set",
+   "resizable",
+   "configure",
+   "bind",
+   "Label",
+   "_SANS",
+   "pack",
+   "Canvas",
+   "Scrollbar",
+   "yview",
+   "set",
+   "Frame",
+   "create_window",
+   "get",
+   "_FIELDS",
+   "Entry",
+   "insert",
+   "str",
+   "minsize",
+   "geometry",
+   "update_idletasks",
+   "deiconify",
+   "wait_window"
+  ],
+  "varnames": [
+   "parent",
+   "issues",
+   "vsb",
+   "inner",
+   "iss",
+   "key",
+   "missing",
+   "card",
+   "row_entries",
+   "fkey",
+   "flabel",
+   "r",
+   "req",
+   "ent",
+   "_on_configure",
+   "bottom",
+   "W",
+   "H"
+  ],
+  "consts": [
+   "弹出补录窗。返回 fixes 或 None（取消）。",
+   "v",
+   null,
+   "资料缺失 · 手动补录",
+   true,
+   "gap",
+   [
+    "bg"
+   ],
+   "<Escape>",
+   "检测到以下 PO 资料不完整，请补全后继续生成",
+   "ink",
+   14,
+   "bold",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "w",
+   20,
+   [
+    14,
+    4
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "资料 = PO + 经 Commitment# 关联出的 KI / Mill / Fabric。标 * 为必填（至少填 Commitment# 才能关联）。",
+   "ink_3",
+   11,
+   [
+    0,
+    10
+   ],
+   0,
+   [
+    "bg",
+    "highlightthickness"
+   ],
+   "both",
+   12,
+   "top",
+   [
+    "fill",
+    "expand",
+    "padx",
+    "side"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   "right",
+   "y",
+   [
+    "side",
+    "fill"
+   ],
+   [
+    "yscrollcommand"
+   ],
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "po_no",
+   "entity_index",
+   "missing",
+   "field",
+   "panel_border",
+   1,
+   10,
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness",
+    "padx",
+    "pady"
+   ],
+   "x",
+   8,
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "PO#  ",
+   13,
+   [
+    0,
+    8
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    0,
+    6
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   " *",
+   "",
+   "accent",
+   "ink_2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "width",
+    "anchor"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "flat",
+   "field_border",
+   [
+    "bg",
+    "fg",
+    "insertbackground",
+    "font",
+    "relief",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "<Configure>",
+   [
+    6,
+    14
+   ],
+   "确认并继续",
+   "select_fg",
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   "取消",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   [
+    620,
+    460
+   ],
+   360,
+   [
+    null
+   ]
+  ],
+  "n_instructions": 611
+ },
+ "<module>.ask_missing_data.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "field",
+   [
+    "bg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>.ask_missing_data._on_configure": {
+  "names": [
+   "configure",
+   "bbox"
+  ],
+  "varnames": [
+   "_"
+  ],
+  "consts": [
+   null,
+   "all",
+   [
+    "scrollregion"
+   ]
+  ],
+  "n_instructions": 15
+ },
+ "<module>.ask_missing_data._confirm": {
+  "names": [
+   "items",
+   "_FIELDS",
+   "get",
+   "strip",
+   "any",
+   "messagebox",
+   "askyesno",
+   "destroy"
+  ],
+  "varnames": [
+   "fixes",
+   "key",
+   "row_entries",
+   "vals",
+   "fkey",
+   "_",
+   "v",
+   "bad"
+  ],
+  "consts": [
+   null,
+   "确认",
+   "有 PO 仅填了 KI/Mill/Fabric 而未填 Commitment#，将无法关联到 Commitment 资料。仍要继续？",
+   "v"
+  ],
+  "n_instructions": 98
+ },
+ "<module>.ask_missing_data._confirm.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "commitment_no"
+  ],
+  "n_instructions": 15
+ },
+ "<module>.ask_missing_data._confirm.<genexpr>": {
+  "names": [
+   "_FIELDS",
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "fkey",
+   "_"
+  ],
+  "consts": [
+   "commitment_no",
+   null
+  ],
+  "n_instructions": 35
+ },
+ "<module>.ask_missing_data._cancel": {
+  "names": [
+   "destroy"
+  ],
+  "varnames": [],
+  "consts": [
+   null,
+   "v"
+  ],
+  "n_instructions": 13
+ }
+}

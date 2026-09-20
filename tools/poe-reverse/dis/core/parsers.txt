@@ -1,0 +1,58 @@
+# module: core.parsers
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers package.')
+              4 STORE_NAME               0 (__doc__)
+
+  2           6 LOAD_CONST               1 (1)
+              8 LOAD_CONST               2 (('BaseParser', 'PageWords', 'Token'))
+             10 IMPORT_NAME              1 (base)
+             12 IMPORT_FROM              2 (BaseParser)
+             14 STORE_NAME               2 (BaseParser)
+             16 IMPORT_FROM              3 (PageWords)
+             18 STORE_NAME               3 (PageWords)
+             20 IMPORT_FROM              4 (Token)
+             22 STORE_NAME               4 (Token)
+             24 POP_TOP
+
+  3          26 LOAD_CONST               1 (1)
+             28 LOAD_CONST               3 (('get_parser', 'parse'))
+             30 IMPORT_NAME              5 (registry)
+             32 IMPORT_FROM              6 (get_parser)
+             34 STORE_NAME               6 (get_parser)
+             36 IMPORT_FROM              7 (parse)
+             38 STORE_NAME               7 (parse)
+             40 POP_TOP
+
+  4          42 LOAD_CONST               1 (1)
+             44 LOAD_CONST               4 (('LineItemsParser',))
+             46 IMPORT_NAME              8 (line_items)
+             48 IMPORT_FROM              9 (LineItemsParser)
+             50 STORE_NAME               9 (LineItemsParser)
+             52 POP_TOP
+
+  5          54 LOAD_CONST               1 (1)
+             56 LOAD_CONST               5 (('Matrix2AxisParser',))
+             58 IMPORT_NAME             10 (matrix_2axis)
+             60 IMPORT_FROM             11 (Matrix2AxisParser)
+             62 STORE_NAME              11 (Matrix2AxisParser)
+             64 POP_TOP
+
+  6          66 LOAD_CONST               1 (1)
+             68 LOAD_CONST               6 (('Matrix1AxisParser',))
+             70 IMPORT_NAME             12 (matrix_1axis)
+             72 IMPORT_FROM             13 (Matrix1AxisParser)
+             74 STORE_NAME              13 (Matrix1AxisParser)
+             76 POP_TOP
+
+  8          78 BUILD_LIST               0
+             80 LOAD_CONST               7 (('BaseParser', 'PageWords', 'Token', 'get_parser', 'parse', 'LineItemsParser', 'Matrix2AxisParser', 'Matrix1AxisParser'))
+             82 LIST_EXTEND              1
+             84 STORE_NAME              14 (__all__)
+             86 LOAD_CONST               8 (None)
+             88 RETURN_VALUE

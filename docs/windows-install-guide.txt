@@ -1,0 +1,27 @@
+GS Bot for Windows - Install Guide
+
+If SmartScreen or Windows security interrupts the first launch, use the local launcher from the release folder.
+
+Install
+1. Run GS Bot Setup and finish the installer.
+2. If Windows shows a security prompt, choose More info and then Run anyway only if you trust this build.
+3. Start GS Bot from the desktop shortcut or Start menu after installation.
+
+Local launcher
+1. Keep Start GS Bot.bat next to GS Bot.exe, or keep it in the release folder with win-unpacked/GS Bot.exe.
+2. Double-click Start GS Bot.bat.
+3. The launcher starts GS Bot directly and writes a local startup log.
+
+Allow the app in Windows Security
+1. If SmartScreen blocks the app, click More info.
+2. Confirm the publisher and file name.
+3. Click Run anyway if this is your internal GS Bot build.
+4. If antivirus software quarantines the app, restore it and add an allow rule for the release folder if needed.
+
+Notes
+- The local launcher is intended only for internal testing on trusted machines.
+- A new unsigned build may trigger SmartScreen again even if an older build was allowed before.
+- Keep the launcher and unpacked app together if you want to run directly from the release folder.
+
+Support
+- If the app is still blocked, send a screenshot of the warning dialog to the GS Bot team.

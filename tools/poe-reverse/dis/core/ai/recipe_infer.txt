@@ -1,0 +1,747 @@
+# module: core.ai.recipe_infer
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\recipe_infer.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/ai/recipe_infer.py - infer a PoRecipe from a first-seen PO (AI + manual confirm).\n\nFlow: first PO of a new layout -> send raw text + skeleton to an OpenAI-compatible\nendpoint -> parse the returned JSON into a PoRecipe -> user confirms -> cache by\nfingerprint. Later POs of the same layout hit the cache (zero AI).\n\nOnly stdlib (urllib) is used for the HTTP call. Config lives in\n``%APPDATA%\\Purchase Order Extractor V2\\config.json``:\n    {"base_url": "...", "api_key": "...", "model": "..."}\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 11           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 13          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 14          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 15          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (re)
+             40 STORE_NAME               5 (re)
+
+ 17          42 LOAD_CONST               4 (2)
+             44 LOAD_CONST               5 (('LayoutType', 'PoRecipe'))
+             46 IMPORT_NAME              6 (models)
+             48 IMPORT_FROM              7 (LayoutType)
+             50 STORE_NAME               7 (LayoutType)
+             52 IMPORT_FROM              8 (PoRecipe)
+             54 STORE_NAME               8 (PoRecipe)
+             56 POP_TOP
+
+ 18          58 LOAD_CONST               6 (1)
+             60 LOAD_CONST               7 (('post_json',))
+             62 IMPORT_NAME              9 (http_util)
+             64 IMPORT_FROM             10 (post_json)
+             66 STORE_NAME              10 (post_json)
+             68 POP_TOP
+
+ 20          70 LOAD_CONST               8 ('Purchase Order Extractor V2')
+             72 STORE_NAME              11 (APP_NAME)
+
+ 21          74 LOAD_CONST               9 ('You are a parser-recipe generator for a purchase-order extraction engine.\nGiven the raw text of a purchase order PDF, output a single JSON object describing how to\nextract it. NO prose, NO markdown outside the JSON, just the JSON.\n\nRequired fields:\n  "layout_type": one of "line_items" | "matrix_2axis" | "matrix_1axis".\n    - line_items: one row per (style/color/size) with quantity, e.g. LPP SA (637JO, XL901).\n    - matrix_2axis: color blocks, each a grid of size x inseam, e.g. COLIN\'S trousers.\n    - matrix_1axis: color blocks, each a single row of sizes, e.g. SAKHA / COLIN\'S non-trouser.\n  "customer": the sold-to / brand name (e.g. "LPP SA", "COLIN\'S").\n  "order_unit": the unit token that appears on REAL order lines (usually "PCS").\n      Only rows whose unit equals order_unit are counted as real order lines.\n\nFor line_items also provide:\n  "entity_anchor": regex marking the start of each order block. Its FIRST capture group,\n      or a named group "po_no", MUST be the ORDER NUMBER -- never the block index.\n      LPP repeats blocks like "Entity 1 Order No: 11321589": the order number is\n      11321589, the "1" is only a block index. Prefer explicit named groups, e.g.\n          Entity\\s+\\d+\\s+Order No:\\s*(?P<po_no>\\d+)(?:\\s+(?P<channel>E-COMM))?\n      Use "" when the PDF has a single order.\n  "line_pattern": a FULL Python regex (re.MULTILINE) matching ONE REAL order line.\n\n  A REAL LPP order line has a DESCRIPTION + COLOUR block in the MIDDLE, then unit,\n  quantity, unit price and amount:\n      637JO-80X-S MEN`S TROUSERS 80X 80X BEIGE PCS 744 10.20 7,588.80\n      \\_________/ \\_____________________________/ \\_/ \\_/ \\___/ \\______/\n        Index No     description + colour code+name  unit qty  price   amount\n  A correct line_pattern for that is:\n      (?P<style>\\S+-\\S+-\\S+)\\s+(?P<middle>.*?)\\s+(?P<unit>PCS)\\s+(?P<qty>\\d+)\\s+(?P<unit_price>[\\d.]+)\\s+[\\d,.]+\n  The (?P<middle>.*?) block and the trailing unit price are MANDATORY for this layout --\n  omitting them makes the pattern silently match the WRONG rows (see below).\n\n  CRITICAL -- these look-alike rows are NOT orders, never match them:\n    * MULTIPACK / pack break-up rows:   637JO-80X-T01 PACK 2 186 372\n      the "2" is pieces-per-pack, NOT an order quantity. Their unit is PACK.\n    * bare sub-breakdown rows:          637JO-80X-S PCS 372\n      no description, no colour, no unit price. They restate a partial split.\n  Requiring the middle block AND the unit price excludes both.\n\n  The engine DERIVES color_code (2nd dash-segment of the Index No) and size (3rd\n  dash-segment) automatically, so those groups are optional. Required groups:\n      style, unit, qty        (always)\n      middle, unit_price      (whenever the layout has them -- LPP does)\n      color_code, size, color_desc (OPTIONAL -- only if a literal separate column exists)\n  Do NOT invent columns that are not in the text; the engine degrades gracefully.\n\nFor matrix layouts also provide:\n  "color_anchor": regex with group(1)=color_code, group(2)=color_desc (e.g. "COLOR NO\\s*:\\s*(\\S+)\\s+(.+)").\n  "has_inseam": true only when the grid has an inseam axis (matrix_2axis).\n  "destination_anchor": regex capturing group(1)=destination_code, when the order splits per\n      destination (e.g. SAKHA). Set "section_anchor" to the section header that contains the\n      real order quantities (e.g. "DESTINATION DETAILS") so summary sections are ignored.\n\nHeader anchors (regex, group(1)=value): po_no_anchor, season_anchor, delivery_anchor,\ncurrency_anchor, price_term_anchor, style_anchor, price_anchor, packing_anchor,\nport_discharge_anchor, port_loading_anchor, ship_mode_anchor, agent_anchor, vendor_anchor,\npayment_terms_anchor. Use "" when not present.\n  * price_term_anchor = 价格条款（如 FOB / CIF / EXW）；payment_terms_anchor = 付款条款\n    （如 T/T、信用证 L/C、付款天数）。二者是不同字段，不要混用同一个锚点。\n  * port_loading_anchor / port_discharge_anchor MUST capture a PORT NAME\n    （如 "SHANGHAI"、"SINGAPORE"），绝不能是运输方式或船名。若 PDF 只写了\n    "Incoterms: FOB VESSEL"，末尾的 VESSEL 是船名而非港口 —— 该锚点留空，不要抓取它。\n    ship_mode_anchor 同理，必须抓取运输方式（SEA / AIR / TRUCK / …），绝不写 "VESSEL"。\n    V2.0.19.15: 校验会清除落入港口列的运输方式词，但请从源头避免。\n\nCRITICAL anchor rules (prevent the most common extraction bugs):\n  * The captured group MUST be ONLY the value, NEVER the label or a leading colon.\n    Write the label, swallow the colon, then capture, e.g.\n        "ORDER NO........:PO10151999"  ->  ORDER\\s+NO\\.+\\s*:\\s*(\\S+)\n        "SEASON........:2027 Yaz"      ->  SEASON\\.+\\s*:\\s*(.+)\n    Do NOT write "ORDER NO....(\\S+)" (that captures ":PO10151999").\n  * If a header line carries MULTIPLE fields side-by-side (e.g.\n    "SEASON........:2027 Yaz / 2027 летo STYLE NO..................:1086137"),\n    the captured group MUST STOP before the next field label. Use a lazy group\n    plus a lookahead for that next label, e.g.\n        SEASON\\.+\\s*:\\s*(.+?)(?=\\s+STYLE\\s+NO)\n    Do NOT let the season anchor swallow "STYLE NO..................:1086137".\n  * Unit price labels may use the Turkish dotted-I: always write the class token as\n    PR[İI]CE (e.g. "UNIT PR[İI]CE...: 9,50"), never a bare "PRICE".\n  * Prefer (\\S+) for single-token values and (.+) for values containing spaces; use\n    (.+?) with a trailing lookahead when another label sits on the same line.\n  * delivery_anchor MUST match the date itself, NOT a specific destination/country.\n    In per-destination layouts (e.g. COLIN\'S) "Delivery Date:DD.MM.YYYY" repeats under\n    every destination, so the anchor must work for ALL of them.\n    CRITICAL: in these PDFs pdfplumber often merges the destination description into the\n    label, producing THREE different garbled forms:\n        "ToptaDnelivery Date:", "PerakenDdeelivery Date:", "PerakendDeelivery Date:"\n        (contain "Date:"),\n        "ColDinesli vReertya iDlate:" (contains "Dlate:" -- capital D before "late:").\n    A literal "Delivery\\s+Date:" therefore MISSES the "iDlate:" rows. Key off the stable\n    shared token instead: "Date:" OR a capital-letter + "late:" followed by DD.MM.YYYY.\n    Keep it CASE-SENSITIVE so the all-caps header order-date line\n    "DATE.....:DD.MM.YYYY" is NOT matched:\n        (?:Date|[A-Z]late):\\s*(\\d{1,2}\\.\\d{1,2}\\.\\d{4})\n    NEVER prefix it with "Destination Code:EG..." / a country name (Mısır, etc.) -- that\n    would only capture one destination and leave the others blank.\n\nSet "channel_value" to "STANDARD" when a channel exists but is not labelled "E-COMM";\nuse "" when the customer has no channel concept. "total_token" defaults to "TOTAL",\n"size_header_token" to "COLOR NO".\n\nDate format (Ship Date / Order Date standardisation):\n  * Inspect how the PDF prints dates and emit TWO fields:\n      "date_format": a Python strptime format for the SOURCE date, e.g.\n          "%d.%m.%Y"  (COLIN\'S / SAKHA / most European customers: 06.07.2026)\n          "%m/%d/%Y"  (US customers: 06/07/2026)\n          "%Y-%m-%d"  (already ISO)\n          ""          (leave empty only if you cannot determine it)\n      "date_dayfirst": true when the customer uses DD/MM ordering, false otherwise.\n  * Pinning "date_format" lets the engine convert every Ship Date to ISO\n    YYYY-MM-DD with NO guessing. If you leave it "", ambiguous numeric dates\n    (both day and month <= 12) will be flagged for human review instead of being\n    silently mis-read. European customers (COLIN\'S, SAKHA, …) are DD.MM.YYYY — set\n    date_format to "%d.%m.%Y" and date_dayfirst to true.\n\nAutomatic hygiene (NO recipe fields needed — the engine already does this):\n  * StyleNo / PONo are trimmed, de-spaced and upper-cased automatically.\n  * Season, SU, Currency, PriceTerm, ShipMode, CountryOfOrigin, Inseam and Size\n    are normalised automatically via built-in vocabularies. Do NOT emit "cleans"\n    rules for these fields unless a customer needs a custom mapping.\nReturn only the JSON.')
+             76 STORE_NAME              12 (RECIPE_SYSTEM_PROMPT)
+
+144          78 NOP
+
+145          80 NOP
+
+144          82 LOAD_CONST              35 (('', '', ''))
+             84 LOAD_CONST              36 (('raw_text', 'str', 'customer', 'str', 'extra_hint', 'str', 'layout_type', 'str', 'return', 'tuple'))
+             86 LOAD_CONST              18 (<code object build_recipe_prompt at 0x000002BF9472B340, file "core\ai\recipe_infer.py", line 144>)
+             88 MAKE_FUNCTION            5 (defaults, annotations)
+             90 STORE_NAME              13 (build_recipe_prompt)
+
+168          92 LOAD_CONST              37 (('content', 'str', 'return', 'str'))
+             94 LOAD_CONST              20 (<code object _extract_json at 0x000002BF94A01B50, file "core\ai\recipe_infer.py", line 168>)
+             96 MAKE_FUNCTION            4 (annotations)
+             98 STORE_NAME              14 (_extract_json)
+
+181         100 LOAD_CONST              10 ('')
+            102 LOAD_CONST              10 ('')
+            104 LOAD_CONST              21 (('fingerprint', 'customer'))
+            106 BUILD_CONST_KEY_MAP      2
+            108 LOAD_CONST              38 (('content', 'str', 'fingerprint', 'str', 'customer', 'str', 'return', 'PoRecipe'))
+            110 LOAD_CONST              24 (<code object parse_recipe_response at 0x000002BF944645E0, file "core\ai\recipe_infer.py", line 181>)
+            112 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            114 STORE_NAME              15 (parse_recipe_response)
+
+196         116 LOAD_CONST              39 (('text', 'str', 'return', 'LayoutType'))
+            118 LOAD_CONST              27 (<code object guess_layout_type at 0x000002BF946C5E60, file "core\ai\recipe_infer.py", line 196>)
+            120 MAKE_FUNCTION            4 (annotations)
+            122 STORE_NAME              16 (guess_layout_type)
+
+206         124 LOAD_CONST              40 (('return', 'dict'))
+            126 LOAD_CONST              29 (<code object load_ai_config at 0x000002BF94081E10, file "core\ai\recipe_infer.py", line 206>)
+            128 MAKE_FUNCTION            4 (annotations)
+            130 STORE_NAME              17 (load_ai_config)
+
+218         132 LOAD_CONST              10 ('')
+            134 LOAD_CONST               3 (None)
+
+219         136 LOAD_CONST              10 ('')
+            138 LOAD_CONST              10 ('')
+
+220         140 LOAD_CONST              10 ('')
+
+218         142 LOAD_CONST              30 (('customer', 'cfg', 'extra_hint', 'layout_type', 'seed_hint'))
+            144 BUILD_CONST_KEY_MAP      5
+            146 LOAD_CONST              41 (('raw_text', 'str', 'customer', 'str', 'cfg', 'dict | None', 'extra_hint', 'str', 'layout_type', 'str', 'seed_hint', 'str', 'return', 'PoRecipe'))
+            148 LOAD_CONST              34 (<code object infer_recipe at 0x000002BF943C29A0, file "core\ai\recipe_infer.py", line 218>)
+            150 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            152 STORE_NAME              18 (infer_recipe)
+            154 LOAD_CONST               3 (None)
+            156 RETURN_VALUE
+
+==============================================================================
+## <module>.build_recipe_prompt  (args=4, locals=7)
+# varnames: raw_text, customer, extra_hint, layout_type, retry, layout_note, user
+144           0 RESUME                   0
+
+150           2 LOAD_CONST               1 ('')
+              4 STORE_FAST               4 (retry)
+
+151           6 LOAD_FAST                2 (extra_hint)
+              8 POP_JUMP_FORWARD_IF_FALSE     6 (to 22)
+
+152          10 LOAD_CONST               2 ('\nYOUR PREVIOUS ANSWER WAS REJECTED. Reason:\n')
+
+153          12 LOAD_FAST                2 (extra_hint)
+
+152          14 FORMAT_VALUE             0
+             16 LOAD_CONST               3 ('\nFix the recipe accordingly. Re-read the raw text below and make sure\nline_pattern actually matches the real order lines as they appear,\nline by line. Output the corrected JSON only.\n')
+             18 BUILD_STRING             3
+             20 STORE_FAST               4 (retry)
+
+157     >>   22 LOAD_CONST               1 ('')
+             24 STORE_FAST               5 (layout_note)
+
+158          26 LOAD_FAST                3 (layout_type)
+             28 POP_JUMP_FORWARD_IF_FALSE     6 (to 42)
+
+159          30 LOAD_CONST               4 ('The document layout is ALREADY classified as "')
+
+160          32 LOAD_FAST                3 (layout_type)
+
+159          34 FORMAT_VALUE             0
+             36 LOAD_CONST               5 ('". Do NOT re-describe or re-guess the layout; output ONLY the recipe JSON for that layout.\n')
+             38 BUILD_STRING             3
+             40 STORE_FAST               5 (layout_note)
+
+162     >>   42 LOAD_CONST               6 ('Customer hint: ')
+             44 LOAD_FAST                1 (customer)
+             46 FORMAT_VALUE             0
+             48 LOAD_CONST               7 ('\n')
+             50 LOAD_FAST                5 (layout_note)
+             52 FORMAT_VALUE             0
+             54 LOAD_FAST                4 (retry)
+             56 FORMAT_VALUE             0
+             58 LOAD_CONST               8 ('\nPurchase-order text, one visual line per line (digits kept for reference):\n----\n')
+             60 BUILD_STRING             6
+
+164          62 LOAD_FAST                0 (raw_text)
+             64 LOAD_CONST               9 (None)
+             66 LOAD_CONST              10 (8000)
+             68 BUILD_SLICE              2
+             70 BINARY_SUBSCR
+
+162          80 BINARY_OP                0 (+)
+
+164          84 LOAD_CONST              11 ('\n----\n')
+
+162          86 BINARY_OP                0 (+)
+             90 STORE_FAST               6 (user)
+
+165          92 LOAD_GLOBAL              0 (RECIPE_SYSTEM_PROMPT)
+            104 LOAD_FAST                6 (user)
+            106 BUILD_TUPLE              2
+            108 RETURN_VALUE
+
+==============================================================================
+## <module>._extract_json  (args=1, locals=4)
+# varnames: content, m, s, e
+168           0 RESUME                   0
+
+170           2 LOAD_FAST                0 (content)
+              4 LOAD_METHOD              0 (strip)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               0 (content)
+
+171          42 LOAD_GLOBAL              3 (NULL + re)
+             54 LOAD_ATTR                2 (search)
+             64 LOAD_CONST               1 ('```(?:json)?\\s*(\\{.*?\\})\\s*```')
+             66 LOAD_FAST                0 (content)
+             68 LOAD_GLOBAL              2 (re)
+             80 LOAD_ATTR                3 (DOTALL)
+             90 PRECALL                  3
+             94 CALL                     3
+            104 STORE_FAST               1 (m)
+
+172         106 LOAD_FAST                1 (m)
+            108 POP_JUMP_FORWARD_IF_FALSE    21 (to 152)
+
+173         110 LOAD_FAST                1 (m)
+            112 LOAD_METHOD              4 (group)
+            134 LOAD_CONST               2 (1)
+            136 PRECALL                  1
+            140 CALL                     1
+            150 RETURN_VALUE
+
+174     >>  152 LOAD_FAST                0 (content)
+            154 LOAD_METHOD              5 (find)
+            176 LOAD_CONST               3 ('{')
+            178 PRECALL                  1
+            182 CALL                     1
+            192 STORE_FAST               2 (s)
+
+175         194 LOAD_FAST                0 (content)
+            196 LOAD_METHOD              6 (rfind)
+            218 LOAD_CONST               4 ('}')
+            220 PRECALL                  1
+            224 CALL                     1
+            234 STORE_FAST               3 (e)
+
+176         236 LOAD_FAST                2 (s)
+            238 LOAD_CONST               5 (-1)
+            240 COMPARE_OP               3 (!=)
+            246 POP_JUMP_FORWARD_IF_FALSE    25 (to 298)
+            248 LOAD_FAST                3 (e)
+            250 LOAD_CONST               5 (-1)
+            252 COMPARE_OP               3 (!=)
+            258 POP_JUMP_FORWARD_IF_FALSE    19 (to 298)
+            260 LOAD_FAST                3 (e)
+            262 LOAD_FAST                2 (s)
+            264 COMPARE_OP               4 (>)
+            270 POP_JUMP_FORWARD_IF_FALSE    13 (to 298)
+
+177         272 LOAD_FAST                0 (content)
+            274 LOAD_FAST                2 (s)
+            276 LOAD_FAST                3 (e)
+            278 LOAD_CONST               2 (1)
+            280 BINARY_OP                0 (+)
+            284 BUILD_SLICE              2
+            286 BINARY_SUBSCR
+            296 RETURN_VALUE
+
+178     >>  298 LOAD_FAST                0 (content)
+            300 RETURN_VALUE
+
+==============================================================================
+## <module>.parse_recipe_response  (args=1, locals=6)
+# varnames: content, fingerprint, customer, js, d, e
+181           0 RESUME                   0
+
+182           2 LOAD_GLOBAL              1 (NULL + _extract_json)
+             14 LOAD_FAST                0 (content)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 STORE_FAST               3 (js)
+
+183          32 NOP
+
+184          34 LOAD_GLOBAL              3 (NULL + json)
+             46 LOAD_ATTR                2 (loads)
+             56 LOAD_FAST                3 (js)
+             58 PRECALL                  1
+             62 CALL                     1
+             72 STORE_FAST               4 (d)
+             74 JUMP_FORWARD            53 (to 182)
+        >>   76 PUSH_EXC_INFO
+
+185          78 LOAD_GLOBAL              2 (json)
+             90 LOAD_ATTR                3 (JSONDecodeError)
+            100 CHECK_EXC_MATCH
+            102 POP_JUMP_FORWARD_IF_FALSE    35 (to 174)
+            104 STORE_FAST               5 (e)
+
+186         106 LOAD_GLOBAL              9 (NULL + ValueError)
+            118 LOAD_CONST               1 ('AI recipe response is not valid JSON: ')
+            120 LOAD_FAST                5 (e)
+            122 FORMAT_VALUE             0
+            124 LOAD_CONST               2 ('\n---raw---\n')
+            126 LOAD_FAST                0 (content)
+            128 LOAD_CONST               0 (None)
+            130 LOAD_CONST               3 (500)
+            132 BUILD_SLICE              2
+            134 BINARY_SUBSCR
+            144 FORMAT_VALUE             0
+            146 BUILD_STRING             4
+            148 PRECALL                  1
+            152 CALL                     1
+            162 LOAD_FAST                5 (e)
+            164 RAISE_VARARGS            2
+        >>  166 LOAD_CONST               0 (None)
+            168 STORE_FAST               5 (e)
+            170 DELETE_FAST              5 (e)
+            172 RERAISE                  1
+
+185     >>  174 RERAISE                  0
+        >>  176 COPY                     3
+            178 POP_EXCEPT
+            180 RERAISE                  1
+
+187     >>  182 LOAD_FAST                1 (fingerprint)
+            184 POP_JUMP_FORWARD_IF_FALSE    22 (to 230)
+
+188         186 LOAD_FAST                4 (d)
+            188 LOAD_METHOD              5 (setdefault)
+            210 LOAD_CONST               4 ('fingerprint')
+            212 LOAD_FAST                1 (fingerprint)
+            214 PRECALL                  2
+            218 CALL                     2
+            228 POP_TOP
+
+189     >>  230 LOAD_FAST                2 (customer)
+            232 POP_JUMP_FORWARD_IF_FALSE    22 (to 278)
+
+190         234 LOAD_FAST                4 (d)
+            236 LOAD_METHOD              5 (setdefault)
+            258 LOAD_CONST               5 ('customer')
+            260 LOAD_FAST                2 (customer)
+            262 PRECALL                  2
+            266 CALL                     2
+            276 POP_TOP
+
+191     >>  278 LOAD_FAST                4 (d)
+            280 LOAD_METHOD              6 (get)
+            302 LOAD_CONST               6 ('layout_type')
+            304 PRECALL                  1
+            308 CALL                     1
+            318 POP_JUMP_FORWARD_IF_TRUE    23 (to 366)
+
+192         320 LOAD_GLOBAL             15 (NULL + guess_layout_type)
+            332 LOAD_FAST                0 (content)
+            334 PRECALL                  1
+            338 CALL                     1
+            348 LOAD_ATTR                8 (value)
+            358 LOAD_FAST                4 (d)
+            360 LOAD_CONST               6 ('layout_type')
+            362 STORE_SUBSCR
+
+193     >>  366 LOAD_GLOBAL             19 (NULL + PoRecipe)
+            378 LOAD_ATTR               10 (from_json)
+            388 LOAD_GLOBAL              3 (NULL + json)
+            400 LOAD_ATTR               11 (dumps)
+            410 LOAD_FAST                4 (d)
+            412 LOAD_CONST               7 (False)
+            414 KW_NAMES                 8
+            416 PRECALL                  2
+            420 CALL                     2
+            430 PRECALL                  1
+            434 CALL                     1
+            444 RETURN_VALUE
+ExceptionTable:
+  34 to 72 -> 76 [0]
+  76 to 104 -> 176 [1] lasti
+  106 to 164 -> 166 [1] lasti
+  166 to 174 -> 176 [1] lasti
+
+==============================================================================
+## <module>.guess_layout_type  (args=1, locals=1)
+# varnames: text
+196           0 RESUME                   0
+
+197           2 LOAD_GLOBAL              1 (NULL + re)
+             14 LOAD_ATTR                1 (search)
+             24 LOAD_CONST               1 ('Entity\\s+\\d+\\s+Order No')
+             26 LOAD_FAST                0 (text)
+             28 PRECALL                  2
+             32 CALL                     2
+             42 POP_JUMP_FORWARD_IF_FALSE    16 (to 76)
+             44 LOAD_CONST               2 ('Index No')
+             46 LOAD_FAST                0 (text)
+             48 CONTAINS_OP              0
+             50 POP_JUMP_FORWARD_IF_FALSE    12 (to 76)
+
+198          52 LOAD_GLOBAL              4 (LayoutType)
+             64 LOAD_ATTR                3 (LINE_ITEMS)
+             74 RETURN_VALUE
+
+199     >>   76 LOAD_CONST               3 ('Destination Code')
+             78 LOAD_FAST                0 (text)
+             80 CONTAINS_OP              0
+             82 POP_JUMP_FORWARD_IF_FALSE    16 (to 116)
+             84 LOAD_CONST               4 ('COLOR NO')
+             86 LOAD_FAST                0 (text)
+             88 CONTAINS_OP              0
+             90 POP_JUMP_FORWARD_IF_FALSE    12 (to 116)
+
+200          92 LOAD_GLOBAL              4 (LayoutType)
+            104 LOAD_ATTR                4 (MATRIX_1AXIS)
+            114 RETURN_VALUE
+
+201     >>  116 LOAD_CONST               4 ('COLOR NO')
+            118 LOAD_FAST                0 (text)
+            120 CONTAINS_OP              0
+            122 POP_JUMP_FORWARD_IF_FALSE    12 (to 148)
+
+202         124 LOAD_GLOBAL              4 (LayoutType)
+            136 LOAD_ATTR                5 (MATRIX_2AXIS)
+            146 RETURN_VALUE
+
+203     >>  148 LOAD_GLOBAL              4 (LayoutType)
+            160 LOAD_ATTR                3 (LINE_ITEMS)
+            170 RETURN_VALUE
+
+==============================================================================
+## <module>.load_ai_config  (args=0, locals=3)
+# varnames: base, p, f
+206           0 RESUME                   0
+
+207           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (environ)
+             24 LOAD_METHOD              2 (get)
+             46 LOAD_CONST               1 ('APPDATA')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 JUMP_IF_TRUE_OR_POP     30 (to 124)
+             64 LOAD_GLOBAL              0 (os)
+             76 LOAD_ATTR                3 (path)
+             86 LOAD_METHOD              4 (expanduser)
+            108 LOAD_CONST               2 ('~/.config')
+            110 PRECALL                  1
+            114 CALL                     1
+        >>  124 STORE_FAST               0 (base)
+
+208         126 LOAD_GLOBAL              0 (os)
+            138 LOAD_ATTR                3 (path)
+            148 LOAD_METHOD              5 (join)
+            170 LOAD_FAST                0 (base)
+            172 LOAD_GLOBAL             12 (APP_NAME)
+            184 LOAD_CONST               3 ('config.json')
+            186 PRECALL                  3
+            190 CALL                     3
+            200 STORE_FAST               1 (p)
+
+209         202 LOAD_GLOBAL              0 (os)
+            214 LOAD_ATTR                3 (path)
+            224 LOAD_METHOD              7 (exists)
+            246 LOAD_FAST                1 (p)
+            248 PRECALL                  1
+            252 CALL                     1
+            262 POP_JUMP_FORWARD_IF_TRUE     2 (to 268)
+
+210         264 BUILD_MAP                0
+            266 RETURN_VALUE
+
+211     >>  268 NOP
+
+212         270 LOAD_GLOBAL             17 (NULL + open)
+            282 LOAD_FAST                1 (p)
+            284 LOAD_CONST               4 ('utf-8')
+            286 KW_NAMES                 5
+            288 PRECALL                  2
+            292 CALL                     2
+            302 BEFORE_WITH
+            304 STORE_FAST               2 (f)
+
+213         306 LOAD_GLOBAL             19 (NULL + json)
+            318 LOAD_ATTR               10 (load)
+            328 LOAD_FAST                2 (f)
+            330 PRECALL                  1
+            334 CALL                     1
+
+212         344 SWAP                     2
+            346 LOAD_CONST               0 (None)
+            348 LOAD_CONST               0 (None)
+            350 LOAD_CONST               0 (None)
+            352 PRECALL                  2
+            356 CALL                     2
+            366 POP_TOP
+            368 RETURN_VALUE
+        >>  370 PUSH_EXC_INFO
+            372 WITH_EXCEPT_START
+            374 POP_JUMP_FORWARD_IF_TRUE     4 (to 384)
+            376 RERAISE                  2
+        >>  378 COPY                     3
+            380 POP_EXCEPT
+            382 RERAISE                  1
+        >>  384 POP_TOP
+            386 POP_EXCEPT
+            388 POP_TOP
+            390 POP_TOP
+            392 LOAD_CONST               0 (None)
+            394 RETURN_VALUE
+        >>  396 PUSH_EXC_INFO
+
+214         398 LOAD_GLOBAL             22 (Exception)
+            410 CHECK_EXC_MATCH
+            412 POP_JUMP_FORWARD_IF_FALSE     5 (to 424)
+            414 POP_TOP
+
+215         416 BUILD_MAP                0
+            418 SWAP                     2
+            420 POP_EXCEPT
+            422 RETURN_VALUE
+
+214     >>  424 RERAISE                  0
+        >>  426 COPY                     3
+            428 POP_EXCEPT
+            430 RERAISE                  1
+ExceptionTable:
+  270 to 302 -> 396 [0]
+  304 to 342 -> 370 [1] lasti
+  344 to 366 -> 396 [0]
+  370 to 376 -> 378 [3] lasti
+  378 to 382 -> 396 [0]
+  384 to 384 -> 378 [3] lasti
+  386 to 390 -> 396 [0]
+  396 to 418 -> 426 [1] lasti
+  424 to 424 -> 426 [1] lasti
+
+==============================================================================
+## <module>.infer_recipe  (args=1, locals=17)
+# varnames: raw_text, customer, cfg, extra_hint, layout_type, seed_hint, engine, infer_recipe_local, _hint, system, user, model, body, _thinking_off, url, data, content
+218           0 RESUME                   0
+
+221           2 LOAD_FAST                2 (cfg)
+              4 JUMP_IF_TRUE_OR_POP     13 (to 32)
+              6 LOAD_GLOBAL              1 (NULL + load_ai_config)
+             18 PRECALL                  0
+             22 CALL                     0
+        >>   32 STORE_FAST               2 (cfg)
+
+222          34 LOAD_FAST                2 (cfg)
+             36 LOAD_METHOD              1 (get)
+             58 LOAD_CONST               1 ('infer_engine')
+             60 LOAD_CONST               2 ('online')
+             62 PRECALL                  2
+             66 CALL                     2
+             76 STORE_FAST               6 (engine)
+
+223          78 LOAD_FAST                6 (engine)
+             80 LOAD_CONST               3 ('local')
+             82 COMPARE_OP               2 (==)
+             88 POP_JUMP_FORWARD_IF_FALSE    21 (to 132)
+
+224          90 LOAD_CONST               4 (1)
+             92 LOAD_CONST               5 (('infer_recipe_local',))
+             94 IMPORT_NAME              2 (local_infer)
+             96 IMPORT_FROM              3 (infer_recipe_local)
+             98 STORE_FAST               7 (infer_recipe_local)
+            100 POP_TOP
+
+225         102 PUSH_NULL
+            104 LOAD_FAST                7 (infer_recipe_local)
+            106 LOAD_FAST                0 (raw_text)
+            108 LOAD_FAST                1 (customer)
+            110 LOAD_FAST                2 (cfg)
+
+226         112 LOAD_FAST                3 (extra_hint)
+
+225         114 KW_NAMES                 6
+            116 PRECALL                  4
+            120 CALL                     4
+            130 RETURN_VALUE
+
+227     >>  132 LOAD_FAST                2 (cfg)
+            134 LOAD_METHOD              1 (get)
+            156 LOAD_CONST               7 ('api_key')
+            158 PRECALL                  1
+            162 CALL                     1
+            172 POP_JUMP_FORWARD_IF_FALSE    21 (to 216)
+            174 LOAD_FAST                2 (cfg)
+            176 LOAD_METHOD              1 (get)
+            198 LOAD_CONST               8 ('base_url')
+            200 PRECALL                  1
+            204 CALL                     1
+            214 POP_JUMP_FORWARD_IF_TRUE    57 (to 330)
+
+228     >>  216 LOAD_GLOBAL              9 (NULL + RuntimeError)
+
+229         228 LOAD_CONST               9 ('AI not configured. Set base_url/api_key/model in ')
+
+230         230 LOAD_GLOBAL             10 (os)
+            242 LOAD_ATTR                6 (environ)
+            252 LOAD_METHOD              1 (get)
+            274 LOAD_CONST              10 ('APPDATA')
+            276 LOAD_CONST              11 ('')
+            278 PRECALL                  2
+            282 CALL                     2
+
+229         292 FORMAT_VALUE             0
+            294 LOAD_CONST              12 ('/')
+
+230         296 LOAD_GLOBAL             14 (APP_NAME)
+
+229         308 FORMAT_VALUE             0
+            310 LOAD_CONST              13 ('/config.json (or pass cfg=...). Cannot infer recipe without a model.')
+            312 BUILD_STRING             5
+
+228         314 PRECALL                  1
+            318 CALL                     1
+            328 RAISE_VARARGS            1
+
+232     >>  330 LOAD_FAST                3 (extra_hint)
+            332 STORE_FAST               8 (_hint)
+
+233         334 LOAD_FAST                5 (seed_hint)
+            336 POP_JUMP_FORWARD_IF_FALSE    12 (to 362)
+
+234         338 LOAD_FAST                3 (extra_hint)
+            340 POP_JUMP_FORWARD_IF_FALSE     5 (to 352)
+            342 LOAD_FAST                3 (extra_hint)
+            344 LOAD_CONST              14 ('\n')
+            346 BINARY_OP                0 (+)
+            350 JUMP_FORWARD             1 (to 354)
+        >>  352 LOAD_CONST              11 ('')
+        >>  354 LOAD_FAST                5 (seed_hint)
+            356 BINARY_OP                0 (+)
+            360 STORE_FAST               8 (_hint)
+
+235     >>  362 LOAD_GLOBAL             17 (NULL + build_recipe_prompt)
+            374 LOAD_FAST                0 (raw_text)
+            376 LOAD_FAST                1 (customer)
+            378 LOAD_FAST                8 (_hint)
+            380 LOAD_FAST                4 (layout_type)
+            382 PRECALL                  4
+            386 CALL                     4
+            396 UNPACK_SEQUENCE          2
+            400 STORE_FAST               9 (system)
+            402 STORE_FAST              10 (user)
+
+238         404 LOAD_FAST                2 (cfg)
+            406 LOAD_METHOD              1 (get)
+            428 LOAD_CONST              15 ('recipe_model')
+            430 PRECALL                  1
+            434 CALL                     1
+            444 JUMP_IF_TRUE_OR_POP     21 (to 488)
+            446 LOAD_FAST                2 (cfg)
+            448 LOAD_METHOD              1 (get)
+            470 LOAD_CONST              16 ('model')
+            472 LOAD_CONST              17 ('gpt-4o-mini')
+            474 PRECALL                  2
+            478 CALL                     2
+        >>  488 STORE_FAST              11 (model)
+
+240         490 LOAD_FAST               11 (model)
+
+242         492 LOAD_CONST              18 ('system')
+            494 LOAD_FAST                9 (system)
+            496 LOAD_CONST              19 (('role', 'content'))
+            498 BUILD_CONST_KEY_MAP      2
+
+243         500 LOAD_CONST              20 ('user')
+            502 LOAD_FAST               10 (user)
+            504 LOAD_CONST              19 (('role', 'content'))
+            506 BUILD_CONST_KEY_MAP      2
+
+241         508 BUILD_LIST               2
+
+245         510 LOAD_CONST              21 (0.0)
+
+246         512 LOAD_CONST              22 ('type')
+            514 LOAD_CONST              23 ('json_object')
+            516 BUILD_MAP                1
+
+239         518 LOAD_CONST              24 (('model', 'messages', 'temperature', 'response_format'))
+            520 BUILD_CONST_KEY_MAP      4
+            522 STORE_FAST              12 (body)
+
+248         524 LOAD_FAST                2 (cfg)
+            526 LOAD_METHOD              1 (get)
+            548 LOAD_CONST              25 ('allow_thinking')
+            550 PRECALL                  1
+            554 CALL                     1
+            564 POP_JUMP_FORWARD_IF_TRUE    36 (to 638)
+
+249         566 LOAD_CONST               4 (1)
+            568 LOAD_CONST              26 (('_thinking_off',))
+            570 IMPORT_NAME              9 (data_extract)
+            572 IMPORT_FROM             10 (_thinking_off)
+            574 STORE_FAST              13 (_thinking_off)
+            576 POP_TOP
+
+250         578 LOAD_FAST               12 (body)
+            580 LOAD_METHOD             11 (update)
+            602 PUSH_NULL
+            604 LOAD_FAST               13 (_thinking_off)
+            606 LOAD_FAST                2 (cfg)
+            608 PRECALL                  1
+            612 CALL                     1
+            622 PRECALL                  1
+            626 CALL                     1
+            636 POP_TOP
+
+251     >>  638 LOAD_FAST                2 (cfg)
+            640 LOAD_CONST               8 ('base_url')
+            642 BINARY_SUBSCR
+            652 LOAD_METHOD             12 (rstrip)
+            674 LOAD_CONST              12 ('/')
+            676 PRECALL                  1
+            680 CALL                     1
+            690 LOAD_CONST              27 ('/chat/completions')
+            692 BINARY_OP                0 (+)
+            696 STORE_FAST              14 (url)
+
+252         698 LOAD_GLOBAL             27 (NULL + post_json)
+
+253         710 LOAD_FAST               14 (url)
+            712 LOAD_FAST                2 (cfg)
+            714 LOAD_CONST               7 ('api_key')
+            716 BINARY_SUBSCR
+            726 LOAD_FAST               12 (body)
+
+254         728 LOAD_FAST                2 (cfg)
+            730 LOAD_METHOD              1 (get)
+            752 LOAD_CONST              28 ('recipe_timeout')
+            754 LOAD_CONST              29 (180)
+            756 PRECALL                  2
+            760 CALL                     2
+
+255         770 LOAD_FAST                2 (cfg)
+            772 LOAD_METHOD              1 (get)
+            794 LOAD_CONST              30 ('http_retries')
+            796 LOAD_CONST              31 (3)
+            798 PRECALL                  2
+            802 CALL                     2
+
+256         812 LOAD_FAST                2 (cfg)
+            814 LOAD_METHOD              1 (get)
+            836 LOAD_CONST              32 ('http_backoff')
+            838 LOAD_CONST              33 (5)
+            840 PRECALL                  2
+            844 CALL                     2
+
+257         854 LOAD_FAST                2 (cfg)
+            856 LOAD_METHOD              1 (get)
+            878 LOAD_CONST              34 ('read_budget')
+            880 LOAD_CONST              35 (100.0)
+            882 PRECALL                  2
+            886 CALL                     2
+
+252         896 KW_NAMES                36
+            898 PRECALL                  7
+            902 CALL                     7
+            912 STORE_FAST              15 (data)
+
+259         914 LOAD_FAST               15 (data)
+            916 LOAD_CONST              37 ('choices')
+            918 BINARY_SUBSCR
+            928 LOAD_CONST              38 (0)
+            930 BINARY_SUBSCR
+            940 LOAD_CONST              39 ('message')
+            942 BINARY_SUBSCR
+            952 LOAD_CONST              40 ('content')
+            954 BINARY_SUBSCR
+            964 STORE_FAST              16 (content)
+
+260         966 LOAD_GLOBAL             29 (NULL + parse_recipe_response)
+            978 LOAD_FAST               16 (content)
+            980 LOAD_FAST                1 (customer)
+            982 KW_NAMES                41
+            984 PRECALL                  2
+            988 CALL                     2
+            998 RETURN_VALUE

@@ -1,0 +1,385 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "PoRecipe",
+   "http_util",
+   "post_json",
+   "APP_NAME",
+   "RECIPE_SYSTEM_PROMPT",
+   "build_recipe_prompt",
+   "_extract_json",
+   "parse_recipe_response",
+   "guess_layout_type",
+   "load_ai_config",
+   "infer_recipe"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/recipe_infer.py - infer a PoRecipe from a first-seen PO (AI + manual confirm).\n\nFlow: first PO of a new layout -> send raw text + skeleton to an OpenAI-compatible\nendpoint -> parse the returned JSON into a PoRecipe -> user confirms -> cache by\nfingerprint. Later POs of the same layout hit the cache (zero AI).\n\nOnly stdlib (urllib) is used for the HTTP call. Config lives in\n``%APPDATA%\\Purchase Order Extractor V2\\config.json``:\n    {\"base_url\": \"...\", \"api_key\": \"...\", \"model\": \"...\"}\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "post_json"
+   ],
+   "Purchase Order Extractor V2",
+   "You are a parser-recipe generator for a purchase-order extraction engine.\nGiven the raw text of a purchase order PDF, output a single JSON object describing how to\nextract it. NO prose, NO markdown outside the JSON, just the JSON.\n\nRequired fields:\n  \"layout_type\": one of \"line_items\" | \"matrix_2axis\" | \"matrix_1axis\".\n    - line_items: one row per (style/color/size) with quantity, e.g. LPP SA (637JO, XL901).\n    - matrix_2axis: color blocks, each a grid of size x inseam, e.g. COLIN'S trousers.\n    - matrix_1axis: color blocks, each a single row of sizes, e.g. SAKHA / COLIN'S non-trouser.\n  \"customer\": the sold-to / brand name (e.g. \"LPP SA\", \"COLIN'S\").\n  \"order_unit\": the unit token that appears on REAL order lines (usually \"PCS\").\n      Only rows whose unit equals order_unit are counted as real order lines.\n\nFor line_items also provide:\n  \"entity_anchor\": regex marking the start of each order block. Its FIRST capture group,\n      or a named group \"po_no\", MUST be the ORDER NUMBER -- never the block index.\n      LPP repeats blocks like \"Entity 1 Order No: 11321589\": the order number is\n      11321589, the \"1\" is only a block index. Prefer explicit named groups, e.g.\n          Entity\\s+\\d+\\s+Order No:\\s*(?P<po_no>\\d+)(?:\\s+(?P<channel>E-COMM))?\n      Use \"\" when the PDF has a single order.\n  \"line_pattern\": a FULL Python regex (re.MULTILINE) matching ONE REAL order line.\n\n  A REAL LPP order line has a DESCRIPTION + COLOUR block in the MIDDLE, then unit,\n  quantity, unit price and amount:\n      637JO-80X-S MEN`S TROUSERS 80X 80X BEIGE PCS 744 10.20 7,588.80\n      \\_________/ \\_____________________________/ \\_/ \\_/ \\___/ \\______/\n        Index No     description + colour code+name  unit qty  price   amount\n  A correct line_pattern for that is:\n      (?P<style>\\S+-\\S+-\\S+)\\s+(?P<middle>.*?)\\s+(?P<unit>PCS)\\s+(?P<qty>\\d+)\\s+(?P<unit_price>[\\d.]+)\\s+[\\d,.]+\n  The (?P<middle>.*?) block and the trailing unit price are MANDATORY for this layout --\n  omitting them makes the pattern silently match the WRONG rows (see below).\n\n  CRITICAL -- these look-alike rows are NOT orders, never match them:\n    * MULTIPACK / pack break-up rows:   637JO-80X-T01 PACK 2 186 372\n      the \"2\" is pieces-per-pack, NOT an order quantity. Their unit is PACK.\n    * bare sub-breakdown rows:          637JO-80X-S PCS 372\n      no description, no colour, no unit price. They restate a partial split.\n  Requiring the middle block AND the unit price excludes both.\n\n  The engine DERIVES color_code (2nd dash-segment of the Index No) and size (3rd\n  dash-segment) automatically, so those groups are optional. Required groups:\n      style, unit, qty        (always)\n      middle, unit_price      (whenever the layout has them -- LPP does)\n      color_code, size, color_desc (OPTIONAL -- only if a literal separate column exists)\n  Do NOT invent columns that are not in the text; the engine degrades gracefully.\n\nFor matrix layouts also provide:\n  \"color_anchor\": regex with group(1)=color_code, group(2)=color_desc (e.g. \"COLOR NO\\s*:\\s*(\\S+)\\s+(.+)\").\n  \"has_inseam\": true only when the grid has an inseam axis (matrix_2axis).\n  \"destination_anchor\": regex capturing group(1)=destination_code, when the order splits per\n      destination (e.g. SAKHA). Set \"section_anchor\" to the section header that contains the\n      real order quantities (e.g. \"DESTINATION DETAILS\") so summary sections are ignored.\n\nHeader anchors (regex, group(1)=value): po_no_anchor, season_anchor, delivery_anchor,\ncurrency_anchor, price_term_anchor, style_anchor, price_anchor, packing_anchor,\nport_discharge_anchor, port_loading_anchor, ship_mode_anchor, agent_anchor, vendor_anchor,\npayment_terms_anchor. Use \"\" when not present.\n  * price_term_anchor = 价格条款（如 FOB / CIF / EXW）；payment_terms_anchor = 付款条款\n    （如 T/T、信用证 L/C、付款天数）。二者是不同字段，不要混用同一个锚点。\n  * port_loading_anchor / port_discharge_anchor MUST capture a PORT NAME\n    （如 \"SHANGHAI\"、\"SINGAPORE\"），绝不能是运输方式或船名。若 PDF 只写了\n    \"Incoterms: FOB VESSEL\"，末尾的 VESSEL 是船名而非港口 —— 该锚点留空，不要抓取它。\n    ship_mode_anchor 同理，必须抓取运输方式（SEA / AIR / TRUCK / …），绝不写 \"VESSEL\"。\n    V2.0.19.15: 校验会清除落入港口列的运输方式词，但请从源头避免。\n\nCRITICAL anchor rules (prevent the most common extraction bugs):\n  * The captured group MUST be ONLY the value, NEVER the label or a leading colon.\n    Write the label, swallow the colon, then capture, e.g.\n        \"ORDER NO........:PO10151999\"  ->  ORDER\\s+NO\\.+\\s*:\\s*(\\S+)\n        \"SEASON........:2027 Yaz\"      ->  SEASON\\.+\\s*:\\s*(.+)\n    Do NOT write \"ORDER NO....(\\S+)\" (that captures \":PO10151999\").\n  * If a header line carries MULTIPLE fields side-by-side (e.g.\n    \"SEASON........:2027 Yaz / 2027 летo STYLE NO..................:1086137\"),\n    the captured group MUST STOP before the next field label. Use a lazy group\n    plus a lookahead for that next label, e.g.\n        SEASON\\.+\\s*:\\s*(.+?)(?=\\s+STYLE\\s+NO)\n    Do NOT let the season anchor swallow \"STYLE NO..................:1086137\".\n  * Unit price labels may use the Turkish dotted-I: always write the class token as\n    PR[İI]CE (e.g. \"UNIT PR[İI]CE...: 9,50\"), never a bare \"PRICE\".\n  * Prefer (\\S+) for single-token values and (.+) for values containing spaces; use\n    (.+?) with a trailing lookahead when another label sits on the same line.\n  * delivery_anchor MUST match the date itself, NOT a specific destination/country.\n    In per-destination layouts (e.g. COLIN'S) \"Delivery Date:DD.MM.YYYY\" repeats under\n    every destination, so the anchor must work for ALL of them.\n    CRITICAL: in these PDFs pdfplumber often merges the destination description into the\n    label, producing THREE different garbled forms:\n        \"ToptaDnelivery Date:\", \"PerakenDdeelivery Date:\", \"PerakendDeelivery Date:\"\n        (contain \"Date:\"),\n        \"ColDinesli vReertya iDlate:\" (contains \"Dlate:\" -- capital D before \"late:\").\n    A literal \"Delivery\\s+Date:\" therefore MISSES the \"iDlate:\" rows. Key off the stable\n    shared token instead: \"Date:\" OR a capital-letter + \"late:\" followed by DD.MM.YYYY.\n    Keep it CASE-SENSITIVE so the all-caps header order-date line\n    \"DATE.....:DD.MM.YYYY\" is NOT matched:\n        (?:Date|[A-Z]late):\\s*(\\d{1,2}\\.\\d{1,2}\\.\\d{4})\n    NEVER prefix it with \"Destination Code:EG...\" / a country name (Mısır, etc.) -- that\n    would only capture one destination and leave the others blank.\n\nSet \"channel_value\" to \"STANDARD\" when a channel exists but is not labelled \"E-COMM\";\nuse \"\" when the customer has no channel concept. \"total_token\" defaults to \"TOTAL\",\n\"size_header_token\" to \"COLOR NO\".\n\nDate format (Ship Date / Order Date standardisation):\n  * Inspect how the PDF prints dates and emit TWO fields:\n      \"date_format\": a Python strptime format for the SOURCE date, e.g.\n          \"%d.%m.%Y\"  (COLIN'S / SAKHA / most European customers: 06.07.2026)\n          \"%m/%d/%Y\"  (US customers: 06/07/2026)\n          \"%Y-%m-%d\"  (already ISO)\n          \"\"          (leave empty only if you cannot determine it)\n      \"date_dayfirst\": true when the customer uses DD/MM ordering, false otherwise.\n  * Pinning \"date_format\" lets the engine convert every Ship Date to ISO\n    YYYY-MM-DD with NO guessing. If you leave it \"\", ambiguous numeric dates\n    (both day and month <= 12) will be flagged for human review instead of being\n    silently mis-read. European customers (COLIN'S, SAKHA, …) are DD.MM.YYYY — set\n    date_format to \"%d.%m.%Y\" and date_dayfirst to true.\n\nAutomatic hygiene (NO recipe fields needed — the engine already does this):\n  * StyleNo / PONo are trimmed, de-spaced and upper-cased automatically.\n  * Season, SU, Currency, PriceTerm, ShipMode, CountryOfOrigin, Inseam and Size\n    are normalised automatically via built-in vocabularies. Do NOT emit \"cleans\"\n    rules for these fields unless a customer needs a custom mapping.\nReturn only the JSON.",
+   "",
+   "raw_text",
+   "str",
+   "customer",
+   "extra_hint",
+   "layout_type",
+   "return",
+   "tuple",
+   "content",
+   [
+    "fingerprint",
+    "customer"
+   ],
+   "fingerprint",
+   "PoRecipe",
+   "text",
+   "LayoutType",
+   "dict",
+   [
+    "customer",
+    "cfg",
+    "extra_hint",
+    "layout_type",
+    "seed_hint"
+   ],
+   "cfg",
+   "dict | None",
+   "seed_hint",
+   [
+    "",
+    "",
+    ""
+   ],
+   [
+    "raw_text",
+    "str",
+    "customer",
+    "str",
+    "extra_hint",
+    "str",
+    "layout_type",
+    "str",
+    "return",
+    "tuple"
+   ],
+   [
+    "content",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "content",
+    "str",
+    "fingerprint",
+    "str",
+    "customer",
+    "str",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "LayoutType"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "raw_text",
+    "str",
+    "customer",
+    "str",
+    "cfg",
+    "dict | None",
+    "extra_hint",
+    "str",
+    "layout_type",
+    "str",
+    "seed_hint",
+    "str",
+    "return",
+    "PoRecipe"
+   ]
+  ],
+  "n_instructions": 79
+ },
+ "<module>.build_recipe_prompt": {
+  "names": [
+   "RECIPE_SYSTEM_PROMPT"
+  ],
+  "varnames": [
+   "raw_text",
+   "customer",
+   "extra_hint",
+   "layout_type",
+   "retry",
+   "layout_note",
+   "user"
+  ],
+  "consts": [
+   "Build (system, user) messages. ``extra_hint`` feeds back why the previous\n    attempt failed so the model can self-correct on retry. ``layout_type`` (when\n    already known from the first read) is injected so the model does not waste\n    tokens re-deriving the layout and just emits the recipe JSON.",
+   "",
+   "\nYOUR PREVIOUS ANSWER WAS REJECTED. Reason:\n",
+   "\nFix the recipe accordingly. Re-read the raw text below and make sure\nline_pattern actually matches the real order lines as they appear,\nline by line. Output the corrected JSON only.\n",
+   "The document layout is ALREADY classified as \"",
+   "\". Do NOT re-describe or re-guess the layout; output ONLY the recipe JSON for that layout.\n",
+   "Customer hint: ",
+   "\n",
+   "\nPurchase-order text, one visual line per line (digits kept for reference):\n----\n",
+   null,
+   8000,
+   "\n----\n"
+  ],
+  "n_instructions": 44
+ },
+ "<module>._extract_json": {
+  "names": [
+   "strip",
+   "re",
+   "search",
+   "DOTALL",
+   "group",
+   "find",
+   "rfind"
+  ],
+  "varnames": [
+   "content",
+   "m",
+   "s",
+   "e"
+  ],
+  "consts": [
+   "Pull a JSON object out of a model response (handles ```json fences).",
+   "```(?:json)?\\s*(\\{.*?\\})\\s*```",
+   1,
+   "{",
+   "}",
+   -1
+  ],
+  "n_instructions": 57
+ },
+ "<module>.parse_recipe_response": {
+  "names": [
+   "_extract_json",
+   "json",
+   "loads",
+   "JSONDecodeError",
+   "ValueError",
+   "setdefault",
+   "get",
+   "guess_layout_type",
+   "value",
+   "PoRecipe",
+   "from_json",
+   "dumps"
+  ],
+  "varnames": [
+   "content",
+   "fingerprint",
+   "customer",
+   "js",
+   "d",
+   "e"
+  ],
+  "consts": [
+   null,
+   "AI recipe response is not valid JSON: ",
+   "\n---raw---\n",
+   500,
+   "fingerprint",
+   "customer",
+   "layout_type",
+   false,
+   [
+    "ensure_ascii"
+   ]
+  ],
+  "n_instructions": 88
+ },
+ "<module>.guess_layout_type": {
+  "names": [
+   "re",
+   "search",
+   "LayoutType",
+   "LINE_ITEMS",
+   "MATRIX_1AXIS",
+   "MATRIX_2AXIS"
+  ],
+  "varnames": [
+   "text"
+  ],
+  "consts": [
+   null,
+   "Entity\\s+\\d+\\s+Order No",
+   "Index No",
+   "Destination Code",
+   "COLOR NO"
+  ],
+  "n_instructions": 36
+ },
+ "<module>.load_ai_config": {
+  "names": [
+   "os",
+   "environ",
+   "get",
+   "path",
+   "expanduser",
+   "join",
+   "APP_NAME",
+   "exists",
+   "open",
+   "json",
+   "load",
+   "Exception"
+  ],
+  "varnames": [
+   "base",
+   "p",
+   "f"
+  ],
+  "consts": [
+   null,
+   "APPDATA",
+   "~/.config",
+   "config.json",
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 81
+ },
+ "<module>.infer_recipe": {
+  "names": [
+   "load_ai_config",
+   "get",
+   "local_infer",
+   "infer_recipe_local",
+   "RuntimeError",
+   "os",
+   "environ",
+   "APP_NAME",
+   "build_recipe_prompt",
+   "data_extract",
+   "_thinking_off",
+   "update",
+   "rstrip",
+   "post_json",
+   "parse_recipe_response"
+  ],
+  "varnames": [
+   "raw_text",
+   "customer",
+   "cfg",
+   "extra_hint",
+   "layout_type",
+   "seed_hint",
+   "engine",
+   "infer_recipe_local",
+   "_hint",
+   "system",
+   "user",
+   "model",
+   "body",
+   "_thinking_off",
+   "url",
+   "data",
+   "content"
+  ],
+  "consts": [
+   null,
+   "infer_engine",
+   "online",
+   "local",
+   1,
+   [
+    "infer_recipe_local"
+   ],
+   [
+    "customer",
+    "cfg",
+    "extra_hint"
+   ],
+   "api_key",
+   "base_url",
+   "AI not configured. Set base_url/api_key/model in ",
+   "APPDATA",
+   "",
+   "/",
+   "/config.json (or pass cfg=...). Cannot infer recipe without a model.",
+   "\n",
+   "recipe_model",
+   "model",
+   "gpt-4o-mini",
+   "system",
+   [
+    "role",
+    "content"
+   ],
+   "user",
+   0.0,
+   "type",
+   "json_object",
+   [
+    "model",
+    "messages",
+    "temperature",
+    "response_format"
+   ],
+   "allow_thinking",
+   [
+    "_thinking_off"
+   ],
+   "/chat/completions",
+   "recipe_timeout",
+   180,
+   "http_retries",
+   3,
+   "http_backoff",
+   5,
+   "read_budget",
+   100.0,
+   [
+    "timeout",
+    "retries",
+    "backoff",
+    "budget"
+   ],
+   "choices",
+   0,
+   "message",
+   "content",
+   [
+    "customer"
+   ]
+  ],
+  "n_instructions": 201
+ }
+}

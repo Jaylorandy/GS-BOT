@@ -1,0 +1,540 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "_to_int",
+   "_to_float",
+   "_clean",
+   "_nearest",
+   "norm_date",
+   "merge_order_lines",
+   "_norm_ship",
+   "_min_date",
+   "size_columns",
+   "split_row_total",
+   "is_size_header",
+   "parse_total_row",
+   "_looks_like_style",
+   "_norm_color_desc",
+   "compile",
+   "_DELIVERY_DATE_FALLBACK",
+   "Matrix2AxisParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/matrix_2axis.py - color x size x inseam grid (COLIN'S trousers).\n\nTwo modes, selected by the recipe:\n\n1. Total grid (default, e.g. LPP/XL901 when no section_anchor): parse the single\n   aggregate COLOR grid on the first page -> one OrderEntity per PO.\n\n2. Per-destination (recipe.section_anchor + destination_anchor set, i.e. COLIN'S):\n   parse the \"DESTINATION DETAILS\" block, emitting ONE OrderEntity per destination.\n   Each destination carries its own Delivery Date and its own size allocation, so the\n   inseam axis is kept on the OrderLine (template_a sums it into one color row) and\n   the destination's delivery date survives into its own PO block.\n\nEach color block reads like:\n    COLOR NO : DCM DARK CAMEL\n    30 31 32 33 34 36 38 TOTAL        <- size header (waist columns, by x-position)\n    30 249 276 264 279 1.068          <- inseam 30, qty per size (dropped zeros omitted)\n    32 314 262 371 331 407 334 250 2.269\n    34 263 244 262 269 185 1.223\n    TOTAL: 314 511 ...                 <- sum row (skipped)\nQuantities align to size columns by X-position, so dropped zeros are fine.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text",
+    "_to_int",
+    "_to_float",
+    "_clean",
+    "_nearest",
+    "norm_date",
+    "merge_order_lines",
+    "_norm_ship",
+    "_min_date",
+    "size_columns",
+    "split_row_total",
+    "is_size_header",
+    "parse_total_row",
+    "_looks_like_style"
+   ],
+   "s",
+   "str",
+   "return",
+   "(?:Date|[A-Z]late):\\s*(\\d{1,2}\\.\\d{1,2}\\.\\d{4})",
+   "Matrix2AxisParser",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 89
+ },
+ "<module>._norm_color_desc": {
+  "names": [
+   "strip",
+   "re",
+   "sub",
+   "IGNORECASE",
+   "base",
+   "extract_color_from_combined"
+  ],
+  "varnames": [
+   "s",
+   "t",
+   "extract_color_from_combined",
+   "smart"
+  ],
+  "consts": [
+   "Strip redundant prefix/suffix + smart middle extraction for color descriptions (V2.0.19.6).\n\n    Original: strip leading 'COLOR:' label.\n    Enhanced: also strip SKU prefixes + product name suffixes via extract_color_from_combined.\n    ",
+   "^(COLOR|COLOUR)\\s*:\\s*",
+   "",
+   [
+    "flags"
+   ],
+   1,
+   [
+    "extract_color_from_combined"
+   ]
+  ],
+  "n_instructions": 38
+ },
+ "<module>.Matrix2AxisParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "MATRIX_2AXIS",
+   "layout_type",
+   "_extract_delivery_date",
+   "parse",
+   "_parse_destinations"
+  ],
+  "varnames": [],
+  "consts": [
+   "Matrix2AxisParser",
+   "recipe",
+   "PoRecipe",
+   "line_text",
+   "str",
+   "return",
+   "",
+   [
+    "source_file"
+   ],
+   "source_file",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "line_text",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 24
+ },
+ "<module>.Matrix2AxisParser._extract_delivery_date": {
+  "names": [
+   "delivery_anchor",
+   "norm_date",
+   "_first",
+   "_DELIVERY_DATE_FALLBACK",
+   "search",
+   "group"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "line_text",
+   "dd",
+   "m"
+  ],
+  "consts": [
+   "Return ISO delivery date from ``line_text`` using the recipe anchor,\n        falling back to a robust case-sensitive \"Date:DD.MM.YYYY\" scan.",
+   1,
+   ""
+  ],
+  "n_instructions": 38
+ },
+ "<module>.Matrix2AxisParser.parse": {
+  "names": [
+   "doc_text",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "_first",
+   "po_no_anchor",
+   "price_anchor",
+   "style_anchor",
+   "dict",
+   "channel_value",
+   "_clean",
+   "season_anchor",
+   "re",
+   "search",
+   "currency_anchor",
+   "price_term_anchor",
+   "port_discharge_anchor",
+   "port_loading_anchor",
+   "_norm_ship",
+   "ship_mode_anchor",
+   "agent_anchor",
+   "vendor_anchor",
+   "payment_terms_anchor",
+   "import_po_no_anchor",
+   "reference_no_anchor",
+   "cir_no_anchor",
+   "freight_terms_anchor",
+   "country_of_origin_anchor",
+   "dc_address_anchor",
+   "packing_method",
+   "packing_anchor",
+   "section_anchor",
+   "destination_anchor",
+   "_parse_destinations",
+   "bool",
+   "entities",
+   "per_destination",
+   "OrderEntity",
+   "_min_date",
+   "lines",
+   "join",
+   "groups",
+   "group",
+   "strip",
+   "_looks_like_style",
+   "breakdown_anchor",
+   "summary_anchor",
+   "match",
+   "color_anchor",
+   "_norm_color_desc",
+   "text",
+   "startswith",
+   "total_token",
+   "parse_total_row",
+   "printed_size_totals",
+   "any",
+   "size_columns",
+   "is_size_header",
+   "size_header_anchor",
+   "is_number",
+   "require_row_total",
+   "split_row_total",
+   "_to_int",
+   "_nearest",
+   "xc",
+   "append",
+   "SizeQty",
+   "OrderLine",
+   "_to_float",
+   "merge_order_lines"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "po",
+   "po_no",
+   "header_price",
+   "header_style",
+   "base",
+   "ent",
+   "current_color",
+   "current_sizes",
+   "last_sizes",
+   "total_xc",
+   "in_grid",
+   "collected",
+   "current_style",
+   "page",
+   "line",
+   "line_text",
+   "sm",
+   "cand",
+   "m",
+   "ref",
+   "cols",
+   "txc",
+   "inseam",
+   "qty_toks",
+   "row_total",
+   "printed_row_total",
+   "sizes",
+   "t",
+   "col"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "po_no",
+   "channel",
+   "season",
+   "currency",
+   "price_term",
+   "product_desc",
+   "port_discharge",
+   "port_loading",
+   "ship_mode",
+   "agent_name",
+   "vendor_name",
+   "payment_terms",
+   "import_po_no",
+   "reference_no",
+   "cir_no",
+   "freight_terms",
+   "country_of_origin",
+   "dc_address",
+   "packing_method",
+   "MULTIPACK",
+   "delivery_date",
+   false,
+   " ",
+   1,
+   0,
+   2,
+   true,
+   -1,
+   [
+    "size",
+    "qty"
+   ],
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "inseam",
+    "unit_price",
+    "sizes",
+    "printed_row_total"
+   ],
+   []
+  ],
+  "n_instructions": 813
+ },
+ "<module>.Matrix2AxisParser.parse.<genexpr>": {
+  "names": [
+   "text",
+   "total_token"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.Matrix2AxisParser.parse.<listcomp>": {
+  "names": [
+   "text",
+   "total_token",
+   "xc"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 20
+ },
+ "<module>.Matrix2AxisParser._parse_destinations": {
+  "names": [
+   "set",
+   "lines",
+   "join",
+   "style_anchor",
+   "re",
+   "search",
+   "groups",
+   "group",
+   "strip",
+   "_looks_like_style",
+   "section_delim_pattern",
+   "match",
+   "section_anchor",
+   "summary_anchor",
+   "destination_anchor",
+   "_extract_delivery_date",
+   "delivery_date",
+   "append",
+   "color_anchor",
+   "_norm_color_desc",
+   "text",
+   "startswith",
+   "total_token",
+   "parse_total_row",
+   "printed_size_totals",
+   "any",
+   "size_columns",
+   "is_size_header",
+   "size_header_anchor",
+   "is_number",
+   "require_row_total",
+   "split_row_total",
+   "_to_int",
+   "_nearest",
+   "xc",
+   "SizeQty",
+   "add",
+   "OrderLine",
+   "_to_float",
+   "items",
+   "get",
+   "min",
+   "merge_order_lines",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "po",
+   "base",
+   "header_style",
+   "header_price",
+   "current_section",
+   "current_color",
+   "current_dest",
+   "current_style",
+   "current_sizes",
+   "last_sizes",
+   "total_xc",
+   "in_dest_block",
+   "seen_lines",
+   "_ensure",
+   "page",
+   "line",
+   "line_text",
+   "sm",
+   "cand",
+   "dm",
+   "dest",
+   "ent",
+   "dl",
+   "dd",
+   "cm",
+   "ref",
+   "cols",
+   "txc",
+   "inseam",
+   "qty_toks",
+   "row_total",
+   "printed_row_total",
+   "sizes",
+   "t",
+   "col",
+   "lkey"
+  ],
+  "consts": [
+   "Parse the DESTINATION DETAILS section -> one OrderEntity per destination.\n\n        Only destination blocks under ``recipe.section_anchor`` are read, so the\n        earlier aggregate grid (and PACKAGING/COLOR DETAILS summaries) are ignored.\n\n        The PDF cycles colors inside the section (COLOR header -> per-destination\n        size blocks -> next color -> ...), so each destination's lines are scattered\n        across the document. We therefore accumulate ONE entity per destination CODE\n        (keyed dict), appending every color's inseam rows to that destination's buffer,\n        and only finalize all destinations at the end.\n\n        PDF ordering note: inside the section the COLOR header precedes its\n        ``Destination Code:`` line, and the per-destination ``Delivery Date:`` sits on\n        the FOLLOWING line. So colors/size-headers are captured whenever a color is\n        active, and the delivery date is attached to the current destination entity\n        when its own ``Delivery Date:`` line is seen. The inseam axis is kept on the\n        OrderLine so template_a can sum it into one color row.\n        ",
+   "",
+   null,
+   false,
+   " ",
+   1,
+   0,
+   true,
+   2,
+   -1,
+   [
+    "size",
+    "qty"
+   ],
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "inseam",
+    "unit_price",
+    "sizes",
+    "printed_row_total"
+   ]
+  ],
+  "n_instructions": 588
+ },
+ "<module>.Matrix2AxisParser._parse_destinations._ensure": {
+  "names": [
+   "OrderEntity"
+  ],
+  "varnames": [
+   "dest"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "destination_code",
+    "delivery_date"
+   ],
+   []
+  ],
+  "n_instructions": 30
+ },
+ "<module>.Matrix2AxisParser._parse_destinations.<genexpr>": {
+  "names": [
+   "text",
+   "total_token"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.Matrix2AxisParser._parse_destinations.<listcomp>": {
+  "names": [
+   "text",
+   "total_token",
+   "xc"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   [
+    "COLOR",
+    "NO"
+   ]
+  ],
+  "n_instructions": 25
+ }
+}

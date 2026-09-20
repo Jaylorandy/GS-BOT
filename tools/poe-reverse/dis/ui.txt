@@ -1,0 +1,12 @@
+# module: ui
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/ - Tkinter front-end for the V2 extractor.')
+              4 STORE_NAME               0 (__doc__)
+              6 LOAD_CONST               1 (None)
+              8 RETURN_VALUE

@@ -1,0 +1,12 @@
+Flatten into the 27-column Template B schema (columns A..AA).
+
+        V2.0.5 起对齐 V1.6.4 的栏位规范（栏位 label 全部照搬 1.6.4）：相对旧的
+        35 列（A..AI）硬删除了 7 列 —— Channel / Size Scale / Age-Sex Desc /
+        Product Desc / Wash Method / Washing Color / Packing Method —— V2.0.19.x
+        再删 5 列 —— Product Group / Vendor Name / Agent Name / Freight Terms /
+        DC Address —— 余 21 列内容 + 6 列 meta = 27 列（A..AA）。V2.0.19.12 起追
+        加 AA(_Fingerprint) 元数据列供 OSR 回灌学习精确 join。
+
+        Returns dicts keyed by column LETTER (A..AA). Column L (Net Amt) is
+        left as None - the writer fills the live formula ``=I*K``.
+        

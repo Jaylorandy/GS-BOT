@@ -1,0 +1,125 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "sys",
+   "_ensure_stdio",
+   "resolve_infer_engine",
+   "_local_engine_available"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/engine_router.py - resolve which inference engine to actually use.\n\n**\"本地优先，在线次之\"** is the single source of truth for engine selection.\n\nThe UI exposes an *preference* radio (online / local) but the *actual* engine\nused for a recipe inference is decided here, so the user never has to remember\nto flip the radio:\n\n    user prefers local  ->  local ONLY IF the local engine is genuinely usable\n                            (model file present AND llama-cpp-python bundled);\n                            otherwise fall back to online with a logged reason.\n    user prefers online ->  online.\n\nA local engine is \"genuinely usable\" when:\n    1. a model path is configured,\n    2. the file exists on disk,\n    3. llama-cpp-python is importable (bundled in the installer).\n\nNote: the V.2.0.0 installer bundles llama-cpp-python (collect_all in spec),\nso ``_local_engine_available()`` returns True as long as the GGUF file exists\nand the PyInstaller build included the engine DLLs.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   "return",
+   "None",
+   "cfg",
+   "dict",
+   "tuple[str, str]",
+   "bool",
+   [
+    "return",
+    "None"
+   ],
+   [
+    "cfg",
+    "dict",
+    "return",
+    "tuple[str, str]"
+   ],
+   [
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 31
+ },
+ "<module>._ensure_stdio": {
+  "names": [
+   "sys",
+   "stdout",
+   "open",
+   "os",
+   "devnull",
+   "stderr",
+   "Exception"
+  ],
+  "varnames": [],
+  "consts": [
+   "Redirect None stdout/stderr to devnull before importing llama_cpp.\n\n    In a PyInstaller windowed build stdio may be None; llama-cpp-python's\n    import-time log callback prints to stderr and a None stderr inside a C\n    callback causes access-violations on Windows.\n    ",
+   null,
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 44
+ },
+ "<module>.resolve_infer_engine": {
+  "names": [
+   "get",
+   "strip",
+   "os",
+   "path",
+   "exists",
+   "_local_engine_available"
+  ],
+  "varnames": [
+   "cfg",
+   "pref",
+   "model_path"
+  ],
+  "consts": [
+   "Return (engine, reason).\n\n    engine ∈ {\"local\", \"online\"}. reason is a human-readable string good for\n    the status bar / log so the user understands *why* a particular engine ran.\n    ",
+   "infer_engine",
+   "online",
+   "local_model_path",
+   "",
+   "local",
+   [
+    "online",
+    "使用在线 AI（当前偏好）"
+   ],
+   [
+    "online",
+    "本地已选为偏好，但未指定 GGUF 模型文件 → 回退在线 AI"
+   ],
+   "本地已选为偏好，但模型文件不存在：",
+   " → 回退在线 AI",
+   [
+    "online",
+    "本地已选为偏好，但本地引擎（llama-cpp-python）未打包进本程序 → 回退在线 AI"
+   ],
+   [
+    "local",
+    "本地引擎就绪，使用本地 AI（离线）"
+   ]
+  ],
+  "n_instructions": 53
+ },
+ "<module>._local_engine_available": {
+  "names": [
+   "_ensure_stdio",
+   "llama_cpp",
+   "Exception"
+  ],
+  "varnames": [
+   "llama_cpp"
+  ],
+  "consts": [
+   null,
+   0,
+   true,
+   false
+  ],
+  "n_instructions": 24
+ }
+}

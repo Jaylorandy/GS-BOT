@@ -1,0 +1,28 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "recipe_infer",
+   "build_recipe_prompt",
+   "parse_recipe_response",
+   "guess_layout_type",
+   "load_ai_config",
+   "infer_recipe",
+   "__all__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai package - recipe inference (first-seen PO).",
+   1,
+   [
+    "build_recipe_prompt",
+    "parse_recipe_response",
+    "guess_layout_type",
+    "load_ai_config",
+    "infer_recipe"
+   ],
+   null
+  ],
+  "n_instructions": 23
+ }
+}

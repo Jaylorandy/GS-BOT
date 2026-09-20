@@ -1,0 +1,1087 @@
+# module: ui.anf_missing_data
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\anf_missing_data.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/anf_missing_data.py - 缺失资料手动补录弹窗。\n\n扫描 ANF 文件夹后，若某些 PO 的「资料」（PO + 经 Commitment# 关联出的\nKI / Mill / Fabric）不完整，弹出此窗让用户逐条补录。确认后返回\nfixes 字典，键为 (po_no, entity_index)，值为各字段值。\n\n返回 None 表示取消（中止生成）。\n')
+              4 STORE_NAME               0 (__doc__)
+
+  9           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 11          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('Dict', 'List', 'Optional', 'Tuple'))
+             22 IMPORT_NAME              3 (typing)
+             24 IMPORT_FROM              4 (Dict)
+             26 STORE_NAME               4 (Dict)
+             28 IMPORT_FROM              5 (List)
+             30 STORE_NAME               5 (List)
+             32 IMPORT_FROM              6 (Optional)
+             34 STORE_NAME               6 (Optional)
+             36 IMPORT_FROM              7 (Tuple)
+             38 STORE_NAME               7 (Tuple)
+             40 POP_TOP
+
+ 13          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (None)
+             46 IMPORT_NAME              8 (tkinter)
+             48 STORE_NAME               9 (tk)
+
+ 14          50 LOAD_CONST               1 (0)
+             52 LOAD_CONST               5 (('messagebox',))
+             54 IMPORT_NAME              8 (tkinter)
+             56 IMPORT_FROM             10 (messagebox)
+             58 STORE_NAME              10 (messagebox)
+             60 POP_TOP
+
+ 16          62 LOAD_CONST               1 (0)
+             64 LOAD_CONST               4 (None)
+             66 IMPORT_NAME             11 (theme_glass)
+             68 STORE_NAME              12 (tg)
+
+ 18          70 BUILD_LIST               0
+             72 LOAD_CONST               6 ((('commitment_no', 'Commitment#'), ('ki_no', 'KI'), ('mill_name', 'Mill'), ('fabric_ref', 'Fabric')))
+             74 LIST_EXTEND              1
+             76 STORE_NAME              13 (_FIELDS)
+
+ 26          78 LOAD_CONST              12 (('issues', 'List[dict]', 'return', "'Optional[Dict[Tuple[str, int], dict]]'"))
+             80 LOAD_CONST              11 (<code object ask_missing_data at 0x000002BF94461590, file "ui\anf_missing_data.py", line 26>)
+             82 MAKE_FUNCTION            4 (annotations)
+             84 STORE_NAME              14 (ask_missing_data)
+             86 LOAD_CONST               4 (None)
+             88 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data  (args=2, locals=18)
+# varnames: parent, issues, vsb, inner, iss, key, missing, card, row_entries, fkey, flabel, r, req, ent, _on_configure, bottom, W, H
+              0 MAKE_CELL               18 (COL)
+              2 MAKE_CELL               19 (_cancel)
+              4 MAKE_CELL               20 (_confirm)
+              6 MAKE_CELL               21 (cancel)
+              8 MAKE_CELL               22 (canvas)
+             10 MAKE_CELL               23 (confirm)
+             12 MAKE_CELL               24 (entries)
+             14 MAKE_CELL               25 (result)
+             16 MAKE_CELL               26 (win)
+
+ 26          18 RESUME                   0
+
+ 28          20 LOAD_GLOBAL              0 (tg)
+             32 LOAD_ATTR                1 (COL)
+             42 STORE_DEREF             18 (COL)
+
+ 29          44 LOAD_CONST               1 ('v')
+             46 LOAD_CONST               2 (None)
+             48 BUILD_MAP                1
+             50 STORE_DEREF             25 (result)
+
+ 31          52 LOAD_GLOBAL              5 (NULL + tk)
+             64 LOAD_ATTR                3 (Toplevel)
+             74 LOAD_FAST                0 (parent)
+             76 PRECALL                  1
+             80 CALL                     1
+             90 STORE_DEREF             26 (win)
+
+ 32          92 LOAD_DEREF              26 (win)
+             94 LOAD_METHOD              4 (title)
+            116 LOAD_CONST               3 ('资料缺失 · 手动补录')
+            118 PRECALL                  1
+            122 CALL                     1
+            132 POP_TOP
+
+ 33         134 LOAD_DEREF              26 (win)
+            136 LOAD_METHOD              5 (transient)
+            158 LOAD_FAST                0 (parent)
+            160 PRECALL                  1
+            164 CALL                     1
+            174 POP_TOP
+
+ 34         176 LOAD_DEREF              26 (win)
+            178 LOAD_METHOD              6 (grab_set)
+            200 PRECALL                  0
+            204 CALL                     0
+            214 POP_TOP
+
+ 35         216 LOAD_DEREF              26 (win)
+            218 LOAD_METHOD              7 (resizable)
+            240 LOAD_CONST               4 (True)
+            242 LOAD_CONST               4 (True)
+            244 PRECALL                  2
+            248 CALL                     2
+            258 POP_TOP
+
+ 36         260 LOAD_DEREF              26 (win)
+            262 LOAD_METHOD              8 (configure)
+            284 LOAD_DEREF              18 (COL)
+            286 LOAD_CONST               5 ('gap')
+            288 BINARY_SUBSCR
+            298 KW_NAMES                 6
+            300 PRECALL                  1
+            304 CALL                     1
+            314 POP_TOP
+
+ 37         316 LOAD_DEREF              26 (win)
+            318 LOAD_METHOD              9 (bind)
+            340 LOAD_CONST               7 ('<Escape>')
+            342 LOAD_CLOSURE            26 (win)
+            344 BUILD_TUPLE              1
+            346 LOAD_CONST               8 (<code object <lambda> at 0x000002BF94A2BF00, file "ui\anf_missing_data.py", line 37>)
+            348 MAKE_FUNCTION            8 (closure)
+            350 PRECALL                  2
+            354 CALL                     2
+            364 POP_TOP
+
+ 39         366 LOAD_GLOBAL              5 (NULL + tk)
+            378 LOAD_ATTR               10 (Label)
+            388 LOAD_DEREF              26 (win)
+            390 LOAD_CONST               9 ('检测到以下 PO 资料不完整，请补全后继续生成')
+
+ 40         392 LOAD_DEREF              18 (COL)
+            394 LOAD_CONST               5 ('gap')
+            396 BINARY_SUBSCR
+            406 LOAD_DEREF              18 (COL)
+            408 LOAD_CONST              10 ('ink')
+            410 BINARY_SUBSCR
+            420 LOAD_GLOBAL              0 (tg)
+            432 LOAD_ATTR               11 (_SANS)
+            442 LOAD_CONST              11 (14)
+            444 LOAD_CONST              12 ('bold')
+            446 BUILD_TUPLE              3
+
+ 39         448 KW_NAMES                13
+            450 PRECALL                  5
+            454 CALL                     5
+
+ 40         464 LOAD_METHOD             12 (pack)
+
+ 41         486 LOAD_CONST              14 ('w')
+            488 LOAD_CONST              15 (20)
+            490 LOAD_CONST              16 ((14, 4))
+
+ 40         492 KW_NAMES                17
+            494 PRECALL                  3
+            498 CALL                     3
+            508 POP_TOP
+
+ 42         510 LOAD_GLOBAL              5 (NULL + tk)
+            522 LOAD_ATTR               10 (Label)
+            532 LOAD_DEREF              26 (win)
+            534 LOAD_CONST              18 ('资料 = PO + 经 Commitment# 关联出的 KI / Mill / Fabric。标 * 为必填（至少填 Commitment# 才能关联）。')
+
+ 44         536 LOAD_DEREF              18 (COL)
+            538 LOAD_CONST               5 ('gap')
+            540 BINARY_SUBSCR
+            550 LOAD_DEREF              18 (COL)
+            552 LOAD_CONST              19 ('ink_3')
+            554 BINARY_SUBSCR
+            564 LOAD_GLOBAL              0 (tg)
+            576 LOAD_ATTR               11 (_SANS)
+            586 LOAD_CONST              20 (11)
+            588 BUILD_TUPLE              2
+
+ 42         590 KW_NAMES                13
+            592 PRECALL                  5
+            596 CALL                     5
+
+ 44         606 LOAD_METHOD             12 (pack)
+
+ 45         628 LOAD_CONST              14 ('w')
+            630 LOAD_CONST              15 (20)
+            632 LOAD_CONST              21 ((0, 10))
+
+ 44         634 KW_NAMES                17
+            636 PRECALL                  3
+            640 CALL                     3
+            650 POP_TOP
+
+ 48         652 LOAD_GLOBAL              5 (NULL + tk)
+            664 LOAD_ATTR               13 (Canvas)
+            674 LOAD_DEREF              26 (win)
+            676 LOAD_DEREF              18 (COL)
+            678 LOAD_CONST               5 ('gap')
+            680 BINARY_SUBSCR
+            690 LOAD_CONST              22 (0)
+            692 KW_NAMES                23
+            694 PRECALL                  3
+            698 CALL                     3
+            708 STORE_DEREF             22 (canvas)
+
+ 49         710 LOAD_DEREF              22 (canvas)
+            712 LOAD_METHOD             12 (pack)
+            734 LOAD_CONST              24 ('both')
+            736 LOAD_CONST               4 (True)
+            738 LOAD_CONST              25 (12)
+            740 LOAD_CONST              26 ('top')
+            742 KW_NAMES                27
+            744 PRECALL                  4
+            748 CALL                     4
+            758 POP_TOP
+
+ 50         760 LOAD_GLOBAL              5 (NULL + tk)
+            772 LOAD_ATTR               14 (Scrollbar)
+            782 LOAD_DEREF              26 (win)
+            784 LOAD_CONST              28 ('vertical')
+            786 LOAD_DEREF              22 (canvas)
+            788 LOAD_ATTR               15 (yview)
+            798 KW_NAMES                29
+            800 PRECALL                  3
+            804 CALL                     3
+            814 STORE_FAST               2 (vsb)
+
+ 51         816 LOAD_FAST                2 (vsb)
+            818 LOAD_METHOD             12 (pack)
+            840 LOAD_CONST              30 ('right')
+            842 LOAD_CONST              31 ('y')
+            844 KW_NAMES                32
+            846 PRECALL                  2
+            850 CALL                     2
+            860 POP_TOP
+
+ 52         862 LOAD_DEREF              22 (canvas)
+            864 LOAD_METHOD              8 (configure)
+            886 LOAD_FAST                2 (vsb)
+            888 LOAD_ATTR               16 (set)
+            898 KW_NAMES                33
+            900 PRECALL                  1
+            904 CALL                     1
+            914 POP_TOP
+
+ 53         916 LOAD_GLOBAL              5 (NULL + tk)
+            928 LOAD_ATTR               17 (Frame)
+            938 LOAD_DEREF              22 (canvas)
+            940 LOAD_DEREF              18 (COL)
+            942 LOAD_CONST               5 ('gap')
+            944 BINARY_SUBSCR
+            954 KW_NAMES                 6
+            956 PRECALL                  2
+            960 CALL                     2
+            970 STORE_FAST               3 (inner)
+
+ 54         972 LOAD_DEREF              22 (canvas)
+            974 LOAD_METHOD             18 (create_window)
+            996 LOAD_CONST              34 ((0, 0))
+            998 LOAD_FAST                3 (inner)
+           1000 LOAD_CONST              35 ('nw')
+           1002 KW_NAMES                36
+           1004 PRECALL                  3
+           1008 CALL                     3
+           1018 POP_TOP
+
+ 56        1020 BUILD_MAP                0
+           1022 STORE_DEREF             24 (entries)
+
+ 58        1024 LOAD_FAST                1 (issues)
+           1026 GET_ITER
+        >> 1028 EXTENDED_ARG             2
+           1030 FOR_ITER               515 (to 2062)
+           1032 STORE_FAST               4 (iss)
+
+ 59        1034 LOAD_FAST                4 (iss)
+           1036 LOAD_CONST              37 ('po_no')
+           1038 BINARY_SUBSCR
+           1048 LOAD_FAST                4 (iss)
+           1050 LOAD_CONST              38 ('entity_index')
+           1052 BINARY_SUBSCR
+           1062 BUILD_TUPLE              2
+           1064 STORE_FAST               5 (key)
+
+ 60        1066 LOAD_GLOBAL             33 (NULL + set)
+           1078 LOAD_FAST                4 (iss)
+           1080 LOAD_METHOD             19 (get)
+           1102 LOAD_CONST              39 ('missing')
+           1104 BUILD_LIST               0
+           1106 PRECALL                  2
+           1110 CALL                     2
+           1120 PRECALL                  1
+           1124 CALL                     1
+           1134 STORE_FAST               6 (missing)
+
+ 61        1136 LOAD_GLOBAL              5 (NULL + tk)
+           1148 LOAD_ATTR               17 (Frame)
+           1158 LOAD_FAST                3 (inner)
+           1160 LOAD_DEREF              18 (COL)
+           1162 LOAD_CONST              40 ('field')
+           1164 BINARY_SUBSCR
+           1174 LOAD_DEREF              18 (COL)
+           1176 LOAD_CONST              41 ('panel_border')
+           1178 BINARY_SUBSCR
+
+ 62        1188 LOAD_CONST              42 (1)
+           1190 LOAD_CONST              11 (14)
+           1192 LOAD_CONST              43 (10)
+
+ 61        1194 KW_NAMES                44
+           1196 PRECALL                  6
+           1200 CALL                     6
+           1210 STORE_FAST               7 (card)
+
+ 63        1212 LOAD_FAST                7 (card)
+           1214 LOAD_METHOD             12 (pack)
+           1236 LOAD_CONST              45 ('x')
+           1238 LOAD_CONST              46 (8)
+           1240 LOAD_CONST              21 ((0, 10))
+           1242 KW_NAMES                47
+           1244 PRECALL                  3
+           1248 CALL                     3
+           1258 POP_TOP
+
+ 64        1260 LOAD_GLOBAL              5 (NULL + tk)
+           1272 LOAD_ATTR               10 (Label)
+           1282 LOAD_FAST                7 (card)
+           1284 LOAD_CONST              48 ('PO#  ')
+           1286 LOAD_FAST                4 (iss)
+           1288 LOAD_CONST              37 ('po_no')
+           1290 BINARY_SUBSCR
+           1300 FORMAT_VALUE             0
+           1302 BUILD_STRING             2
+           1304 LOAD_DEREF              18 (COL)
+           1306 LOAD_CONST              40 ('field')
+           1308 BINARY_SUBSCR
+           1318 LOAD_DEREF              18 (COL)
+           1320 LOAD_CONST              10 ('ink')
+           1322 BINARY_SUBSCR
+
+ 65        1332 LOAD_GLOBAL              0 (tg)
+           1344 LOAD_ATTR               11 (_SANS)
+           1354 LOAD_CONST              49 (13)
+           1356 LOAD_CONST              12 ('bold')
+           1358 BUILD_TUPLE              3
+
+ 64        1360 KW_NAMES                13
+           1362 PRECALL                  5
+           1366 CALL                     5
+
+ 65        1376 LOAD_METHOD             12 (pack)
+           1398 LOAD_CONST              14 ('w')
+           1400 LOAD_CONST              50 ((0, 8))
+           1402 KW_NAMES                51
+           1404 PRECALL                  2
+           1408 CALL                     2
+           1418 POP_TOP
+
+ 66        1420 BUILD_MAP                0
+           1422 STORE_FAST               8 (row_entries)
+
+ 67        1424 LOAD_GLOBAL             40 (_FIELDS)
+           1436 GET_ITER
+        >> 1438 EXTENDED_ARG             1
+           1440 FOR_ITER               303 (to 2048)
+           1442 UNPACK_SEQUENCE          2
+           1446 STORE_FAST               9 (fkey)
+           1448 STORE_FAST              10 (flabel)
+
+ 68        1450 LOAD_GLOBAL              5 (NULL + tk)
+           1462 LOAD_ATTR               17 (Frame)
+           1472 LOAD_FAST                7 (card)
+           1474 LOAD_DEREF              18 (COL)
+           1476 LOAD_CONST              40 ('field')
+           1478 BINARY_SUBSCR
+           1488 KW_NAMES                 6
+           1490 PRECALL                  2
+           1494 CALL                     2
+           1504 STORE_FAST              11 (r)
+
+ 69        1506 LOAD_FAST               11 (r)
+           1508 LOAD_METHOD             12 (pack)
+           1530 LOAD_CONST              45 ('x')
+           1532 LOAD_CONST              52 ((0, 6))
+           1534 KW_NAMES                53
+           1536 PRECALL                  2
+           1540 CALL                     2
+           1550 POP_TOP
+
+ 70        1552 LOAD_FAST                9 (fkey)
+           1554 LOAD_FAST                6 (missing)
+           1556 CONTAINS_OP              0
+           1558 POP_JUMP_FORWARD_IF_FALSE     2 (to 1564)
+           1560 LOAD_CONST              54 (' *')
+           1562 JUMP_FORWARD             1 (to 1566)
+        >> 1564 LOAD_CONST              55 ('')
+        >> 1566 STORE_FAST              12 (req)
+
+ 71        1568 LOAD_GLOBAL              5 (NULL + tk)
+           1580 LOAD_ATTR               10 (Label)
+           1590 LOAD_FAST               11 (r)
+           1592 LOAD_FAST               10 (flabel)
+           1594 FORMAT_VALUE             0
+           1596 LOAD_FAST               12 (req)
+           1598 FORMAT_VALUE             0
+           1600 BUILD_STRING             2
+           1602 LOAD_DEREF              18 (COL)
+           1604 LOAD_CONST              40 ('field')
+           1606 BINARY_SUBSCR
+
+ 72        1616 LOAD_FAST                9 (fkey)
+           1618 LOAD_FAST                6 (missing)
+           1620 CONTAINS_OP              0
+           1622 POP_JUMP_FORWARD_IF_FALSE     8 (to 1640)
+           1624 LOAD_DEREF              18 (COL)
+           1626 LOAD_CONST              56 ('accent')
+           1628 BINARY_SUBSCR
+           1638 JUMP_FORWARD             7 (to 1654)
+        >> 1640 LOAD_DEREF              18 (COL)
+           1642 LOAD_CONST              57 ('ink_2')
+           1644 BINARY_SUBSCR
+
+ 73     >> 1654 LOAD_GLOBAL              0 (tg)
+           1666 LOAD_ATTR               11 (_SANS)
+           1676 LOAD_CONST              25 (12)
+           1678 BUILD_TUPLE              2
+           1680 LOAD_CONST              11 (14)
+           1682 LOAD_CONST              14 ('w')
+
+ 71        1684 KW_NAMES                58
+           1686 PRECALL                  7
+           1690 CALL                     7
+
+ 73        1700 LOAD_METHOD             12 (pack)
+           1722 LOAD_CONST              59 ('left')
+           1724 KW_NAMES                60
+           1726 PRECALL                  1
+           1730 CALL                     1
+           1740 POP_TOP
+
+ 74        1742 LOAD_GLOBAL              5 (NULL + tk)
+           1754 LOAD_ATTR               21 (Entry)
+           1764 LOAD_FAST               11 (r)
+           1766 LOAD_DEREF              18 (COL)
+           1768 LOAD_CONST               5 ('gap')
+           1770 BINARY_SUBSCR
+           1780 LOAD_DEREF              18 (COL)
+           1782 LOAD_CONST              10 ('ink')
+           1784 BINARY_SUBSCR
+
+ 75        1794 LOAD_DEREF              18 (COL)
+           1796 LOAD_CONST              10 ('ink')
+           1798 BINARY_SUBSCR
+           1808 LOAD_GLOBAL              0 (tg)
+           1820 LOAD_ATTR               11 (_SANS)
+           1830 LOAD_CONST              25 (12)
+           1832 BUILD_TUPLE              2
+
+ 76        1834 LOAD_CONST              61 ('flat')
+           1836 LOAD_DEREF              18 (COL)
+           1838 LOAD_CONST              62 ('field_border')
+           1840 BINARY_SUBSCR
+
+ 77        1850 LOAD_CONST              42 (1)
+
+ 74        1852 KW_NAMES                63
+           1854 PRECALL                  8
+           1858 CALL                     8
+           1868 STORE_FAST              13 (ent)
+
+ 78        1870 LOAD_FAST               13 (ent)
+           1872 LOAD_METHOD             22 (insert)
+           1894 LOAD_CONST              22 (0)
+           1896 LOAD_GLOBAL             47 (NULL + str)
+           1908 LOAD_FAST                4 (iss)
+           1910 LOAD_METHOD             19 (get)
+           1932 LOAD_FAST                9 (fkey)
+           1934 LOAD_CONST              55 ('')
+           1936 PRECALL                  2
+           1940 CALL                     2
+           1950 JUMP_IF_TRUE_OR_POP      1 (to 1954)
+           1952 LOAD_CONST              55 ('')
+        >> 1954 PRECALL                  1
+           1958 CALL                     1
+           1968 PRECALL                  2
+           1972 CALL                     2
+           1982 POP_TOP
+
+ 79        1984 LOAD_FAST               13 (ent)
+           1986 LOAD_METHOD             12 (pack)
+           2008 LOAD_CONST              59 ('left')
+           2010 LOAD_CONST              45 ('x')
+           2012 LOAD_CONST               4 (True)
+           2014 LOAD_CONST              50 ((0, 8))
+           2016 KW_NAMES                64
+           2018 PRECALL                  4
+           2022 CALL                     4
+           2032 POP_TOP
+
+ 80        2034 LOAD_FAST               13 (ent)
+           2036 LOAD_FAST                8 (row_entries)
+           2038 LOAD_FAST                9 (fkey)
+           2040 STORE_SUBSCR
+           2044 EXTENDED_ARG             1
+           2046 JUMP_BACKWARD          305 (to 1438)
+
+ 81     >> 2048 LOAD_FAST                8 (row_entries)
+           2050 LOAD_DEREF              24 (entries)
+           2052 LOAD_FAST                5 (key)
+           2054 STORE_SUBSCR
+           2058 EXTENDED_ARG             2
+           2060 JUMP_BACKWARD          517 (to 1028)
+
+ 83     >> 2062 LOAD_CONST              89 ((None,))
+           2064 LOAD_CLOSURE            22 (canvas)
+           2066 BUILD_TUPLE              1
+           2068 LOAD_CONST              65 (<code object _on_configure at 0x000002BF94A69E90, file "ui\anf_missing_data.py", line 83>)
+           2070 MAKE_FUNCTION            9 (defaults, closure)
+           2072 STORE_FAST              14 (_on_configure)
+
+ 86        2074 LOAD_FAST                3 (inner)
+           2076 LOAD_METHOD              9 (bind)
+           2098 LOAD_CONST              66 ('<Configure>')
+           2100 LOAD_FAST               14 (_on_configure)
+           2102 PRECALL                  2
+           2106 CALL                     2
+           2116 POP_TOP
+
+ 89        2118 LOAD_GLOBAL              5 (NULL + tk)
+           2130 LOAD_ATTR               17 (Frame)
+           2140 LOAD_DEREF              26 (win)
+           2142 LOAD_DEREF              18 (COL)
+           2144 LOAD_CONST               5 ('gap')
+           2146 BINARY_SUBSCR
+           2156 KW_NAMES                 6
+           2158 PRECALL                  2
+           2162 CALL                     2
+           2172 STORE_FAST              15 (bottom)
+
+ 90        2174 LOAD_FAST               15 (bottom)
+           2176 LOAD_METHOD             12 (pack)
+           2198 LOAD_CONST              45 ('x')
+           2200 LOAD_CONST              15 (20)
+           2202 LOAD_CONST              67 ((6, 14))
+           2204 KW_NAMES                47
+           2206 PRECALL                  3
+           2210 CALL                     3
+           2220 POP_TOP
+
+ 92        2222 LOAD_CLOSURE            24 (entries)
+           2224 LOAD_CLOSURE            25 (result)
+           2226 LOAD_CLOSURE            26 (win)
+           2228 BUILD_TUPLE              3
+           2230 LOAD_CONST              68 (<code object _confirm at 0x000002BF94391230, file "ui\anf_missing_data.py", line 92>)
+           2232 MAKE_FUNCTION            8 (closure)
+           2234 STORE_DEREF             20 (_confirm)
+
+116        2236 LOAD_CLOSURE            25 (result)
+           2238 LOAD_CLOSURE            26 (win)
+           2240 BUILD_TUPLE              2
+           2242 LOAD_CONST              69 (<code object _cancel at 0x000002BF94A2F730, file "ui\anf_missing_data.py", line 116>)
+           2244 MAKE_FUNCTION            8 (closure)
+           2246 STORE_DEREF             19 (_cancel)
+
+120        2248 LOAD_GLOBAL              5 (NULL + tk)
+           2260 LOAD_ATTR               10 (Label)
+           2270 LOAD_FAST               15 (bottom)
+           2272 LOAD_CONST              70 ('确认并继续')
+           2274 LOAD_DEREF              18 (COL)
+           2276 LOAD_CONST              56 ('accent')
+           2278 BINARY_SUBSCR
+           2288 LOAD_DEREF              18 (COL)
+           2290 LOAD_CONST              71 ('select_fg')
+           2292 BINARY_SUBSCR
+
+121        2302 LOAD_GLOBAL              0 (tg)
+           2314 LOAD_ATTR               11 (_SANS)
+           2324 LOAD_CONST              49 (13)
+           2326 LOAD_CONST              12 ('bold')
+           2328 BUILD_TUPLE              3
+           2330 LOAD_CONST              15 (20)
+           2332 LOAD_CONST              46 (8)
+           2334 LOAD_CONST              72 ('hand2')
+
+120        2336 KW_NAMES                73
+           2338 PRECALL                  8
+           2342 CALL                     8
+           2352 STORE_DEREF             23 (confirm)
+
+122        2354 LOAD_DEREF              23 (confirm)
+           2356 LOAD_METHOD             12 (pack)
+           2378 LOAD_CONST              30 ('right')
+           2380 KW_NAMES                60
+           2382 PRECALL                  1
+           2386 CALL                     1
+           2396 POP_TOP
+
+123        2398 LOAD_DEREF              23 (confirm)
+           2400 LOAD_METHOD              9 (bind)
+           2422 LOAD_CONST              74 ('<Button-1>')
+           2424 LOAD_CLOSURE            20 (_confirm)
+           2426 BUILD_TUPLE              1
+           2428 LOAD_CONST              75 (<code object <lambda> at 0x000002BF94AB1960, file "ui\anf_missing_data.py", line 123>)
+           2430 MAKE_FUNCTION            8 (closure)
+           2432 PRECALL                  2
+           2436 CALL                     2
+           2446 POP_TOP
+
+124        2448 LOAD_DEREF              23 (confirm)
+           2450 LOAD_METHOD              9 (bind)
+           2472 LOAD_CONST              76 ('<Enter>')
+           2474 LOAD_CLOSURE            18 (COL)
+           2476 LOAD_CLOSURE            23 (confirm)
+           2478 BUILD_TUPLE              2
+           2480 LOAD_CONST              77 (<code object <lambda> at 0x000002BF94A2FE30, file "ui\anf_missing_data.py", line 124>)
+           2482 MAKE_FUNCTION            8 (closure)
+           2484 PRECALL                  2
+           2488 CALL                     2
+           2498 POP_TOP
+
+125        2500 LOAD_DEREF              23 (confirm)
+           2502 LOAD_METHOD              9 (bind)
+           2524 LOAD_CONST              78 ('<Leave>')
+           2526 LOAD_CLOSURE            18 (COL)
+           2528 LOAD_CLOSURE            23 (confirm)
+           2530 BUILD_TUPLE              2
+           2532 LOAD_CONST              79 (<code object <lambda> at 0x000002BF94A2F330, file "ui\anf_missing_data.py", line 125>)
+           2534 MAKE_FUNCTION            8 (closure)
+           2536 PRECALL                  2
+           2540 CALL                     2
+           2550 POP_TOP
+
+126        2552 LOAD_GLOBAL              5 (NULL + tk)
+           2564 LOAD_ATTR               10 (Label)
+           2574 LOAD_FAST               15 (bottom)
+           2576 LOAD_CONST              80 ('取消')
+           2578 LOAD_DEREF              18 (COL)
+           2580 LOAD_CONST              40 ('field')
+           2582 BINARY_SUBSCR
+           2592 LOAD_DEREF              18 (COL)
+           2594 LOAD_CONST              10 ('ink')
+           2596 BINARY_SUBSCR
+
+127        2606 LOAD_GLOBAL              0 (tg)
+           2618 LOAD_ATTR               11 (_SANS)
+           2628 LOAD_CONST              49 (13)
+           2630 BUILD_TUPLE              2
+           2632 LOAD_CONST              15 (20)
+           2634 LOAD_CONST              46 (8)
+           2636 LOAD_CONST              72 ('hand2')
+
+128        2638 LOAD_DEREF              18 (COL)
+           2640 LOAD_CONST              41 ('panel_border')
+           2642 BINARY_SUBSCR
+           2652 LOAD_CONST              42 (1)
+
+126        2654 KW_NAMES                81
+           2656 PRECALL                 10
+           2660 CALL                    10
+           2670 STORE_DEREF             21 (cancel)
+
+129        2672 LOAD_DEREF              21 (cancel)
+           2674 LOAD_METHOD             12 (pack)
+           2696 LOAD_CONST              30 ('right')
+           2698 LOAD_CONST              82 ((0, 12))
+           2700 KW_NAMES                83
+           2702 PRECALL                  2
+           2706 CALL                     2
+           2716 POP_TOP
+
+130        2718 LOAD_DEREF              21 (cancel)
+           2720 LOAD_METHOD              9 (bind)
+           2742 LOAD_CONST              74 ('<Button-1>')
+           2744 LOAD_CLOSURE            19 (_cancel)
+           2746 BUILD_TUPLE              1
+           2748 LOAD_CONST              84 (<code object <lambda> at 0x000002BF94AB01D0, file "ui\anf_missing_data.py", line 130>)
+           2750 MAKE_FUNCTION            8 (closure)
+           2752 PRECALL                  2
+           2756 CALL                     2
+           2766 POP_TOP
+
+131        2768 LOAD_DEREF              21 (cancel)
+           2770 LOAD_METHOD              9 (bind)
+           2792 LOAD_CONST              76 ('<Enter>')
+           2794 LOAD_CLOSURE            18 (COL)
+           2796 LOAD_CLOSURE            21 (cancel)
+           2798 BUILD_TUPLE              2
+           2800 LOAD_CONST              85 (<code object <lambda> at 0x000002BF94A2F630, file "ui\anf_missing_data.py", line 131>)
+           2802 MAKE_FUNCTION            8 (closure)
+           2804 PRECALL                  2
+           2808 CALL                     2
+           2818 POP_TOP
+
+132        2820 LOAD_DEREF              21 (cancel)
+           2822 LOAD_METHOD              9 (bind)
+           2844 LOAD_CONST              78 ('<Leave>')
+           2846 LOAD_CLOSURE            18 (COL)
+           2848 LOAD_CLOSURE            21 (cancel)
+           2850 BUILD_TUPLE              2
+           2852 LOAD_CONST              86 (<code object <lambda> at 0x000002BF94A2EF30, file "ui\anf_missing_data.py", line 132>)
+           2854 MAKE_FUNCTION            8 (closure)
+           2856 PRECALL                  2
+           2860 CALL                     2
+           2870 POP_TOP
+
+134        2872 LOAD_CONST              87 ((620, 460))
+           2874 UNPACK_SEQUENCE          2
+           2878 STORE_FAST              16 (W)
+           2880 STORE_FAST              17 (H)
+
+135        2882 LOAD_DEREF              26 (win)
+           2884 LOAD_METHOD             24 (minsize)
+           2906 LOAD_FAST               16 (W)
+           2908 LOAD_CONST              88 (360)
+           2910 PRECALL                  2
+           2914 CALL                     2
+           2924 POP_TOP
+
+136        2926 LOAD_DEREF              26 (win)
+           2928 LOAD_METHOD             25 (geometry)
+           2950 LOAD_FAST               16 (W)
+           2952 FORMAT_VALUE             0
+           2954 LOAD_CONST              45 ('x')
+           2956 LOAD_FAST               17 (H)
+           2958 FORMAT_VALUE             0
+           2960 BUILD_STRING             3
+           2962 PRECALL                  1
+           2966 CALL                     1
+           2976 POP_TOP
+
+137        2978 LOAD_DEREF              26 (win)
+           2980 LOAD_METHOD             26 (update_idletasks)
+           3002 PRECALL                  0
+           3006 CALL                     0
+           3016 POP_TOP
+
+138        3018 LOAD_DEREF              26 (win)
+           3020 LOAD_METHOD             27 (deiconify)
+           3042 PRECALL                  0
+           3046 CALL                     0
+           3056 POP_TOP
+
+139        3058 LOAD_DEREF              26 (win)
+           3060 LOAD_METHOD             28 (wait_window)
+           3082 PRECALL                  0
+           3086 CALL                     0
+           3096 POP_TOP
+
+140        3098 LOAD_DEREF              25 (result)
+           3100 LOAD_CONST               1 ('v')
+           3102 BINARY_SUBSCR
+           3112 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+ 37           2 RESUME                   0
+              4 LOAD_DEREF               1 (win)
+              6 LOAD_METHOD              0 (destroy)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data._on_configure  (args=1, locals=1)
+# varnames: _
+              0 COPY_FREE_VARS           1
+
+ 83           2 RESUME                   0
+
+ 84           4 LOAD_DEREF               1 (canvas)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (canvas)
+             30 LOAD_METHOD              1 (bbox)
+             52 LOAD_CONST               1 ('all')
+             54 PRECALL                  1
+             58 CALL                     1
+             68 KW_NAMES                 2
+             70 PRECALL                  1
+             74 CALL                     1
+             84 POP_TOP
+             86 LOAD_CONST               0 (None)
+             88 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data._confirm  (args=0, locals=8)
+# varnames: fixes, key, row_entries, vals, fkey, _, v, bad
+              0 COPY_FREE_VARS           3
+
+ 92           2 RESUME                   0
+
+ 93           4 BUILD_MAP                0
+              6 STORE_FAST               0 (fixes)
+
+ 94           8 LOAD_DEREF               8 (entries)
+             10 LOAD_METHOD              0 (items)
+             32 PRECALL                  0
+             36 CALL                     0
+             46 GET_ITER
+        >>   48 FOR_ITER                78 (to 206)
+             50 UNPACK_SEQUENCE          2
+             54 STORE_FAST               1 (key)
+             56 STORE_FAST               2 (row_entries)
+
+ 95          58 BUILD_MAP                0
+             60 STORE_FAST               3 (vals)
+
+ 96          62 LOAD_GLOBAL              2 (_FIELDS)
+             74 GET_ITER
+        >>   76 FOR_ITER                56 (to 190)
+             78 UNPACK_SEQUENCE          2
+             82 STORE_FAST               4 (fkey)
+             84 STORE_FAST               5 (_)
+
+ 97          86 LOAD_FAST                2 (row_entries)
+             88 LOAD_FAST                4 (fkey)
+             90 BINARY_SUBSCR
+            100 LOAD_METHOD              2 (get)
+            122 PRECALL                  0
+            126 CALL                     0
+            136 LOAD_METHOD              3 (strip)
+            158 PRECALL                  0
+            162 CALL                     0
+            172 STORE_FAST               6 (v)
+
+ 98         174 LOAD_FAST                6 (v)
+            176 POP_JUMP_FORWARD_IF_FALSE     5 (to 188)
+
+ 99         178 LOAD_FAST                6 (v)
+            180 LOAD_FAST                3 (vals)
+            182 LOAD_FAST                4 (fkey)
+            184 STORE_SUBSCR
+        >>  188 JUMP_BACKWARD           57 (to 76)
+
+100     >>  190 LOAD_FAST                3 (vals)
+            192 POP_JUMP_FORWARD_IF_FALSE     5 (to 204)
+
+101         194 LOAD_FAST                3 (vals)
+            196 LOAD_FAST                0 (fixes)
+            198 LOAD_FAST                1 (key)
+            200 STORE_SUBSCR
+        >>  204 JUMP_BACKWARD           79 (to 48)
+
+103     >>  206 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6EE90, file "ui\anf_missing_data.py", line 103>)
+            208 MAKE_FUNCTION            0
+            210 LOAD_FAST                0 (fixes)
+            212 LOAD_METHOD              0 (items)
+            234 PRECALL                  0
+            238 CALL                     0
+            248 GET_ITER
+            250 PRECALL                  0
+            254 CALL                     0
+            264 STORE_FAST               7 (bad)
+
+104         266 LOAD_FAST                7 (bad)
+            268 POP_JUMP_FORWARD_IF_FALSE    75 (to 420)
+            270 LOAD_GLOBAL              9 (NULL + any)
+            282 LOAD_CLOSURE             8 (entries)
+            284 BUILD_TUPLE              1
+            286 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94999E70, file "ui\anf_missing_data.py", line 104>)
+            288 MAKE_FUNCTION            8 (closure)
+            290 LOAD_FAST                7 (bad)
+            292 GET_ITER
+            294 PRECALL                  0
+            298 CALL                     0
+            308 PRECALL                  1
+            312 CALL                     1
+            322 POP_JUMP_FORWARD_IF_FALSE    48 (to 420)
+
+107         324 LOAD_GLOBAL             11 (NULL + messagebox)
+            336 LOAD_ATTR                6 (askyesno)
+            346 LOAD_CONST               3 ('确认')
+
+108         348 LOAD_CONST               4 ('有 PO 仅填了 KI/Mill/Fabric 而未填 Commitment#，将无法关联到 Commitment 资料。仍要继续？')
+
+107         350 PRECALL                  2
+            354 CALL                     2
+            364 POP_JUMP_FORWARD_IF_FALSE    25 (to 416)
+
+110         366 LOAD_FAST                0 (fixes)
+            368 LOAD_DEREF               9 (result)
+            370 LOAD_CONST               5 ('v')
+            372 STORE_SUBSCR
+
+111         376 LOAD_DEREF              10 (win)
+            378 LOAD_METHOD              7 (destroy)
+            400 PRECALL                  0
+            404 CALL                     0
+            414 POP_TOP
+
+112     >>  416 LOAD_CONST               0 (None)
+            418 RETURN_VALUE
+
+113     >>  420 LOAD_FAST                0 (fixes)
+            422 LOAD_DEREF               9 (result)
+            424 LOAD_CONST               5 ('v')
+            426 STORE_SUBSCR
+
+114         430 LOAD_DEREF              10 (win)
+            432 LOAD_METHOD              7 (destroy)
+            454 PRECALL                  0
+            458 CALL                     0
+            468 POP_TOP
+            470 LOAD_CONST               0 (None)
+            472 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data._confirm.<listcomp>  (args=1, locals=3)
+# varnames: .0, k, v
+103           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                11 (to 30)
+              8 UNPACK_SEQUENCE          2
+             12 STORE_FAST               1 (k)
+             14 STORE_FAST               2 (v)
+             16 LOAD_CONST               0 ('commitment_no')
+             18 LOAD_FAST                2 (v)
+             20 CONTAINS_OP              1
+             22 POP_JUMP_BACKWARD_IF_FALSE     9 (to 6)
+             24 LOAD_FAST                1 (k)
+             26 LIST_APPEND              2
+             28 JUMP_BACKWARD           12 (to 6)
+        >>   30 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data._confirm.<genexpr>  (args=1, locals=4)
+# varnames: .0, k, fkey, _
+              0 COPY_FREE_VARS           1
+
+104           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                73 (to 158)
+             12 STORE_FAST               1 (k)
+             14 LOAD_GLOBAL              0 (_FIELDS)
+             26 GET_ITER
+        >>   28 FOR_ITER                63 (to 156)
+             30 UNPACK_SEQUENCE          2
+             34 STORE_FAST               2 (fkey)
+             36 STORE_FAST               3 (_)
+
+105          38 LOAD_FAST                2 (fkey)
+             40 LOAD_CONST               0 ('commitment_no')
+             42 COMPARE_OP               3 (!=)
+             48 POP_JUMP_BACKWARD_IF_FALSE    11 (to 28)
+
+104          50 LOAD_DEREF               4 (entries)
+             52 LOAD_FAST                1 (k)
+             54 BINARY_SUBSCR
+             64 LOAD_FAST                2 (fkey)
+             66 BINARY_SUBSCR
+             76 LOAD_METHOD              1 (get)
+             98 PRECALL                  0
+            102 CALL                     0
+            112 LOAD_METHOD              2 (strip)
+            134 PRECALL                  0
+            138 CALL                     0
+
+105         148 YIELD_VALUE
+            150 RESUME                   1
+            152 POP_TOP
+            154 JUMP_BACKWARD           64 (to 28)
+        >>  156 JUMP_BACKWARD           74 (to 10)
+
+104     >>  158 LOAD_CONST               1 (None)
+            160 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data._cancel  (args=0, locals=0)
+              0 COPY_FREE_VARS           2
+
+116           2 RESUME                   0
+
+117           4 LOAD_CONST               0 (None)
+              6 LOAD_DEREF               0 (result)
+              8 LOAD_CONST               1 ('v')
+             10 STORE_SUBSCR
+
+118          14 LOAD_DEREF               1 (win)
+             16 LOAD_METHOD              0 (destroy)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 POP_TOP
+             54 LOAD_CONST               0 (None)
+             56 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+123           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_confirm)
+              8 PRECALL                  0
+             12 CALL                     0
+             22 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+124           2 RESUME                   0
+              4 LOAD_DEREF               2 (confirm)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent_2')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+125           2 RESUME                   0
+              4 LOAD_DEREF               2 (confirm)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('accent')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+130           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_cancel)
+              8 PRECALL                  0
+             12 CALL                     0
+             22 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+131           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('hover')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.ask_missing_data.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+132           2 RESUME                   0
+              4 LOAD_DEREF               2 (cancel)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (COL)
+             30 LOAD_CONST               1 ('field')
+             32 BINARY_SUBSCR
+             42 KW_NAMES                 2
+             44 PRECALL                  1
+             48 CALL                     1
+             58 RETURN_VALUE

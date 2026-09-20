@@ -1,0 +1,31 @@
+GS Bot for macOS - Install Guide
+
+If macOS blocks the app in Finder, use the local launcher first.
+
+Install
+1. Open the DMG file.
+2. Drag GS Bot.app into Applications.
+3. If the app will not open from Finder, run Start GS Bot.command instead.
+4. If macOS shows a security warning, close the dialog.
+
+Local launcher
+1. Keep Start GS Bot.command next to GS Bot.app, or keep it in the release folder with mac-arm64/GS Bot.app.
+2. Double-click Start GS Bot.command.
+3. The launcher starts the app directly from its executable and brings GS Bot to the front.
+
+Allow the app in System Settings
+1. Open System Settings.
+2. Go to Privacy & Security.
+3. Scroll down to the Security section.
+4. Click Open Anyway for GS Bot.
+5. Click Open again and enter your Mac password if prompted.
+6. Reopen GS Bot from Applications.
+
+Notes
+- The Open Anyway button usually appears only after the first blocked launch.
+- The button is typically available for about one hour after the warning appears.
+- A new app version may need to be allowed again.
+- The local launcher is intended only for testing on your own Mac.
+
+Support
+- If the app is still blocked, send a screenshot of the warning dialog to the GS Bot team.

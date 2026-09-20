@@ -1,0 +1,1076 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "sys",
+   "tkinter",
+   "tk",
+   "pathlib",
+   "Path",
+   "messagebox",
+   "ttk",
+   "core.models",
+   "PoRecipe",
+   "core.store.cache",
+   "RecipeCache",
+   "theme_glass",
+   "getattr",
+   "COL",
+   "FONT_BODY",
+   "FONT_HEAD",
+   "FONT_BUTTON",
+   "FONT_BUTTON_BOLD",
+   "Exception",
+   "_ANCHOR_LABELS",
+   "_FIELD_DEFAULT_KEYS",
+   "_CLEAN_FIELDS",
+   "get",
+   "_C_GAP",
+   "_C_PANEL",
+   "_C_PANEL_BORDER",
+   "_C_INK",
+   "_C_INK2",
+   "_C_INK3",
+   "_C_FIELD",
+   "_C_ACCENT",
+   "_C_SELECT_FG",
+   "_C_ACCENT_SOFT",
+   "_C_HOVER",
+   "_C_DEL_FG",
+   "_C_DEL_ACTIVE",
+   "PRIMARY_KW",
+   "Toplevel",
+   "RecipeRawEditor"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/recipe_raw_editor.py - 无 PDF 时直接编辑指纹配方的锚点正则。\n\n这是「指纹管理面板」的高级入口：当用户手上没有对应 PO 的 PDF（或只是想\n手动修一个 AI 写错的锚点）时，直接手填 14 个头字段锚点正则并保存回缓存。\n\n与确认框不同，这里**不依赖 doc_lines**，无法自动重定位锚点 —— 用户必须\n自己写对正则。保存前逐个 re.compile 校验，避免写进一个无法编译的配方。\n\n注意：缓存文件里只有锚点正则（field_overrides 在 cache.put 前已被清空），\n所以事后编辑只作用于带锚点的头字段；override-only 字段本就不进缓存，不在此编辑。\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Path"
+   ],
+   [
+    "messagebox",
+    "ttk"
+   ],
+   [
+    "PoRecipe"
+   ],
+   [
+    "RecipeCache"
+   ],
+   "COL",
+   "FONT_BODY",
+   [
+    "Segoe UI",
+    12
+   ],
+   "FONT_HEAD_BOLD",
+   [
+    "Segoe UI",
+    13,
+    "bold"
+   ],
+   "FONT_BUTTON",
+   [
+    "Segoe UI",
+    13
+   ],
+   "FONT_BUTTON_BOLD",
+   [
+    [
+     "po_no_anchor",
+     "PO 单号"
+    ],
+    [
+     "season_anchor",
+     "季节"
+    ],
+    [
+     "delivery_anchor",
+     "交期 / Delivery"
+    ],
+    [
+     "currency_anchor",
+     "币种"
+    ],
+    [
+     "price_term_anchor",
+     "价格条款"
+    ],
+    [
+     "payment_terms_anchor",
+     "付款条款"
+    ],
+    [
+     "style_anchor",
+     "款式 / 产品"
+    ],
+    [
+     "price_anchor",
+     "单价"
+    ],
+    [
+     "packing_anchor",
+     "包装"
+    ],
+    [
+     "port_loading_anchor",
+     "装货港"
+    ],
+    [
+     "port_discharge_anchor",
+     "目的港"
+    ],
+    [
+     "ship_mode_anchor",
+     "运输方式"
+    ],
+    [
+     "vendor_anchor",
+     "供应商"
+    ],
+    [
+     "agent_anchor",
+     "代理"
+    ]
+   ],
+   [
+    "customer",
+    "channel",
+    "destination_code",
+    "size_scale",
+    "product_group",
+    "age_sex_desc",
+    "product_desc",
+    "wash_method",
+    "washing_color",
+    "packing_method",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "po_no",
+    "delivery_date",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "style_no",
+    "unit_price",
+    "import_po_no",
+    "reference_no",
+    "cir_no",
+    "freight_terms",
+    "country_of_origin",
+    "dc_address"
+   ],
+   [
+    "color",
+    "style_no",
+    "season",
+    "po_no",
+    "destination_code",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "vendor_name",
+    "agent_name"
+   ],
+   "gap",
+   "#2a2e35",
+   "panel",
+   "#343841",
+   "panel_border",
+   "#444b57",
+   "ink",
+   "#ECEEF1",
+   "ink_2",
+   "#B7BDC6",
+   "ink_3",
+   "#8A909B",
+   "field",
+   "#31353D",
+   "accent",
+   "#C2A878",
+   "select_fg",
+   "#23262D",
+   "accent_soft",
+   "#5A4E34",
+   "hover",
+   "#3C424C",
+   "#E5736B",
+   "#4A2A28",
+   "flat",
+   "accent_2",
+   "#A98C5F",
+   [
+    "bg",
+    "fg",
+    "relief",
+    "borderwidth",
+    "highlightthickness",
+    "activebackground",
+    "activeforeground"
+   ],
+   "RecipeRawEditor"
+  ],
+  "n_instructions": 230
+ },
+ "<module>.RecipeRawEditor": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "_set_icon",
+   "_center",
+   "_build",
+   "_save",
+   "_cancel",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "RecipeRawEditor",
+   "Modal editor for the 14 header anchor regexes of a cached recipe.",
+   "recipe",
+   "PoRecipe",
+   "fp",
+   "str",
+   "cache",
+   "RecipeCache",
+   [
+    "recipe",
+    "PoRecipe",
+    "fp",
+    "str",
+    "cache",
+    "RecipeCache"
+   ]
+  ],
+  "n_instructions": 33
+ },
+ "<module>.RecipeRawEditor.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "title",
+   "result",
+   "_recipe",
+   "_fp",
+   "_cache",
+   "_vars",
+   "tk",
+   "StringVar",
+   "str",
+   "customer",
+   "_customer_var",
+   "transient",
+   "grab_set",
+   "_set_icon",
+   "_build",
+   "_center",
+   "protocol",
+   "_cancel",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "recipe",
+   "fp",
+   "cache"
+  ],
+  "consts": [
+   null,
+   "高级：直编锚点正则",
+   false,
+   "",
+   [
+    "value"
+   ],
+   "WM_DELETE_WINDOW"
+  ],
+  "n_instructions": 88
+ },
+ "<module>.RecipeRawEditor._set_icon": {
+  "names": [
+   "Path",
+   "getattr",
+   "sys",
+   "__file__",
+   "parent",
+   "iconbitmap",
+   "str",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "base"
+  ],
+  "consts": [
+   null,
+   "_MEIPASS",
+   "app.ico"
+  ],
+  "n_instructions": 42
+ },
+ "<module>.RecipeRawEditor._center": {
+  "names": [
+   "update_idletasks",
+   "winfo_rootx",
+   "max",
+   "winfo_width",
+   "winfo_rooty",
+   "winfo_height",
+   "geometry",
+   "minsize"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "w",
+   "h",
+   "x",
+   "y"
+  ],
+  "consts": [
+   null,
+   [
+    620,
+    640
+   ],
+   0,
+   2,
+   "x",
+   "+",
+   560,
+   480
+  ],
+  "n_instructions": 72
+ },
+ "<module>.RecipeRawEditor._build": {
+  "names": [
+   "ttk",
+   "Frame",
+   "pack",
+   "columnconfigure",
+   "rowconfigure",
+   "tk",
+   "_C_GAP",
+   "grid",
+   "Label",
+   "FONT_HEAD",
+   "_C_INK",
+   "FONT_BODY",
+   "_C_INK2",
+   "Canvas",
+   "Scrollbar",
+   "yview",
+   "configure",
+   "set",
+   "create_window",
+   "bind",
+   "Entry",
+   "_customer_var",
+   "_C_FIELD",
+   "_C_ACCENT_SOFT",
+   "_recipe",
+   "layout_type",
+   "_ANCHOR_LABELS",
+   "str",
+   "getattr",
+   "StringVar",
+   "_vars",
+   "_fd_vars",
+   "_fd_rows",
+   "Combobox",
+   "list",
+   "_FIELD_DEFAULT_KEYS",
+   "_fd_combo",
+   "Button",
+   "FONT_BUTTON",
+   "_C_HOVER",
+   "field_defaults",
+   "items",
+   "_clean_rows_data",
+   "_cancel",
+   "_save",
+   "FONT_BUTTON_BOLD",
+   "PRIMARY_KW"
+  ],
+  "varnames": [
+   "self",
+   "outer",
+   "head",
+   "vsb",
+   "body",
+   "_on_cfg",
+   "grid",
+   "cust_ent",
+   "row",
+   "attr",
+   "label",
+   "cur",
+   "v",
+   "ent",
+   "_fd_add",
+   "add_row",
+   "k",
+   "_cl_refresh",
+   "add_cl",
+   "btns"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "padding"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   1,
+   [
+    "weight"
+   ],
+   20,
+   14,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   "ew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   "高级：直编锚点正则",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "w",
+   [
+    "anchor"
+   ],
+   "此模式不读 PDF，请直接填写正则（消费端按「标签 值」抓取）。留空 = 关闭该锚点。保存前会校验每条正则可编译。",
+   580,
+   "left",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "wraplength",
+    "justify"
+   ],
+   [
+    4,
+    0
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    "highlightthickness",
+    "bg"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   [
+    "yscrollcommand"
+   ],
+   "nsew",
+   "ns",
+   16,
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "<Configure>",
+   [
+    "bg"
+   ],
+   "x",
+   [
+    "fill"
+   ],
+   "客户名称（显示用，可手动改）",
+   [
+    0,
+    12
+   ],
+   [
+    0,
+    8
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   "flat",
+   [
+    "textvariable",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "highlightbackground",
+    "highlightthickness",
+    "bd"
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "pady"
+   ],
+   "版式类型（只读）: ",
+   2,
+   [
+    "row",
+    "column",
+    "columnspan",
+    "sticky",
+    "pady"
+   ],
+   "",
+   [
+    "value"
+   ],
+   4,
+   [
+    "Consolas",
+    11
+   ],
+   "默认字段值（跨PO套用 field_defaults）",
+   [
+    12,
+    4
+   ],
+   [
+    0,
+    4
+   ],
+   [
+    2,
+    0
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "readonly",
+   22,
+   [
+    "values",
+    "state",
+    "width",
+    "font"
+   ],
+   [
+    "side"
+   ],
+   "添加默认字段",
+   [
+    "text",
+    "command",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "activebackground"
+   ],
+   [
+    6,
+    0
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "清洗规则 cleans（可多条累计）",
+   "添加清洗规则",
+   [
+    "row",
+    "column",
+    "columnspan",
+    "sticky"
+   ],
+   "取消",
+   8,
+   [
+    "text",
+    "command",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "padx",
+    "pady",
+    "activebackground"
+   ],
+   "保存并回写缓存",
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "right",
+   [
+    "",
+    "",
+    ""
+   ]
+  ],
+  "n_instructions": 703
+ },
+ "<module>.RecipeRawEditor._build._on_cfg": {
+  "names": [
+   "itemconfig",
+   "width"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   [
+    "width"
+   ]
+  ],
+  "n_instructions": 13
+ },
+ "<module>.RecipeRawEditor._build.<lambda>": {
+  "names": [],
+  "varnames": [],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.RecipeRawEditor._build._fd_remove": {
+  "names": [
+   "_fd_vars",
+   "pop"
+  ],
+  "varnames": [
+   "kk"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>.RecipeRawEditor._build._fd_refresh": {
+  "names": [
+   "_fd_rows",
+   "destroy",
+   "clear",
+   "_fd_vars",
+   "items",
+   "tk",
+   "Frame",
+   "_C_GAP",
+   "pack",
+   "Label",
+   "FONT_BODY",
+   "_C_INK2",
+   "Entry",
+   "_C_FIELD",
+   "_C_INK",
+   "_C_ACCENT_SOFT",
+   "Button",
+   "_C_DEL_FG",
+   "_C_DEL_ACTIVE",
+   "append"
+  ],
+  "varnames": [
+   "w",
+   "k",
+   "v",
+   "r"
+  ],
+  "consts": [
+   null,
+   [
+    "bg"
+   ],
+   "x",
+   2,
+   [
+    "fill",
+    "pady"
+   ],
+   20,
+   "w",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "width",
+    "anchor"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   [
+    "Consolas",
+    11
+   ],
+   "flat",
+   1,
+   0,
+   [
+    "textvariable",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "highlightbackground",
+    "highlightthickness",
+    "bd"
+   ],
+   true,
+   [
+    6,
+    6
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "删除",
+   [
+    "text",
+    "command",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "activebackground"
+   ]
+  ],
+  "n_instructions": 122
+ },
+ "<module>.RecipeRawEditor._build._fd_refresh.<lambda>": {
+  "names": [],
+  "varnames": [
+   "kk"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 8
+ },
+ "<module>.RecipeRawEditor._build._fd_add": {
+  "names": [
+   "_fd_combo",
+   "get",
+   "strip",
+   "_fd_vars",
+   "tk",
+   "StringVar"
+  ],
+  "varnames": [
+   "k"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "value"
+   ]
+  ],
+  "n_instructions": 37
+ },
+ "<module>.RecipeRawEditor._build._cl_add_row": {
+  "names": [
+   "tk",
+   "StringVar",
+   "Frame",
+   "_C_GAP",
+   "pack",
+   "ttk",
+   "Combobox",
+   "list",
+   "_CLEAN_FIELDS",
+   "Entry",
+   "_C_FIELD",
+   "_C_INK",
+   "_C_ACCENT_SOFT",
+   "Button",
+   "FONT_BODY",
+   "_C_DEL_FG",
+   "_C_DEL_ACTIVE",
+   "_clean_rows_data",
+   "append"
+  ],
+  "varnames": [
+   "field",
+   "pat",
+   "repl",
+   "d",
+   "r"
+  ],
+  "consts": [
+   null,
+   [
+    "value"
+   ],
+   [
+    "field",
+    "pat",
+    "repl"
+   ],
+   [
+    "bg"
+   ],
+   "x",
+   2,
+   [
+    "fill",
+    "pady"
+   ],
+   "field",
+   14,
+   [
+    "Consolas",
+    10
+   ],
+   [
+    "textvariable",
+    "values",
+    "width",
+    "font"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "pat",
+   "flat",
+   1,
+   0,
+   30,
+   [
+    "textvariable",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "highlightbackground",
+    "highlightthickness",
+    "bd",
+    "width"
+   ],
+   [
+    4,
+    4
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "repl",
+   12,
+   [
+    0,
+    4
+   ],
+   "删除",
+   [
+    "text",
+    "command",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "activebackground"
+   ],
+   "w"
+  ],
+  "n_instructions": 145
+ },
+ "<module>.RecipeRawEditor._build._cl_add_row.<lambda>": {
+  "names": [],
+  "varnames": [
+   "dd"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 8
+ },
+ "<module>.RecipeRawEditor._build._cl_remove": {
+  "names": [
+   "_clean_rows_data",
+   "remove",
+   "destroy"
+  ],
+  "varnames": [
+   "dd"
+  ],
+  "consts": [
+   null,
+   "w"
+  ],
+  "n_instructions": 25
+ },
+ "<module>.RecipeRawEditor._build._cl_refresh": {
+  "names": [
+   "list",
+   "_clean_rows_data",
+   "destroy",
+   "clear",
+   "_recipe",
+   "cleans",
+   "items",
+   "get"
+  ],
+  "varnames": [
+   "d",
+   "field",
+   "rules",
+   "spec"
+  ],
+  "consts": [
+   null,
+   "w",
+   "pat",
+   "",
+   "repl"
+  ],
+  "n_instructions": 67
+ },
+ "<module>.RecipeRawEditor._save": {
+  "names": [
+   "_customer_var",
+   "get",
+   "strip",
+   "_recipe",
+   "customer",
+   "_fd_vars",
+   "items",
+   "field_defaults",
+   "_clean_rows_data",
+   "setdefault",
+   "append",
+   "cleans",
+   "_ANCHOR_LABELS",
+   "_vars",
+   "re",
+   "compile",
+   "error",
+   "setattr",
+   "messagebox",
+   "showerror",
+   "join",
+   "_cache",
+   "put",
+   "_fp",
+   "Exception",
+   "result",
+   "destroy"
+  ],
+  "varnames": [
+   "self",
+   "cleans",
+   "d",
+   "f",
+   "pat",
+   "repl",
+   "bad",
+   "attr",
+   "_label",
+   "e"
+  ],
+  "consts": [
+   null,
+   "field",
+   "pat",
+   "repl",
+   [
+    "pat",
+    "repl"
+   ],
+   ": ",
+   "正则无法编译",
+   "以下锚点正则无效：\n",
+   "\n",
+   [
+    "parent"
+   ],
+   "保存失败",
+   "写入缓存失败：",
+   true
+  ],
+  "n_instructions": 225
+ },
+ "<module>.RecipeRawEditor._save.<dictcomp>": {
+  "names": [
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   ""
+  ],
+  "n_instructions": 28
+ },
+ "<module>.RecipeRawEditor._cancel": {
+  "names": [
+   "result",
+   "destroy"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   false
+  ],
+  "n_instructions": 11
+ }
+}

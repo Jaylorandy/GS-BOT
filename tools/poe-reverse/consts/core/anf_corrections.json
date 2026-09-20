@@ -1,0 +1,517 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "EDIT_ACCESS",
+   "_READONLY_COLS",
+   "_ACCESS_BY_HEADER",
+   "EDITABLE_HEADERS",
+   "_get_val",
+   "_set_val",
+   "_row_sig",
+   "iter_rawdata",
+   "_path",
+   "_load",
+   "_save",
+   "record_edits",
+   "apply_anf_corrections"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/anf_corrections.py - persist ANF preview edits keyed by PDF layout fingerprint.\n\nWhen the operator corrects an ANF entity/line field in the preview window\n(\"信息确认\" tab or the editable RawData grid), the correction is stored on disk\nkeyed by the source PDF's ``layout_fingerprint``. On the NEXT parse of the same\nPDF, :func:`apply_anf_corrections` replays the stored values so the operator does\nnot have to re-type them — the \"memory\" the ANF Special flow needs across cases.\n\nThe edits are **value overrides** (the same semantic as the standard confirm\ndialog's cleeds), NOT position relocations: where the value is read from in the\nPDF is still decided by the existing parser / recipe, only the extracted value is\noverwritten by the remembered correction.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   [
+    [
+     "PO#",
+     "ent_attr",
+     "po_no"
+    ],
+    [
+     "PO_CODE",
+     "ent_extra",
+     "po_code"
+    ],
+    [
+     "TECH_PACK",
+     "ent_extra",
+     "tech_pack_no"
+    ],
+    [
+     "COMMITMENT",
+     "ent_extra",
+     "commitment_no"
+    ],
+    [
+     "KI",
+     "ent_extra",
+     "ki_no"
+    ],
+    [
+     "STYLE_NO",
+     "ln_attr",
+     "style_no"
+    ],
+    [
+     "COLOR_CODE",
+     "ln_attr",
+     "color_code"
+    ],
+    [
+     "COLOR_NAME",
+     "ln_attr",
+     "color_desc"
+    ],
+    [
+     "SHIP_DATE",
+     "ent_attr",
+     "delivery_date"
+    ],
+    [
+     "SHIP_MODE",
+     "ent_attr",
+     "ship_mode"
+    ],
+    [
+     "FOB",
+     "ln_attr",
+     "unit_price"
+    ],
+    [
+     "CURRENCY",
+     "ent_attr",
+     "currency"
+    ],
+    [
+     "COO",
+     "ent_attr",
+     "country_of_origin"
+    ],
+    [
+     "CARTON_STD",
+     "ent_extra",
+     "carton_std"
+    ],
+    [
+     "NDC_DATE",
+     "ent_extra",
+     "ndc_date"
+    ],
+    [
+     "CANCEL_DATE",
+     "ent_extra",
+     "cancel_date"
+    ],
+    [
+     "NOT_BEFORE_DATE",
+     "ent_extra",
+     "not_before_date"
+    ],
+    [
+     "DEAL_PRICE",
+     "ent_extra",
+     "deal_price"
+    ],
+    [
+     "VENDOR",
+     "ent_extra",
+     "vendor_code"
+    ],
+    [
+     "FACTORY",
+     "ent_extra",
+     "factory_code"
+    ],
+    [
+     "MILL",
+     "ent_extra",
+     "mill_name"
+    ],
+    [
+     "FABRIC",
+     "ent_extra",
+     "fabric_ref"
+    ],
+    [
+     "EAN",
+     "ln_extra",
+     "ean"
+    ],
+    [
+     "SHORT_SKU",
+     "ln_extra",
+     "short_sku"
+    ],
+    [
+     "LONG_SKU",
+     "ln_extra",
+     "long_sku"
+    ],
+    [
+     "SHADE",
+     "ln_extra",
+     "shade"
+    ],
+    [
+     "TICKET_TYPE",
+     "ln_extra",
+     "ticket_type"
+    ]
+   ],
+   [
+    8,
+    9
+   ],
+   "header",
+   "str",
+   "return",
+   "val",
+   "None",
+   "po_results",
+   "List",
+   "'List[tuple]'",
+   "dict",
+   "data",
+   "fp",
+   [
+    "header",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "header",
+    "str",
+    "val",
+    "str",
+    "return",
+    "None"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "po_results",
+    "List",
+    "return",
+    "'List[tuple]'"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "data",
+    "dict",
+    "return",
+    "None"
+   ],
+   [
+    "fp",
+    "str",
+    "po_results",
+    "List",
+    "return",
+    "None"
+   ],
+   [
+    "fp",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 85
+ },
+ "<module>.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "h",
+   "scope",
+   "key"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "h",
+   "_"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._get_val": {
+  "names": [
+   "_ACCESS_BY_HEADER",
+   "str",
+   "getattr",
+   "extra",
+   "get"
+  ],
+  "varnames": [
+   "ent",
+   "ln",
+   "sq",
+   "header",
+   "scope",
+   "key"
+  ],
+  "consts": [
+   null,
+   "ent_attr",
+   "",
+   "ent_extra",
+   "ln_attr"
+  ],
+  "n_instructions": 69
+ },
+ "<module>._set_val": {
+  "names": [
+   "_ACCESS_BY_HEADER",
+   "setattr",
+   "extra"
+  ],
+  "varnames": [
+   "ent",
+   "ln",
+   "sq",
+   "header",
+   "val",
+   "scope",
+   "key",
+   "v"
+  ],
+  "consts": [
+   null,
+   "",
+   "ent_attr",
+   "ent_extra",
+   "ln_attr"
+  ],
+  "n_instructions": 57
+ },
+ "<module>._row_sig": {
+  "names": [
+   "join",
+   "str",
+   "po_no",
+   "style_no",
+   "color_code",
+   "color_desc",
+   "size"
+  ],
+  "varnames": [
+   "ent",
+   "ln",
+   "sq"
+  ],
+  "consts": [
+   "Stable identity for a RawData row; must stay in sync with iter_rawdata order.",
+   "|",
+   ""
+  ],
+  "n_instructions": 44
+ },
+ "<module>.iter_rawdata": {
+  "names": [
+   "entities",
+   "lines",
+   "sizes",
+   "append"
+  ],
+  "varnames": [
+   "po_results",
+   "out",
+   "po",
+   "ent",
+   "ln",
+   "sq"
+  ],
+  "consts": [
+   "Yield (ent, ln, sq) in the SAME order as output.customer_anf._rawdata_rows.\n\n    Order stability is what makes index-based replay reliable across sessions for\n    the same layout fingerprint.\n    "
+  ],
+  "n_instructions": 37
+ },
+ "<module>._path": {
+  "names": [
+   "core.store.cache",
+   "_appdata",
+   "os",
+   "path",
+   "join",
+   "makedirs"
+  ],
+  "varnames": [
+   "_appdata",
+   "d"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "_appdata"
+   ],
+   "anf_corrections",
+   true,
+   [
+    "exist_ok"
+   ],
+   "corrections.json"
+  ],
+  "n_instructions": 34
+ },
+ "<module>._load": {
+  "names": [
+   "open",
+   "_path",
+   "json",
+   "load",
+   "OSError",
+   "ValueError"
+  ],
+  "varnames": [
+   "f"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 53
+ },
+ "<module>._save": {
+  "names": [
+   "open",
+   "_path",
+   "json",
+   "dump",
+   "OSError"
+  ],
+  "varnames": [
+   "data",
+   "f"
+  ],
+  "consts": [
+   null,
+   "w",
+   "utf-8",
+   [
+    "encoding"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ]
+  ],
+  "n_instructions": 56
+ },
+ "<module>.record_edits": {
+  "names": [
+   "enumerate",
+   "iter_rawdata",
+   "EDITABLE_HEADERS",
+   "append",
+   "_row_sig",
+   "_load",
+   "_save"
+  ],
+  "varnames": [
+   "fp",
+   "po_results",
+   "rows",
+   "i",
+   "vals",
+   "data"
+  ],
+  "consts": [
+   "Persist the current (already-corrected) editable values of ``po_results``\n    under layout fingerprint ``fp``. Called from the preview save handler.",
+   null,
+   [
+    "i",
+    "sig",
+    "vals"
+   ],
+   "rows"
+  ],
+  "n_instructions": 69
+ },
+ "<module>.record_edits.<dictcomp>": {
+  "names": [
+   "_get_val"
+  ],
+  "varnames": [
+   ".0",
+   "h"
+  ],
+  "consts": [],
+  "n_instructions": 17
+ },
+ "<module>.apply_anf_corrections": {
+  "names": [
+   "_load",
+   "get",
+   "enumerate",
+   "iter_rawdata",
+   "_row_sig",
+   "items",
+   "_set_val"
+  ],
+  "varnames": [
+   "fp",
+   "po",
+   "data",
+   "by_i",
+   "i",
+   "ent",
+   "ln",
+   "sq",
+   "r",
+   "h",
+   "v"
+  ],
+  "consts": [
+   "Replay stored corrections for fingerprint ``fp`` onto a freshly-parsed\n    ``po``. Called from parse_single_anf_pdf after the recipe is acquired.",
+   null,
+   "rows",
+   "sig",
+   "vals"
+  ],
+  "n_instructions": 99
+ },
+ "<module>.apply_anf_corrections.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [
+   "i"
+  ],
+  "n_instructions": 12
+ }
+}

@@ -1,0 +1,239 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "typing",
+   "List",
+   "Optional",
+   "parsers.base",
+   "PageWords",
+   "Token",
+   "_CHAR_MAP",
+   "normalize_text",
+   "text_layer_pages",
+   "pdf_to_pages"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/io/pdf.py - load a PDF into source-agnostic PageWords.\n\nPrimary path is pdfplumber's text layer. When a document turns out to be a SCAN\n(no usable text layer) the loader transparently falls back to ``core.io.ocr``,\nwhich rebuilds an equivalent token stream from the page images. Everything\ndownstream (fingerprint / recipe / parsers / xlsx) is identical either way.\n",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "List",
+    "Optional"
+   ],
+   2,
+   [
+    "PageWords",
+    "Token"
+   ],
+   173,
+   "-",
+   8208,
+   8209,
+   8722,
+   160,
+   " ",
+   8199,
+   8239,
+   8201,
+   8203,
+   null,
+   8204,
+   8205,
+   65279,
+   8216,
+   "'",
+   8217,
+   8220,
+   "\"",
+   8221,
+   "s",
+   "str",
+   "return",
+   "path",
+   "List[PageWords]",
+   true,
+   [
+    "cfg",
+    "log",
+    "allow_ocr"
+   ],
+   "cfg",
+   "Optional[dict]",
+   "allow_ocr",
+   "bool",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "path",
+    "str",
+    "return",
+    "List[PageWords]"
+   ],
+   [
+    "path",
+    "str",
+    "cfg",
+    "Optional[dict]",
+    "allow_ocr",
+    "bool",
+    "return",
+    "List[PageWords]"
+   ]
+  ],
+  "n_instructions": 94
+ },
+ "<module>.normalize_text": {
+  "names": [
+   "any",
+   "translate",
+   "_CHAR_MAP"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   "ASCII-fold the typographic variants listed in :data:`_CHAR_MAP`."
+  ],
+  "n_instructions": 21
+ },
+ "<module>.normalize_text.<genexpr>": {
+  "names": [
+   "ord"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   127,
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.text_layer_pages": {
+  "names": [
+   "pdfplumber",
+   "open",
+   "enumerate",
+   "pages",
+   "extract_words",
+   "append",
+   "PageWords",
+   "width",
+   "height"
+  ],
+  "varnames": [
+   "path",
+   "pdfplumber",
+   "pages",
+   "pdf",
+   "pg",
+   "words",
+   "toks"
+  ],
+  "consts": [
+   "Read the PDF's embedded text layer via pdfplumber (no OCR).",
+   0,
+   null,
+   false,
+   [
+    "use_text_flow",
+    "keep_blank_chars"
+   ],
+   [
+    "page",
+    "width",
+    "height",
+    "tokens"
+   ]
+  ],
+  "n_instructions": 79
+ },
+ "<module>.text_layer_pages.<listcomp>": {
+  "names": [
+   "Token",
+   "normalize_text"
+  ],
+  "varnames": [
+   ".0",
+   "w"
+  ],
+  "consts": [
+   "text",
+   "x0",
+   "top",
+   "x1",
+   "bottom",
+   [
+    "text",
+    "x0",
+    "y0",
+    "x1",
+    "y1",
+    "page"
+   ]
+  ],
+  "n_instructions": 32
+ },
+ "<module>.pdf_to_pages": {
+  "names": [
+   "text_layer_pages",
+   "ocr",
+   "text_layer_is_sparse",
+   "ocr_pdf_pages",
+   "Exception",
+   "sum"
+  ],
+  "varnames": [
+   "path",
+   "cfg",
+   "log",
+   "allow_ocr",
+   "pages",
+   "text_layer_is_sparse",
+   "ocr_pdf_pages",
+   "ocr_pages",
+   "e"
+  ],
+  "consts": [
+   "Load ``path`` into PageWords, OCR-ing it only if it has no text layer.\n\n    ``cfg`` (the app config dict) is forwarded to the OCR bridge so it can reach\n    the cloud vision model when the local engine is unavailable; ``log`` is the\n    UI logger. Both are optional — with neither, this behaves exactly like the\n    original pdfplumber-only loader.\n\n    The OCR branch is guarded twice: it only runs when the text layer is sparse\n    (:func:`core.io.ocr.text_layer_is_sparse`), and its result is only adopted\n    when it actually produced more tokens than pdfplumber did. A digital PO can\n    therefore never be degraded by this path.\n    ",
+   1,
+   [
+    "text_layer_is_sparse",
+    "ocr_pdf_pages"
+   ],
+   "  文本层为空/极稀疏（疑似扫描件），启用图像识别（OCR）…",
+   [
+    "cfg",
+    "log"
+   ],
+   "  OCR 失败，沿用文本层结果：",
+   null
+  ],
+  "n_instructions": 141
+ },
+ "<module>.pdf_to_pages.<genexpr>": {
+  "names": [
+   "len",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ }
+}

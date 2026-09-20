@@ -1,0 +1,2025 @@
+# module: core.io.ocr
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\io\ocr.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/io/ocr.py - scanned-PDF -> PageWords bridge (local RapidOCR + cloud vision).\n\nWhy this module exists\n----------------------\n``pdf_to_pages`` reads a PDF's *text layer*. A scanned / photographed PO has no\ntext layer at all, so pdfplumber returns ~zero words and the whole recipe engine\nstarves. This module rebuilds an equivalent token stream from the page IMAGE, so\nevery downstream stage (fingerprint -> recipe -> parser -> xlsx) runs unchanged.\n\nTwo engines, in priority order (user's choice: local-first, cloud fallback):\n\n1. **Local — RapidOCR (onnxruntime)**. Fully offline, no API cost, returns real\n   pixel bounding boxes. This is the primary path.\n2. **Cloud — a vision LLM (default ``glm-4.6v``)**. Used only when RapidOCR is\n   unavailable (not installed / not bundled) or yields nothing. A vision model\n   returns *text*, not boxes, so we ask for a fixed-width transcription and\n   rebuild pseudo-coordinates from character columns.\n\nCoordinate contract (critical)\n------------------------------\npdfplumber emits ``x0/top/x1/bottom`` in PDF **points** with a top-left origin.\nEvery token produced here is converted into that SAME space (pixels are scaled\nby ``page_width_pt / pixmap_width_px``). That is what lets the matrix parsers —\nwhich align quantities to size columns purely by X position — work identically\non scanned and digital POs.\n\nAll heavy dependencies (pymupdf / rapidocr / onnxruntime / cv2) are imported\nlazily inside functions, so importing this module stays free and application\nstartup is unaffected when no scan is ever processed.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 31           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 33          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (base64)
+             24 STORE_NAME               3 (base64)
+
+ 34          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 35          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               4 (('List', 'Optional', 'Sequence', 'Tuple'))
+             38 IMPORT_NAME              5 (typing)
+             40 IMPORT_FROM              6 (List)
+             42 STORE_NAME               6 (List)
+             44 IMPORT_FROM              7 (Optional)
+             46 STORE_NAME               7 (Optional)
+             48 IMPORT_FROM              8 (Sequence)
+             50 STORE_NAME               8 (Sequence)
+             52 IMPORT_FROM              9 (Tuple)
+             54 STORE_NAME               9 (Tuple)
+             56 POP_TOP
+
+ 37          58 LOAD_CONST               5 (2)
+             60 LOAD_CONST               6 (('PageWords', 'Token'))
+             62 IMPORT_NAME             10 (parsers.base)
+             64 IMPORT_FROM             11 (PageWords)
+             66 STORE_NAME              11 (PageWords)
+             68 IMPORT_FROM             12 (Token)
+             70 STORE_NAME              12 (Token)
+             72 POP_TOP
+
+ 38          74 LOAD_CONST               7 (1)
+             76 LOAD_CONST               8 (('normalize_text',))
+             78 IMPORT_NAME             13 (pdf)
+             80 IMPORT_FROM             14 (normalize_text)
+             82 STORE_NAME              14 (normalize_text)
+             84 POP_TOP
+
+ 44          86 LOAD_CONST               9 (15)
+             88 STORE_NAME              15 (SPARSE_WORDS_PER_PAGE)
+
+ 47          90 LOAD_CONST              10 (200)
+             92 STORE_NAME              16 (DEFAULT_DPI)
+
+ 51          94 LOAD_CONST              11 ('glm-4.6v')
+             96 STORE_NAME              17 (DEFAULT_VISION_MODEL)
+
+ 54          98 LOAD_CONST              12 ('Transcribe this purchase-order page as PLAIN TEXT.\nRules:\n1. Preserve the original table layout using spaces so that columns stay vertically aligned (fixed-width / monospace style).\n2. Keep every number, code and label exactly as printed. Do not translate, reformat, round or reorder anything.\n3. One physical line of the page = one line of output.\n4. Output ONLY the transcription. No markdown, no code fences, no comments.')
+
+ 53         100 STORE_NAME              18 (_VISION_PROMPT)
+
+ 68         102 LOAD_CONST              57 (('pages', 'Sequence[PageWords]', 'return', 'bool'))
+            104 LOAD_CONST              17 (<code object text_layer_is_sparse at 0x000002BF9472B340, file "core\io\ocr.py", line 68>)
+            106 MAKE_FUNCTION            4 (annotations)
+            108 STORE_NAME              19 (text_layer_is_sparse)
+
+ 84         110 LOAD_CONST              58 (('path', 'str', 'dpi', 'int', 'return', 'List[Tuple[int, bytes, float, float, float]]'))
+            112 LOAD_CONST              23 (<code object _rasterize_pypdfium2 at 0x000002BF944413B0, file "core\io\ocr.py", line 84>)
+            114 MAKE_FUNCTION            4 (annotations)
+            116 STORE_NAME              20 (_rasterize_pypdfium2)
+
+118         118 LOAD_CONST              58 (('path', 'str', 'dpi', 'int', 'return', 'List[Tuple[int, bytes, float, float, float]]'))
+            120 LOAD_CONST              24 (<code object _rasterize_pymupdf at 0x000002BF94461590, file "core\io\ocr.py", line 118>)
+            122 MAKE_FUNCTION            4 (annotations)
+            124 STORE_NAME              21 (_rasterize_pymupdf)
+
+140         126 LOAD_NAME               16 (DEFAULT_DPI)
+            128 BUILD_TUPLE              1
+            130 LOAD_CONST              58 (('path', 'str', 'dpi', 'int', 'return', 'List[Tuple[int, bytes, float, float, float]]'))
+            132 LOAD_CONST              25 (<code object rasterize_pdf at 0x000002BF946C5E60, file "core\io\ocr.py", line 140>)
+            134 MAKE_FUNCTION            5 (defaults, annotations)
+            136 STORE_NAME              22 (rasterize_pdf)
+
+162         138 LOAD_CONST              59 (('text', 'str', 'x0', 'float', 'y0', 'float', 'x1', 'float', 'y1', 'float', 'page', 'int', 'return', 'List[Token]'))
+            140 LOAD_CONST              34 (<code object _split_line_to_words at 0x000002BF94461BE0, file "core\io\ocr.py", line 162>)
+            142 MAKE_FUNCTION            4 (annotations)
+            144 STORE_NAME              23 (_split_line_to_words)
+
+193         146 LOAD_CONST              60 (('tokens', 'List[Token]', 'tol', 'float', 'return', 'List[Token]'))
+            148 LOAD_CONST              37 (<code object _snap_rows at 0x000002BF94461E60, file "core\io\ocr.py", line 193>)
+            150 MAKE_FUNCTION            4 (annotations)
+            152 STORE_NAME              24 (_snap_rows)
+
+222         154 LOAD_CONST              61 (('return', 'list'))
+            156 LOAD_CONST              39 (<code object _local_assets_missing at 0x000002BF94464E20, file "core\io\ocr.py", line 222>)
+            158 MAKE_FUNCTION            4 (annotations)
+            160 STORE_NAME              25 (_local_assets_missing)
+
+255         162 LOAD_CONST              62 (('return', 'bool'))
+            164 LOAD_CONST              40 (<code object local_engine_available at 0x000002BF94A658A0, file "core\io\ocr.py", line 255>)
+            166 MAKE_FUNCTION            4 (annotations)
+            168 STORE_NAME              26 (local_engine_available)
+
+264         170 LOAD_CONST              41 (<code object _make_local_engine at 0x000002BF94749BC0, file "core\io\ocr.py", line 264>)
+            172 MAKE_FUNCTION            0
+            174 STORE_NAME              27 (_make_local_engine)
+
+273         176 LOAD_CONST              63 (('png', 'bytes', 'page', 'int', 'width_pt', 'float', 'height_pt', 'float', 'scale', 'float', 'return', 'PageWords'))
+            178 LOAD_CONST              48 (<code object _ocr_local_page at 0x000002BF94391230, file "core\io\ocr.py", line 273>)
+            180 MAKE_FUNCTION            4 (annotations)
+            182 STORE_NAME              28 (_ocr_local_page)
+
+298         184 LOAD_CONST              64 (('text', 'str', 'page', 'int', 'width_pt', 'float', 'height_pt', 'float', 'return', 'PageWords'))
+            186 LOAD_CONST              49 (<code object _text_to_pagewords at 0x000002BF940DBEE0, file "core\io\ocr.py", line 298>)
+            188 MAKE_FUNCTION            4 (annotations)
+            190 STORE_NAME              29 (_text_to_pagewords)
+
+327         192 LOAD_CONST              65 (('png', 'bytes', 'page', 'int', 'width_pt', 'float', 'height_pt', 'float', 'cfg', 'dict', 'return', 'PageWords'))
+            194 LOAD_CONST              52 (<code object _ocr_cloud_page at 0x000002BF940DC5A0, file "core\io\ocr.py", line 327>)
+            196 MAKE_FUNCTION            4 (annotations)
+            198 STORE_NAME              30 (_ocr_cloud_page)
+
+369         200 LOAD_CONST               3 (None)
+            202 LOAD_CONST               3 (None)
+
+370         204 LOAD_NAME               16 (DEFAULT_DPI)
+
+369         206 LOAD_CONST              53 (('cfg', 'log', 'dpi'))
+            208 BUILD_CONST_KEY_MAP      3
+            210 LOAD_CONST              66 (('path', 'str', 'cfg', 'Optional[dict]', 'dpi', 'int', 'return', 'List[PageWords]'))
+            212 LOAD_CONST              56 (<code object ocr_pdf_pages at 0x000002BF940DCCC0, file "core\io\ocr.py", line 369>)
+            214 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            216 STORE_NAME              31 (ocr_pdf_pages)
+            218 LOAD_CONST               3 (None)
+            220 RETURN_VALUE
+
+==============================================================================
+## <module>.text_layer_is_sparse  (args=1, locals=2)
+# varnames: pages, total
+ 68           0 RESUME                   0
+
+ 75           2 LOAD_FAST                0 (pages)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+ 76           6 LOAD_CONST               1 (True)
+              8 RETURN_VALUE
+
+ 77     >>   10 LOAD_GLOBAL              1 (NULL + sum)
+             22 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94A2F130, file "core\io\ocr.py", line 77>)
+             24 MAKE_FUNCTION            0
+             26 LOAD_FAST                0 (pages)
+             28 GET_ITER
+             30 PRECALL                  0
+             34 CALL                     0
+             44 PRECALL                  1
+             48 CALL                     1
+             58 STORE_FAST               1 (total)
+
+ 78          60 LOAD_FAST                1 (total)
+             62 LOAD_GLOBAL              3 (NULL + len)
+             74 LOAD_FAST                0 (pages)
+             76 PRECALL                  1
+             80 CALL                     1
+             90 BINARY_OP               11 (/)
+             94 LOAD_GLOBAL              4 (SPARSE_WORDS_PER_PAGE)
+            106 COMPARE_OP               0 (<)
+            112 RETURN_VALUE
+
+==============================================================================
+## <module>.text_layer_is_sparse.<genexpr>  (args=1, locals=2)
+# varnames: .0, p
+ 77           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (p)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (p)
+             26 LOAD_ATTR                1 (tokens)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._rasterize_pypdfium2  (args=2, locals=15)
+# varnames: path, dpi, io, pdfium, out, doc, scale_req, i, page, w_pt, h_pt, pil, buf, px_w, scale
+ 84           0 RESUME                   0
+
+ 93           2 LOAD_CONST               1 (0)
+              4 LOAD_CONST               2 (None)
+              6 IMPORT_NAME              0 (io)
+              8 STORE_FAST               2 (io)
+
+ 94          10 LOAD_CONST               1 (0)
+             12 LOAD_CONST               2 (None)
+             14 IMPORT_NAME              1 (pypdfium2)
+             16 STORE_FAST               3 (pdfium)
+
+ 96          18 BUILD_LIST               0
+             20 STORE_FAST               4 (out)
+
+ 97          22 LOAD_FAST                3 (pdfium)
+             24 LOAD_METHOD              2 (PdfDocument)
+             46 LOAD_FAST                0 (path)
+             48 PRECALL                  1
+             52 CALL                     1
+             62 STORE_FAST               5 (doc)
+
+ 98          64 NOP
+
+ 99          66 LOAD_FAST                1 (dpi)
+             68 LOAD_CONST               3 (72.0)
+             70 BINARY_OP               11 (/)
+             74 STORE_FAST               6 (scale_req)
+
+100          76 LOAD_GLOBAL              7 (NULL + range)
+             88 LOAD_GLOBAL              9 (NULL + len)
+            100 LOAD_FAST                5 (doc)
+            102 PRECALL                  1
+            106 CALL                     1
+            116 PRECALL                  1
+            120 CALL                     1
+            130 GET_ITER
+        >>  132 FOR_ITER               241 (to 616)
+            134 STORE_FAST               7 (i)
+
+101         136 LOAD_FAST                5 (doc)
+            138 LOAD_FAST                7 (i)
+            140 BINARY_SUBSCR
+            150 STORE_FAST               8 (page)
+
+102         152 LOAD_GLOBAL             11 (NULL + float)
+            164 LOAD_FAST                8 (page)
+            166 LOAD_METHOD              6 (get_width)
+            188 PRECALL                  0
+            192 CALL                     0
+            202 PRECALL                  1
+            206 CALL                     1
+            216 LOAD_GLOBAL             11 (NULL + float)
+            228 LOAD_FAST                8 (page)
+            230 LOAD_METHOD              7 (get_height)
+            252 PRECALL                  0
+            256 CALL                     0
+            266 PRECALL                  1
+            270 CALL                     1
+            280 STORE_FAST              10 (h_pt)
+            282 STORE_FAST               9 (w_pt)
+
+103         284 LOAD_FAST                8 (page)
+            286 LOAD_METHOD              8 (render)
+            308 LOAD_FAST                6 (scale_req)
+            310 KW_NAMES                 4
+            312 PRECALL                  1
+            316 CALL                     1
+            326 LOAD_METHOD              9 (to_pil)
+            348 PRECALL                  0
+            352 CALL                     0
+            362 STORE_FAST              11 (pil)
+
+104         364 LOAD_FAST                2 (io)
+            366 LOAD_METHOD             10 (BytesIO)
+            388 PRECALL                  0
+            392 CALL                     0
+            402 STORE_FAST              12 (buf)
+
+105         404 LOAD_FAST               11 (pil)
+            406 LOAD_METHOD             11 (save)
+            428 LOAD_FAST               12 (buf)
+            430 LOAD_CONST               5 ('PNG')
+            432 KW_NAMES                 6
+            434 PRECALL                  2
+            438 CALL                     2
+            448 POP_TOP
+
+106         450 LOAD_FAST               11 (pil)
+            452 LOAD_ATTR               12 (size)
+            462 LOAD_CONST               1 (0)
+            464 BINARY_SUBSCR
+            474 STORE_FAST              13 (px_w)
+
+108         476 LOAD_FAST               13 (px_w)
+            478 POP_JUMP_FORWARD_IF_FALSE     5 (to 490)
+            480 LOAD_FAST                9 (w_pt)
+            482 LOAD_FAST               13 (px_w)
+            484 BINARY_OP               11 (/)
+            488 JUMP_FORWARD             4 (to 498)
+        >>  490 LOAD_CONST               3 (72.0)
+            492 LOAD_FAST                1 (dpi)
+            494 BINARY_OP               11 (/)
+        >>  498 STORE_FAST              14 (scale)
+
+109         500 LOAD_FAST                4 (out)
+            502 LOAD_METHOD             13 (append)
+            524 LOAD_FAST                7 (i)
+            526 LOAD_FAST               12 (buf)
+            528 LOAD_METHOD             14 (getvalue)
+            550 PRECALL                  0
+            554 CALL                     0
+            564 LOAD_FAST                9 (w_pt)
+            566 LOAD_FAST               10 (h_pt)
+            568 LOAD_GLOBAL             11 (NULL + float)
+            580 LOAD_FAST               14 (scale)
+            582 PRECALL                  1
+            586 CALL                     1
+            596 BUILD_TUPLE              5
+            598 PRECALL                  1
+            602 CALL                     1
+            612 POP_TOP
+            614 JUMP_BACKWARD          242 (to 132)
+
+100     >>  616 NOP
+
+111         618 NOP
+
+112         620 LOAD_FAST                5 (doc)
+            622 LOAD_METHOD             15 (close)
+            644 PRECALL                  0
+            648 CALL                     0
+            658 POP_TOP
+            660 JUMP_FORWARD            58 (to 778)
+        >>  662 PUSH_EXC_INFO
+
+113         664 LOAD_GLOBAL             32 (Exception)
+            676 CHECK_EXC_MATCH
+            678 POP_JUMP_FORWARD_IF_FALSE     3 (to 686)
+            680 POP_TOP
+
+114         682 POP_EXCEPT
+            684 JUMP_FORWARD            46 (to 778)
+
+113     >>  686 RERAISE                  0
+        >>  688 COPY                     3
+            690 POP_EXCEPT
+            692 RERAISE                  1
+        >>  694 PUSH_EXC_INFO
+
+111         696 NOP
+
+112         698 LOAD_FAST                5 (doc)
+            700 LOAD_METHOD             15 (close)
+            722 PRECALL                  0
+            726 CALL                     0
+            736 POP_TOP
+            738 RERAISE                  0
+        >>  740 PUSH_EXC_INFO
+
+113         742 LOAD_GLOBAL             32 (Exception)
+            754 CHECK_EXC_MATCH
+            756 POP_JUMP_FORWARD_IF_FALSE     3 (to 764)
+            758 POP_TOP
+
+114         760 POP_EXCEPT
+            762 RERAISE                  0
+
+113     >>  764 RERAISE                  0
+        >>  766 COPY                     3
+            768 POP_EXCEPT
+            770 RERAISE                  1
+        >>  772 COPY                     3
+            774 POP_EXCEPT
+            776 RERAISE                  1
+
+115     >>  778 LOAD_FAST                4 (out)
+            780 RETURN_VALUE
+ExceptionTable:
+  66 to 614 -> 694 [0]
+  620 to 658 -> 662 [0]
+  662 to 680 -> 688 [1] lasti
+  686 to 686 -> 688 [1] lasti
+  694 to 694 -> 772 [1] lasti
+  698 to 736 -> 740 [2]
+  738 to 738 -> 772 [1] lasti
+  740 to 758 -> 766 [3] lasti
+  760 to 762 -> 772 [1] lasti
+  764 to 764 -> 766 [3] lasti
+  766 to 770 -> 772 [1] lasti
+
+==============================================================================
+## <module>._rasterize_pymupdf  (args=2, locals=10)
+# varnames: path, dpi, pymupdf, out, doc, i, page, rect, pix, scale
+118           0 RESUME                   0
+
+121           2 NOP
+
+122           4 LOAD_CONST               1 (0)
+              6 LOAD_CONST               2 (None)
+              8 IMPORT_NAME              0 (pymupdf)
+             10 STORE_FAST               2 (pymupdf)
+             12 JUMP_FORWARD            20 (to 54)
+        >>   14 PUSH_EXC_INFO
+
+123          16 LOAD_GLOBAL              2 (ImportError)
+             28 CHECK_EXC_MATCH
+             30 POP_JUMP_FORWARD_IF_FALSE     7 (to 46)
+             32 POP_TOP
+
+124          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               2 (None)
+             38 IMPORT_NAME              2 (fitz)
+             40 STORE_FAST               2 (pymupdf)
+             42 POP_EXCEPT
+             44 JUMP_FORWARD             4 (to 54)
+
+123     >>   46 RERAISE                  0
+        >>   48 COPY                     3
+             50 POP_EXCEPT
+             52 RERAISE                  1
+
+126     >>   54 BUILD_LIST               0
+             56 STORE_FAST               3 (out)
+
+127          58 LOAD_FAST                2 (pymupdf)
+             60 LOAD_METHOD              3 (open)
+             82 LOAD_FAST                0 (path)
+             84 PRECALL                  1
+             88 CALL                     1
+             98 STORE_FAST               4 (doc)
+
+128         100 NOP
+
+129         102 LOAD_GLOBAL              9 (NULL + enumerate)
+            114 LOAD_FAST                4 (doc)
+            116 PRECALL                  1
+            120 CALL                     1
+            130 GET_ITER
+        >>  132 FOR_ITER               155 (to 444)
+            134 UNPACK_SEQUENCE          2
+            138 STORE_FAST               5 (i)
+            140 STORE_FAST               6 (page)
+
+130         142 LOAD_FAST                6 (page)
+            144 LOAD_ATTR                5 (rect)
+            154 STORE_FAST               7 (rect)
+
+131         156 LOAD_FAST                6 (page)
+            158 LOAD_METHOD              6 (get_pixmap)
+            180 LOAD_FAST                1 (dpi)
+            182 KW_NAMES                 3
+            184 PRECALL                  1
+            188 CALL                     1
+            198 STORE_FAST               8 (pix)
+
+132         200 LOAD_FAST                8 (pix)
+            202 LOAD_ATTR                7 (width)
+            212 POP_JUMP_FORWARD_IF_FALSE    15 (to 244)
+            214 LOAD_FAST                7 (rect)
+            216 LOAD_ATTR                7 (width)
+            226 LOAD_FAST                8 (pix)
+            228 LOAD_ATTR                7 (width)
+            238 BINARY_OP               11 (/)
+            242 JUMP_FORWARD             4 (to 252)
+        >>  244 LOAD_CONST               4 (72.0)
+            246 LOAD_FAST                1 (dpi)
+            248 BINARY_OP               11 (/)
+        >>  252 STORE_FAST               9 (scale)
+
+133         254 LOAD_FAST                3 (out)
+            256 LOAD_METHOD              8 (append)
+            278 LOAD_FAST                5 (i)
+            280 LOAD_FAST                8 (pix)
+            282 LOAD_METHOD              9 (tobytes)
+            304 LOAD_CONST               5 ('png')
+            306 PRECALL                  1
+            310 CALL                     1
+            320 LOAD_GLOBAL             21 (NULL + float)
+            332 LOAD_FAST                7 (rect)
+            334 LOAD_ATTR                7 (width)
+            344 PRECALL                  1
+            348 CALL                     1
+
+134         358 LOAD_GLOBAL             21 (NULL + float)
+            370 LOAD_FAST                7 (rect)
+            372 LOAD_ATTR               11 (height)
+            382 PRECALL                  1
+            386 CALL                     1
+            396 LOAD_GLOBAL             21 (NULL + float)
+            408 LOAD_FAST                9 (scale)
+            410 PRECALL                  1
+            414 CALL                     1
+
+133         424 BUILD_TUPLE              5
+            426 PRECALL                  1
+            430 CALL                     1
+            440 POP_TOP
+            442 JUMP_BACKWARD          156 (to 132)
+
+129     >>  444 NOP
+
+136         446 LOAD_FAST                4 (doc)
+            448 LOAD_METHOD             12 (close)
+            470 PRECALL                  0
+            474 CALL                     0
+            484 POP_TOP
+            486 JUMP_FORWARD            25 (to 538)
+        >>  488 PUSH_EXC_INFO
+            490 LOAD_FAST                4 (doc)
+            492 LOAD_METHOD             12 (close)
+            514 PRECALL                  0
+            518 CALL                     0
+            528 POP_TOP
+            530 RERAISE                  0
+        >>  532 COPY                     3
+            534 POP_EXCEPT
+            536 RERAISE                  1
+
+137     >>  538 LOAD_FAST                3 (out)
+            540 RETURN_VALUE
+ExceptionTable:
+  4 to 10 -> 14 [0]
+  14 to 40 -> 48 [1] lasti
+  46 to 46 -> 48 [1] lasti
+  102 to 442 -> 488 [0]
+  488 to 530 -> 532 [1] lasti
+
+==============================================================================
+## <module>.rasterize_pdf  (args=2, locals=3)
+# varnames: path, dpi, e
+140           0 RESUME                   0
+
+147           2 NOP
+
+148           4 LOAD_GLOBAL              1 (NULL + _rasterize_pypdfium2)
+             16 LOAD_FAST                0 (path)
+             18 LOAD_FAST                1 (dpi)
+             20 PRECALL                  2
+             24 CALL                     2
+             34 RETURN_VALUE
+        >>   36 PUSH_EXC_INFO
+
+149          38 LOAD_GLOBAL              2 (ImportError)
+             50 CHECK_EXC_MATCH
+             52 POP_JUMP_FORWARD_IF_FALSE     3 (to 60)
+             54 POP_TOP
+
+150          56 POP_EXCEPT
+             58 JUMP_FORWARD             4 (to 68)
+
+149     >>   60 RERAISE                  0
+        >>   62 COPY                     3
+             64 POP_EXCEPT
+             66 RERAISE                  1
+
+151     >>   68 NOP
+
+152          70 LOAD_GLOBAL              5 (NULL + _rasterize_pymupdf)
+             82 LOAD_FAST                0 (path)
+             84 LOAD_FAST                1 (dpi)
+             86 PRECALL                  2
+             90 CALL                     2
+            100 RETURN_VALUE
+        >>  102 PUSH_EXC_INFO
+
+153         104 LOAD_GLOBAL              2 (ImportError)
+            116 CHECK_EXC_MATCH
+            118 POP_JUMP_FORWARD_IF_FALSE    21 (to 162)
+            120 STORE_FAST               2 (e)
+
+154         122 LOAD_GLOBAL              7 (NULL + RuntimeError)
+
+155         134 LOAD_CONST               1 ('OCR 需要 pypdfium2（随 pdfplumber 安装）或 PyMuPDF 来渲染页面。')
+
+154         136 PRECALL                  1
+            140 CALL                     1
+
+156         150 LOAD_FAST                2 (e)
+
+154         152 RAISE_VARARGS            2
+        >>  154 LOAD_CONST               2 (None)
+            156 STORE_FAST               2 (e)
+            158 DELETE_FAST              2 (e)
+            160 RERAISE                  1
+
+153     >>  162 RERAISE                  0
+        >>  164 COPY                     3
+            166 POP_EXCEPT
+            168 RERAISE                  1
+ExceptionTable:
+  4 to 32 -> 36 [0]
+  36 to 54 -> 62 [1] lasti
+  60 to 60 -> 62 [1] lasti
+  70 to 98 -> 102 [0]
+  102 to 120 -> 164 [1] lasti
+  122 to 152 -> 154 [1] lasti
+  154 to 162 -> 164 [1] lasti
+
+==============================================================================
+## <module>._split_line_to_words  (args=6, locals=11)
+# varnames: text, x0, y0, x1, y1, page, per_char, toks, cursor, word, idx
+162           0 RESUME                   0
+
+171           2 LOAD_FAST                0 (text)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_CONST               1 ('')
+        >>    8 LOAD_METHOD              0 (strip)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 STORE_FAST               0 (text)
+
+172          46 LOAD_FAST                0 (text)
+             48 POP_JUMP_FORWARD_IF_TRUE     2 (to 54)
+
+173          50 BUILD_LIST               0
+             52 RETURN_VALUE
+
+174     >>   54 LOAD_FAST                3 (x1)
+             56 LOAD_FAST                1 (x0)
+             58 COMPARE_OP               1 (<=)
+             64 POP_JUMP_FORWARD_IF_FALSE    35 (to 136)
+
+175          66 LOAD_GLOBAL              3 (NULL + Token)
+             78 LOAD_GLOBAL              5 (NULL + normalize_text)
+             90 LOAD_FAST                0 (text)
+             92 PRECALL                  1
+             96 CALL                     1
+            106 LOAD_FAST                1 (x0)
+            108 LOAD_FAST                2 (y0)
+            110 LOAD_FAST                3 (x1)
+            112 LOAD_FAST                4 (y1)
+            114 LOAD_FAST                5 (page)
+            116 KW_NAMES                 2
+            118 PRECALL                  6
+            122 CALL                     6
+            132 BUILD_LIST               1
+            134 RETURN_VALUE
+
+176     >>  136 LOAD_FAST                3 (x1)
+            138 LOAD_FAST                1 (x0)
+            140 BINARY_OP               10 (-)
+            144 LOAD_GLOBAL              7 (NULL + len)
+            156 LOAD_FAST                0 (text)
+            158 PRECALL                  1
+            162 CALL                     1
+            172 BINARY_OP               11 (/)
+            176 STORE_FAST               6 (per_char)
+
+177         178 BUILD_LIST               0
+            180 STORE_FAST               7 (toks)
+
+178         182 LOAD_CONST               3 (0)
+            184 STORE_FAST               8 (cursor)
+
+179         186 LOAD_FAST                0 (text)
+            188 LOAD_METHOD              4 (split)
+            210 PRECALL                  0
+            214 CALL                     0
+            224 GET_ITER
+        >>  226 FOR_ITER               107 (to 442)
+            228 STORE_FAST               9 (word)
+
+180         230 LOAD_FAST                0 (text)
+            232 LOAD_METHOD              5 (index)
+            254 LOAD_FAST                9 (word)
+            256 LOAD_FAST                8 (cursor)
+            258 PRECALL                  2
+            262 CALL                     2
+            272 STORE_FAST              10 (idx)
+
+181         274 LOAD_FAST               10 (idx)
+            276 LOAD_GLOBAL              7 (NULL + len)
+            288 LOAD_FAST                9 (word)
+            290 PRECALL                  1
+            294 CALL                     1
+            304 BINARY_OP                0 (+)
+            308 STORE_FAST               8 (cursor)
+
+182         310 LOAD_FAST                7 (toks)
+            312 LOAD_METHOD              6 (append)
+            334 LOAD_GLOBAL              3 (NULL + Token)
+
+183         346 LOAD_GLOBAL              5 (NULL + normalize_text)
+            358 LOAD_FAST                9 (word)
+            360 PRECALL                  1
+            364 CALL                     1
+
+184         374 LOAD_FAST                1 (x0)
+            376 LOAD_FAST               10 (idx)
+            378 LOAD_FAST                6 (per_char)
+            380 BINARY_OP                5 (*)
+            384 BINARY_OP                0 (+)
+
+185         388 LOAD_FAST                2 (y0)
+
+186         390 LOAD_FAST                1 (x0)
+            392 LOAD_FAST                8 (cursor)
+            394 LOAD_FAST                6 (per_char)
+            396 BINARY_OP                5 (*)
+            400 BINARY_OP                0 (+)
+
+187         404 LOAD_FAST                4 (y1)
+
+188         406 LOAD_FAST                5 (page)
+
+182         408 KW_NAMES                 2
+            410 PRECALL                  6
+            414 CALL                     6
+            424 PRECALL                  1
+            428 CALL                     1
+            438 POP_TOP
+            440 JUMP_BACKWARD          108 (to 226)
+
+190     >>  442 LOAD_FAST                7 (toks)
+            444 RETURN_VALUE
+
+==============================================================================
+## <module>._snap_rows  (args=2, locals=8)
+# varnames: tokens, tol, ordered, clusters, t, cl, yc, half
+193           0 RESUME                   0
+
+202           2 LOAD_FAST                0 (tokens)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+203           6 LOAD_FAST                0 (tokens)
+              8 RETURN_VALUE
+
+204     >>   10 LOAD_GLOBAL              1 (NULL + sorted)
+             22 LOAD_FAST                0 (tokens)
+             24 LOAD_CONST               1 (<code object <lambda> at 0x000002BF94AB0510, file "core\io\ocr.py", line 204>)
+             26 MAKE_FUNCTION            0
+             28 KW_NAMES                 2
+             30 PRECALL                  2
+             34 CALL                     2
+             44 STORE_FAST               2 (ordered)
+
+205          46 LOAD_FAST                2 (ordered)
+             48 LOAD_CONST               3 (0)
+             50 BINARY_SUBSCR
+             60 BUILD_LIST               1
+             62 BUILD_LIST               1
+             64 STORE_FAST               3 (clusters)
+
+206          66 LOAD_FAST                2 (ordered)
+             68 LOAD_CONST               4 (1)
+             70 LOAD_CONST               5 (None)
+             72 BUILD_SLICE              2
+             74 BINARY_SUBSCR
+             84 GET_ITER
+        >>   86 FOR_ITER                96 (to 280)
+             88 STORE_FAST               4 (t)
+
+207          90 LOAD_GLOBAL              3 (NULL + abs)
+            102 LOAD_FAST                4 (t)
+            104 LOAD_ATTR                2 (yc)
+            114 LOAD_FAST                3 (clusters)
+            116 LOAD_CONST               6 (-1)
+            118 BINARY_SUBSCR
+            128 LOAD_CONST               6 (-1)
+            130 BINARY_SUBSCR
+            140 LOAD_ATTR                2 (yc)
+            150 BINARY_OP               10 (-)
+            154 PRECALL                  1
+            158 CALL                     1
+            168 LOAD_FAST                1 (tol)
+            170 COMPARE_OP               1 (<=)
+            176 POP_JUMP_FORWARD_IF_FALSE    28 (to 234)
+
+208         178 LOAD_FAST                3 (clusters)
+            180 LOAD_CONST               6 (-1)
+            182 BINARY_SUBSCR
+            192 LOAD_METHOD              3 (append)
+            214 LOAD_FAST                4 (t)
+            216 PRECALL                  1
+            220 CALL                     1
+            230 POP_TOP
+            232 JUMP_BACKWARD           74 (to 86)
+
+210     >>  234 LOAD_FAST                3 (clusters)
+            236 LOAD_METHOD              3 (append)
+            258 LOAD_FAST                4 (t)
+            260 BUILD_LIST               1
+            262 PRECALL                  1
+            266 CALL                     1
+            276 POP_TOP
+            278 JUMP_BACKWARD           97 (to 86)
+
+211     >>  280 LOAD_FAST                3 (clusters)
+            282 GET_ITER
+        >>  284 FOR_ITER                99 (to 484)
+            286 STORE_FAST               5 (cl)
+
+212         288 LOAD_GLOBAL              9 (NULL + sum)
+            300 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF94A6E950, file "core\io\ocr.py", line 212>)
+            302 MAKE_FUNCTION            0
+            304 LOAD_FAST                5 (cl)
+            306 GET_ITER
+            308 PRECALL                  0
+            312 CALL                     0
+            322 PRECALL                  1
+            326 CALL                     1
+            336 LOAD_GLOBAL             11 (NULL + len)
+            348 LOAD_FAST                5 (cl)
+            350 PRECALL                  1
+            354 CALL                     1
+            364 BINARY_OP               11 (/)
+            368 STORE_FAST               6 (yc)
+
+213         370 LOAD_GLOBAL             13 (NULL + max)
+            382 LOAD_CONST               8 (<code object <genexpr> at 0x000002BF94A2BF00, file "core\io\ocr.py", line 213>)
+            384 MAKE_FUNCTION            0
+            386 LOAD_FAST                5 (cl)
+            388 GET_ITER
+            390 PRECALL                  0
+            394 CALL                     0
+            404 PRECALL                  1
+            408 CALL                     1
+            418 LOAD_CONST               9 (2.0)
+            420 BINARY_OP               11 (/)
+            424 JUMP_IF_TRUE_OR_POP      1 (to 428)
+            426 LOAD_CONST              10 (1.0)
+        >>  428 STORE_FAST               7 (half)
+
+214         430 LOAD_FAST                5 (cl)
+            432 GET_ITER
+        >>  434 FOR_ITER                23 (to 482)
+            436 STORE_FAST               4 (t)
+
+215         438 LOAD_FAST                6 (yc)
+            440 LOAD_FAST                7 (half)
+            442 BINARY_OP               10 (-)
+            446 LOAD_FAST                6 (yc)
+            448 LOAD_FAST                7 (half)
+            450 BINARY_OP                0 (+)
+            454 SWAP                     2
+            456 LOAD_FAST                4 (t)
+            458 STORE_ATTR               7 (y0)
+            468 LOAD_FAST                4 (t)
+            470 STORE_ATTR               8 (y1)
+            480 JUMP_BACKWARD           24 (to 434)
+
+214     >>  482 JUMP_BACKWARD          100 (to 284)
+
+216     >>  484 LOAD_FAST                0 (tokens)
+            486 RETURN_VALUE
+
+==============================================================================
+## <module>._snap_rows.<lambda>  (args=1, locals=1)
+# varnames: t
+204           0 RESUME                   0
+              2 LOAD_FAST                0 (t)
+              4 LOAD_ATTR                0 (yc)
+             14 RETURN_VALUE
+
+==============================================================================
+## <module>._snap_rows.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+212           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (yc)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>._snap_rows.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+213           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (y1)
+             24 LOAD_FAST                1 (t)
+             26 LOAD_ATTR                1 (y0)
+             36 BINARY_OP               10 (-)
+             40 YIELD_VALUE
+             42 RESUME                   1
+             44 POP_TOP
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+==============================================================================
+## <module>._local_assets_missing  (args=0, locals=6)
+# varnames: _P, _m, root, need, missing, p
+222           0 RESUME                   0
+
+236           2 LOAD_CONST               1 (0)
+              4 LOAD_CONST               2 (('Path',))
+              6 IMPORT_NAME              0 (pathlib)
+              8 IMPORT_FROM              1 (Path)
+             10 STORE_FAST               0 (_P)
+             12 POP_TOP
+
+237          14 LOAD_CONST               1 (0)
+             16 LOAD_CONST               3 (None)
+             18 IMPORT_NAME              2 (rapidocr_onnxruntime.main)
+             20 IMPORT_FROM              3 (main)
+             22 STORE_FAST               1 (_m)
+             24 POP_TOP
+
+238          26 PUSH_NULL
+             28 LOAD_FAST                0 (_P)
+             30 LOAD_FAST                1 (_m)
+             32 LOAD_ATTR                4 (root_dir)
+             42 PRECALL                  1
+             46 CALL                     1
+             56 STORE_FAST               2 (root)
+
+240          58 LOAD_FAST                2 (root)
+             60 LOAD_CONST               4 ('config.yaml')
+             62 BINARY_OP               11 (/)
+
+241          66 LOAD_FAST                2 (root)
+             68 LOAD_CONST               5 ('models')
+             70 BINARY_OP               11 (/)
+             74 LOAD_CONST               6 ('ch_PP-OCRv4_det_infer.onnx')
+             76 BINARY_OP               11 (/)
+
+242          80 LOAD_FAST                2 (root)
+             82 LOAD_CONST               5 ('models')
+             84 BINARY_OP               11 (/)
+             88 LOAD_CONST               7 ('ch_PP-OCRv4_rec_infer.onnx')
+             90 BINARY_OP               11 (/)
+
+243          94 LOAD_FAST                2 (root)
+             96 LOAD_CONST               5 ('models')
+             98 BINARY_OP               11 (/)
+            102 LOAD_CONST               8 ('ch_ppocr_mobile_v2.0_cls_infer.onnx')
+            104 BINARY_OP               11 (/)
+
+239         108 BUILD_LIST               4
+            110 STORE_FAST               3 (need)
+
+245         112 BUILD_LIST               0
+            114 STORE_FAST               4 (missing)
+
+246         116 LOAD_FAST                3 (need)
+            118 GET_ITER
+        >>  120 FOR_ITER               107 (to 336)
+            122 STORE_FAST               5 (p)
+
+247         124 NOP
+
+248         126 LOAD_FAST                5 (p)
+            128 LOAD_METHOD              5 (exists)
+            150 PRECALL                  0
+            154 CALL                     0
+            164 POP_JUMP_FORWARD_IF_TRUE    34 (to 234)
+
+249         166 LOAD_FAST                4 (missing)
+            168 LOAD_METHOD              6 (append)
+            190 LOAD_GLOBAL             15 (NULL + str)
+            202 LOAD_FAST                5 (p)
+            204 PRECALL                  1
+            208 CALL                     1
+            218 PRECALL                  1
+            222 CALL                     1
+            232 POP_TOP
+        >>  234 JUMP_BACKWARD           58 (to 120)
+        >>  236 PUSH_EXC_INFO
+
+250         238 LOAD_GLOBAL             16 (OSError)
+            250 CHECK_EXC_MATCH
+            252 POP_JUMP_FORWARD_IF_FALSE    37 (to 328)
+            254 POP_TOP
+
+251         256 LOAD_FAST                4 (missing)
+            258 LOAD_METHOD              6 (append)
+            280 LOAD_GLOBAL             15 (NULL + str)
+            292 LOAD_FAST                5 (p)
+            294 PRECALL                  1
+            298 CALL                     1
+            308 PRECALL                  1
+            312 CALL                     1
+            322 POP_TOP
+            324 POP_EXCEPT
+            326 JUMP_BACKWARD          104 (to 120)
+
+250     >>  328 RERAISE                  0
+        >>  330 COPY                     3
+            332 POP_EXCEPT
+            334 RERAISE                  1
+
+252     >>  336 LOAD_FAST                4 (missing)
+            338 RETURN_VALUE
+ExceptionTable:
+  126 to 232 -> 236 [1]
+  236 to 322 -> 330 [2] lasti
+  328 to 328 -> 330 [2] lasti
+
+==============================================================================
+## <module>.local_engine_available  (args=0, locals=1)
+# varnames: rapidocr_onnxruntime
+255           0 RESUME                   0
+
+257           2 NOP
+
+258           4 LOAD_CONST               1 (0)
+              6 LOAD_CONST               2 (None)
+              8 IMPORT_NAME              0 (rapidocr_onnxruntime)
+             10 STORE_FAST               0 (rapidocr_onnxruntime)
+             12 JUMP_FORWARD            17 (to 48)
+        >>   14 PUSH_EXC_INFO
+
+259          16 LOAD_GLOBAL              2 (Exception)
+             28 CHECK_EXC_MATCH
+             30 POP_JUMP_FORWARD_IF_FALSE     4 (to 40)
+             32 POP_TOP
+
+260          34 POP_EXCEPT
+             36 LOAD_CONST               3 (False)
+             38 RETURN_VALUE
+
+259     >>   40 RERAISE                  0
+        >>   42 COPY                     3
+             44 POP_EXCEPT
+             46 RERAISE                  1
+
+261     >>   48 LOAD_GLOBAL              5 (NULL + _local_assets_missing)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 UNARY_NOT
+             76 RETURN_VALUE
+ExceptionTable:
+  4 to 10 -> 14 [0]
+  14 to 32 -> 42 [1] lasti
+  40 to 40 -> 42 [1] lasti
+
+==============================================================================
+## <module>._make_local_engine  (args=0, locals=2)
+# varnames: RapidOCR, missing
+264           0 RESUME                   0
+
+265           2 LOAD_CONST               1 (0)
+              4 LOAD_CONST               2 (('RapidOCR',))
+              6 IMPORT_NAME              0 (rapidocr_onnxruntime)
+              8 IMPORT_FROM              1 (RapidOCR)
+             10 STORE_FAST               0 (RapidOCR)
+             12 POP_TOP
+
+266          14 LOAD_GLOBAL              5 (NULL + _local_assets_missing)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (missing)
+
+267          42 LOAD_FAST                1 (missing)
+             44 POP_JUMP_FORWARD_IF_FALSE    37 (to 120)
+
+268          46 LOAD_GLOBAL              7 (NULL + FileNotFoundError)
+
+269          58 LOAD_CONST               3 ('RapidOCR 模型文件缺失（打包遗漏）: ')
+             60 LOAD_CONST               4 ('; ')
+             62 LOAD_METHOD              4 (join)
+             84 LOAD_FAST                1 (missing)
+             86 PRECALL                  1
+             90 CALL                     1
+            100 BINARY_OP                0 (+)
+
+268         104 PRECALL                  1
+            108 CALL                     1
+            118 RAISE_VARARGS            1
+
+270     >>  120 PUSH_NULL
+            122 LOAD_FAST                0 (RapidOCR)
+            124 PRECALL                  0
+            128 CALL                     0
+            138 RETURN_VALUE
+
+==============================================================================
+## <module>._ocr_local_page  (args=6, locals=15)
+# varnames: engine, png, page, width_pt, height_pt, scale, result, _elapsed, dets, toks, det, box, txt, xs, ys
+273           0 RESUME                   0
+
+276           2 PUSH_NULL
+              4 LOAD_FAST                0 (engine)
+              6 LOAD_FAST                1 (png)
+              8 PRECALL                  1
+             12 CALL                     1
+             22 LOAD_CONST               1 (None)
+             24 STORE_FAST               7 (_elapsed)
+             26 STORE_FAST               6 (result)
+
+278          28 LOAD_GLOBAL              1 (NULL + isinstance)
+             40 LOAD_FAST                6 (result)
+             42 LOAD_GLOBAL              2 (tuple)
+             54 PRECALL                  2
+             58 CALL                     2
+             68 POP_JUMP_FORWARD_IF_FALSE     8 (to 86)
+             70 LOAD_FAST                6 (result)
+             72 LOAD_CONST               2 (0)
+             74 BINARY_SUBSCR
+             84 JUMP_FORWARD             1 (to 88)
+        >>   86 LOAD_FAST                6 (result)
+        >>   88 STORE_FAST               8 (dets)
+
+279          90 BUILD_LIST               0
+             92 STORE_FAST               9 (toks)
+
+280          94 LOAD_FAST                8 (dets)
+             96 JUMP_IF_TRUE_OR_POP      1 (to 100)
+             98 BUILD_LIST               0
+        >>  100 GET_ITER
+        >>  102 FOR_ITER               145 (to 394)
+            104 STORE_FAST              10 (det)
+
+282         106 LOAD_FAST               10 (det)
+            108 LOAD_CONST               2 (0)
+            110 BINARY_SUBSCR
+            120 LOAD_FAST               10 (det)
+            122 LOAD_CONST               3 (1)
+            124 BINARY_SUBSCR
+            134 STORE_FAST              12 (txt)
+            136 STORE_FAST              11 (box)
+
+283         138 LOAD_CONST               4 (<code object <listcomp> at 0x000002BF94A6EE90, file "core\io\ocr.py", line 283>)
+            140 MAKE_FUNCTION            0
+            142 LOAD_FAST               11 (box)
+            144 GET_ITER
+            146 PRECALL                  0
+            150 CALL                     0
+            160 STORE_FAST              13 (xs)
+
+284         162 LOAD_CONST               5 (<code object <listcomp> at 0x000002BF94A6EB10, file "core\io\ocr.py", line 284>)
+            164 MAKE_FUNCTION            0
+            166 LOAD_FAST               11 (box)
+            168 GET_ITER
+            170 PRECALL                  0
+            174 CALL                     0
+            184 STORE_FAST              14 (ys)
+
+285         186 LOAD_FAST                9 (toks)
+            188 LOAD_METHOD              2 (extend)
+            210 LOAD_GLOBAL              7 (NULL + _split_line_to_words)
+
+286         222 LOAD_FAST               12 (txt)
+
+287         224 LOAD_GLOBAL              9 (NULL + min)
+            236 LOAD_FAST               13 (xs)
+            238 PRECALL                  1
+            242 CALL                     1
+            252 LOAD_FAST                5 (scale)
+            254 BINARY_OP                5 (*)
+            258 LOAD_GLOBAL              9 (NULL + min)
+            270 LOAD_FAST               14 (ys)
+            272 PRECALL                  1
+            276 CALL                     1
+            286 LOAD_FAST                5 (scale)
+            288 BINARY_OP                5 (*)
+
+288         292 LOAD_GLOBAL             11 (NULL + max)
+            304 LOAD_FAST               13 (xs)
+            306 PRECALL                  1
+            310 CALL                     1
+            320 LOAD_FAST                5 (scale)
+            322 BINARY_OP                5 (*)
+            326 LOAD_GLOBAL             11 (NULL + max)
+            338 LOAD_FAST               14 (ys)
+            340 PRECALL                  1
+            344 CALL                     1
+            354 LOAD_FAST                5 (scale)
+            356 BINARY_OP                5 (*)
+
+289         360 LOAD_FAST                2 (page)
+
+285         362 PRECALL                  6
+            366 CALL                     6
+            376 PRECALL                  1
+            380 CALL                     1
+            390 POP_TOP
+            392 JUMP_BACKWARD          146 (to 102)
+
+291     >>  394 LOAD_GLOBAL             13 (NULL + _snap_rows)
+            406 LOAD_FAST                9 (toks)
+            408 LOAD_CONST               6 (3.0)
+            410 KW_NAMES                 7
+            412 PRECALL                  2
+            416 CALL                     2
+            426 POP_TOP
+
+292         428 LOAD_GLOBAL             15 (NULL + PageWords)
+            440 LOAD_FAST                2 (page)
+            442 LOAD_FAST                3 (width_pt)
+            444 LOAD_FAST                4 (height_pt)
+            446 LOAD_FAST                9 (toks)
+            448 KW_NAMES                 8
+            450 PRECALL                  4
+            454 CALL                     4
+            464 RETURN_VALUE
+
+==============================================================================
+## <module>._ocr_local_page.<listcomp>  (args=1, locals=2)
+# varnames: .0, p
+283           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                10 (to 28)
+              8 STORE_FAST               1 (p)
+             10 LOAD_FAST                1 (p)
+             12 LOAD_CONST               0 (0)
+             14 BINARY_SUBSCR
+             24 LIST_APPEND              2
+             26 JUMP_BACKWARD           11 (to 6)
+        >>   28 RETURN_VALUE
+
+==============================================================================
+## <module>._ocr_local_page.<listcomp>  (args=1, locals=2)
+# varnames: .0, p
+284           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                10 (to 28)
+              8 STORE_FAST               1 (p)
+             10 LOAD_FAST                1 (p)
+             12 LOAD_CONST               0 (1)
+             14 BINARY_SUBSCR
+             24 LIST_APPEND              2
+             26 JUMP_BACKWARD           11 (to 6)
+        >>   28 RETURN_VALUE
+
+==============================================================================
+## <module>._text_to_pagewords  (args=4, locals=14)
+# varnames: text, page, width_pt, height_pt, lines, max_cols, char_w, line_h, toks, r, ln, y0, y1, m
+298           0 RESUME                   0
+
+306           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94AA85D0, file "core\io\ocr.py", line 306>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_FAST                0 (text)
+              8 JUMP_IF_TRUE_OR_POP      1 (to 12)
+             10 LOAD_CONST               2 ('')
+        >>   12 LOAD_METHOD              0 (splitlines)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 GET_ITER
+             50 PRECALL                  0
+             54 CALL                     0
+             64 STORE_FAST               4 (lines)
+
+307          66 LOAD_CONST               3 (<code object <listcomp> at 0x000002BF94A2EF30, file "core\io\ocr.py", line 307>)
+             68 MAKE_FUNCTION            0
+             70 LOAD_FAST                4 (lines)
+             72 GET_ITER
+             74 PRECALL                  0
+             78 CALL                     0
+             88 STORE_FAST               4 (lines)
+
+308          90 LOAD_FAST                4 (lines)
+             92 POP_JUMP_FORWARD_IF_TRUE    19 (to 132)
+
+309          94 LOAD_GLOBAL              3 (NULL + PageWords)
+            106 LOAD_FAST                1 (page)
+            108 LOAD_FAST                2 (width_pt)
+            110 LOAD_FAST                3 (height_pt)
+            112 BUILD_LIST               0
+            114 KW_NAMES                 4
+            116 PRECALL                  4
+            120 CALL                     4
+            130 RETURN_VALUE
+
+310     >>  132 LOAD_GLOBAL              5 (NULL + max)
+            144 LOAD_CONST               5 (<code object <genexpr> at 0x000002BF94AA8E40, file "core\io\ocr.py", line 310>)
+            146 MAKE_FUNCTION            0
+            148 LOAD_FAST                4 (lines)
+            150 GET_ITER
+            152 PRECALL                  0
+            156 CALL                     0
+            166 PRECALL                  1
+            170 CALL                     1
+            180 STORE_FAST               5 (max_cols)
+
+311         182 LOAD_FAST                2 (width_pt)
+            184 LOAD_GLOBAL              5 (NULL + max)
+            196 LOAD_FAST                5 (max_cols)
+            198 LOAD_CONST               6 (1)
+            200 PRECALL                  2
+            204 CALL                     2
+            214 BINARY_OP               11 (/)
+            218 STORE_FAST               6 (char_w)
+
+312         220 LOAD_FAST                3 (height_pt)
+            222 LOAD_GLOBAL              5 (NULL + max)
+            234 LOAD_GLOBAL              7 (NULL + len)
+            246 LOAD_FAST                4 (lines)
+            248 PRECALL                  1
+            252 CALL                     1
+            262 LOAD_CONST               6 (1)
+            264 PRECALL                  2
+            268 CALL                     2
+            278 BINARY_OP               11 (/)
+            282 STORE_FAST               7 (line_h)
+
+313         284 BUILD_LIST               0
+            286 STORE_FAST               8 (toks)
+
+314         288 LOAD_GLOBAL              9 (NULL + enumerate)
+            300 LOAD_FAST                4 (lines)
+            302 PRECALL                  1
+            306 CALL                     1
+            316 GET_ITER
+        >>  318 FOR_ITER               155 (to 630)
+            320 UNPACK_SEQUENCE          2
+            324 STORE_FAST               9 (r)
+            326 STORE_FAST              10 (ln)
+
+315         328 LOAD_FAST                9 (r)
+            330 LOAD_FAST                7 (line_h)
+            332 BINARY_OP                5 (*)
+            336 STORE_FAST              11 (y0)
+
+316         338 LOAD_FAST               11 (y0)
+            340 LOAD_FAST                7 (line_h)
+            342 LOAD_CONST               7 (0.8)
+            344 BINARY_OP                5 (*)
+            348 BINARY_OP                0 (+)
+            352 STORE_FAST              12 (y1)
+
+317         354 LOAD_GLOBAL             11 (NULL + re)
+            366 LOAD_ATTR                6 (finditer)
+            376 LOAD_CONST               8 ('\\S+')
+            378 LOAD_FAST               10 (ln)
+            380 PRECALL                  2
+            384 CALL                     2
+            394 GET_ITER
+        >>  396 FOR_ITER               115 (to 628)
+            398 STORE_FAST              13 (m)
+
+318         400 LOAD_FAST                8 (toks)
+            402 LOAD_METHOD              7 (append)
+            424 LOAD_GLOBAL             17 (NULL + Token)
+
+319         436 LOAD_GLOBAL             19 (NULL + normalize_text)
+            448 LOAD_FAST               13 (m)
+            450 LOAD_METHOD             10 (group)
+            472 PRECALL                  0
+            476 CALL                     0
+            486 PRECALL                  1
+            490 CALL                     1
+
+320         500 LOAD_FAST               13 (m)
+            502 LOAD_METHOD             11 (start)
+            524 PRECALL                  0
+            528 CALL                     0
+            538 LOAD_FAST                6 (char_w)
+            540 BINARY_OP                5 (*)
+            544 LOAD_FAST               11 (y0)
+
+321         546 LOAD_FAST               13 (m)
+            548 LOAD_METHOD             12 (end)
+            570 PRECALL                  0
+            574 CALL                     0
+            584 LOAD_FAST                6 (char_w)
+            586 BINARY_OP                5 (*)
+            590 LOAD_FAST               12 (y1)
+
+322         592 LOAD_FAST                1 (page)
+
+318         594 KW_NAMES                 9
+            596 PRECALL                  6
+            600 CALL                     6
+            610 PRECALL                  1
+            614 CALL                     1
+            624 POP_TOP
+            626 JUMP_BACKWARD          116 (to 396)
+
+317     >>  628 JUMP_BACKWARD          156 (to 318)
+
+324     >>  630 LOAD_GLOBAL              3 (NULL + PageWords)
+            642 LOAD_FAST                1 (page)
+            644 LOAD_FAST                2 (width_pt)
+            646 LOAD_FAST                3 (height_pt)
+            648 LOAD_FAST                8 (toks)
+            650 KW_NAMES                 4
+            652 PRECALL                  4
+            656 CALL                     4
+            666 RETURN_VALUE
+
+==============================================================================
+## <module>._text_to_pagewords.<listcomp>  (args=1, locals=2)
+# varnames: .0, ln
+306           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                22 (to 52)
+              8 STORE_FAST               1 (ln)
+             10 LOAD_FAST                1 (ln)
+             12 LOAD_METHOD              0 (rstrip)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 LIST_APPEND              2
+             50 JUMP_BACKWARD           23 (to 6)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>._text_to_pagewords.<listcomp>  (args=1, locals=2)
+# varnames: .0, ln
+307           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                24 (to 56)
+              8 STORE_FAST               1 (ln)
+             10 LOAD_FAST                1 (ln)
+             12 LOAD_METHOD              0 (strip)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_BACKWARD_IF_FALSE    22 (to 6)
+             50 LOAD_FAST                1 (ln)
+             52 LIST_APPEND              2
+             54 JUMP_BACKWARD           25 (to 6)
+        >>   56 RETURN_VALUE
+
+==============================================================================
+## <module>._text_to_pagewords.<genexpr>  (args=1, locals=2)
+# varnames: .0, ln
+310           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (ln)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (ln)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 YIELD_VALUE
+             42 RESUME                   1
+             44 POP_TOP
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 LOAD_CONST               0 (None)
+             50 RETURN_VALUE
+
+==============================================================================
+## <module>._ocr_cloud_page  (args=5, locals=15)
+# varnames: png, page, width_pt, height_pt, cfg, post_json, DEFAULT_BUDGET, _thinking_off, base_url, api_key, model, b64, body, data, text
+327           0 RESUME                   0
+
+330           2 LOAD_CONST               1 (2)
+              4 LOAD_CONST               2 (('post_json', 'DEFAULT_BUDGET'))
+              6 IMPORT_NAME              0 (ai.http_util)
+              8 IMPORT_FROM              1 (post_json)
+             10 STORE_FAST               5 (post_json)
+             12 IMPORT_FROM              2 (DEFAULT_BUDGET)
+             14 STORE_FAST               6 (DEFAULT_BUDGET)
+             16 POP_TOP
+
+331          18 LOAD_CONST               1 (2)
+             20 LOAD_CONST               3 (('_thinking_off',))
+             22 IMPORT_NAME              3 (ai.data_extract)
+             24 IMPORT_FROM              4 (_thinking_off)
+             26 STORE_FAST               7 (_thinking_off)
+             28 POP_TOP
+
+333          30 LOAD_GLOBAL             11 (NULL + str)
+             42 LOAD_FAST                4 (cfg)
+             44 LOAD_METHOD              6 (get)
+             66 LOAD_CONST               4 ('base_url')
+             68 PRECALL                  1
+             72 CALL                     1
+             82 JUMP_IF_TRUE_OR_POP      1 (to 86)
+             84 LOAD_CONST               5 ('')
+        >>   86 PRECALL                  1
+             90 CALL                     1
+            100 LOAD_METHOD              7 (rstrip)
+            122 LOAD_CONST               6 ('/')
+            124 PRECALL                  1
+            128 CALL                     1
+            138 STORE_FAST               8 (base_url)
+
+334         140 LOAD_GLOBAL             11 (NULL + str)
+            152 LOAD_FAST                4 (cfg)
+            154 LOAD_METHOD              6 (get)
+            176 LOAD_CONST               7 ('api_key')
+            178 PRECALL                  1
+            182 CALL                     1
+            192 JUMP_IF_TRUE_OR_POP      1 (to 196)
+            194 LOAD_CONST               5 ('')
+        >>  196 PRECALL                  1
+            200 CALL                     1
+            210 STORE_FAST               9 (api_key)
+
+335         212 LOAD_FAST                8 (base_url)
+            214 POP_JUMP_FORWARD_IF_FALSE     2 (to 220)
+            216 LOAD_FAST                9 (api_key)
+            218 POP_JUMP_FORWARD_IF_TRUE    15 (to 250)
+
+336     >>  220 LOAD_GLOBAL             17 (NULL + RuntimeError)
+            232 LOAD_CONST               8 ('云端 OCR 需要在线模型配置（base_url / api_key）')
+            234 PRECALL                  1
+            238 CALL                     1
+            248 RAISE_VARARGS            1
+
+337     >>  250 LOAD_GLOBAL             11 (NULL + str)
+            262 LOAD_FAST                4 (cfg)
+            264 LOAD_METHOD              6 (get)
+            286 LOAD_CONST               9 ('vision_model')
+            288 PRECALL                  1
+            292 CALL                     1
+            302 JUMP_IF_TRUE_OR_POP      6 (to 316)
+            304 LOAD_GLOBAL             18 (DEFAULT_VISION_MODEL)
+        >>  316 PRECALL                  1
+            320 CALL                     1
+            330 LOAD_METHOD             10 (strip)
+            352 PRECALL                  0
+            356 CALL                     0
+            366 STORE_FAST              10 (model)
+
+338         368 LOAD_FAST               10 (model)
+            370 POP_JUMP_FORWARD_IF_TRUE    15 (to 402)
+
+339         372 LOAD_GLOBAL             17 (NULL + RuntimeError)
+            384 LOAD_CONST              10 ('未配置 vision_model，无法使用云端 OCR 兜底')
+            386 PRECALL                  1
+            390 CALL                     1
+            400 RAISE_VARARGS            1
+
+340     >>  402 LOAD_GLOBAL             23 (NULL + base64)
+            414 LOAD_ATTR               12 (b64encode)
+            424 LOAD_FAST                0 (png)
+            426 PRECALL                  1
+            430 CALL                     1
+            440 LOAD_METHOD             13 (decode)
+            462 LOAD_CONST              11 ('ascii')
+            464 PRECALL                  1
+            468 CALL                     1
+            478 STORE_FAST              11 (b64)
+
+342         480 LOAD_FAST               10 (model)
+
+344         482 LOAD_CONST              12 ('user')
+
+346         484 LOAD_CONST              13 ('image_url')
+
+347         486 LOAD_CONST              14 ('url')
+            488 LOAD_CONST              15 ('data:image/png;base64,')
+            490 LOAD_FAST               11 (b64)
+            492 FORMAT_VALUE             0
+            494 BUILD_STRING             2
+            496 BUILD_MAP                1
+
+346         498 LOAD_CONST              16 (('type', 'image_url'))
+            500 BUILD_CONST_KEY_MAP      2
+
+348         502 LOAD_CONST              17 ('text')
+            504 LOAD_GLOBAL             28 (_VISION_PROMPT)
+            516 LOAD_CONST              18 (('type', 'text'))
+            518 BUILD_CONST_KEY_MAP      2
+
+345         520 BUILD_LIST               2
+
+343         522 LOAD_CONST              19 (('role', 'content'))
+            524 BUILD_CONST_KEY_MAP      2
+            526 BUILD_LIST               1
+
+351         528 LOAD_CONST              20 (0.0)
+
+352         530 LOAD_CONST              21 (4096)
+
+341         532 LOAD_CONST              22 (('model', 'messages', 'temperature', 'max_tokens'))
+            534 BUILD_CONST_KEY_MAP      4
+            536 STORE_FAST              12 (body)
+
+356         538 LOAD_FAST               12 (body)
+            540 LOAD_METHOD             15 (update)
+            562 PUSH_NULL
+            564 LOAD_FAST                7 (_thinking_off)
+            566 LOAD_FAST               10 (model)
+            568 LOAD_FAST                8 (base_url)
+            570 LOAD_CONST              23 (('model', 'base_url'))
+            572 BUILD_CONST_KEY_MAP      2
+            574 PRECALL                  1
+            578 CALL                     1
+            588 PRECALL                  1
+            592 CALL                     1
+            602 POP_TOP
+
+357         604 PUSH_NULL
+            606 LOAD_FAST                5 (post_json)
+
+358         608 LOAD_FAST                8 (base_url)
+            610 LOAD_CONST              24 ('/chat/completions')
+            612 BINARY_OP                0 (+)
+            616 LOAD_FAST                9 (api_key)
+            618 LOAD_FAST               12 (body)
+
+359         620 LOAD_FAST                4 (cfg)
+            622 LOAD_METHOD              6 (get)
+            644 LOAD_CONST              25 ('data_timeout')
+            646 PRECALL                  1
+            650 CALL                     1
+            660 LOAD_FAST                4 (cfg)
+            662 LOAD_METHOD              6 (get)
+            684 LOAD_CONST              26 ('http_retries')
+            686 PRECALL                  1
+            690 CALL                     1
+
+360         700 LOAD_FAST                6 (DEFAULT_BUDGET)
+
+357         702 KW_NAMES                27
+            704 PRECALL                  6
+            708 CALL                     6
+            718 STORE_FAST              13 (data)
+
+362         720 LOAD_FAST               13 (data)
+            722 LOAD_CONST              28 ('choices')
+            724 BINARY_SUBSCR
+            734 LOAD_CONST              29 (0)
+            736 BINARY_SUBSCR
+            746 LOAD_CONST              30 ('message')
+            748 BINARY_SUBSCR
+            758 LOAD_CONST              31 ('content')
+            760 BINARY_SUBSCR
+            770 STORE_FAST              14 (text)
+
+363         772 LOAD_GLOBAL             33 (NULL + _text_to_pagewords)
+            784 LOAD_FAST               14 (text)
+            786 LOAD_FAST                1 (page)
+            788 LOAD_FAST                2 (width_pt)
+            790 LOAD_FAST                3 (height_pt)
+            792 PRECALL                  4
+            796 CALL                     4
+            806 RETURN_VALUE
+
+==============================================================================
+## <module>.ocr_pdf_pages  (args=1, locals=17)
+# varnames: path, cfg, log, dpi, _say, rasters, engine, e, cloud_ready, pages, i, png, w_pt, h_pt, scale, pw, got
+              0 MAKE_CELL                2 (log)
+
+369           2 RESUME                   0
+
+378           4 LOAD_CONST              26 (('msg', 'str', 'return', 'None'))
+              6 LOAD_CLOSURE             2 (log)
+              8 BUILD_TUPLE              1
+             10 LOAD_CONST               5 (<code object _say at 0x000002BF94A66AB0, file "core\io\ocr.py", line 378>)
+             12 MAKE_FUNCTION           12 (annotations, closure)
+             14 STORE_FAST               4 (_say)
+
+385          16 LOAD_GLOBAL              1 (NULL + rasterize_pdf)
+             28 LOAD_FAST                0 (path)
+             30 LOAD_FAST                3 (dpi)
+             32 KW_NAMES                 6
+             34 PRECALL                  2
+             38 CALL                     2
+             48 STORE_FAST               5 (rasters)
+
+386          50 LOAD_FAST                5 (rasters)
+             52 POP_JUMP_FORWARD_IF_TRUE     2 (to 58)
+
+387          54 BUILD_LIST               0
+             56 RETURN_VALUE
+
+389     >>   58 LOAD_CONST               7 (None)
+             60 STORE_FAST               6 (engine)
+
+390          62 LOAD_GLOBAL              3 (NULL + local_engine_available)
+             74 PRECALL                  0
+             78 CALL                     0
+             88 POP_JUMP_FORWARD_IF_FALSE    85 (to 260)
+
+391          90 NOP
+
+392          92 LOAD_GLOBAL              5 (NULL + _make_local_engine)
+            104 PRECALL                  0
+            108 CALL                     0
+            118 STORE_FAST               6 (engine)
+
+393         120 PUSH_NULL
+            122 LOAD_FAST                4 (_say)
+            124 LOAD_CONST               8 ('  OCR：本地 RapidOCR 就绪，')
+            126 LOAD_GLOBAL              7 (NULL + len)
+            138 LOAD_FAST                5 (rasters)
+            140 PRECALL                  1
+            144 CALL                     1
+            154 FORMAT_VALUE             0
+            156 LOAD_CONST               9 (' 页 @')
+            158 LOAD_FAST                3 (dpi)
+            160 FORMAT_VALUE             0
+            162 LOAD_CONST              10 ('dpi')
+            164 BUILD_STRING             5
+            166 PRECALL                  1
+            170 CALL                     1
+            180 POP_TOP
+            182 JUMP_FORWARD            49 (to 282)
+        >>  184 PUSH_EXC_INFO
+
+394         186 LOAD_GLOBAL              8 (Exception)
+            198 CHECK_EXC_MATCH
+            200 POP_JUMP_FORWARD_IF_FALSE    25 (to 252)
+            202 STORE_FAST               7 (e)
+
+395         204 PUSH_NULL
+            206 LOAD_FAST                4 (_say)
+            208 LOAD_CONST              11 ('  OCR：本地引擎初始化失败（')
+            210 LOAD_FAST                7 (e)
+            212 FORMAT_VALUE             0
+            214 LOAD_CONST              12 ('），尝试云端视觉模型')
+            216 BUILD_STRING             3
+            218 PRECALL                  1
+            222 CALL                     1
+            232 POP_TOP
+            234 POP_EXCEPT
+            236 LOAD_CONST               7 (None)
+            238 STORE_FAST               7 (e)
+            240 DELETE_FAST              7 (e)
+            242 JUMP_FORWARD            19 (to 282)
+        >>  244 LOAD_CONST               7 (None)
+            246 STORE_FAST               7 (e)
+            248 DELETE_FAST              7 (e)
+            250 RERAISE                  1
+
+394     >>  252 RERAISE                  0
+        >>  254 COPY                     3
+            256 POP_EXCEPT
+            258 RERAISE                  1
+
+397     >>  260 PUSH_NULL
+            262 LOAD_FAST                4 (_say)
+            264 LOAD_CONST              13 ('  OCR：本地 RapidOCR 不可用，尝试云端视觉模型')
+            266 PRECALL                  1
+            270 CALL                     1
+            280 POP_TOP
+
+399     >>  282 LOAD_GLOBAL             11 (NULL + bool)
+            294 LOAD_FAST                1 (cfg)
+            296 JUMP_IF_FALSE_OR_POP    41 (to 380)
+            298 LOAD_FAST                1 (cfg)
+            300 LOAD_METHOD              6 (get)
+            322 LOAD_CONST              14 ('api_key')
+            324 PRECALL                  1
+            328 CALL                     1
+            338 JUMP_IF_FALSE_OR_POP    20 (to 380)
+            340 LOAD_FAST                1 (cfg)
+            342 LOAD_METHOD              6 (get)
+            364 LOAD_CONST              15 ('base_url')
+            366 PRECALL                  1
+            370 CALL                     1
+        >>  380 PRECALL                  1
+            384 CALL                     1
+            394 STORE_FAST               8 (cloud_ready)
+
+400         396 BUILD_LIST               0
+            398 STORE_FAST               9 (pages)
+
+401         400 LOAD_FAST                5 (rasters)
+            402 GET_ITER
+        >>  404 FOR_ITER               235 (to 876)
+            406 UNPACK_SEQUENCE          5
+            410 STORE_FAST              10 (i)
+            412 STORE_FAST              11 (png)
+            414 STORE_FAST              12 (w_pt)
+            416 STORE_FAST              13 (h_pt)
+            418 STORE_FAST              14 (scale)
+
+402         420 LOAD_CONST               7 (None)
+            422 STORE_FAST              15 (pw)
+
+403         424 LOAD_FAST                6 (engine)
+            426 POP_JUMP_FORWARD_IF_NONE    65 (to 558)
+
+404         428 NOP
+
+405         430 LOAD_GLOBAL             15 (NULL + _ocr_local_page)
+            442 LOAD_FAST                6 (engine)
+            444 LOAD_FAST               11 (png)
+            446 LOAD_FAST               10 (i)
+            448 LOAD_FAST               12 (w_pt)
+            450 LOAD_FAST               13 (h_pt)
+            452 LOAD_FAST               14 (scale)
+            454 PRECALL                  6
+            458 CALL                     6
+            468 STORE_FAST              15 (pw)
+            470 JUMP_FORWARD            43 (to 558)
+        >>  472 PUSH_EXC_INFO
+
+406         474 LOAD_GLOBAL              8 (Exception)
+            486 CHECK_EXC_MATCH
+            488 POP_JUMP_FORWARD_IF_FALSE    30 (to 550)
+            490 STORE_FAST               7 (e)
+
+407         492 PUSH_NULL
+            494 LOAD_FAST                4 (_say)
+            496 LOAD_CONST              16 ('  OCR：第 ')
+            498 LOAD_FAST               10 (i)
+            500 LOAD_CONST              17 (1)
+            502 BINARY_OP                0 (+)
+            506 FORMAT_VALUE             0
+            508 LOAD_CONST              18 (' 页本地识别失败：')
+            510 LOAD_FAST                7 (e)
+            512 FORMAT_VALUE             0
+            514 BUILD_STRING             4
+            516 PRECALL                  1
+            520 CALL                     1
+            530 POP_TOP
+            532 POP_EXCEPT
+            534 LOAD_CONST               7 (None)
+            536 STORE_FAST               7 (e)
+            538 DELETE_FAST              7 (e)
+            540 JUMP_FORWARD             8 (to 558)
+        >>  542 LOAD_CONST               7 (None)
+            544 STORE_FAST               7 (e)
+            546 DELETE_FAST              7 (e)
+            548 RERAISE                  1
+
+406     >>  550 RERAISE                  0
+        >>  552 COPY                     3
+            554 POP_EXCEPT
+            556 RERAISE                  1
+
+408     >>  558 LOAD_FAST               15 (pw)
+            560 POP_JUMP_FORWARD_IF_NONE     7 (to 576)
+            562 LOAD_FAST               15 (pw)
+            564 LOAD_ATTR                8 (tokens)
+            574 POP_JUMP_FORWARD_IF_TRUE   107 (to 790)
+        >>  576 LOAD_FAST                8 (cloud_ready)
+            578 POP_JUMP_FORWARD_IF_FALSE   105 (to 790)
+
+409         580 NOP
+
+410         582 LOAD_GLOBAL             19 (NULL + _ocr_cloud_page)
+            594 LOAD_FAST               11 (png)
+            596 LOAD_FAST               10 (i)
+            598 LOAD_FAST               12 (w_pt)
+            600 LOAD_FAST               13 (h_pt)
+            602 LOAD_FAST                1 (cfg)
+            604 JUMP_IF_TRUE_OR_POP      1 (to 608)
+            606 BUILD_MAP                0
+        >>  608 PRECALL                  5
+            612 CALL                     5
+            622 STORE_FAST              15 (pw)
+
+411         624 PUSH_NULL
+            626 LOAD_FAST                4 (_say)
+            628 LOAD_CONST              16 ('  OCR：第 ')
+            630 LOAD_FAST               10 (i)
+            632 LOAD_CONST              17 (1)
+            634 BINARY_OP                0 (+)
+            638 FORMAT_VALUE             0
+            640 LOAD_CONST              19 (' 页改用云端视觉模型，识别 ')
+            642 LOAD_GLOBAL              7 (NULL + len)
+            654 LOAD_FAST               15 (pw)
+            656 LOAD_ATTR                8 (tokens)
+            666 PRECALL                  1
+            670 CALL                     1
+            680 FORMAT_VALUE             0
+            682 LOAD_CONST              20 (' 个词')
+            684 BUILD_STRING             5
+            686 PRECALL                  1
+            690 CALL                     1
+            700 POP_TOP
+            702 JUMP_FORWARD            43 (to 790)
+        >>  704 PUSH_EXC_INFO
+
+412         706 LOAD_GLOBAL              8 (Exception)
+            718 CHECK_EXC_MATCH
+            720 POP_JUMP_FORWARD_IF_FALSE    30 (to 782)
+            722 STORE_FAST               7 (e)
+
+413         724 PUSH_NULL
+            726 LOAD_FAST                4 (_say)
+            728 LOAD_CONST              16 ('  OCR：第 ')
+            730 LOAD_FAST               10 (i)
+            732 LOAD_CONST              17 (1)
+            734 BINARY_OP                0 (+)
+            738 FORMAT_VALUE             0
+            740 LOAD_CONST              21 (' 页云端识别失败：')
+            742 LOAD_FAST                7 (e)
+            744 FORMAT_VALUE             0
+            746 BUILD_STRING             4
+            748 PRECALL                  1
+            752 CALL                     1
+            762 POP_TOP
+            764 POP_EXCEPT
+            766 LOAD_CONST               7 (None)
+            768 STORE_FAST               7 (e)
+            770 DELETE_FAST              7 (e)
+            772 JUMP_FORWARD             8 (to 790)
+        >>  774 LOAD_CONST               7 (None)
+            776 STORE_FAST               7 (e)
+            778 DELETE_FAST              7 (e)
+            780 RERAISE                  1
+
+412     >>  782 RERAISE                  0
+        >>  784 COPY                     3
+            786 POP_EXCEPT
+            788 RERAISE                  1
+
+414     >>  790 LOAD_FAST               15 (pw)
+            792 POP_JUMP_FORWARD_IF_NOT_NONE    19 (to 832)
+
+415         794 LOAD_GLOBAL             21 (NULL + PageWords)
+            806 LOAD_FAST               10 (i)
+            808 LOAD_FAST               12 (w_pt)
+            810 LOAD_FAST               13 (h_pt)
+            812 BUILD_LIST               0
+            814 KW_NAMES                22
+            816 PRECALL                  4
+            820 CALL                     4
+            830 STORE_FAST              15 (pw)
+
+416     >>  832 LOAD_FAST                9 (pages)
+            834 LOAD_METHOD             11 (append)
+            856 LOAD_FAST               15 (pw)
+            858 PRECALL                  1
+            862 CALL                     1
+            872 POP_TOP
+            874 JUMP_BACKWARD          236 (to 404)
+
+418     >>  876 LOAD_GLOBAL             25 (NULL + sum)
+            888 LOAD_CONST              23 (<code object <genexpr> at 0x000002BF94A2F230, file "core\io\ocr.py", line 418>)
+            890 MAKE_FUNCTION            0
+            892 LOAD_FAST                9 (pages)
+            894 GET_ITER
+            896 PRECALL                  0
+            900 CALL                     0
+            910 PRECALL                  1
+            914 CALL                     1
+            924 STORE_FAST              16 (got)
+
+419         926 PUSH_NULL
+            928 LOAD_FAST                4 (_say)
+            930 LOAD_CONST              24 ('  OCR 完成：')
+            932 LOAD_GLOBAL              7 (NULL + len)
+            944 LOAD_FAST                9 (pages)
+            946 PRECALL                  1
+            950 CALL                     1
+            960 FORMAT_VALUE             0
+            962 LOAD_CONST              25 (' 页，共 ')
+            964 LOAD_FAST               16 (got)
+            966 FORMAT_VALUE             0
+            968 LOAD_CONST              20 (' 个词')
+            970 BUILD_STRING             5
+            972 PRECALL                  1
+            976 CALL                     1
+            986 POP_TOP
+
+420         988 LOAD_FAST                9 (pages)
+            990 RETURN_VALUE
+ExceptionTable:
+  92 to 180 -> 184 [0]
+  184 to 202 -> 254 [1] lasti
+  204 to 232 -> 244 [1] lasti
+  244 to 252 -> 254 [1] lasti
+  430 to 468 -> 472 [1]
+  472 to 490 -> 552 [2] lasti
+  492 to 530 -> 542 [2] lasti
+  542 to 550 -> 552 [2] lasti
+  582 to 700 -> 704 [1]
+  704 to 722 -> 784 [2] lasti
+  724 to 762 -> 774 [2] lasti
+  774 to 782 -> 784 [2] lasti
+
+==============================================================================
+## <module>.ocr_pdf_pages._say  (args=1, locals=1)
+# varnames: msg
+              0 COPY_FREE_VARS           1
+
+378           2 RESUME                   0
+
+379           4 LOAD_DEREF               1 (log)
+              6 POP_JUMP_FORWARD_IF_FALSE    31 (to 70)
+
+380           8 NOP
+
+381          10 PUSH_NULL
+             12 LOAD_DEREF               1 (log)
+             14 LOAD_FAST                0 (msg)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 POP_TOP
+             32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+        >>   36 PUSH_EXC_INFO
+
+382          38 LOAD_GLOBAL              0 (Exception)
+             50 CHECK_EXC_MATCH
+             52 POP_JUMP_FORWARD_IF_FALSE     4 (to 62)
+             54 POP_TOP
+
+383          56 POP_EXCEPT
+             58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+382     >>   62 RERAISE                  0
+        >>   64 COPY                     3
+             66 POP_EXCEPT
+             68 RERAISE                  1
+
+379     >>   70 LOAD_CONST               0 (None)
+             72 RETURN_VALUE
+ExceptionTable:
+  10 to 30 -> 36 [0]
+  36 to 54 -> 64 [1] lasti
+  62 to 62 -> 64 [1] lasti
+
+==============================================================================
+## <module>.ocr_pdf_pages.<genexpr>  (args=1, locals=2)
+# varnames: .0, p
+418           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (p)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (p)
+             26 LOAD_ATTR                1 (tokens)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE

@@ -1,0 +1,1393 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "dataclasses",
+   "re",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "Tuple",
+   "TYPE_CHECKING",
+   "core.models",
+   "PurchaseOrder",
+   "PoRecipe",
+   "datetime",
+   "_EXPLICIT_FORMATS",
+   "_NUMERIC_FORMATS",
+   "_try_parse_date",
+   "_is_ambiguous_date",
+   "_normalize_amount",
+   "_normalize_date",
+   "_normalize_term",
+   "_normalize_color",
+   "_SU_VOCAB",
+   "_CURRENCY_VOCAB",
+   "_PRICE_TERM_VOCAB",
+   "_SHIP_MODE_VOCAB",
+   "_PORT_FORBIDDEN_SHIP_WORDS",
+   "_COUNTRY_VOCAB",
+   "_SIZE_VOCAB",
+   "_normalize_code",
+   "_normalize_season",
+   "_normalize_size",
+   "_normalize_inseam",
+   "_normalize_payment_terms",
+   "_DATE_FIELDS",
+   "_append_warning",
+   "_normalize_date_fields",
+   "_auto_clean",
+   "_NORMALIZERS",
+   "apply_normalizers",
+   "validate_fields",
+   "_check_positive",
+   "_check_non_negative_int",
+   "_validate_lines",
+   "_default_validation_message",
+   "consolidate_entities_by_style_dest",
+   "normalize_po"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/normalize.py — business field normalization & validation post-extraction.\n\nAdded in V2.0.19.10: a unified post-processing pipeline that sits AFTER\n``apply_value_clean`` and BEFORE export.  Every normalizer is driven by recipe\n``cleans`` rules that carry a ``type`` key (backward-compatible with the existing\n``{pat, repl}`` regex regime).\n\nNormalization types\n-------------------\n* normalize_date    — parse → reformat as YYYY-MM-DD\n* normalize_amount  — strip currency / thousand separators, standardise decimal\n* normalize_term    — arbitrary vocabulary mapping (e.g. destination codes)\n* normalize_color   — specialised colour-vocabulary mapping\n\nValidation\n----------\n* date_parseable    — value must be parseable by dateutil\n* positive_number   — value must be > 0\n* not_empty         — value must not be empty / whitespace-only\n\nAll changes are reported as a list of human-readable ``(entity, field, old, new)``\ntuples via ``apply_normalizers``, and validation warnings are appended to\n``PurchaseOrder.validation_warnings`` (a new list-of-dicts field).\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Dict",
+    "List",
+    "Optional",
+    "Tuple",
+    "TYPE_CHECKING"
+   ],
+   [
+    "PurchaseOrder",
+    "PoRecipe"
+   ],
+   [
+    "datetime"
+   ],
+   [
+    "%Y-%m-%d",
+    "%Y/%m/%d",
+    "%d %b %Y",
+    "%d %B %Y",
+    "%b %d, %Y",
+    "%B %d, %Y",
+    "%d-%b-%Y",
+    "%d-%B-%Y"
+   ],
+   [
+    [
+     "%d.%m.%Y",
+     true
+    ],
+    [
+     "%m.%d.%Y",
+     false
+    ],
+    [
+     "%d/%m/%Y",
+     true
+    ],
+    [
+     "%m/%d/%Y",
+     false
+    ],
+    [
+     "%d-%m-%Y",
+     true
+    ],
+    [
+     "%m-%d-%Y",
+     false
+    ]
+   ],
+   "",
+   false,
+   "s",
+   "str",
+   "date_format",
+   "dayfirst",
+   "bool",
+   "return",
+   "vocab",
+   "Dict[str, str]",
+   "PCS",
+   "PC",
+   "PCE",
+   "PCES",
+   "PIECE",
+   "PIECES",
+   "PCS.",
+   "SET",
+   "SETS",
+   "ST",
+   "PR",
+   "PRS",
+   "PAIR",
+   "PAIRS",
+   "DZN",
+   "DOZ",
+   "DOZEN",
+   "DOZENS",
+   "USD",
+   "US$",
+   "$",
+   "U.S.DOLLAR",
+   "U.S. DOLLAR",
+   "US DOLLAR",
+   "DOLLARS",
+   "EUR",
+   "EURO",
+   "€",
+   "EUROS",
+   "GBP",
+   "£",
+   "STERLING",
+   "CNY",
+   "RMB",
+   "¥",
+   "HKD",
+   "JPY",
+   "KRW",
+   "VND",
+   "BDT",
+   "INR",
+   "TRY",
+   "PLN",
+   "CHF",
+   "CAD",
+   [
+    "￥",
+    "HKD",
+    "HK$",
+    "JPY",
+    "KRW",
+    "VND",
+    "BDT",
+    "INR",
+    "TRY",
+    "PLN",
+    "CHF",
+    "CAD"
+   ],
+   "FOB",
+   "FOB HK",
+   "FOB-HK",
+   "FOBHK",
+   "FOB HONG KONG",
+   "FOBHONGKONG",
+   "CIF",
+   "CFR",
+   "CNF",
+   "C&F",
+   "C&F HK",
+   "EXW",
+   "FCA",
+   "FAS",
+   "DDP",
+   "DDU",
+   "DAP",
+   "DAT",
+   "CPT",
+   "CIP",
+   [
+    "DAT",
+    "CPT",
+    "CIP"
+   ],
+   "SEA",
+   "BY SEA",
+   "OCEAN",
+   "SEA FREIGHT",
+   "SEAFREIGHT",
+   "SEA SHIPMENT",
+   "VESSEL",
+   "SHIP",
+   "BOAT",
+   "AIR",
+   "BY AIR",
+   "AIR FREIGHT",
+   "AIRFREIGHT",
+   "PLANE",
+   "COURIER",
+   "EXPRESS",
+   "TRUCK",
+   "RAIL",
+   "COMBINED",
+   [
+    "BY TRUCK",
+    "ROAD",
+    "RAIL",
+    "BY RAIL",
+    "TRAIN",
+    "COMBINED",
+    "MULTIMODAL"
+   ],
+   [
+    "<frozenset>",
+    "AIR",
+    "AIR FREIGHT",
+    "AIRFREIGHT",
+    "BOAT",
+    "BY AIR",
+    "BY RAIL",
+    "BY SEA",
+    "BY TRUCK",
+    "COMBINED",
+    "COURIER",
+    "EXPRESS",
+    "MULTIMODAL",
+    "OCEAN",
+    "OCEAN FREIGHT",
+    "PLANE",
+    "RAIL",
+    "ROAD",
+    "SEA",
+    "SEA FREIGHT",
+    "SEA SHIPMENT",
+    "SEAFREIGHT",
+    "SHIP",
+    "TRAIN",
+    "TRUCK",
+    "VESSEL"
+   ],
+   "CHINA",
+   "CN",
+   "P.R.CHINA",
+   "PRC",
+   "P.R. CHINA",
+   "PEOPLE'S REPUBLIC OF CHINA",
+   "HONG KONG",
+   "HK",
+   "HONGKONG",
+   "HONG KONG SAR",
+   "VIETNAM",
+   "VN",
+   "VIET NAM",
+   "BANGLADESH",
+   "BD",
+   "INDIA",
+   "IN",
+   "CAMBODIA",
+   "KH",
+   "TURKEY",
+   "TR",
+   "TURKIYE",
+   "INDONESIA",
+   "ID",
+   "PAKISTAN",
+   "PK",
+   "THAILAND",
+   "TH",
+   "MYANMAR",
+   "MM",
+   "SRI LANKA",
+   "LK",
+   "POLAND",
+   "PL",
+   "USA",
+   "US",
+   "U.S.A",
+   "U.S.A.",
+   "UNITED STATES",
+   "AMERICA",
+   "FRANCE",
+   "FR",
+   "GERMANY",
+   "DE",
+   "ITALY",
+   "IT",
+   "SPAIN",
+   "ES",
+   "UNITED KINGDOM",
+   "GB",
+   "UK",
+   "ENGLAND",
+   "XS",
+   "X-S",
+   "X SMALL",
+   "XSMALL",
+   "EXTRA SMALL",
+   "S",
+   "SMALL",
+   "M",
+   "MEDIUM",
+   "MED",
+   "L",
+   "LARGE",
+   "LGE",
+   "XL",
+   "X-L",
+   "X L",
+   "EXTRA LARGE",
+   "XXL",
+   "XXXL",
+   [
+    "XLARGE",
+    "XXL",
+    "2XL",
+    "XX-L",
+    "2X-L",
+    "DOUBLE XL",
+    "XXXL",
+    "3XL",
+    "XXX-L",
+    "3X-L"
+   ],
+   "spec",
+   "Optional[Dict]",
+   [
+    "delivery_date",
+    "order_date"
+   ],
+   "entity",
+   "field",
+   "value",
+   "reason",
+   "None",
+   "List[Tuple[str, str, str, str]]",
+   "po",
+   "'PurchaseOrder'",
+   "recipe",
+   "'PoRecipe'",
+   [
+    "normalize_date",
+    "normalize_amount",
+    "normalize_term",
+    "normalize_color",
+    "normalize_code",
+    "normalize_season",
+    "normalize_size",
+    "normalize_inseam",
+    "normalize_payment_terms"
+   ],
+   "List[dict]",
+   "v",
+   "vtype",
+   "int",
+   "overrides",
+   "Optional[Dict[str, str]]",
+   "List[str]",
+   [
+    "",
+    false
+   ],
+   [
+    "s",
+    "str",
+    "date_format",
+    "str",
+    "dayfirst",
+    "bool"
+   ],
+   [
+    "s",
+    "str",
+    "date_format",
+    "str",
+    "dayfirst",
+    "bool",
+    "return",
+    "bool"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "s",
+    "str",
+    "date_format",
+    "str",
+    "dayfirst",
+    "bool",
+    "return",
+    "str"
+   ],
+   [
+    "s",
+    "str",
+    "vocab",
+    "Dict[str, str]",
+    "return",
+    "str"
+   ],
+   [
+    null
+   ],
+   [
+    "s",
+    "str",
+    "spec",
+    "Optional[Dict]",
+    "return",
+    "str"
+   ],
+   [
+    "entity",
+    "str",
+    "field",
+    "str",
+    "value",
+    "str",
+    "reason",
+    "str",
+    "return",
+    "None"
+   ],
+   [
+    "return",
+    "List[Tuple[str, str, str, str]]"
+   ],
+   [
+    "po",
+    "'PurchaseOrder'",
+    "recipe",
+    "'PoRecipe'",
+    "return",
+    "List[Tuple[str, str, str, str]]"
+   ],
+   [
+    "po",
+    "'PurchaseOrder'",
+    "recipe",
+    "'PoRecipe'",
+    "return",
+    "List[dict]"
+   ],
+   [
+    "v",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "po",
+    "'PurchaseOrder'",
+    "return",
+    "None"
+   ],
+   [
+    "vtype",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "po",
+    "'PurchaseOrder'",
+    "return",
+    "int"
+   ],
+   [
+    "po",
+    "'PurchaseOrder'",
+    "recipe",
+    "'PoRecipe'",
+    "overrides",
+    "Optional[Dict[str, str]]",
+    "return",
+    "List[str]"
+   ]
+  ],
+  "n_instructions": 654
+ },
+ "<module>._try_parse_date": {
+  "names": [
+   "strip",
+   "datetime",
+   "strptime",
+   "strftime",
+   "ValueError",
+   "TypeError",
+   "_EXPLICIT_FORMATS",
+   "_NUMERIC_FORMATS",
+   "append",
+   "len",
+   "next"
+  ],
+  "varnames": [
+   "s",
+   "date_format",
+   "dayfirst",
+   "fmt",
+   "cands",
+   "df",
+   "chosen"
+  ],
+  "consts": [
+   "Parse *s* into ISO ``YYYY-MM-DD``.\n\n    Returns a tuple ``(norm, ambiguous)``:\n      * ``norm``      — \"YYYY-MM-DD\" on success, else None.\n      * ``ambiguous`` — True when the value is a numeric date whose day & month\n                       are both ≤ 12 (so MM/DD and DD/MM are both valid) AND we\n                       had NO explicit format hint / dayfirst preference to break\n                       the tie.  Callers must keep the RAW value and warn the user\n                       rather than silently guessing.\n\n    Priority:\n      1. ``date_format`` (if given) — exact strptime, never ambiguous.\n      2. explicit unambiguous formats (ISO, text-month) — never ambiguous.\n      3. numeric formats — if only one parses (e.g. 13.03 → DD/MM only) it is\n         safe; if both parse, resolve by ``dayfirst`` but mark ambiguous unless\n         ``dayfirst`` was an explicit preference.\n    ",
+   "",
+   [
+    null,
+    false
+   ],
+   "%Y-%m-%d",
+   false,
+   1,
+   0,
+   true
+  ],
+  "n_instructions": 165
+ },
+ "<module>._try_parse_date.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "dt",
+   "df"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>._is_ambiguous_date": {
+  "names": [
+   "_try_parse_date"
+  ],
+  "varnames": [
+   "s",
+   "date_format",
+   "dayfirst",
+   "norm",
+   "ambiguous"
+  ],
+  "consts": [
+   "True if *s* is a date we CANNOT safely standardise without a human.",
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._normalize_amount": {
+  "names": [
+   "strip",
+   "re",
+   "sub",
+   "count",
+   "rfind",
+   "search",
+   "replace"
+  ],
+  "varnames": [
+   "s",
+   "dots",
+   "commas",
+   "last_dot",
+   "last_comma",
+   "dec_sep",
+   "thou_sep"
+  ],
+  "consts": [
+   "Strip currency symbols / thousand-seps → bare numeric string.\n\n    Handles both European (1.234,56) and American (1,234.56) conventions by\n    checking which of '.' or ',' appears LAST (the decimal marker).\n    ",
+   "",
+   "^[^\\d.,-]+",
+   ".",
+   ",",
+   0,
+   1,
+   "\\.\\d{2}$",
+   ",\\d{2}$",
+   "[^\\d.-]+$",
+   "^[^\\d-]+"
+  ],
+  "n_instructions": 169
+ },
+ "<module>._normalize_date": {
+  "names": [
+   "strip",
+   "_try_parse_date"
+  ],
+  "varnames": [
+   "s",
+   "date_format",
+   "dayfirst",
+   "norm",
+   "ambiguous"
+  ],
+  "consts": [
+   "Try to parse *s* as a date and return YYYY-MM-DD.\n\n    If parsing fails OR the result is ambiguous (we would have to GUESS the\n    day/month order), return *s* UNCHANGED so the user can fix it manually.  The\n    ambiguity is surfaced separately via ``date_parseable`` / the auto date pass\n    so it shows up as a validation warning rather than a silent wrong date.\n    ",
+   ""
+  ],
+  "n_instructions": 27
+ },
+ "<module>._normalize_term": {
+  "names": [
+   "strip",
+   "lower",
+   "items"
+  ],
+  "varnames": [
+   "s",
+   "vocab",
+   "key",
+   "lower",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "Replace *s* using the lookup table *vocab* (exact, case-insensitive match)."
+  ],
+  "n_instructions": 48
+ },
+ "<module>._normalize_color": {
+  "names": [
+   "re",
+   "split",
+   "enumerate",
+   "_normalize_term",
+   "join"
+  ],
+  "varnames": [
+   "s",
+   "vocab",
+   "parts",
+   "i",
+   "token"
+  ],
+  "consts": [
+   "Apply colour vocabulary to the combined \"CODE / DESC\" string.\n\n    Tries each token individually (split on ' / ' and whitespace).\n    ",
+   "\\s*/\\s*",
+   " / "
+  ],
+  "n_instructions": 38
+ },
+ "<module>._normalize_code": {
+  "names": [
+   "strip",
+   "re",
+   "sub",
+   "upper"
+  ],
+  "varnames": [
+   "s",
+   "spec"
+  ],
+  "consts": [
+   "Style / PO code cleanup: trim + de-space + upper-case.\n\n    Conservative by design — it NEVER drops alphanumeric characters, so a\n    legitimate code with unusual separators is preserved; only stray spaces and\n    case are normalised.\n    ",
+   "",
+   "\\s+"
+  ],
+  "n_instructions": 28
+ },
+ "<module>._normalize_season": {
+  "names": [
+   "strip",
+   "upper",
+   "replace",
+   "re",
+   "sub",
+   "match",
+   "group"
+  ],
+  "varnames": [
+   "s",
+   "spec",
+   "m"
+  ],
+  "consts": [
+   "Normalise season tokens: \"S/S 27\" / \"SS 2027\" / \"ss27\" → \"SS27\".\n\n    Recognised prefixes: SS / FW / AW / FA / SP / SU / HO.  4-digit years are\n    collapsed to 2 digits.  Unknown shapes are still de-spaced / upper-cased but\n    otherwise left intact (never guessed).\n    ",
+   "",
+   "S/S",
+   "SS",
+   "F/W",
+   "FW",
+   "A/W",
+   "AW",
+   "S-S",
+   "F-W",
+   "A-W",
+   "\\s+",
+   "^(SS|FW|AW|FA|SP|SU|HO)(\\d{4})$",
+   1,
+   2,
+   null
+  ],
+  "n_instructions": 87
+ },
+ "<module>._normalize_size": {
+  "names": [
+   "strip",
+   "upper",
+   "re",
+   "fullmatch",
+   "sub",
+   "get",
+   "_SIZE_VOCAB",
+   "_normalize_term"
+  ],
+  "varnames": [
+   "s",
+   "spec",
+   "vocab"
+  ],
+  "consts": [
+   "Normalise size labels. Alpha sizes map via vocabulary; numeric sizes\n    (incl. waist/inseam like \"30/32\") are kept verbatim (trimmed / de-spaced).\n    ",
+   "",
+   "\\d[\\d\\s/.\\-]*",
+   "\\s+",
+   "vocab"
+  ],
+  "n_instructions": 49
+ },
+ "<module>._normalize_inseam": {
+  "names": [
+   "strip",
+   "upper",
+   "re",
+   "sub",
+   "replace",
+   "fullmatch"
+  ],
+  "varnames": [
+   "s",
+   "spec"
+  ],
+  "consts": [
+   "Strip unit words / symbols from an inseam, keep the length token.\n\n    \"30 INCH\" / \"30\"\" / \"30IN\" → \"30\"; \"L\" / \"LONG\" → \"L\".\n    ",
+   "",
+   "(INCHES|INCH|INS)",
+   "\"",
+   "'",
+   "\\s+",
+   "^(\\d+(?:\\.\\d+)?)IN$",
+   "\\1",
+   "\\d+(?:\\.\\d+)?",
+   [
+    "L",
+    "M",
+    "S",
+    "R"
+   ],
+   "LONG",
+   "L"
+  ],
+  "n_instructions": 77
+ },
+ "<module>._normalize_payment_terms": {
+  "names": [
+   "strip",
+   "re",
+   "sub",
+   "upper",
+   "search",
+   "group"
+  ],
+  "varnames": [
+   "s",
+   "spec",
+   "raw",
+   "up",
+   "instrument",
+   "days",
+   "m",
+   "m2"
+  ],
+  "consts": [
+   "Normalise payment terms to a canonical \"INSTRUMENT [ND]\" form.\n\n    e.g. \"T/T 30 DAYS\" / \"TT 30D\" / \"TT30DAYS\" → \"T/T 30D\".  Returns the raw\n    value when no recognised instrument is found (never guesses).\n    ",
+   "",
+   "\\s+",
+   " ",
+   null,
+   "T/?T",
+   "\\bTT\\b",
+   "T/T",
+   "L/?C",
+   "\\bLC\\b",
+   "L/C",
+   "\\bD/?P\\b",
+   "D/P",
+   "\\bD/?A\\b",
+   "D/A",
+   "\\bO/?A\\b",
+   "O/A",
+   "\\bCAD\\b",
+   "CAD",
+   "\\bCOD\\b",
+   "COD",
+   "\\bCASH\\b",
+   "CASH",
+   "(\\d{1,3})\\s*(?:DAYS?|D\\b)",
+   1,
+   "\\b(\\d{1,3})\\b",
+   "D"
+  ],
+  "n_instructions": 170
+ },
+ "<module>._append_warning": {
+  "names": [
+   "str",
+   "hasattr",
+   "object",
+   "__setattr__",
+   "validation_warnings",
+   "get",
+   "append",
+   "AttributeError",
+   "TypeError"
+  ],
+  "varnames": [
+   "po",
+   "entity",
+   "field",
+   "value",
+   "reason",
+   "w",
+   "existing",
+   "e"
+  ],
+  "consts": [
+   "Append a validation warning, de-duplicated by (entity, field, value).",
+   [
+    "entity",
+    "field",
+    "value",
+    "reason"
+   ],
+   "validation_warnings",
+   "entity",
+   "field",
+   "value",
+   "reason",
+   null
+  ],
+  "n_instructions": 97
+ },
+ "<module>._normalize_date_fields": {
+  "names": [
+   "getattr",
+   "bool",
+   "enumerate",
+   "entities"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "_process",
+   "ei",
+   "ent"
+  ],
+  "consts": [
+   "Auto-normalise delivery_date / order_date using the recipe date hint.\n\n    ``delivery_date`` is per-entity (Ship Date); ``order_date`` is document-level.\n    Returns ``(entity, field, old, new)`` change tuples for logging.  Ambiguous\n    or unparseable values are left unchanged and recorded as validation warnings.\n    ",
+   "date_format",
+   "",
+   "date_dayfirst",
+   false,
+   "PO",
+   "order_date",
+   "E",
+   1,
+   "delivery_date"
+  ],
+  "n_instructions": 68
+ },
+ "<module>._normalize_date_fields._process": {
+  "names": [
+   "getattr",
+   "strip",
+   "_try_parse_date",
+   "_append_warning",
+   "setattr",
+   "append"
+  ],
+  "varnames": [
+   "target",
+   "label",
+   "fld",
+   "old",
+   "norm",
+   "ambiguous"
+  ],
+  "consts": [
+   null,
+   "",
+   "无法解析为日期，请人工确认（Ship Date）",
+   "日期格式歧义（日/月均≤12，无法判定 DD/MM 还是 MM/DD），请人工确认"
+  ],
+  "n_instructions": 78
+ },
+ "<module>._auto_clean": {
+  "names": [
+   "enumerate",
+   "entities",
+   "_normalize_code",
+   "po_no",
+   "_normalize_season",
+   "season",
+   "_normalize_term",
+   "currency",
+   "_CURRENCY_VOCAB",
+   "price_term",
+   "_PRICE_TERM_VOCAB",
+   "ship_mode",
+   "_SHIP_MODE_VOCAB",
+   "country_of_origin",
+   "_COUNTRY_VOCAB",
+   "getattr",
+   "setattr",
+   "append",
+   "strip",
+   "upper",
+   "_PORT_FORBIDDEN_SHIP_WORDS",
+   "payment_terms",
+   "_normalize_payment_terms",
+   "lines",
+   "style_no",
+   "su",
+   "_SU_VOCAB",
+   "inseam",
+   "_normalize_inseam",
+   "sizes",
+   "size",
+   "_normalize_size"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "changes",
+   "ei",
+   "ent",
+   "label",
+   "fld",
+   "new",
+   "old",
+   "raw",
+   "li",
+   "ln",
+   "llab",
+   "sq"
+  ],
+  "consts": [
+   "Apply safe, deterministic cleaning to well-known fields for EVERY customer.\n\n    Unlike recipe-driven ``cleans`` (which the AI / user must author), this pass\n    runs automatically and losslessly:\n      * code fields (style_no, po_no) — trim / de-space / upper-case\n      * season — canonical \"SS27\" form\n      * SU / currency / price_term / ship_mode / country_of_origin — vocab map\n      * inseam / size — strip units / canonical alpha sizes\n    Unrecognised values are left unchanged; only spelling / case / whitespace is\n    normalised.  Returns ``(entity, field, old, new)`` change tuples for logging.\n    ",
+   "E",
+   1,
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "ship_mode",
+   "country_of_origin",
+   "",
+   [
+    "port_loading",
+    "port_discharge"
+   ],
+   "payment_terms",
+   "-L",
+   "style_no",
+   "su",
+   "inseam",
+   "size"
+  ],
+  "n_instructions": 321
+ },
+ "<module>.<lambda>": {
+  "names": [
+   "_normalize_payment_terms"
+  ],
+  "varnames": [
+   "v",
+   "r"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.apply_normalizers": {
+  "names": [
+   "getattr",
+   "enumerate",
+   "entities",
+   "items",
+   "isinstance",
+   "list",
+   "dict",
+   "get",
+   "_NORMALIZERS",
+   "_normalize_date",
+   "str",
+   "date_format",
+   "date_dayfirst",
+   "setattr",
+   "append",
+   "lines",
+   "color_code",
+   "color_desc",
+   "rstrip",
+   "_normalize_color",
+   "split",
+   "len"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "cleans",
+   "changes",
+   "ei",
+   "ent",
+   "entity_label",
+   "field_name",
+   "rules",
+   "spec",
+   "ntype",
+   "old",
+   "new",
+   "vocab",
+   "li",
+   "ln",
+   "combined",
+   "new_combined",
+   "parts"
+  ],
+  "consts": [
+   "Apply ``type=normalize_*`` rules from ``recipe.cleans`` and return changes.\n\n    Each entry in ``recipe.cleans[field_name]`` that carries a ``\"type\"`` key\n    is dispatched to the corresponding handler.  Existing ``{pat, repl}``\n    entries are SKIPPED here (they are already processed by\n    ``PurchaseOrder.apply_value_clean``).\n\n    Returns a list of ``(entity, field, old, new)`` change descriptions for\n    logging — empty list means nothing was altered.\n    ",
+   "cleans",
+   null,
+   "E",
+   1,
+   "color",
+   "type",
+   "",
+   "normalize_date",
+   "normalize_color",
+   "vocab",
+   " / ",
+   " /",
+   0,
+   "-L"
+  ],
+  "n_instructions": 278
+ },
+ "<module>.validate_fields": {
+  "names": [
+   "getattr",
+   "isinstance",
+   "dict",
+   "bool",
+   "enumerate",
+   "entities",
+   "items",
+   "list",
+   "get",
+   "str",
+   "_default_validation_message",
+   "_append_warning",
+   "_validate_lines",
+   "hasattr"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "validates_spec",
+   "warnings",
+   "_v_date_parseable",
+   "_VALIDATOR_FUNCS",
+   "ei",
+   "ent",
+   "entity_label",
+   "field_name",
+   "rules",
+   "old",
+   "rule",
+   "vtype",
+   "ok",
+   "reason"
+  ],
+  "consts": [
+   "Run field-level validators and return a list of warning dicts.\n\n    Each warning: ``{\"entity\": str, \"field\": str, \"value\": str, \"reason\": str}``.\n    Also appends to ``po.validation_warnings``.\n    ",
+   "validators",
+   null,
+   "date_format",
+   "",
+   "date_dayfirst",
+   false,
+   "v",
+   "str",
+   "return",
+   "bool",
+   [
+    "date_parseable",
+    "positive_number",
+    "not_empty",
+    "non_negative_int"
+   ],
+   "E",
+   1,
+   "type",
+   "message",
+   "validation_warnings",
+   [
+    "v",
+    "str",
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 187
+ },
+ "<module>.validate_fields._v_date_parseable": {
+  "names": [
+   "_try_parse_date"
+  ],
+  "varnames": [
+   "v",
+   "norm",
+   "ambiguous"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.validate_fields.<lambda>": {
+  "names": [
+   "_check_non_negative_int"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 6
+ },
+ "<module>._check_positive": {
+  "names": [
+   "_normalize_amount",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   "True if *v* is a positive number (> 0).",
+   0,
+   false
+  ],
+  "n_instructions": 28
+ },
+ "<module>._check_non_negative_int": {
+  "names": [
+   "_normalize_amount",
+   "int",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   "True if *v* is a non-negative integer (0, 1, 2, …).",
+   0,
+   false
+  ],
+  "n_instructions": 31
+ },
+ "<module>._validate_lines": {
+  "names": [
+   "enumerate",
+   "entities",
+   "lines",
+   "sizes",
+   "qty_safe",
+   "_append_warning",
+   "str",
+   "qty",
+   "getattr",
+   "unit_price",
+   "round",
+   "total_qty",
+   "abs"
+  ],
+  "varnames": [
+   "po",
+   "ei",
+   "ent",
+   "elab",
+   "li",
+   "ln",
+   "llab",
+   "sq",
+   "net",
+   "expected"
+  ],
+  "consts": [
+   "Line-level structural checks (V2.0.19.15).\n\n    * each SizeQty.qty must be >= 0 (negative = likely a reversal/correction row)\n    * when a line carries both ``net_amount`` and ``unit_price``, the computed\n      amount (unit_price x total_qty) is cross-checked against the printed one.\n    Warnings are appended (de-duplicated) to ``po.validation_warnings``.\n    ",
+   "E",
+   1,
+   "-L",
+   0,
+   "qty",
+   "数量不能为负数，请人工确认",
+   "net_amount",
+   null,
+   2,
+   0.5,
+   " (计算=",
+   ".2f",
+   ")",
+   "行金额对账不一致，请人工确认"
+  ],
+  "n_instructions": 112
+ },
+ "<module>._default_validation_message": {
+  "names": [
+   "get"
+  ],
+  "varnames": [
+   "vtype"
+  ],
+  "consts": [
+   null,
+   "无法解析为日期",
+   "值必须大于 0",
+   "字段不能为空",
+   "必须为非负整数",
+   "行金额对账不一致",
+   [
+    "date_parseable",
+    "positive_number",
+    "not_empty",
+    "non_negative_int",
+    "net_amount_consistent"
+   ],
+   "校验失败: "
+  ],
+  "n_instructions": 17
+ },
+ "<module>.consolidate_entities_by_style_dest": {
+  "names": [
+   "core.models",
+   "OrderEntity",
+   "entities",
+   "lines",
+   "append",
+   "destination_code",
+   "po_no",
+   "strip",
+   "upper",
+   "style_no",
+   "get",
+   "dataclasses",
+   "replace",
+   "enumerate",
+   "entity_index",
+   "len"
+  ],
+  "varnames": [
+   "po",
+   "OrderEntity",
+   "order",
+   "header_only_entities",
+   "ent",
+   "dest",
+   "ln",
+   "key",
+   "g",
+   "i",
+   "e"
+  ],
+  "consts": [
+   "V2.0.19.17: re-group ``po.entities`` so the final list holds exactly ONE\n    entity per distinct ``(style_no, destination_code)`` combination.\n\n    Parsers build entities however they like (often per destination, with each\n    line already carrying its own ``style_no``). This single post-parse step\n    guarantees the OSR emits one row per ``style × destination`` — the agreed\n    multi-style rule — without touching individual parser grouping logic.\n\n    Lines are moved into the matching entity; the entity's header fields are\n    inherited from the first source entity that contributed (they are consistent\n    within a PO). Returns the number of entities after consolidation.\n    ",
+   0,
+   [
+    "OrderEntity"
+   ],
+   "",
+   null,
+   [
+    "lines"
+   ],
+   1,
+   2
+  ],
+  "n_instructions": 141
+ },
+ "<module>.consolidate_entities_by_style_dest.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>.normalize_po": {
+  "names": [
+   "hasattr",
+   "apply_field_defaults",
+   "append",
+   "len",
+   "entities",
+   "consolidate_entities_by_style_dest",
+   "apply_recipe_overrides",
+   "apply_value_clean",
+   "apply_normalizers",
+   "_normalize_date_fields",
+   "_auto_clean",
+   "validate_fields",
+   "getattr"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "overrides",
+   "log_lines",
+   "ch",
+   "c",
+   "n_before",
+   "nz",
+   "ent",
+   "fld",
+   "old",
+   "new",
+   "o",
+   "n",
+   "df",
+   "ac",
+   "w"
+  ],
+  "consts": [
+   "Run the full post-extraction processing pipeline on *po*.\n\n    Order (deliberate):\n    1. ``apply_field_defaults``  — cross-PO persisted defaults (zero-AI)\n    2. ``apply_recipe_overrides`` — 仅此PO one-shot overrides (NOT cached)\n    3. ``apply_value_clean``      — existing {pat, repl} regex rules (cleans list)\n    4. ``apply_normalizers``      — NEW type=normalize_* rules\n    5. ``validate_fields``        — NEW field-level validators → warnings\n\n    Returns a flat list of human-readable change/warning strings for logging.\n    ",
+   "apply_field_defaults",
+   "[default] ",
+   "[consolidate] ",
+   " -> ",
+   " entities (style x destination)",
+   "apply_recipe_overrides",
+   "apply_value_clean",
+   "[clean] ",
+   32,
+   null,
+   29,
+   "…",
+   "[norm] ",
+   ":",
+   ": ",
+   " → ",
+   "[date] ",
+   "[hygiene] ",
+   "validation_warnings",
+   "[warn] ",
+   "entity",
+   "field",
+   " = ",
+   "value",
+   "reason"
+  ],
+  "n_instructions": 354
+ }
+}

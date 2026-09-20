@@ -1,0 +1,81 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "sys",
+   "platform",
+   "IS_WIN",
+   "_SW_RESTORE",
+   "_user32",
+   "raise_window"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/_win_raise.py — reliably raise a Tk window to the foreground on Windows.\n\nThe naive ``lift()`` + ``focus_force()`` used before V2.0.19.7 is unreliable on\nWindows: clicking the taskbar button hands the foreground token to\n``explorer.exe``; by the time Tk's ``<Map>`` handler runs in-process the token\nhas expired, so ``SetForegroundWindow`` (called internally by ``focus_force``)\nis silently rejected by the foreground lock. The window restores but stays\nbehind other apps — the classic \"taskbar shows running but nothing pops up\"\nbug.\n\nFix strategy (Windows only):\n  1. deiconify if the window is minimized;\n  2. toggle ``-topmost`` True -> update -> False, which forces the window past\n     the foreground lock even without a valid foreground token;\n  3. ``ShowWindow(hwnd, SW_RESTORE)`` to normalize/restore the window;\n  4. ``SetForegroundWindow(hwnd)`` to pull it forward.\n\nNon-Windows platforms fall back to ``lift()`` + ``focus_force()``.\n\nThis module imports only the standard library so neither ``ui.main_window`` nor\n``ui.recipe_dialog`` creates a circular import when they import it.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   "win32",
+   9,
+   "return",
+   "None",
+   [
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 29
+ },
+ "<module>._user32": {
+  "names": [
+   "IS_WIN",
+   "__import__",
+   "windll",
+   "user32",
+   "Exception"
+  ],
+  "varnames": [],
+  "consts": [
+   "Return the user32 ctypes lib on Windows, else None.",
+   null,
+   "ctypes"
+  ],
+  "n_instructions": 25
+ },
+ "<module>.raise_window": {
+  "names": [
+   "getattr",
+   "state",
+   "deiconify",
+   "Exception",
+   "_user32",
+   "wm_attributes",
+   "update_idletasks",
+   "winfo_id",
+   "ShowWindow",
+   "_SW_RESTORE",
+   "SetForegroundWindow",
+   "lift",
+   "focus_force"
+  ],
+  "varnames": [
+   "win",
+   "user32",
+   "hwnd"
+  ],
+  "consts": [
+   "Bring *win* (a ``tkinter`` Toplevel / Tk) to the front reliably.\n\n    Every step is guarded so a failure degrades gracefully to the old\n    ``lift``/``focus_force`` behaviour rather than raising an exception inside\n    a Tk event handler.\n    ",
+   "state",
+   null,
+   "iconic",
+   "-topmost",
+   true,
+   false
+  ],
+  "n_instructions": 166
+ }
+}

@@ -1,0 +1,2333 @@
+# module: ui.recipe_raw_editor
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\ui\recipe_raw_editor.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('ui/recipe_raw_editor.py - 无 PDF 时直接编辑指纹配方的锚点正则。\n\n这是「指纹管理面板」的高级入口：当用户手上没有对应 PO 的 PDF（或只是想\n手动修一个 AI 写错的锚点）时，直接手填 14 个头字段锚点正则并保存回缓存。\n\n与确认框不同，这里**不依赖 doc_lines**，无法自动重定位锚点 —— 用户必须\n自己写对正则。保存前逐个 re.compile 校验，避免写进一个无法编译的配方。\n\n注意：缓存文件里只有锚点正则（field_overrides 在 cache.put 前已被清空），\n所以事后编辑只作用于带锚点的头字段；override-only 字段本就不进缓存，不在此编辑。\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 12           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 14          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (re)
+             24 STORE_NAME               3 (re)
+
+ 15          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (sys)
+             32 STORE_NAME               4 (sys)
+
+ 16          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (tkinter)
+             40 STORE_NAME               6 (tk)
+
+ 17          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (('Path',))
+             46 IMPORT_NAME              7 (pathlib)
+             48 IMPORT_FROM              8 (Path)
+             50 STORE_NAME               8 (Path)
+             52 POP_TOP
+
+ 18          54 LOAD_CONST               1 (0)
+             56 LOAD_CONST               5 (('messagebox', 'ttk'))
+             58 IMPORT_NAME              5 (tkinter)
+             60 IMPORT_FROM              9 (messagebox)
+             62 STORE_NAME               9 (messagebox)
+             64 IMPORT_FROM             10 (ttk)
+             66 STORE_NAME              10 (ttk)
+             68 POP_TOP
+
+ 20          70 LOAD_CONST               1 (0)
+             72 LOAD_CONST               6 (('PoRecipe',))
+             74 IMPORT_NAME             11 (core.models)
+             76 IMPORT_FROM             12 (PoRecipe)
+             78 STORE_NAME              12 (PoRecipe)
+             80 POP_TOP
+
+ 21          82 LOAD_CONST               1 (0)
+             84 LOAD_CONST               7 (('RecipeCache',))
+             86 IMPORT_NAME             13 (core.store.cache)
+             88 IMPORT_FROM             14 (RecipeCache)
+             90 STORE_NAME              14 (RecipeCache)
+             92 POP_TOP
+
+ 23          94 NOP
+
+ 24          96 LOAD_CONST               1 (0)
+             98 LOAD_CONST               3 (None)
+            100 IMPORT_NAME             15 (theme_glass)
+            102 STORE_NAME              15 (theme_glass)
+
+ 25         104 PUSH_NULL
+            106 LOAD_NAME               16 (getattr)
+            108 LOAD_NAME               15 (theme_glass)
+            110 LOAD_CONST               8 ('COL')
+            112 BUILD_MAP                0
+            114 PRECALL                  3
+            118 CALL                     3
+            128 STORE_NAME              17 (COL)
+
+ 26         130 PUSH_NULL
+            132 LOAD_NAME               16 (getattr)
+            134 LOAD_NAME               15 (theme_glass)
+            136 LOAD_CONST               9 ('FONT_BODY')
+            138 LOAD_CONST              10 (('Segoe UI', 12))
+            140 PRECALL                  3
+            144 CALL                     3
+            154 STORE_NAME              18 (FONT_BODY)
+
+ 27         156 PUSH_NULL
+            158 LOAD_NAME               16 (getattr)
+            160 LOAD_NAME               15 (theme_glass)
+            162 LOAD_CONST              11 ('FONT_HEAD_BOLD')
+            164 LOAD_CONST              12 (('Segoe UI', 13, 'bold'))
+            166 PRECALL                  3
+            170 CALL                     3
+            180 STORE_NAME              19 (FONT_HEAD)
+
+ 28         182 PUSH_NULL
+            184 LOAD_NAME               16 (getattr)
+            186 LOAD_NAME               15 (theme_glass)
+            188 LOAD_CONST              13 ('FONT_BUTTON')
+            190 LOAD_CONST              14 (('Segoe UI', 13))
+            192 PRECALL                  3
+            196 CALL                     3
+            206 STORE_NAME              20 (FONT_BUTTON)
+
+ 29         208 PUSH_NULL
+            210 LOAD_NAME               16 (getattr)
+            212 LOAD_NAME               15 (theme_glass)
+            214 LOAD_CONST              15 ('FONT_BUTTON_BOLD')
+            216 LOAD_CONST              12 (('Segoe UI', 13, 'bold'))
+            218 PRECALL                  3
+            222 CALL                     3
+            232 STORE_NAME              21 (FONT_BUTTON_BOLD)
+            234 JUMP_FORWARD            23 (to 282)
+        >>  236 PUSH_EXC_INFO
+
+ 30         238 LOAD_NAME               22 (Exception)
+            240 CHECK_EXC_MATCH
+            242 POP_JUMP_FORWARD_IF_FALSE    15 (to 274)
+            244 POP_TOP
+
+ 31         246 LOAD_CONST               3 (None)
+            248 STORE_NAME              15 (theme_glass)
+
+ 32         250 BUILD_MAP                0
+            252 STORE_NAME              17 (COL)
+
+ 33         254 LOAD_CONST              10 (('Segoe UI', 12))
+            256 STORE_NAME              18 (FONT_BODY)
+
+ 34         258 LOAD_CONST              12 (('Segoe UI', 13, 'bold'))
+            260 STORE_NAME              19 (FONT_HEAD)
+
+ 35         262 LOAD_CONST              14 (('Segoe UI', 13))
+            264 STORE_NAME              20 (FONT_BUTTON)
+
+ 36         266 LOAD_CONST              12 (('Segoe UI', 13, 'bold'))
+            268 STORE_NAME              21 (FONT_BUTTON_BOLD)
+            270 POP_EXCEPT
+            272 JUMP_FORWARD             4 (to 282)
+
+ 30     >>  274 RERAISE                  0
+        >>  276 COPY                     3
+            278 POP_EXCEPT
+            280 RERAISE                  1
+
+ 39     >>  282 LOAD_CONST              16 ((('po_no_anchor', 'PO 单号'), ('season_anchor', '季节'), ('delivery_anchor', '交期 / Delivery'), ('currency_anchor', '币种'), ('price_term_anchor', '价格条款'), ('payment_terms_anchor', '付款条款'), ('style_anchor', '款式 / 产品'), ('price_anchor', '单价'), ('packing_anchor', '包装'), ('port_loading_anchor', '装货港'), ('port_discharge_anchor', '目的港'), ('ship_mode_anchor', '运输方式'), ('vendor_anchor', '供应商'), ('agent_anchor', '代理')))
+            284 STORE_NAME              23 (_ANCHOR_LABELS)
+
+ 57         286 LOAD_CONST              17 (('customer', 'channel', 'destination_code', 'size_scale', 'product_group', 'age_sex_desc', 'product_desc', 'wash_method', 'washing_color', 'packing_method', 'season', 'currency', 'price_term', 'payment_terms', 'po_no', 'delivery_date', 'port_loading', 'port_discharge', 'ship_mode', 'vendor_name', 'agent_name', 'style_no', 'unit_price', 'import_po_no', 'reference_no', 'cir_no', 'freight_terms', 'country_of_origin', 'dc_address'))
+            288 STORE_NAME              24 (_FIELD_DEFAULT_KEYS)
+
+ 67         290 LOAD_CONST              18 (('color', 'style_no', 'season', 'po_no', 'destination_code', 'currency', 'price_term', 'payment_terms', 'delivery_date', 'vendor_name', 'agent_name'))
+            292 STORE_NAME              25 (_CLEAN_FIELDS)
+
+ 72         294 LOAD_NAME               17 (COL)
+            296 LOAD_METHOD             26 (get)
+            318 LOAD_CONST              19 ('gap')
+            320 LOAD_CONST              20 ('#2a2e35')
+            322 PRECALL                  2
+            326 CALL                     2
+            336 STORE_NAME              27 (_C_GAP)
+
+ 73         338 LOAD_NAME               17 (COL)
+            340 LOAD_METHOD             26 (get)
+            362 LOAD_CONST              21 ('panel')
+            364 LOAD_CONST              22 ('#343841')
+            366 PRECALL                  2
+            370 CALL                     2
+            380 STORE_NAME              28 (_C_PANEL)
+
+ 74         382 LOAD_NAME               17 (COL)
+            384 LOAD_METHOD             26 (get)
+            406 LOAD_CONST              23 ('panel_border')
+            408 LOAD_CONST              24 ('#444b57')
+            410 PRECALL                  2
+            414 CALL                     2
+            424 STORE_NAME              29 (_C_PANEL_BORDER)
+
+ 75         426 LOAD_NAME               17 (COL)
+            428 LOAD_METHOD             26 (get)
+            450 LOAD_CONST              25 ('ink')
+            452 LOAD_CONST              26 ('#ECEEF1')
+            454 PRECALL                  2
+            458 CALL                     2
+            468 STORE_NAME              30 (_C_INK)
+
+ 76         470 LOAD_NAME               17 (COL)
+            472 LOAD_METHOD             26 (get)
+            494 LOAD_CONST              27 ('ink_2')
+            496 LOAD_CONST              28 ('#B7BDC6')
+            498 PRECALL                  2
+            502 CALL                     2
+            512 STORE_NAME              31 (_C_INK2)
+
+ 77         514 LOAD_NAME               17 (COL)
+            516 LOAD_METHOD             26 (get)
+            538 LOAD_CONST              29 ('ink_3')
+            540 LOAD_CONST              30 ('#8A909B')
+            542 PRECALL                  2
+            546 CALL                     2
+            556 STORE_NAME              32 (_C_INK3)
+
+ 78         558 LOAD_NAME               17 (COL)
+            560 LOAD_METHOD             26 (get)
+            582 LOAD_CONST              31 ('field')
+            584 LOAD_CONST              32 ('#31353D')
+            586 PRECALL                  2
+            590 CALL                     2
+            600 STORE_NAME              33 (_C_FIELD)
+
+ 79         602 LOAD_NAME               17 (COL)
+            604 LOAD_METHOD             26 (get)
+            626 LOAD_CONST              33 ('accent')
+            628 LOAD_CONST              34 ('#C2A878')
+            630 PRECALL                  2
+            634 CALL                     2
+            644 STORE_NAME              34 (_C_ACCENT)
+
+ 80         646 LOAD_NAME               17 (COL)
+            648 LOAD_METHOD             26 (get)
+            670 LOAD_CONST              35 ('select_fg')
+            672 LOAD_CONST              36 ('#23262D')
+            674 PRECALL                  2
+            678 CALL                     2
+            688 STORE_NAME              35 (_C_SELECT_FG)
+
+ 81         690 LOAD_NAME               17 (COL)
+            692 LOAD_METHOD             26 (get)
+            714 LOAD_CONST              37 ('accent_soft')
+            716 LOAD_CONST              38 ('#5A4E34')
+            718 PRECALL                  2
+            722 CALL                     2
+            732 STORE_NAME              36 (_C_ACCENT_SOFT)
+
+ 82         734 LOAD_NAME               17 (COL)
+            736 LOAD_METHOD             26 (get)
+            758 LOAD_CONST              39 ('hover')
+            760 LOAD_CONST              40 ('#3C424C')
+            762 PRECALL                  2
+            766 CALL                     2
+            776 STORE_NAME              37 (_C_HOVER)
+
+ 85         778 LOAD_CONST              41 ('#E5736B')
+            780 STORE_NAME              38 (_C_DEL_FG)
+
+ 86         782 LOAD_CONST              42 ('#4A2A28')
+            784 STORE_NAME              39 (_C_DEL_ACTIVE)
+
+ 87         786 LOAD_NAME               34 (_C_ACCENT)
+            788 LOAD_NAME               35 (_C_SELECT_FG)
+            790 LOAD_CONST              43 ('flat')
+
+ 88         792 LOAD_CONST               1 (0)
+            794 LOAD_CONST               1 (0)
+
+ 89         796 LOAD_NAME               17 (COL)
+            798 LOAD_METHOD             26 (get)
+            820 LOAD_CONST              44 ('accent_2')
+            822 LOAD_CONST              45 ('#A98C5F')
+            824 PRECALL                  2
+            828 CALL                     2
+
+ 90         838 LOAD_NAME               35 (_C_SELECT_FG)
+
+ 87         840 LOAD_CONST              46 (('bg', 'fg', 'relief', 'borderwidth', 'highlightthickness', 'activebackground', 'activeforeground'))
+            842 BUILD_CONST_KEY_MAP      7
+            844 STORE_NAME              40 (PRIMARY_KW)
+
+ 93         846 PUSH_NULL
+            848 LOAD_BUILD_CLASS
+            850 LOAD_CONST              47 (<code object RecipeRawEditor at 0x000002BF94A2F730, file "ui\recipe_raw_editor.py", line 93>)
+            852 MAKE_FUNCTION            0
+            854 LOAD_CONST              48 ('RecipeRawEditor')
+            856 LOAD_NAME                6 (tk)
+            858 LOAD_ATTR               41 (Toplevel)
+            868 PRECALL                  3
+            872 CALL                     3
+            882 STORE_NAME              42 (RecipeRawEditor)
+            884 LOAD_CONST               3 (None)
+            886 RETURN_VALUE
+ExceptionTable:
+  96 to 232 -> 236 [0]
+  236 to 268 -> 276 [1] lasti
+  274 to 274 -> 276 [1] lasti
+
+==============================================================================
+## <module>.RecipeRawEditor  (args=0, locals=0)
+              0 MAKE_CELL                0 (__class__)
+
+ 93           2 RESUME                   0
+              4 LOAD_NAME                0 (__name__)
+              6 STORE_NAME               1 (__module__)
+              8 LOAD_CONST               0 ('RecipeRawEditor')
+             10 STORE_NAME               2 (__qualname__)
+
+ 94          12 LOAD_CONST               1 ('Modal editor for the 14 header anchor regexes of a cached recipe.')
+             14 STORE_NAME               3 (__doc__)
+
+ 96          16 LOAD_CONST              14 (('recipe', 'PoRecipe', 'fp', 'str', 'cache', 'RecipeCache'))
+             18 LOAD_CLOSURE             0 (__class__)
+             20 BUILD_TUPLE              1
+             22 LOAD_CONST               8 (<code object __init__ at 0x000002BF94447C90, file "ui\recipe_raw_editor.py", line 96>)
+             24 MAKE_FUNCTION           12 (annotations, closure)
+             26 STORE_NAME               4 (__init__)
+
+114          28 LOAD_CONST               9 (<code object _set_icon at 0x000002BF946C1CE0, file "ui\recipe_raw_editor.py", line 114>)
+             30 MAKE_FUNCTION            0
+             32 STORE_NAME               5 (_set_icon)
+
+121          34 LOAD_CONST              10 (<code object _center at 0x000002BF940DE030, file "ui\recipe_raw_editor.py", line 121>)
+             36 MAKE_FUNCTION            0
+             38 STORE_NAME               6 (_center)
+
+129          40 LOAD_CONST              11 (<code object _build at 0x000002BF940DA4E0, file "ui\recipe_raw_editor.py", line 129>)
+             42 MAKE_FUNCTION            0
+             44 STORE_NAME               7 (_build)
+
+306          46 LOAD_CONST              12 (<code object _save at 0x000002BF943E4F40, file "ui\recipe_raw_editor.py", line 306>)
+             48 MAKE_FUNCTION            0
+             50 STORE_NAME               8 (_save)
+
+343          52 LOAD_CONST              13 (<code object _cancel at 0x000002BF94A2ED30, file "ui\recipe_raw_editor.py", line 343>)
+             54 MAKE_FUNCTION            0
+             56 STORE_NAME               9 (_cancel)
+             58 LOAD_CLOSURE             0 (__class__)
+             60 COPY                     1
+             62 STORE_NAME              10 (__classcell__)
+             64 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor.__init__  (args=5, locals=5)
+# varnames: self, parent, recipe, fp, cache
+              0 COPY_FREE_VARS           1
+
+ 96           2 RESUME                   0
+
+ 97           4 LOAD_GLOBAL              1 (NULL + super)
+             16 PRECALL                  0
+             20 CALL                     0
+             30 LOAD_METHOD              1 (__init__)
+             52 LOAD_FAST                1 (parent)
+             54 PRECALL                  1
+             58 CALL                     1
+             68 POP_TOP
+
+ 98          70 LOAD_FAST                0 (self)
+             72 LOAD_METHOD              2 (title)
+             94 LOAD_CONST               1 ('高级：直编锚点正则')
+             96 PRECALL                  1
+            100 CALL                     1
+            110 POP_TOP
+
+ 99         112 LOAD_CONST               2 (False)
+            114 LOAD_FAST                0 (self)
+            116 STORE_ATTR               3 (result)
+
+100         126 LOAD_FAST                2 (recipe)
+            128 LOAD_FAST                0 (self)
+            130 STORE_ATTR               4 (_recipe)
+
+101         140 LOAD_FAST                3 (fp)
+            142 LOAD_FAST                0 (self)
+            144 STORE_ATTR               5 (_fp)
+
+102         154 LOAD_FAST                4 (cache)
+            156 LOAD_FAST                0 (self)
+            158 STORE_ATTR               6 (_cache)
+
+103         168 BUILD_MAP                0
+            170 LOAD_FAST                0 (self)
+            172 STORE_ATTR               7 (_vars)
+
+104         182 LOAD_GLOBAL             17 (NULL + tk)
+            194 LOAD_ATTR                9 (StringVar)
+            204 LOAD_GLOBAL             21 (NULL + str)
+            216 LOAD_FAST                2 (recipe)
+            218 LOAD_ATTR               11 (customer)
+            228 JUMP_IF_TRUE_OR_POP      1 (to 232)
+            230 LOAD_CONST               3 ('')
+        >>  232 PRECALL                  1
+            236 CALL                     1
+            246 KW_NAMES                 4
+            248 PRECALL                  1
+            252 CALL                     1
+            262 LOAD_FAST                0 (self)
+            264 STORE_ATTR              12 (_customer_var)
+
+106         274 LOAD_FAST                0 (self)
+            276 LOAD_METHOD             13 (transient)
+            298 LOAD_FAST                1 (parent)
+            300 PRECALL                  1
+            304 CALL                     1
+            314 POP_TOP
+
+107         316 LOAD_FAST                0 (self)
+            318 LOAD_METHOD             14 (grab_set)
+            340 PRECALL                  0
+            344 CALL                     0
+            354 POP_TOP
+
+108         356 LOAD_FAST                0 (self)
+            358 LOAD_METHOD             15 (_set_icon)
+            380 PRECALL                  0
+            384 CALL                     0
+            394 POP_TOP
+
+109         396 LOAD_FAST                0 (self)
+            398 LOAD_METHOD             16 (_build)
+            420 PRECALL                  0
+            424 CALL                     0
+            434 POP_TOP
+
+110         436 LOAD_FAST                0 (self)
+            438 LOAD_METHOD             17 (_center)
+            460 LOAD_FAST                1 (parent)
+            462 PRECALL                  1
+            466 CALL                     1
+            476 POP_TOP
+
+111         478 LOAD_FAST                0 (self)
+            480 LOAD_METHOD             18 (protocol)
+            502 LOAD_CONST               5 ('WM_DELETE_WINDOW')
+            504 LOAD_FAST                0 (self)
+            506 LOAD_ATTR               19 (_cancel)
+            516 PRECALL                  2
+            520 CALL                     2
+            530 POP_TOP
+
+112         532 LOAD_FAST                0 (self)
+            534 LOAD_METHOD             20 (wait_window)
+            556 LOAD_FAST                0 (self)
+            558 PRECALL                  1
+            562 CALL                     1
+            572 POP_TOP
+            574 LOAD_CONST               0 (None)
+            576 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._set_icon  (args=1, locals=2)
+# varnames: self, base
+114           0 RESUME                   0
+
+115           2 NOP
+
+116           4 LOAD_GLOBAL              1 (NULL + Path)
+             16 LOAD_GLOBAL              3 (NULL + getattr)
+             28 LOAD_GLOBAL              4 (sys)
+             40 LOAD_CONST               1 ('_MEIPASS')
+             42 LOAD_GLOBAL              1 (NULL + Path)
+             54 LOAD_GLOBAL              6 (__file__)
+             66 PRECALL                  1
+             70 CALL                     1
+             80 LOAD_ATTR                4 (parent)
+             90 LOAD_ATTR                4 (parent)
+            100 PRECALL                  3
+            104 CALL                     3
+            114 PRECALL                  1
+            118 CALL                     1
+            128 STORE_FAST               1 (base)
+
+117         130 LOAD_FAST                0 (self)
+            132 LOAD_METHOD              5 (iconbitmap)
+            154 LOAD_GLOBAL             13 (NULL + str)
+            166 LOAD_FAST                1 (base)
+            168 LOAD_CONST               2 ('app.ico')
+            170 BINARY_OP               11 (/)
+            174 PRECALL                  1
+            178 CALL                     1
+            188 PRECALL                  1
+            192 CALL                     1
+            202 POP_TOP
+            204 LOAD_CONST               0 (None)
+            206 RETURN_VALUE
+        >>  208 PUSH_EXC_INFO
+
+118         210 LOAD_GLOBAL             14 (Exception)
+            222 CHECK_EXC_MATCH
+            224 POP_JUMP_FORWARD_IF_FALSE     4 (to 234)
+            226 POP_TOP
+
+119         228 POP_EXCEPT
+            230 LOAD_CONST               0 (None)
+            232 RETURN_VALUE
+
+118     >>  234 RERAISE                  0
+        >>  236 COPY                     3
+            238 POP_EXCEPT
+            240 RERAISE                  1
+ExceptionTable:
+  4 to 202 -> 208 [0]
+  208 to 226 -> 236 [1] lasti
+  234 to 234 -> 236 [1] lasti
+
+==============================================================================
+## <module>.RecipeRawEditor._center  (args=2, locals=6)
+# varnames: self, parent, w, h, x, y
+121           0 RESUME                   0
+
+122           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (update_idletasks)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 POP_TOP
+
+123          42 LOAD_CONST               1 ((620, 640))
+             44 UNPACK_SEQUENCE          2
+             48 STORE_FAST               2 (w)
+             50 STORE_FAST               3 (h)
+
+124          52 LOAD_FAST                1 (parent)
+             54 LOAD_METHOD              1 (winfo_rootx)
+             76 PRECALL                  0
+             80 CALL                     0
+             90 LOAD_GLOBAL              5 (NULL + max)
+            102 LOAD_CONST               2 (0)
+            104 LOAD_FAST                1 (parent)
+            106 LOAD_METHOD              3 (winfo_width)
+            128 PRECALL                  0
+            132 CALL                     0
+            142 LOAD_FAST                2 (w)
+            144 BINARY_OP               10 (-)
+            148 LOAD_CONST               3 (2)
+            150 BINARY_OP                2 (//)
+            154 PRECALL                  2
+            158 CALL                     2
+            168 BINARY_OP                0 (+)
+            172 STORE_FAST               4 (x)
+
+125         174 LOAD_FAST                1 (parent)
+            176 LOAD_METHOD              4 (winfo_rooty)
+            198 PRECALL                  0
+            202 CALL                     0
+            212 LOAD_GLOBAL              5 (NULL + max)
+            224 LOAD_CONST               2 (0)
+            226 LOAD_FAST                1 (parent)
+            228 LOAD_METHOD              5 (winfo_height)
+            250 PRECALL                  0
+            254 CALL                     0
+            264 LOAD_FAST                3 (h)
+            266 BINARY_OP               10 (-)
+            270 LOAD_CONST               3 (2)
+            272 BINARY_OP                2 (//)
+            276 PRECALL                  2
+            280 CALL                     2
+            290 BINARY_OP                0 (+)
+            294 STORE_FAST               5 (y)
+
+126         296 LOAD_FAST                0 (self)
+            298 LOAD_METHOD              6 (geometry)
+            320 LOAD_FAST                2 (w)
+            322 FORMAT_VALUE             0
+            324 LOAD_CONST               4 ('x')
+            326 LOAD_FAST                3 (h)
+            328 FORMAT_VALUE             0
+            330 LOAD_CONST               5 ('+')
+            332 LOAD_FAST                4 (x)
+            334 FORMAT_VALUE             0
+            336 LOAD_CONST               5 ('+')
+            338 LOAD_FAST                5 (y)
+            340 FORMAT_VALUE             0
+            342 BUILD_STRING             7
+            344 PRECALL                  1
+            348 CALL                     1
+            358 POP_TOP
+
+127         360 LOAD_FAST                0 (self)
+            362 LOAD_METHOD              7 (minsize)
+            384 LOAD_CONST               6 (560)
+            386 LOAD_CONST               7 (480)
+            388 PRECALL                  2
+            392 CALL                     2
+            402 POP_TOP
+            404 LOAD_CONST               0 (None)
+            406 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build  (args=1, locals=20)
+# varnames: self, outer, head, vsb, body, _on_cfg, grid, cust_ent, row, attr, label, cur, v, ent, _fd_add, add_row, k, _cl_refresh, add_cl, btns
+              0 MAKE_CELL                0 (self)
+              2 MAKE_CELL               20 (_cl_add_row)
+              4 MAKE_CELL               21 (_cl_remove)
+              6 MAKE_CELL               22 (_fd_refresh)
+              8 MAKE_CELL               23 (_fd_remove)
+             10 MAKE_CELL               24 (body_id)
+             12 MAKE_CELL               25 (canvas)
+             14 MAKE_CELL               26 (cl_frame)
+             16 MAKE_CELL               27 (fd_frame)
+
+129          18 RESUME                   0
+
+130          20 LOAD_GLOBAL              1 (NULL + ttk)
+             32 LOAD_ATTR                1 (Frame)
+             42 LOAD_DEREF               0 (self)
+             44 LOAD_CONST               1 (0)
+             46 KW_NAMES                 2
+             48 PRECALL                  2
+             52 CALL                     2
+             62 STORE_FAST               1 (outer)
+
+131          64 LOAD_FAST                1 (outer)
+             66 LOAD_METHOD              2 (pack)
+             88 LOAD_CONST               3 ('both')
+             90 LOAD_CONST               4 (True)
+             92 KW_NAMES                 5
+             94 PRECALL                  2
+             98 CALL                     2
+            108 POP_TOP
+
+132         110 LOAD_FAST                1 (outer)
+            112 LOAD_METHOD              3 (columnconfigure)
+            134 LOAD_CONST               1 (0)
+            136 LOAD_CONST               6 (1)
+            138 KW_NAMES                 7
+            140 PRECALL                  2
+            144 CALL                     2
+            154 POP_TOP
+
+133         156 LOAD_FAST                1 (outer)
+            158 LOAD_METHOD              4 (rowconfigure)
+            180 LOAD_CONST               6 (1)
+            182 LOAD_CONST               6 (1)
+            184 KW_NAMES                 7
+            186 PRECALL                  2
+            190 CALL                     2
+            200 POP_TOP
+
+135         202 LOAD_GLOBAL             11 (NULL + tk)
+            214 LOAD_ATTR                1 (Frame)
+            224 LOAD_FAST                1 (outer)
+            226 LOAD_GLOBAL             12 (_C_GAP)
+            238 LOAD_CONST               8 (20)
+            240 LOAD_CONST               9 (14)
+            242 KW_NAMES                10
+            244 PRECALL                  4
+            248 CALL                     4
+            258 STORE_FAST               2 (head)
+
+136         260 LOAD_FAST                2 (head)
+            262 LOAD_METHOD              7 (grid)
+            284 LOAD_CONST               1 (0)
+            286 LOAD_CONST               1 (0)
+            288 LOAD_CONST              11 ('ew')
+            290 KW_NAMES                12
+            292 PRECALL                  3
+            296 CALL                     3
+            306 POP_TOP
+
+137         308 LOAD_GLOBAL             11 (NULL + tk)
+            320 LOAD_ATTR                8 (Label)
+            330 LOAD_FAST                2 (head)
+            332 LOAD_CONST              13 ('高级：直编锚点正则')
+            334 LOAD_GLOBAL             18 (FONT_HEAD)
+            346 LOAD_GLOBAL             12 (_C_GAP)
+
+138         358 LOAD_GLOBAL             20 (_C_INK)
+
+137         370 KW_NAMES                14
+            372 PRECALL                  5
+            376 CALL                     5
+
+138         386 LOAD_METHOD              2 (pack)
+            408 LOAD_CONST              15 ('w')
+            410 KW_NAMES                16
+            412 PRECALL                  1
+            416 CALL                     1
+            426 POP_TOP
+
+139         428 LOAD_GLOBAL             11 (NULL + tk)
+            440 LOAD_ATTR                8 (Label)
+            450 LOAD_FAST                2 (head)
+            452 LOAD_CONST              17 ('此模式不读 PDF，请直接填写正则（消费端按「标签 值」抓取）。留空 = 关闭该锚点。保存前会校验每条正则可编译。')
+
+141         454 LOAD_GLOBAL             22 (FONT_BODY)
+            466 LOAD_GLOBAL             12 (_C_GAP)
+            478 LOAD_GLOBAL             24 (_C_INK2)
+            490 LOAD_CONST              18 (580)
+
+142         492 LOAD_CONST              19 ('left')
+
+139         494 KW_NAMES                20
+            496 PRECALL                  7
+            500 CALL                     7
+
+142         510 LOAD_METHOD              2 (pack)
+            532 LOAD_CONST              15 ('w')
+            534 LOAD_CONST              21 ((4, 0))
+            536 KW_NAMES                22
+            538 PRECALL                  2
+            542 CALL                     2
+            552 POP_TOP
+
+144         554 LOAD_GLOBAL             11 (NULL + tk)
+            566 LOAD_ATTR               13 (Canvas)
+            576 LOAD_FAST                1 (outer)
+            578 LOAD_CONST               1 (0)
+            580 LOAD_GLOBAL             12 (_C_GAP)
+            592 KW_NAMES                23
+            594 PRECALL                  3
+            598 CALL                     3
+            608 STORE_DEREF             25 (canvas)
+
+145         610 LOAD_GLOBAL              1 (NULL + ttk)
+            622 LOAD_ATTR               14 (Scrollbar)
+            632 LOAD_FAST                1 (outer)
+            634 LOAD_CONST              24 ('vertical')
+            636 LOAD_DEREF              25 (canvas)
+            638 LOAD_ATTR               15 (yview)
+            648 KW_NAMES                25
+            650 PRECALL                  3
+            654 CALL                     3
+            664 STORE_FAST               3 (vsb)
+
+146         666 LOAD_DEREF              25 (canvas)
+            668 LOAD_METHOD             16 (configure)
+            690 LOAD_FAST                3 (vsb)
+            692 LOAD_ATTR               17 (set)
+            702 KW_NAMES                26
+            704 PRECALL                  1
+            708 CALL                     1
+            718 POP_TOP
+
+147         720 LOAD_DEREF              25 (canvas)
+            722 LOAD_METHOD              7 (grid)
+            744 LOAD_CONST               6 (1)
+            746 LOAD_CONST               1 (0)
+            748 LOAD_CONST              27 ('nsew')
+            750 KW_NAMES                12
+            752 PRECALL                  3
+            756 CALL                     3
+            766 POP_TOP
+
+148         768 LOAD_FAST                3 (vsb)
+            770 LOAD_METHOD              7 (grid)
+            792 LOAD_CONST               6 (1)
+            794 LOAD_CONST               6 (1)
+            796 LOAD_CONST              28 ('ns')
+            798 KW_NAMES                12
+            800 PRECALL                  3
+            804 CALL                     3
+            814 POP_TOP
+
+150         816 LOAD_GLOBAL             11 (NULL + tk)
+            828 LOAD_ATTR                1 (Frame)
+            838 LOAD_DEREF              25 (canvas)
+            840 LOAD_GLOBAL             12 (_C_GAP)
+            852 LOAD_CONST               8 (20)
+            854 LOAD_CONST              29 (16)
+            856 KW_NAMES                10
+            858 PRECALL                  4
+            862 CALL                     4
+            872 STORE_FAST               4 (body)
+
+151         874 LOAD_DEREF              25 (canvas)
+            876 LOAD_METHOD             18 (create_window)
+            898 LOAD_CONST              30 ((0, 0))
+            900 LOAD_FAST                4 (body)
+            902 LOAD_CONST              31 ('nw')
+            904 KW_NAMES                32
+            906 PRECALL                  3
+            910 CALL                     3
+            920 STORE_DEREF             24 (body_id)
+
+153         922 LOAD_CLOSURE            24 (body_id)
+            924 LOAD_CLOSURE            25 (canvas)
+            926 BUILD_TUPLE              2
+            928 LOAD_CONST              33 (<code object _on_cfg at 0x000002BF94A2F530, file "ui\recipe_raw_editor.py", line 153>)
+            930 MAKE_FUNCTION            8 (closure)
+            932 STORE_FAST               5 (_on_cfg)
+
+155         934 LOAD_DEREF              25 (canvas)
+            936 LOAD_METHOD             19 (bind)
+            958 LOAD_CONST              34 ('<Configure>')
+            960 LOAD_FAST                5 (_on_cfg)
+            962 PRECALL                  2
+            966 CALL                     2
+            976 POP_TOP
+
+156         978 LOAD_FAST                4 (body)
+            980 LOAD_METHOD             19 (bind)
+           1002 LOAD_CONST              34 ('<Configure>')
+           1004 LOAD_CLOSURE            25 (canvas)
+           1006 BUILD_TUPLE              1
+           1008 LOAD_CONST              35 (<code object <lambda> at 0x000002BF94A65AC0, file "ui\recipe_raw_editor.py", line 156>)
+           1010 MAKE_FUNCTION            8 (closure)
+           1012 PRECALL                  2
+           1016 CALL                     2
+           1026 POP_TOP
+
+158        1028 LOAD_GLOBAL             11 (NULL + tk)
+           1040 LOAD_ATTR                1 (Frame)
+           1050 LOAD_FAST                4 (body)
+           1052 LOAD_GLOBAL             12 (_C_GAP)
+           1064 KW_NAMES                36
+           1066 PRECALL                  2
+           1070 CALL                     2
+           1080 STORE_FAST               6 (grid)
+
+159        1082 LOAD_FAST                6 (grid)
+           1084 LOAD_METHOD              2 (pack)
+           1106 LOAD_CONST              37 ('x')
+           1108 KW_NAMES                38
+           1110 PRECALL                  1
+           1114 CALL                     1
+           1124 POP_TOP
+
+160        1126 LOAD_FAST                6 (grid)
+           1128 LOAD_METHOD              3 (columnconfigure)
+           1150 LOAD_CONST               6 (1)
+           1152 LOAD_CONST               6 (1)
+           1154 KW_NAMES                 7
+           1156 PRECALL                  2
+           1160 CALL                     2
+           1170 POP_TOP
+
+163        1172 LOAD_GLOBAL             11 (NULL + tk)
+           1184 LOAD_ATTR                8 (Label)
+           1194 LOAD_FAST                6 (grid)
+           1196 LOAD_CONST              39 ('客户名称（显示用，可手动改）')
+
+164        1198 LOAD_GLOBAL             22 (FONT_BODY)
+           1210 LOAD_GLOBAL             12 (_C_GAP)
+           1222 LOAD_GLOBAL             20 (_C_INK)
+
+163        1234 KW_NAMES                14
+           1236 PRECALL                  5
+           1240 CALL                     5
+
+164        1250 LOAD_METHOD              7 (grid)
+
+165        1272 LOAD_CONST               1 (0)
+           1274 LOAD_CONST               1 (0)
+           1276 LOAD_CONST              15 ('w')
+           1278 LOAD_CONST              40 ((0, 12))
+           1280 LOAD_CONST              41 ((0, 8))
+
+164        1282 KW_NAMES                42
+           1284 PRECALL                  5
+           1288 CALL                     5
+           1298 POP_TOP
+
+166        1300 LOAD_GLOBAL             11 (NULL + tk)
+           1312 LOAD_ATTR               20 (Entry)
+           1322 LOAD_FAST                6 (grid)
+           1324 LOAD_DEREF               0 (self)
+           1326 LOAD_ATTR               21 (_customer_var)
+           1336 LOAD_GLOBAL             22 (FONT_BODY)
+
+167        1348 LOAD_GLOBAL             44 (_C_FIELD)
+           1360 LOAD_GLOBAL             20 (_C_INK)
+           1372 LOAD_CONST              43 ('flat')
+
+168        1374 LOAD_GLOBAL             46 (_C_ACCENT_SOFT)
+
+169        1386 LOAD_CONST               6 (1)
+           1388 LOAD_CONST               1 (0)
+
+166        1390 KW_NAMES                44
+           1392 PRECALL                  9
+           1396 CALL                     9
+           1406 STORE_FAST               7 (cust_ent)
+
+170        1408 LOAD_FAST                7 (cust_ent)
+           1410 LOAD_METHOD              7 (grid)
+           1432 LOAD_CONST               1 (0)
+           1434 LOAD_CONST               6 (1)
+           1436 LOAD_CONST              11 ('ew')
+           1438 LOAD_CONST              41 ((0, 8))
+           1440 KW_NAMES                45
+           1442 PRECALL                  4
+           1446 CALL                     4
+           1456 POP_TOP
+
+172        1458 LOAD_GLOBAL             11 (NULL + tk)
+           1470 LOAD_ATTR                8 (Label)
+           1480 LOAD_FAST                6 (grid)
+           1482 LOAD_CONST              46 ('版式类型（只读）: ')
+           1484 LOAD_DEREF               0 (self)
+           1486 LOAD_ATTR               24 (_recipe)
+           1496 LOAD_ATTR               25 (layout_type)
+           1506 FORMAT_VALUE             0
+           1508 BUILD_STRING             2
+
+173        1510 LOAD_GLOBAL             22 (FONT_BODY)
+           1522 LOAD_GLOBAL             12 (_C_GAP)
+           1534 LOAD_GLOBAL             24 (_C_INK2)
+
+172        1546 KW_NAMES                14
+           1548 PRECALL                  5
+           1552 CALL                     5
+
+173        1562 LOAD_METHOD              7 (grid)
+
+174        1584 LOAD_CONST               6 (1)
+           1586 LOAD_CONST               1 (0)
+           1588 LOAD_CONST              47 (2)
+           1590 LOAD_CONST              15 ('w')
+           1592 LOAD_CONST              41 ((0, 8))
+
+173        1594 KW_NAMES                48
+           1596 PRECALL                  5
+           1600 CALL                     5
+           1610 POP_TOP
+
+176        1612 LOAD_CONST              47 (2)
+           1614 STORE_FAST               8 (row)
+
+177        1616 LOAD_GLOBAL             52 (_ANCHOR_LABELS)
+           1628 GET_ITER
+        >> 1630 FOR_ITER               211 (to 2054)
+           1632 UNPACK_SEQUENCE          2
+           1636 STORE_FAST               9 (attr)
+           1638 STORE_FAST              10 (label)
+
+178        1640 LOAD_GLOBAL             55 (NULL + str)
+           1652 LOAD_GLOBAL             57 (NULL + getattr)
+           1664 LOAD_DEREF               0 (self)
+           1666 LOAD_ATTR               24 (_recipe)
+           1676 LOAD_FAST                9 (attr)
+           1678 LOAD_CONST              49 ('')
+           1680 PRECALL                  3
+           1684 CALL                     3
+           1694 JUMP_IF_TRUE_OR_POP      1 (to 1698)
+           1696 LOAD_CONST              49 ('')
+        >> 1698 PRECALL                  1
+           1702 CALL                     1
+           1712 STORE_FAST              11 (cur)
+
+179        1714 LOAD_GLOBAL             11 (NULL + tk)
+           1726 LOAD_ATTR               29 (StringVar)
+           1736 LOAD_FAST               11 (cur)
+           1738 KW_NAMES                50
+           1740 PRECALL                  1
+           1744 CALL                     1
+           1754 STORE_FAST              12 (v)
+
+180        1756 LOAD_FAST               12 (v)
+           1758 LOAD_DEREF               0 (self)
+           1760 LOAD_ATTR               30 (_vars)
+           1770 LOAD_FAST                9 (attr)
+           1772 STORE_SUBSCR
+
+181        1776 LOAD_GLOBAL             11 (NULL + tk)
+           1788 LOAD_ATTR                8 (Label)
+           1798 LOAD_FAST                6 (grid)
+           1800 LOAD_FAST               10 (label)
+           1802 LOAD_GLOBAL             22 (FONT_BODY)
+           1814 LOAD_GLOBAL             12 (_C_GAP)
+
+182        1826 LOAD_GLOBAL             24 (_C_INK2)
+
+181        1838 KW_NAMES                14
+           1840 PRECALL                  5
+           1844 CALL                     5
+
+182        1854 LOAD_METHOD              7 (grid)
+           1876 LOAD_FAST                8 (row)
+           1878 LOAD_CONST               1 (0)
+           1880 LOAD_CONST              15 ('w')
+
+183        1882 LOAD_CONST              40 ((0, 12))
+           1884 LOAD_CONST              51 (4)
+
+182        1886 KW_NAMES                42
+           1888 PRECALL                  5
+           1892 CALL                     5
+           1902 POP_TOP
+
+184        1904 LOAD_GLOBAL             11 (NULL + tk)
+           1916 LOAD_ATTR               20 (Entry)
+           1926 LOAD_FAST                6 (grid)
+           1928 LOAD_FAST               12 (v)
+           1930 LOAD_CONST              52 (('Consolas', 11))
+
+185        1932 LOAD_GLOBAL             44 (_C_FIELD)
+           1944 LOAD_GLOBAL             20 (_C_INK)
+           1956 LOAD_CONST              43 ('flat')
+
+186        1958 LOAD_GLOBAL             46 (_C_ACCENT_SOFT)
+
+187        1970 LOAD_CONST               6 (1)
+           1972 LOAD_CONST               1 (0)
+
+184        1974 KW_NAMES                44
+           1976 PRECALL                  9
+           1980 CALL                     9
+           1990 STORE_FAST              13 (ent)
+
+188        1992 LOAD_FAST               13 (ent)
+           1994 LOAD_METHOD              7 (grid)
+           2016 LOAD_FAST                8 (row)
+           2018 LOAD_CONST               6 (1)
+           2020 LOAD_CONST              11 ('ew')
+           2022 LOAD_CONST              51 (4)
+           2024 KW_NAMES                45
+           2026 PRECALL                  4
+           2030 CALL                     4
+           2040 POP_TOP
+
+189        2042 LOAD_FAST                8 (row)
+           2044 LOAD_CONST               6 (1)
+           2046 BINARY_OP               13 (+=)
+           2050 STORE_FAST               8 (row)
+           2052 JUMP_BACKWARD          212 (to 1630)
+
+192     >> 2054 LOAD_GLOBAL             11 (NULL + tk)
+           2066 LOAD_ATTR                8 (Label)
+           2076 LOAD_FAST                6 (grid)
+           2078 LOAD_CONST              53 ('默认字段值（跨PO套用 field_defaults）')
+
+193        2080 LOAD_GLOBAL             18 (FONT_HEAD)
+           2092 LOAD_GLOBAL             12 (_C_GAP)
+           2104 LOAD_GLOBAL             20 (_C_INK)
+
+192        2116 KW_NAMES                14
+           2118 PRECALL                  5
+           2122 CALL                     5
+
+193        2132 LOAD_METHOD              7 (grid)
+
+194        2154 LOAD_FAST                8 (row)
+           2156 LOAD_CONST               1 (0)
+           2158 LOAD_CONST              47 (2)
+           2160 LOAD_CONST              15 ('w')
+           2162 LOAD_CONST              54 ((12, 4))
+
+193        2164 KW_NAMES                48
+           2166 PRECALL                  5
+           2170 CALL                     5
+           2180 POP_TOP
+
+195        2182 LOAD_FAST                8 (row)
+           2184 LOAD_CONST               6 (1)
+           2186 BINARY_OP               13 (+=)
+           2190 STORE_FAST               8 (row)
+
+196        2192 LOAD_GLOBAL             11 (NULL + tk)
+           2204 LOAD_ATTR                1 (Frame)
+           2214 LOAD_FAST                6 (grid)
+           2216 LOAD_GLOBAL             12 (_C_GAP)
+           2228 KW_NAMES                36
+           2230 PRECALL                  2
+           2234 CALL                     2
+           2244 STORE_DEREF             27 (fd_frame)
+
+197        2246 LOAD_DEREF              27 (fd_frame)
+           2248 LOAD_METHOD              7 (grid)
+           2270 LOAD_FAST                8 (row)
+           2272 LOAD_CONST               1 (0)
+           2274 LOAD_CONST              47 (2)
+           2276 LOAD_CONST              11 ('ew')
+           2278 LOAD_CONST              55 ((0, 4))
+           2280 KW_NAMES                48
+           2282 PRECALL                  5
+           2286 CALL                     5
+           2296 POP_TOP
+
+198        2298 BUILD_MAP                0
+           2300 LOAD_DEREF               0 (self)
+           2302 STORE_ATTR              31 (_fd_vars)
+
+199        2312 BUILD_LIST               0
+           2314 LOAD_DEREF               0 (self)
+           2316 STORE_ATTR              32 (_fd_rows)
+
+201        2326 LOAD_CLOSURE            22 (_fd_refresh)
+           2328 LOAD_CLOSURE             0 (self)
+           2330 BUILD_TUPLE              2
+           2332 LOAD_CONST              56 (<code object _fd_remove at 0x000002BF94A65BD0, file "ui\recipe_raw_editor.py", line 201>)
+           2334 MAKE_FUNCTION            8 (closure)
+           2336 STORE_DEREF             23 (_fd_remove)
+
+205        2338 LOAD_CLOSURE            23 (_fd_remove)
+           2340 LOAD_CLOSURE            27 (fd_frame)
+           2342 LOAD_CLOSURE             0 (self)
+           2344 BUILD_TUPLE              3
+           2346 LOAD_CONST              57 (<code object _fd_refresh at 0x000002BF94464520, file "ui\recipe_raw_editor.py", line 205>)
+           2348 MAKE_FUNCTION            8 (closure)
+           2350 STORE_DEREF             22 (_fd_refresh)
+
+224        2352 LOAD_CLOSURE            22 (_fd_refresh)
+           2354 LOAD_CLOSURE             0 (self)
+           2356 BUILD_TUPLE              2
+           2358 LOAD_CONST              58 (<code object _fd_add at 0x000002BF94A196B0, file "ui\recipe_raw_editor.py", line 224>)
+           2360 MAKE_FUNCTION            8 (closure)
+           2362 STORE_FAST              14 (_fd_add)
+
+231        2364 LOAD_GLOBAL             11 (NULL + tk)
+           2376 LOAD_ATTR                1 (Frame)
+           2386 LOAD_DEREF              27 (fd_frame)
+           2388 LOAD_GLOBAL             12 (_C_GAP)
+           2400 KW_NAMES                36
+           2402 PRECALL                  2
+           2406 CALL                     2
+           2416 STORE_FAST              15 (add_row)
+
+232        2418 LOAD_FAST               15 (add_row)
+           2420 LOAD_METHOD              2 (pack)
+           2442 LOAD_CONST              37 ('x')
+           2444 LOAD_CONST              59 ((2, 0))
+           2446 KW_NAMES                60
+           2448 PRECALL                  2
+           2452 CALL                     2
+           2462 POP_TOP
+
+233        2464 LOAD_GLOBAL              1 (NULL + ttk)
+           2476 LOAD_ATTR               33 (Combobox)
+           2486 LOAD_FAST               15 (add_row)
+           2488 LOAD_GLOBAL             69 (NULL + list)
+           2500 LOAD_GLOBAL             70 (_FIELD_DEFAULT_KEYS)
+           2512 PRECALL                  1
+           2516 CALL                     1
+
+234        2526 LOAD_CONST              61 ('readonly')
+           2528 LOAD_CONST              62 (22)
+           2530 LOAD_GLOBAL             22 (FONT_BODY)
+
+233        2542 KW_NAMES                63
+           2544 PRECALL                  5
+           2548 CALL                     5
+           2558 LOAD_DEREF               0 (self)
+           2560 STORE_ATTR              36 (_fd_combo)
+
+235        2570 LOAD_DEREF               0 (self)
+           2572 LOAD_ATTR               36 (_fd_combo)
+           2582 LOAD_METHOD              2 (pack)
+           2604 LOAD_CONST              19 ('left')
+           2606 KW_NAMES                64
+           2608 PRECALL                  1
+           2612 CALL                     1
+           2622 POP_TOP
+
+236        2624 LOAD_GLOBAL             11 (NULL + tk)
+           2636 LOAD_ATTR               37 (Button)
+           2646 LOAD_FAST               15 (add_row)
+           2648 LOAD_CONST              65 ('添加默认字段')
+           2650 LOAD_FAST               14 (_fd_add)
+           2652 LOAD_GLOBAL             76 (FONT_BUTTON)
+
+237        2664 LOAD_GLOBAL             12 (_C_GAP)
+           2676 LOAD_GLOBAL             20 (_C_INK)
+           2688 LOAD_CONST              43 ('flat')
+
+238        2690 LOAD_GLOBAL             78 (_C_HOVER)
+
+236        2702 KW_NAMES                66
+           2704 PRECALL                  8
+           2708 CALL                     8
+
+238        2718 LOAD_METHOD              2 (pack)
+           2740 LOAD_CONST              19 ('left')
+           2742 LOAD_CONST              67 ((6, 0))
+           2744 KW_NAMES                68
+           2746 PRECALL                  2
+           2750 CALL                     2
+           2760 POP_TOP
+
+239        2762 LOAD_DEREF               0 (self)
+           2764 LOAD_ATTR               24 (_recipe)
+           2774 LOAD_ATTR               40 (field_defaults)
+           2784 JUMP_IF_TRUE_OR_POP      1 (to 2788)
+           2786 BUILD_MAP                0
+        >> 2788 LOAD_METHOD             41 (items)
+           2810 PRECALL                  0
+           2814 CALL                     0
+           2824 GET_ITER
+        >> 2826 FOR_ITER                47 (to 2922)
+           2828 UNPACK_SEQUENCE          2
+           2832 STORE_FAST              16 (k)
+           2834 STORE_FAST              12 (v)
+
+240        2836 LOAD_GLOBAL             11 (NULL + tk)
+           2848 LOAD_ATTR               29 (StringVar)
+           2858 LOAD_GLOBAL             55 (NULL + str)
+           2870 LOAD_FAST               12 (v)
+           2872 PRECALL                  1
+           2876 CALL                     1
+           2886 KW_NAMES                50
+           2888 PRECALL                  1
+           2892 CALL                     1
+           2902 LOAD_DEREF               0 (self)
+           2904 LOAD_ATTR               31 (_fd_vars)
+           2914 LOAD_FAST               16 (k)
+           2916 STORE_SUBSCR
+           2920 JUMP_BACKWARD           48 (to 2826)
+
+241     >> 2922 LOAD_DEREF               0 (self)
+           2924 LOAD_ATTR               31 (_fd_vars)
+           2934 POP_JUMP_FORWARD_IF_FALSE    10 (to 2956)
+
+242        2936 PUSH_NULL
+           2938 LOAD_DEREF              22 (_fd_refresh)
+           2940 PRECALL                  0
+           2944 CALL                     0
+           2954 POP_TOP
+
+243     >> 2956 LOAD_FAST                8 (row)
+           2958 LOAD_CONST               6 (1)
+           2960 BINARY_OP               13 (+=)
+           2964 STORE_FAST               8 (row)
+
+246        2966 LOAD_GLOBAL             11 (NULL + tk)
+           2978 LOAD_ATTR                8 (Label)
+           2988 LOAD_FAST                6 (grid)
+           2990 LOAD_CONST              69 ('清洗规则 cleans（可多条累计）')
+
+247        2992 LOAD_GLOBAL             18 (FONT_HEAD)
+           3004 LOAD_GLOBAL             12 (_C_GAP)
+           3016 LOAD_GLOBAL             20 (_C_INK)
+
+246        3028 KW_NAMES                14
+           3030 PRECALL                  5
+           3034 CALL                     5
+
+247        3044 LOAD_METHOD              7 (grid)
+
+248        3066 LOAD_FAST                8 (row)
+           3068 LOAD_CONST               1 (0)
+           3070 LOAD_CONST              47 (2)
+           3072 LOAD_CONST              15 ('w')
+           3074 LOAD_CONST              54 ((12, 4))
+
+247        3076 KW_NAMES                48
+           3078 PRECALL                  5
+           3082 CALL                     5
+           3092 POP_TOP
+
+249        3094 LOAD_FAST                8 (row)
+           3096 LOAD_CONST               6 (1)
+           3098 BINARY_OP               13 (+=)
+           3102 STORE_FAST               8 (row)
+
+250        3104 LOAD_GLOBAL             11 (NULL + tk)
+           3116 LOAD_ATTR                1 (Frame)
+           3126 LOAD_FAST                6 (grid)
+           3128 LOAD_GLOBAL             12 (_C_GAP)
+           3140 KW_NAMES                36
+           3142 PRECALL                  2
+           3146 CALL                     2
+           3156 STORE_DEREF             26 (cl_frame)
+
+251        3158 LOAD_DEREF              26 (cl_frame)
+           3160 LOAD_METHOD              7 (grid)
+           3182 LOAD_FAST                8 (row)
+           3184 LOAD_CONST               1 (0)
+           3186 LOAD_CONST              47 (2)
+           3188 LOAD_CONST              11 ('ew')
+           3190 LOAD_CONST              55 ((0, 4))
+           3192 KW_NAMES                48
+           3194 PRECALL                  5
+           3198 CALL                     5
+           3208 POP_TOP
+
+252        3210 BUILD_LIST               0
+           3212 LOAD_DEREF               0 (self)
+           3214 STORE_ATTR              42 (_clean_rows_data)
+
+254        3224 LOAD_CONST              82 (('', '', ''))
+           3226 LOAD_CLOSURE            21 (_cl_remove)
+           3228 LOAD_CLOSURE            26 (cl_frame)
+           3230 LOAD_CLOSURE             0 (self)
+           3232 BUILD_TUPLE              3
+           3234 LOAD_CONST              70 (<code object _cl_add_row at 0x000002BF940C7A80, file "ui\recipe_raw_editor.py", line 254>)
+           3236 MAKE_FUNCTION            9 (defaults, closure)
+           3238 STORE_DEREF             20 (_cl_add_row)
+
+276        3240 LOAD_CLOSURE             0 (self)
+           3242 BUILD_TUPLE              1
+           3244 LOAD_CONST              71 (<code object _cl_remove at 0x000002BF9473F230, file "ui\recipe_raw_editor.py", line 276>)
+           3246 MAKE_FUNCTION            8 (closure)
+           3248 STORE_DEREF             21 (_cl_remove)
+
+281        3250 LOAD_CLOSURE            20 (_cl_add_row)
+           3252 LOAD_CLOSURE             0 (self)
+           3254 BUILD_TUPLE              2
+           3256 LOAD_CONST              72 (<code object _cl_refresh at 0x000002BF940D7CA0, file "ui\recipe_raw_editor.py", line 281>)
+           3258 MAKE_FUNCTION            8 (closure)
+           3260 STORE_FAST              17 (_cl_refresh)
+
+290        3262 LOAD_GLOBAL             11 (NULL + tk)
+           3274 LOAD_ATTR                1 (Frame)
+           3284 LOAD_DEREF              26 (cl_frame)
+           3286 LOAD_GLOBAL             12 (_C_GAP)
+           3298 KW_NAMES                36
+           3300 PRECALL                  2
+           3304 CALL                     2
+           3314 STORE_FAST              18 (add_cl)
+
+291        3316 LOAD_FAST               18 (add_cl)
+           3318 LOAD_METHOD              2 (pack)
+           3340 LOAD_CONST              37 ('x')
+           3342 LOAD_CONST              59 ((2, 0))
+           3344 KW_NAMES                60
+           3346 PRECALL                  2
+           3350 CALL                     2
+           3360 POP_TOP
+
+292        3362 LOAD_GLOBAL             11 (NULL + tk)
+           3374 LOAD_ATTR               37 (Button)
+           3384 LOAD_FAST               18 (add_cl)
+           3386 LOAD_CONST              73 ('添加清洗规则')
+           3388 LOAD_CLOSURE            20 (_cl_add_row)
+           3390 BUILD_TUPLE              1
+           3392 LOAD_CONST              74 (<code object <lambda> at 0x000002BF94AB06B0, file "ui\recipe_raw_editor.py", line 292>)
+           3394 MAKE_FUNCTION            8 (closure)
+
+293        3396 LOAD_GLOBAL             76 (FONT_BUTTON)
+           3408 LOAD_GLOBAL             12 (_C_GAP)
+           3420 LOAD_GLOBAL             20 (_C_INK)
+           3432 LOAD_CONST              43 ('flat')
+
+294        3434 LOAD_GLOBAL             78 (_C_HOVER)
+
+292        3446 KW_NAMES                66
+           3448 PRECALL                  8
+           3452 CALL                     8
+
+294        3462 LOAD_METHOD              2 (pack)
+           3484 LOAD_CONST              19 ('left')
+           3486 KW_NAMES                64
+           3488 PRECALL                  1
+           3492 CALL                     1
+           3502 POP_TOP
+
+295        3504 PUSH_NULL
+           3506 LOAD_FAST               17 (_cl_refresh)
+           3508 PRECALL                  0
+           3512 CALL                     0
+           3522 POP_TOP
+
+296        3524 LOAD_FAST                8 (row)
+           3526 LOAD_CONST               6 (1)
+           3528 BINARY_OP               13 (+=)
+           3532 STORE_FAST               8 (row)
+
+298        3534 LOAD_GLOBAL             11 (NULL + tk)
+           3546 LOAD_ATTR                1 (Frame)
+           3556 LOAD_FAST                1 (outer)
+           3558 LOAD_GLOBAL             12 (_C_GAP)
+           3570 LOAD_CONST               8 (20)
+           3572 LOAD_CONST               9 (14)
+           3574 KW_NAMES                10
+           3576 PRECALL                  4
+           3580 CALL                     4
+           3590 STORE_FAST              19 (btns)
+
+299        3592 LOAD_FAST               19 (btns)
+           3594 LOAD_METHOD              7 (grid)
+           3616 LOAD_CONST              47 (2)
+           3618 LOAD_CONST               1 (0)
+           3620 LOAD_CONST              47 (2)
+           3622 LOAD_CONST              11 ('ew')
+           3624 KW_NAMES                75
+           3626 PRECALL                  4
+           3630 CALL                     4
+           3640 POP_TOP
+
+300        3642 LOAD_GLOBAL             11 (NULL + tk)
+           3654 LOAD_ATTR               37 (Button)
+           3664 LOAD_FAST               19 (btns)
+           3666 LOAD_CONST              76 ('取消')
+           3668 LOAD_DEREF               0 (self)
+           3670 LOAD_ATTR               43 (_cancel)
+           3680 LOAD_GLOBAL             76 (FONT_BUTTON)
+
+301        3692 LOAD_GLOBAL             12 (_C_GAP)
+           3704 LOAD_GLOBAL             24 (_C_INK2)
+           3716 LOAD_CONST              43 ('flat')
+           3718 LOAD_CONST               9 (14)
+
+302        3720 LOAD_CONST              77 (8)
+           3722 LOAD_GLOBAL             46 (_C_ACCENT_SOFT)
+
+300        3734 KW_NAMES                78
+           3736 PRECALL                 10
+           3740 CALL                    10
+
+302        3750 LOAD_METHOD              2 (pack)
+           3772 LOAD_CONST              19 ('left')
+           3774 KW_NAMES                64
+           3776 PRECALL                  1
+           3780 CALL                     1
+           3790 POP_TOP
+
+303        3792 LOAD_GLOBAL             11 (NULL + tk)
+           3804 LOAD_ATTR               37 (Button)
+           3814 LOAD_FAST               19 (btns)
+           3816 BUILD_TUPLE              1
+           3818 LOAD_CONST              79 ('保存并回写缓存')
+           3820 LOAD_DEREF               0 (self)
+           3822 LOAD_ATTR               44 (_save)
+
+304        3832 LOAD_GLOBAL             90 (FONT_BUTTON_BOLD)
+           3844 LOAD_CONST              62 (22)
+           3846 LOAD_CONST              77 (8)
+
+303        3848 LOAD_CONST              80 (('text', 'command', 'font', 'padx', 'pady'))
+           3850 BUILD_CONST_KEY_MAP      5
+
+304        3852 LOAD_GLOBAL             92 (PRIMARY_KW)
+
+303        3864 DICT_MERGE               1
+           3866 CALL_FUNCTION_EX         1
+
+304        3868 LOAD_METHOD              2 (pack)
+           3890 LOAD_CONST              81 ('right')
+           3892 KW_NAMES                64
+           3894 PRECALL                  1
+           3898 CALL                     1
+           3908 POP_TOP
+           3910 LOAD_CONST               0 (None)
+           3912 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._on_cfg  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           2
+
+153           2 RESUME                   0
+
+154           4 LOAD_DEREF               2 (canvas)
+              6 LOAD_METHOD              0 (itemconfig)
+             28 LOAD_DEREF               1 (body_id)
+             30 LOAD_FAST                0 (e)
+             32 LOAD_ATTR                1 (width)
+             42 KW_NAMES                 1
+             44 PRECALL                  2
+             48 CALL                     2
+             58 POP_TOP
+             60 LOAD_CONST               0 (None)
+             62 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build.<lambda>  (args=1, locals=1)
+# varnames: e
+              0 COPY_FREE_VARS           1
+
+156           2 RESUME                   0
+              4 LOAD_DEREF               1 (canvas)
+              6 LOAD_METHOD              0 (configure)
+             28 LOAD_DEREF               1 (canvas)
+             30 LOAD_METHOD              1 (bbox)
+             52 LOAD_CONST               1 ('all')
+             54 PRECALL                  1
+             58 CALL                     1
+             68 KW_NAMES                 2
+             70 PRECALL                  1
+             74 CALL                     1
+             84 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._fd_remove  (args=1, locals=1)
+# varnames: kk
+              0 COPY_FREE_VARS           2
+
+201           2 RESUME                   0
+
+202           4 LOAD_DEREF               2 (self)
+              6 LOAD_ATTR                0 (_fd_vars)
+             16 LOAD_METHOD              1 (pop)
+             38 LOAD_FAST                0 (kk)
+             40 LOAD_CONST               0 (None)
+             42 PRECALL                  2
+             46 CALL                     2
+             56 POP_TOP
+
+203          58 PUSH_NULL
+             60 LOAD_DEREF               1 (_fd_refresh)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 POP_TOP
+             78 LOAD_CONST               0 (None)
+             80 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._fd_refresh  (args=0, locals=4)
+# varnames: w, k, v, r
+              0 COPY_FREE_VARS           3
+
+205           2 RESUME                   0
+
+206           4 LOAD_DEREF               6 (self)
+              6 LOAD_ATTR                0 (_fd_rows)
+             16 GET_ITER
+        >>   18 FOR_ITER                22 (to 64)
+             20 STORE_FAST               0 (w)
+
+207          22 LOAD_FAST                0 (w)
+             24 LOAD_METHOD              1 (destroy)
+             46 PRECALL                  0
+             50 CALL                     0
+             60 POP_TOP
+             62 JUMP_BACKWARD           23 (to 18)
+
+208     >>   64 LOAD_DEREF               6 (self)
+             66 LOAD_ATTR                0 (_fd_rows)
+             76 LOAD_METHOD              2 (clear)
+             98 PRECALL                  0
+            102 CALL                     0
+            112 POP_TOP
+
+209         114 LOAD_DEREF               6 (self)
+            116 LOAD_ATTR                3 (_fd_vars)
+            126 LOAD_METHOD              4 (items)
+            148 PRECALL                  0
+            152 CALL                     0
+            162 GET_ITER
+        >>  164 EXTENDED_ARG             1
+            166 FOR_ITER               284 (to 736)
+            168 UNPACK_SEQUENCE          2
+            172 STORE_FAST               1 (k)
+            174 STORE_FAST               2 (v)
+
+210         176 LOAD_GLOBAL             11 (NULL + tk)
+            188 LOAD_ATTR                6 (Frame)
+            198 LOAD_DEREF               5 (fd_frame)
+            200 LOAD_GLOBAL             14 (_C_GAP)
+            212 KW_NAMES                 1
+            214 PRECALL                  2
+            218 CALL                     2
+            228 STORE_FAST               3 (r)
+
+211         230 LOAD_FAST                3 (r)
+            232 LOAD_METHOD              8 (pack)
+            254 LOAD_CONST               2 ('x')
+            256 LOAD_CONST               3 (2)
+            258 KW_NAMES                 4
+            260 PRECALL                  2
+            264 CALL                     2
+            274 POP_TOP
+
+212         276 LOAD_GLOBAL             11 (NULL + tk)
+            288 LOAD_ATTR                9 (Label)
+            298 LOAD_FAST                3 (r)
+            300 LOAD_FAST                1 (k)
+            302 LOAD_GLOBAL             20 (FONT_BODY)
+            314 LOAD_GLOBAL             14 (_C_GAP)
+            326 LOAD_GLOBAL             22 (_C_INK2)
+
+213         338 LOAD_CONST               5 (20)
+            340 LOAD_CONST               6 ('w')
+
+212         342 KW_NAMES                 7
+            344 PRECALL                  7
+            348 CALL                     7
+
+213         358 LOAD_METHOD              8 (pack)
+            380 LOAD_CONST               8 ('left')
+            382 KW_NAMES                 9
+            384 PRECALL                  1
+            388 CALL                     1
+            398 POP_TOP
+
+214         400 LOAD_GLOBAL             11 (NULL + tk)
+            412 LOAD_ATTR               12 (Entry)
+            422 LOAD_FAST                3 (r)
+            424 LOAD_FAST                2 (v)
+            426 LOAD_CONST              10 (('Consolas', 11))
+            428 LOAD_GLOBAL             26 (_C_FIELD)
+
+215         440 LOAD_GLOBAL             28 (_C_INK)
+            452 LOAD_CONST              11 ('flat')
+
+216         454 LOAD_GLOBAL             30 (_C_ACCENT_SOFT)
+
+217         466 LOAD_CONST              12 (1)
+            468 LOAD_CONST              13 (0)
+
+214         470 KW_NAMES                14
+            472 PRECALL                  9
+            476 CALL                     9
+
+217         486 LOAD_METHOD              8 (pack)
+
+218         508 LOAD_CONST               8 ('left')
+            510 LOAD_CONST               2 ('x')
+            512 LOAD_CONST              15 (True)
+            514 LOAD_CONST              16 ((6, 6))
+
+217         516 KW_NAMES                17
+            518 PRECALL                  4
+            522 CALL                     4
+            532 POP_TOP
+
+219         534 LOAD_GLOBAL             11 (NULL + tk)
+            546 LOAD_ATTR               16 (Button)
+            556 LOAD_FAST                3 (r)
+            558 LOAD_CONST              18 ('删除')
+            560 LOAD_FAST                1 (k)
+            562 BUILD_TUPLE              1
+            564 LOAD_CLOSURE             4 (_fd_remove)
+            566 BUILD_TUPLE              1
+            568 LOAD_CONST              19 (<code object <lambda> at 0x000002BF94A6E6B0, file "ui\recipe_raw_editor.py", line 219>)
+            570 MAKE_FUNCTION            9 (defaults, closure)
+
+220         572 LOAD_GLOBAL             20 (FONT_BODY)
+            584 LOAD_GLOBAL             14 (_C_GAP)
+            596 LOAD_GLOBAL             34 (_C_DEL_FG)
+            608 LOAD_CONST              11 ('flat')
+
+221         610 LOAD_GLOBAL             36 (_C_DEL_ACTIVE)
+
+219         622 KW_NAMES                20
+            624 PRECALL                  8
+            628 CALL                     8
+
+221         638 LOAD_METHOD              8 (pack)
+            660 LOAD_CONST               8 ('left')
+            662 KW_NAMES                 9
+            664 PRECALL                  1
+            668 CALL                     1
+            678 POP_TOP
+
+222         680 LOAD_DEREF               6 (self)
+            682 LOAD_ATTR                0 (_fd_rows)
+            692 LOAD_METHOD             19 (append)
+            714 LOAD_FAST                3 (r)
+            716 PRECALL                  1
+            720 CALL                     1
+            730 POP_TOP
+            732 EXTENDED_ARG             1
+            734 JUMP_BACKWARD          286 (to 164)
+
+209     >>  736 LOAD_CONST               0 (None)
+            738 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._fd_refresh.<lambda>  (args=1, locals=1)
+# varnames: kk
+              0 COPY_FREE_VARS           1
+
+219           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_fd_remove)
+              8 LOAD_FAST                0 (kk)
+             10 PRECALL                  1
+             14 CALL                     1
+             24 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._fd_add  (args=0, locals=1)
+# varnames: k
+              0 COPY_FREE_VARS           2
+
+224           2 RESUME                   0
+
+225           4 LOAD_DEREF               2 (self)
+              6 LOAD_ATTR                0 (_fd_combo)
+             16 LOAD_METHOD              1 (get)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 LOAD_METHOD              2 (strip)
+             74 PRECALL                  0
+             78 CALL                     0
+             88 STORE_FAST               0 (k)
+
+226          90 LOAD_FAST                0 (k)
+             92 POP_JUMP_FORWARD_IF_FALSE     9 (to 112)
+             94 LOAD_FAST                0 (k)
+             96 LOAD_DEREF               2 (self)
+             98 LOAD_ATTR                3 (_fd_vars)
+            108 CONTAINS_OP              0
+            110 POP_JUMP_FORWARD_IF_FALSE     2 (to 116)
+
+227     >>  112 LOAD_CONST               0 (None)
+            114 RETURN_VALUE
+
+228     >>  116 LOAD_GLOBAL              9 (NULL + tk)
+            128 LOAD_ATTR                5 (StringVar)
+            138 LOAD_CONST               1 ('')
+            140 KW_NAMES                 2
+            142 PRECALL                  1
+            146 CALL                     1
+            156 LOAD_DEREF               2 (self)
+            158 LOAD_ATTR                3 (_fd_vars)
+            168 LOAD_FAST                0 (k)
+            170 STORE_SUBSCR
+
+229         174 PUSH_NULL
+            176 LOAD_DEREF               1 (_fd_refresh)
+            178 PRECALL                  0
+            182 CALL                     0
+            192 POP_TOP
+            194 LOAD_CONST               0 (None)
+            196 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._cl_add_row  (args=3, locals=5)
+# varnames: field, pat, repl, d, r
+              0 COPY_FREE_VARS           3
+
+254           2 RESUME                   0
+
+255           4 LOAD_GLOBAL              1 (NULL + tk)
+             16 LOAD_ATTR                1 (StringVar)
+             26 LOAD_FAST                0 (field)
+             28 KW_NAMES                 1
+             30 PRECALL                  1
+             34 CALL                     1
+
+256          44 LOAD_GLOBAL              1 (NULL + tk)
+             56 LOAD_ATTR                1 (StringVar)
+             66 LOAD_FAST                1 (pat)
+             68 KW_NAMES                 1
+             70 PRECALL                  1
+             74 CALL                     1
+
+257          84 LOAD_GLOBAL              1 (NULL + tk)
+             96 LOAD_ATTR                1 (StringVar)
+            106 LOAD_FAST                2 (repl)
+            108 KW_NAMES                 1
+            110 PRECALL                  1
+            114 CALL                     1
+
+255         124 LOAD_CONST               2 (('field', 'pat', 'repl'))
+            126 BUILD_CONST_KEY_MAP      3
+            128 STORE_FAST               3 (d)
+
+258         130 LOAD_GLOBAL              1 (NULL + tk)
+            142 LOAD_ATTR                2 (Frame)
+            152 LOAD_DEREF               6 (cl_frame)
+            154 LOAD_GLOBAL              6 (_C_GAP)
+            166 KW_NAMES                 3
+            168 PRECALL                  2
+            172 CALL                     2
+            182 STORE_FAST               4 (r)
+
+259         184 LOAD_FAST                4 (r)
+            186 LOAD_METHOD              4 (pack)
+            208 LOAD_CONST               4 ('x')
+            210 LOAD_CONST               5 (2)
+            212 KW_NAMES                 6
+            214 PRECALL                  2
+            218 CALL                     2
+            228 POP_TOP
+
+260         230 LOAD_GLOBAL             11 (NULL + ttk)
+            242 LOAD_ATTR                6 (Combobox)
+            252 LOAD_FAST                4 (r)
+            254 LOAD_FAST                3 (d)
+            256 LOAD_CONST               7 ('field')
+            258 BINARY_SUBSCR
+            268 LOAD_GLOBAL             15 (NULL + list)
+            280 LOAD_GLOBAL             16 (_CLEAN_FIELDS)
+            292 PRECALL                  1
+            296 CALL                     1
+
+261         306 LOAD_CONST               8 (14)
+            308 LOAD_CONST               9 (('Consolas', 10))
+
+260         310 KW_NAMES                10
+            312 PRECALL                  5
+            316 CALL                     5
+
+261         326 LOAD_METHOD              4 (pack)
+            348 LOAD_CONST              11 ('left')
+            350 KW_NAMES                12
+            352 PRECALL                  1
+            356 CALL                     1
+            366 POP_TOP
+
+262         368 LOAD_GLOBAL              1 (NULL + tk)
+            380 LOAD_ATTR                9 (Entry)
+            390 LOAD_FAST                4 (r)
+            392 LOAD_FAST                3 (d)
+            394 LOAD_CONST              13 ('pat')
+            396 BINARY_SUBSCR
+            406 LOAD_CONST               9 (('Consolas', 10))
+            408 LOAD_GLOBAL             20 (_C_FIELD)
+
+263         420 LOAD_GLOBAL             22 (_C_INK)
+            432 LOAD_CONST              14 ('flat')
+            434 LOAD_GLOBAL             24 (_C_ACCENT_SOFT)
+
+264         446 LOAD_CONST              15 (1)
+            448 LOAD_CONST              16 (0)
+            450 LOAD_CONST              17 (30)
+
+262         452 KW_NAMES                18
+            454 PRECALL                 10
+            458 CALL                    10
+
+264         468 LOAD_METHOD              4 (pack)
+
+265         490 LOAD_CONST              11 ('left')
+            492 LOAD_CONST              19 ((4, 4))
+
+264         494 KW_NAMES                20
+            496 PRECALL                  2
+            500 CALL                     2
+            510 POP_TOP
+
+266         512 LOAD_GLOBAL              1 (NULL + tk)
+            524 LOAD_ATTR                9 (Entry)
+            534 LOAD_FAST                4 (r)
+            536 LOAD_FAST                3 (d)
+            538 LOAD_CONST              21 ('repl')
+            540 BINARY_SUBSCR
+            550 LOAD_CONST               9 (('Consolas', 10))
+            552 LOAD_GLOBAL             20 (_C_FIELD)
+
+267         564 LOAD_GLOBAL             22 (_C_INK)
+            576 LOAD_CONST              14 ('flat')
+            578 LOAD_GLOBAL             24 (_C_ACCENT_SOFT)
+
+268         590 LOAD_CONST              15 (1)
+            592 LOAD_CONST              16 (0)
+            594 LOAD_CONST              22 (12)
+
+266         596 KW_NAMES                18
+            598 PRECALL                 10
+            602 CALL                    10
+
+268         612 LOAD_METHOD              4 (pack)
+
+269         634 LOAD_CONST              11 ('left')
+            636 LOAD_CONST              23 ((0, 4))
+
+268         638 KW_NAMES                20
+            640 PRECALL                  2
+            644 CALL                     2
+            654 POP_TOP
+
+270         656 LOAD_GLOBAL              1 (NULL + tk)
+            668 LOAD_ATTR               13 (Button)
+            678 LOAD_FAST                4 (r)
+            680 LOAD_CONST              24 ('删除')
+            682 LOAD_FAST                3 (d)
+            684 BUILD_TUPLE              1
+            686 LOAD_CLOSURE             5 (_cl_remove)
+            688 BUILD_TUPLE              1
+            690 LOAD_CONST              25 (<code object <lambda> at 0x000002BF94A6F210, file "ui\recipe_raw_editor.py", line 270>)
+            692 MAKE_FUNCTION            9 (defaults, closure)
+
+271         694 LOAD_GLOBAL             28 (FONT_BODY)
+            706 LOAD_GLOBAL              6 (_C_GAP)
+            718 LOAD_GLOBAL             30 (_C_DEL_FG)
+            730 LOAD_CONST              14 ('flat')
+
+272         732 LOAD_GLOBAL             32 (_C_DEL_ACTIVE)
+
+270         744 KW_NAMES                26
+            746 PRECALL                  8
+            750 CALL                     8
+
+272         760 LOAD_METHOD              4 (pack)
+            782 LOAD_CONST              11 ('left')
+            784 KW_NAMES                12
+            786 PRECALL                  1
+            790 CALL                     1
+            800 POP_TOP
+
+273         802 LOAD_FAST                4 (r)
+            804 LOAD_FAST                3 (d)
+            806 LOAD_CONST              27 ('w')
+            808 STORE_SUBSCR
+
+274         812 LOAD_DEREF               7 (self)
+            814 LOAD_ATTR               17 (_clean_rows_data)
+            824 LOAD_METHOD             18 (append)
+            846 LOAD_FAST                3 (d)
+            848 PRECALL                  1
+            852 CALL                     1
+            862 POP_TOP
+            864 LOAD_CONST               0 (None)
+            866 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._cl_add_row.<lambda>  (args=1, locals=1)
+# varnames: dd
+              0 COPY_FREE_VARS           1
+
+270           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               1 (_cl_remove)
+              8 LOAD_FAST                0 (dd)
+             10 PRECALL                  1
+             14 CALL                     1
+             24 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._cl_remove  (args=1, locals=1)
+# varnames: dd
+              0 COPY_FREE_VARS           1
+
+276           2 RESUME                   0
+
+277           4 LOAD_FAST                0 (dd)
+              6 LOAD_DEREF               1 (self)
+              8 LOAD_ATTR                0 (_clean_rows_data)
+             18 CONTAINS_OP              0
+             20 POP_JUMP_FORWARD_IF_FALSE    54 (to 130)
+
+278          22 LOAD_DEREF               1 (self)
+             24 LOAD_ATTR                0 (_clean_rows_data)
+             34 LOAD_METHOD              1 (remove)
+             56 LOAD_FAST                0 (dd)
+             58 PRECALL                  1
+             62 CALL                     1
+             72 POP_TOP
+
+279          74 LOAD_FAST                0 (dd)
+             76 LOAD_CONST               1 ('w')
+             78 BINARY_SUBSCR
+             88 LOAD_METHOD              2 (destroy)
+            110 PRECALL                  0
+            114 CALL                     0
+            124 POP_TOP
+            126 LOAD_CONST               0 (None)
+            128 RETURN_VALUE
+
+277     >>  130 LOAD_CONST               0 (None)
+            132 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build._cl_refresh  (args=0, locals=4)
+# varnames: d, field, rules, spec
+              0 COPY_FREE_VARS           2
+
+281           2 RESUME                   0
+
+282           4 LOAD_GLOBAL              1 (NULL + list)
+             16 LOAD_DEREF               5 (self)
+             18 LOAD_ATTR                1 (_clean_rows_data)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 GET_ITER
+        >>   44 FOR_ITER                28 (to 102)
+             46 STORE_FAST               0 (d)
+
+283          48 LOAD_FAST                0 (d)
+             50 LOAD_CONST               1 ('w')
+             52 BINARY_SUBSCR
+             62 LOAD_METHOD              2 (destroy)
+             84 PRECALL                  0
+             88 CALL                     0
+             98 POP_TOP
+            100 JUMP_BACKWARD           29 (to 44)
+
+284     >>  102 LOAD_DEREF               5 (self)
+            104 LOAD_ATTR                1 (_clean_rows_data)
+            114 LOAD_METHOD              3 (clear)
+            136 PRECALL                  0
+            140 CALL                     0
+            150 POP_TOP
+
+285         152 LOAD_DEREF               5 (self)
+            154 LOAD_ATTR                4 (_recipe)
+            164 LOAD_ATTR                5 (cleans)
+            174 JUMP_IF_TRUE_OR_POP      1 (to 178)
+            176 BUILD_MAP                0
+        >>  178 LOAD_METHOD              6 (items)
+            200 PRECALL                  0
+            204 CALL                     0
+            214 GET_ITER
+        >>  216 FOR_ITER                67 (to 352)
+            218 UNPACK_SEQUENCE          2
+            222 STORE_FAST               1 (field)
+            224 STORE_FAST               2 (rules)
+
+286         226 LOAD_FAST                2 (rules)
+            228 GET_ITER
+        >>  230 FOR_ITER                59 (to 350)
+            232 STORE_FAST               3 (spec)
+
+287         234 PUSH_NULL
+            236 LOAD_DEREF               4 (_cl_add_row)
+            238 LOAD_FAST                1 (field)
+            240 LOAD_FAST                3 (spec)
+            242 JUMP_IF_TRUE_OR_POP      1 (to 246)
+            244 BUILD_MAP                0
+        >>  246 LOAD_METHOD              7 (get)
+            268 LOAD_CONST               2 ('pat')
+            270 LOAD_CONST               3 ('')
+            272 PRECALL                  2
+            276 CALL                     2
+
+288         286 LOAD_FAST                3 (spec)
+            288 JUMP_IF_TRUE_OR_POP      1 (to 292)
+            290 BUILD_MAP                0
+        >>  292 LOAD_METHOD              7 (get)
+            314 LOAD_CONST               4 ('repl')
+            316 LOAD_CONST               3 ('')
+            318 PRECALL                  2
+            322 CALL                     2
+
+287         332 PRECALL                  3
+            336 CALL                     3
+            346 POP_TOP
+            348 JUMP_BACKWARD           60 (to 230)
+
+286     >>  350 JUMP_BACKWARD           68 (to 216)
+
+285     >>  352 LOAD_CONST               0 (None)
+            354 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._build.<lambda>  (args=0, locals=0)
+              0 COPY_FREE_VARS           1
+
+292           2 RESUME                   0
+              4 PUSH_NULL
+              6 LOAD_DEREF               0 (_cl_add_row)
+              8 PRECALL                  0
+             12 CALL                     0
+             22 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._save  (args=1, locals=10)
+# varnames: self, cleans, d, f, pat, repl, bad, attr, _label, e
+306           0 RESUME                   0
+
+307           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (_customer_var)
+             14 LOAD_METHOD              1 (get)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 LOAD_METHOD              2 (strip)
+             72 PRECALL                  0
+             76 CALL                     0
+             86 LOAD_FAST                0 (self)
+             88 LOAD_ATTR                3 (_recipe)
+             98 STORE_ATTR               4 (customer)
+
+309         108 LOAD_CONST               1 (<code object <dictcomp> at 0x000002BF946C6870, file "ui\recipe_raw_editor.py", line 309>)
+            110 MAKE_FUNCTION            0
+
+310         112 LOAD_FAST                0 (self)
+            114 LOAD_ATTR                5 (_fd_vars)
+            124 LOAD_METHOD              6 (items)
+            146 PRECALL                  0
+            150 CALL                     0
+
+309         160 GET_ITER
+            162 PRECALL                  0
+            166 CALL                     0
+            176 LOAD_FAST                0 (self)
+            178 LOAD_ATTR                3 (_recipe)
+            188 STORE_ATTR               7 (field_defaults)
+
+314         198 BUILD_MAP                0
+            200 STORE_FAST               1 (cleans)
+
+315         202 LOAD_FAST                0 (self)
+            204 LOAD_ATTR                8 (_clean_rows_data)
+            214 GET_ITER
+        >>  216 FOR_ITER               182 (to 582)
+            218 STORE_FAST               2 (d)
+
+316         220 LOAD_FAST                2 (d)
+            222 LOAD_CONST               2 ('field')
+            224 BINARY_SUBSCR
+            234 LOAD_METHOD              1 (get)
+            256 PRECALL                  0
+            260 CALL                     0
+            270 LOAD_METHOD              2 (strip)
+            292 PRECALL                  0
+            296 CALL                     0
+            306 STORE_FAST               3 (f)
+
+317         308 LOAD_FAST                2 (d)
+            310 LOAD_CONST               3 ('pat')
+            312 BINARY_SUBSCR
+            322 LOAD_METHOD              1 (get)
+            344 PRECALL                  0
+            348 CALL                     0
+            358 LOAD_METHOD              2 (strip)
+            380 PRECALL                  0
+            384 CALL                     0
+            394 STORE_FAST               4 (pat)
+
+318         396 LOAD_FAST                2 (d)
+            398 LOAD_CONST               4 ('repl')
+            400 BINARY_SUBSCR
+            410 LOAD_METHOD              1 (get)
+            432 PRECALL                  0
+            436 CALL                     0
+            446 LOAD_METHOD              2 (strip)
+            468 PRECALL                  0
+            472 CALL                     0
+            482 STORE_FAST               5 (repl)
+
+319         484 LOAD_FAST                3 (f)
+            486 POP_JUMP_FORWARD_IF_FALSE    46 (to 580)
+            488 LOAD_FAST                4 (pat)
+            490 POP_JUMP_FORWARD_IF_FALSE    44 (to 580)
+
+320         492 LOAD_FAST                1 (cleans)
+            494 LOAD_METHOD              9 (setdefault)
+            516 LOAD_FAST                3 (f)
+            518 BUILD_LIST               0
+            520 PRECALL                  2
+            524 CALL                     2
+            534 LOAD_METHOD             10 (append)
+            556 LOAD_FAST                4 (pat)
+            558 LOAD_FAST                5 (repl)
+            560 LOAD_CONST               5 (('pat', 'repl'))
+            562 BUILD_CONST_KEY_MAP      2
+            564 PRECALL                  1
+            568 CALL                     1
+            578 POP_TOP
+        >>  580 JUMP_BACKWARD          183 (to 216)
+
+321     >>  582 LOAD_FAST                1 (cleans)
+            584 LOAD_FAST                0 (self)
+            586 LOAD_ATTR                3 (_recipe)
+            596 STORE_ATTR              11 (cleans)
+
+322         606 BUILD_LIST               0
+            608 STORE_FAST               6 (bad)
+
+323         610 LOAD_GLOBAL             24 (_ANCHOR_LABELS)
+            622 GET_ITER
+        >>  624 FOR_ITER               154 (to 934)
+            626 UNPACK_SEQUENCE          2
+            630 STORE_FAST               7 (attr)
+            632 STORE_FAST               8 (_label)
+
+324         634 LOAD_FAST                0 (self)
+            636 LOAD_ATTR               13 (_vars)
+            646 LOAD_FAST                7 (attr)
+            648 BINARY_SUBSCR
+            658 LOAD_METHOD              1 (get)
+            680 PRECALL                  0
+            684 CALL                     0
+            694 LOAD_METHOD              2 (strip)
+            716 PRECALL                  0
+            720 CALL                     0
+            730 STORE_FAST               4 (pat)
+
+325         732 LOAD_FAST                4 (pat)
+            734 POP_JUMP_FORWARD_IF_FALSE    76 (to 888)
+
+326         736 NOP
+
+327         738 LOAD_GLOBAL             29 (NULL + re)
+            750 LOAD_ATTR               15 (compile)
+            760 LOAD_FAST                4 (pat)
+            762 PRECALL                  1
+            766 CALL                     1
+            776 POP_TOP
+            778 JUMP_FORWARD            54 (to 888)
+        >>  780 PUSH_EXC_INFO
+
+328         782 LOAD_GLOBAL             28 (re)
+            794 LOAD_ATTR               16 (error)
+            804 CHECK_EXC_MATCH
+            806 POP_JUMP_FORWARD_IF_FALSE    36 (to 880)
+            808 STORE_FAST               9 (e)
+
+329         810 LOAD_FAST                6 (bad)
+            812 LOAD_METHOD             10 (append)
+            834 LOAD_FAST                8 (_label)
+            836 FORMAT_VALUE             0
+            838 LOAD_CONST               6 (': ')
+            840 LOAD_FAST                9 (e)
+            842 FORMAT_VALUE             0
+            844 BUILD_STRING             3
+            846 PRECALL                  1
+            850 CALL                     1
+            860 POP_TOP
+            862 POP_EXCEPT
+            864 LOAD_CONST               0 (None)
+            866 STORE_FAST               9 (e)
+            868 DELETE_FAST              9 (e)
+            870 JUMP_FORWARD             8 (to 888)
+        >>  872 LOAD_CONST               0 (None)
+            874 STORE_FAST               9 (e)
+            876 DELETE_FAST              9 (e)
+            878 RERAISE                  1
+
+328     >>  880 RERAISE                  0
+        >>  882 COPY                     3
+            884 POP_EXCEPT
+            886 RERAISE                  1
+
+330     >>  888 LOAD_GLOBAL             35 (NULL + setattr)
+            900 LOAD_FAST                0 (self)
+            902 LOAD_ATTR                3 (_recipe)
+            912 LOAD_FAST                7 (attr)
+            914 LOAD_FAST                4 (pat)
+            916 PRECALL                  3
+            920 CALL                     3
+            930 POP_TOP
+            932 JUMP_BACKWARD          155 (to 624)
+
+331     >>  934 LOAD_FAST                6 (bad)
+            936 POP_JUMP_FORWARD_IF_FALSE    47 (to 1032)
+
+332         938 LOAD_GLOBAL             37 (NULL + messagebox)
+            950 LOAD_ATTR               19 (showerror)
+            960 LOAD_CONST               7 ('正则无法编译')
+            962 LOAD_CONST               8 ('以下锚点正则无效：\n')
+            964 LOAD_CONST               9 ('\n')
+            966 LOAD_METHOD             20 (join)
+            988 LOAD_FAST                6 (bad)
+            990 PRECALL                  1
+            994 CALL                     1
+           1004 BINARY_OP                0 (+)
+
+333        1008 LOAD_FAST                0 (self)
+
+332        1010 KW_NAMES                10
+           1012 PRECALL                  3
+           1016 CALL                     3
+           1026 POP_TOP
+
+334        1028 LOAD_CONST               0 (None)
+           1030 RETURN_VALUE
+
+335     >> 1032 NOP
+
+336        1034 LOAD_FAST                0 (self)
+           1036 LOAD_ATTR               21 (_cache)
+           1046 LOAD_METHOD             22 (put)
+           1068 LOAD_FAST                0 (self)
+           1070 LOAD_ATTR               23 (_fp)
+           1080 LOAD_FAST                0 (self)
+           1082 LOAD_ATTR                3 (_recipe)
+           1092 PRECALL                  2
+           1096 CALL                     2
+           1106 POP_TOP
+           1108 JUMP_FORWARD            50 (to 1210)
+        >> 1110 PUSH_EXC_INFO
+
+337        1112 LOAD_GLOBAL             48 (Exception)
+           1124 CHECK_EXC_MATCH
+           1126 POP_JUMP_FORWARD_IF_FALSE    37 (to 1202)
+           1128 STORE_FAST               9 (e)
+
+338        1130 LOAD_GLOBAL             37 (NULL + messagebox)
+           1142 LOAD_ATTR               19 (showerror)
+           1152 LOAD_CONST              11 ('保存失败')
+           1154 LOAD_CONST              12 ('写入缓存失败：')
+           1156 LOAD_FAST                9 (e)
+           1158 FORMAT_VALUE             0
+           1160 BUILD_STRING             2
+           1162 LOAD_FAST                0 (self)
+           1164 KW_NAMES                10
+           1166 PRECALL                  3
+           1170 CALL                     3
+           1180 POP_TOP
+
+339        1182 POP_EXCEPT
+           1184 LOAD_CONST               0 (None)
+           1186 STORE_FAST               9 (e)
+           1188 DELETE_FAST              9 (e)
+           1190 LOAD_CONST               0 (None)
+           1192 RETURN_VALUE
+        >> 1194 LOAD_CONST               0 (None)
+           1196 STORE_FAST               9 (e)
+           1198 DELETE_FAST              9 (e)
+           1200 RERAISE                  1
+
+337     >> 1202 RERAISE                  0
+        >> 1204 COPY                     3
+           1206 POP_EXCEPT
+           1208 RERAISE                  1
+
+340     >> 1210 LOAD_CONST              13 (True)
+           1212 LOAD_FAST                0 (self)
+           1214 STORE_ATTR              25 (result)
+
+341        1224 LOAD_FAST                0 (self)
+           1226 LOAD_METHOD             26 (destroy)
+           1248 PRECALL                  0
+           1252 CALL                     0
+           1262 POP_TOP
+           1264 LOAD_CONST               0 (None)
+           1266 RETURN_VALUE
+ExceptionTable:
+  738 to 776 -> 780 [1]
+  780 to 808 -> 882 [2] lasti
+  810 to 860 -> 872 [2] lasti
+  872 to 880 -> 882 [2] lasti
+  1034 to 1106 -> 1110 [0]
+  1110 to 1128 -> 1204 [1] lasti
+  1130 to 1180 -> 1194 [1] lasti
+  1194 to 1202 -> 1204 [1] lasti
+
+==============================================================================
+## <module>.RecipeRawEditor._save.<dictcomp>  (args=1, locals=3)
+# varnames: .0, k, v
+309           0 RESUME                   0
+              2 BUILD_MAP                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                86 (to 180)
+
+310           8 UNPACK_SEQUENCE          2
+             12 STORE_FAST               1 (k)
+             14 STORE_FAST               2 (v)
+
+311          16 LOAD_FAST                2 (v)
+             18 LOAD_METHOD              0 (get)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 LOAD_METHOD              1 (strip)
+             76 PRECALL                  0
+             80 CALL                     0
+             90 LOAD_CONST               0 ('')
+             92 COMPARE_OP               3 (!=)
+             98 POP_JUMP_BACKWARD_IF_FALSE    47 (to 6)
+
+310         100 LOAD_FAST                1 (k)
+            102 LOAD_FAST                2 (v)
+            104 LOAD_METHOD              0 (get)
+            126 PRECALL                  0
+            130 CALL                     0
+            140 LOAD_METHOD              1 (strip)
+            162 PRECALL                  0
+            166 CALL                     0
+
+311         176 MAP_ADD                  2
+            178 JUMP_BACKWARD           87 (to 6)
+        >>  180 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeRawEditor._cancel  (args=1, locals=1)
+# varnames: self
+343           0 RESUME                   0
+
+344           2 LOAD_CONST               1 (False)
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (result)
+
+345          16 LOAD_FAST                0 (self)
+             18 LOAD_METHOD              1 (destroy)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 POP_TOP
+             56 LOAD_CONST               0 (None)
+             58 RETURN_VALUE

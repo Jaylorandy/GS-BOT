@@ -1,0 +1,1331 @@
+# module: core.ai.local_infer
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\local_infer.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/ai/local_infer.py - local GGUF inference via llama-cpp-python (lazy import).\n\nThis module is the **local** branch of the recipe-inference engine. It mirrors\n``recipe_infer.infer_recipe`` but runs entirely offline against a user-supplied\nGGUF model (no API key, no network).\n\nllama-cpp-python IS bundled in the V.2.0.0 installer (spec uses collect_all and\ndrops the old excludes=[\'llama_cpp\']). The import stays lazy so a missing engine\nstill raises a clear, actionable error instead of crashing at import time.\n\nFour layered defences against the\n"access violation reading 0x0000000000000000" crash\n---------------------------------------------------\nThe crash is the ctypes surface for *any* exception raised inside the C log\ncallback registered by ``llama_cpp._logger`` at import time. We now block\nevery known trigger:\n\n  1. ``sys.stdout`` / ``sys.stderr`` are None in a frozen windowed build.\n     ``_ensure_stdio`` redirects them to utf-8 devnull.\n  2. The default log callback does ``text.decode("utf-8")`` *before* writing.\n     If the backend emits bytes that aren\'t valid UTF-8 (locale-formatted\n     numbers, Windows error strings, etc.) this raises UnicodeDecodeError\n     inside the C callback. ``_install_noop_log_callback`` replaces the\n     default callback with a module-level no-op kept alive so ctypes cannot\n     collect it.\n  3. ``verbose=False`` swaps sys.stderr for ``llama_cpp._utils.errnull_file``\n     which is opened at import time with the system default encoding (gbk on\n     Chinese Windows). Even though the no-op callback swallows logs, we\n     still patch these files to utf-8 as defence in depth\n     (``_patch_llama_utils_utf8``).\n  4. ``Llama(...)`` is always invoked with ``verbose=False`` to match the\n     proven-working OfflineDocAI release (Jul 29).\n\nThe proven OfflineDocAI release avoids all of this because its model lives\nunder ``models/`` (ASCII path) and the default callback never sees non-ASCII.\nWe replicate that *and* harden it so Chinese paths in the model directory\nalso work.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 39           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 41          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (ctypes)
+             24 STORE_NAME               3 (ctypes)
+
+ 42          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 43          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (sys)
+             40 STORE_NAME               5 (sys)
+
+ 45          42 LOAD_CONST               4 (2)
+             44 LOAD_CONST               5 (('PoRecipe',))
+             46 IMPORT_NAME              6 (models)
+             48 IMPORT_FROM              7 (PoRecipe)
+             50 STORE_NAME               7 (PoRecipe)
+             52 POP_TOP
+
+ 46          54 LOAD_CONST               6 (1)
+             56 LOAD_CONST               7 (('build_recipe_prompt', 'parse_recipe_response'))
+             58 IMPORT_NAME              8 (recipe_infer)
+             60 IMPORT_FROM              9 (build_recipe_prompt)
+             62 STORE_NAME               9 (build_recipe_prompt)
+             64 IMPORT_FROM             10 (parse_recipe_response)
+             66 STORE_NAME              10 (parse_recipe_response)
+             68 POP_TOP
+
+ 49          70 LOAD_CONST              42 (('return', 'None'))
+             72 LOAD_CONST              10 (<code object _ensure_stdio at 0x000002BF946C2040, file "core\ai\local_infer.py", line 49>)
+             74 MAKE_FUNCTION            4 (annotations)
+             76 STORE_NAME              11 (_ensure_stdio)
+
+ 69          78 LOAD_CONST              11 (False)
+             80 STORE_GLOBAL            12 (_noop_log_callback_installed)
+
+ 70          82 LOAD_CONST               3 (None)
+             84 STORE_GLOBAL            13 (_noop_log_callback_ref)
+
+ 73          86 LOAD_CONST              42 (('return', 'None'))
+             88 LOAD_CONST              12 (<code object _install_noop_log_callback at 0x000002BF94A19B30, file "core\ai\local_infer.py", line 73>)
+             90 MAKE_FUNCTION            4 (annotations)
+             92 STORE_NAME              14 (_install_noop_log_callback)
+
+103          94 LOAD_CONST              42 (('return', 'None'))
+             96 LOAD_CONST              13 (<code object _patch_llama_utils_utf8 at 0x000002BF946C1CE0, file "core\ai\local_infer.py", line 103>)
+             98 MAKE_FUNCTION            4 (annotations)
+            100 STORE_NAME              15 (_patch_llama_utils_utf8)
+
+123         102 LOAD_CONST              43 (('cfg', 'dict', 'return', 'dict'))
+            104 LOAD_CONST              16 (<code object _sanitize_llama_params at 0x000002BF9438F490, file "core\ai\local_infer.py", line 123>)
+            106 MAKE_FUNCTION            4 (annotations)
+            108 STORE_NAME              16 (_sanitize_llama_params)
+
+140         110 LOAD_CONST              42 (('return', 'None'))
+            112 LOAD_CONST              17 (<code object _setup_llama_runtime at 0x000002BF94A6A670, file "core\ai\local_infer.py", line 140>)
+            114 MAKE_FUNCTION            4 (annotations)
+            116 STORE_NAME              17 (_setup_llama_runtime)
+
+153         118 LOAD_CONST              44 (('system', 'str', 'user', 'str', 'n_ctx', 'int', 'max_tokens', 'int'))
+            120 LOAD_CONST              24 (<code object _fit_prompt_to_ctx at 0x000002BF9444C7E0, file "core\ai\local_infer.py", line 153>)
+            122 MAKE_FUNCTION            4 (annotations)
+            124 STORE_NAME              18 (_fit_prompt_to_ctx)
+
+200         126 LOAD_CONST              25 ('本地推理引擎（llama-cpp-python）尚未打包进本程序。\n请在开发环境执行 `py -3.11 -m pip install llama-cpp-python`，\n并把 core.ai.local_infer 加入打包隐藏导入后重打安装包。')
+
+199         128 STORE_NAME              19 (_LOCAL_MISSING_MSG)
+
+206         130 LOAD_CONST              45 (('system', 'str', 'user', 'str', 'cfg', 'dict', 'return', 'str'))
+            132 LOAD_CONST              26 (<code object _chat_local_impl at 0x000002BF94461810, file "core\ai\local_infer.py", line 206>)
+            134 MAKE_FUNCTION            4 (annotations)
+            136 STORE_NAME              20 (_chat_local_impl)
+
+266         138 LOAD_CONST              27 ('')
+
+267         140 LOAD_CONST              27 ('')
+
+266         142 LOAD_CONST              28 (('customer', 'extra_hint'))
+            144 BUILD_CONST_KEY_MAP      2
+            146 LOAD_CONST              46 (('raw_text', 'str', 'customer', 'str', 'cfg', 'dict', 'extra_hint', 'str', 'return', 'PoRecipe'))
+            148 LOAD_CONST              33 (<code object _infer_recipe_local_impl at 0x000002BF9472B340, file "core\ai\local_infer.py", line 266>)
+            150 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            152 STORE_NAME              21 (_infer_recipe_local_impl)
+
+275         154 LOAD_CONST               3 (None)
+            156 LOAD_CONST              34 (('cfg',))
+            158 BUILD_CONST_KEY_MAP      1
+            160 LOAD_CONST              47 (('system', 'str', 'user', 'str', 'cfg', 'dict | None', 'return', 'str'))
+            162 LOAD_CONST              36 (<code object chat_local at 0x000002BF9472B470, file "core\ai\local_infer.py", line 275>)
+            164 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            166 STORE_NAME              22 (chat_local)
+
+283         168 LOAD_CONST              48 (('return', 'bool'))
+            170 LOAD_CONST              38 (<code object is_local_engine_available at 0x000002BF94A658A0, file "core\ai\local_infer.py", line 283>)
+            172 MAKE_FUNCTION            4 (annotations)
+            174 STORE_NAME              23 (is_local_engine_available)
+
+293         176 LOAD_CONST              27 ('')
+            178 LOAD_CONST               3 (None)
+
+294         180 LOAD_CONST              27 ('')
+
+293         182 LOAD_CONST              39 (('customer', 'cfg', 'extra_hint'))
+            184 BUILD_CONST_KEY_MAP      3
+            186 LOAD_CONST              49 (('raw_text', 'str', 'customer', 'str', 'cfg', 'dict | None', 'extra_hint', 'str', 'return', 'PoRecipe'))
+            188 LOAD_CONST              40 (<code object infer_recipe_local at 0x000002BF9472B6D0, file "core\ai\local_infer.py", line 293>)
+            190 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            192 STORE_NAME              24 (infer_recipe_local)
+
+303         194 LOAD_CONST              50 (('cfg', 'dict', 'return', 'str'))
+            196 LOAD_CONST              41 (<code object load_local_model_headless at 0x000002BF94461C70, file "core\ai\local_infer.py", line 303>)
+            198 MAKE_FUNCTION            4 (annotations)
+            200 STORE_NAME              25 (load_local_model_headless)
+            202 LOAD_CONST               3 (None)
+            204 RETURN_VALUE
+
+==============================================================================
+## <module>._ensure_stdio  (args=0, locals=0)
+ 49           0 RESUME                   0
+
+ 57           2 NOP
+
+ 58           4 LOAD_GLOBAL              0 (sys)
+             16 LOAD_ATTR                1 (stdout)
+             26 POP_JUMP_FORWARD_IF_NOT_NONE    38 (to 104)
+
+ 59          28 LOAD_GLOBAL              5 (NULL + open)
+             40 LOAD_GLOBAL              6 (os)
+             52 LOAD_ATTR                4 (devnull)
+             62 LOAD_CONST               2 ('w')
+             64 LOAD_CONST               3 ('utf-8')
+             66 KW_NAMES                 4
+             68 PRECALL                  3
+             72 CALL                     3
+             82 LOAD_GLOBAL              0 (sys)
+             94 STORE_ATTR               1 (stdout)
+
+ 60     >>  104 LOAD_GLOBAL              0 (sys)
+            116 LOAD_ATTR                5 (stderr)
+            126 POP_JUMP_FORWARD_IF_NOT_NONE    40 (to 208)
+
+ 61         128 LOAD_GLOBAL              5 (NULL + open)
+            140 LOAD_GLOBAL              6 (os)
+            152 LOAD_ATTR                4 (devnull)
+            162 LOAD_CONST               2 ('w')
+            164 LOAD_CONST               3 ('utf-8')
+            166 KW_NAMES                 4
+            168 PRECALL                  3
+            172 CALL                     3
+            182 LOAD_GLOBAL              0 (sys)
+            194 STORE_ATTR               5 (stderr)
+            204 LOAD_CONST               1 (None)
+            206 RETURN_VALUE
+
+ 60     >>  208 LOAD_CONST               1 (None)
+            210 RETURN_VALUE
+        >>  212 PUSH_EXC_INFO
+
+ 62         214 LOAD_GLOBAL             12 (Exception)
+            226 CHECK_EXC_MATCH
+            228 POP_JUMP_FORWARD_IF_FALSE     4 (to 238)
+            230 POP_TOP
+
+ 63         232 POP_EXCEPT
+            234 LOAD_CONST               1 (None)
+            236 RETURN_VALUE
+
+ 62     >>  238 RERAISE                  0
+        >>  240 COPY                     3
+            242 POP_EXCEPT
+            244 RERAISE                  1
+ExceptionTable:
+  4 to 202 -> 212 [0]
+  212 to 230 -> 240 [1] lasti
+  238 to 238 -> 240 [1] lasti
+
+==============================================================================
+## <module>._install_noop_log_callback  (args=0, locals=2)
+# varnames: llama_cpp, _noop
+ 73           0 RESUME                   0
+
+ 87           2 LOAD_GLOBAL              0 (_noop_log_callback_installed)
+             14 POP_JUMP_FORWARD_IF_FALSE     2 (to 20)
+
+ 88          16 LOAD_CONST               1 (None)
+             18 RETURN_VALUE
+
+ 89     >>   20 NOP
+
+ 90          22 LOAD_CONST               2 (0)
+             24 LOAD_CONST               1 (None)
+             26 IMPORT_NAME              1 (llama_cpp)
+             28 STORE_FAST               0 (llama_cpp)
+
+ 92          30 LOAD_FAST                0 (llama_cpp)
+             32 LOAD_ATTR                2 (llama_log_callback)
+
+ 93          42 LOAD_CONST              13 (('level', 'int', 'text', 'bytes', 'user_data', 'ctypes.c_void_p', 'return', 'None'))
+             44 LOAD_CONST              11 (<code object _noop at 0x000002BF946B71B0, file "core\ai\local_infer.py", line 92>)
+             46 MAKE_FUNCTION            4 (annotations)
+
+ 92          48 PRECALL                  0
+             52 CALL                     0
+
+ 93          62 STORE_FAST               1 (_noop)
+
+ 96          64 LOAD_FAST                1 (_noop)
+             66 STORE_GLOBAL             3 (_noop_log_callback_ref)
+
+ 97          68 LOAD_FAST                0 (llama_cpp)
+             70 LOAD_METHOD              4 (llama_log_set)
+             92 LOAD_FAST                1 (_noop)
+             94 LOAD_GLOBAL             11 (NULL + ctypes)
+            106 LOAD_ATTR                6 (c_void_p)
+            116 LOAD_CONST               2 (0)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 PRECALL                  2
+            136 CALL                     2
+            146 POP_TOP
+
+ 98         148 LOAD_CONST              12 (True)
+            150 STORE_GLOBAL             0 (_noop_log_callback_installed)
+            152 LOAD_CONST               1 (None)
+            154 RETURN_VALUE
+        >>  156 PUSH_EXC_INFO
+
+ 99         158 LOAD_GLOBAL             14 (Exception)
+            170 CHECK_EXC_MATCH
+            172 POP_JUMP_FORWARD_IF_FALSE     4 (to 182)
+            174 POP_TOP
+
+100         176 POP_EXCEPT
+            178 LOAD_CONST               1 (None)
+            180 RETURN_VALUE
+
+ 99     >>  182 RERAISE                  0
+        >>  184 COPY                     3
+            186 POP_EXCEPT
+            188 RERAISE                  1
+ExceptionTable:
+  22 to 150 -> 156 [0]
+  156 to 174 -> 184 [1] lasti
+  182 to 182 -> 184 [1] lasti
+
+==============================================================================
+## <module>._install_noop_log_callback._noop  (args=3, locals=3)
+# varnames: level, text, user_data
+ 92           0 RESUME                   0
+
+ 94           2 LOAD_CONST               0 (None)
+              4 RETURN_VALUE
+
+==============================================================================
+## <module>._patch_llama_utils_utf8  (args=0, locals=1)
+# varnames: _utils
+103           0 RESUME                   0
+
+111           2 NOP
+
+112           4 LOAD_CONST               1 (0)
+              6 LOAD_CONST               2 (None)
+              8 IMPORT_NAME              0 (llama_cpp._utils)
+             10 IMPORT_FROM              1 (_utils)
+             12 STORE_FAST               0 (_utils)
+             14 POP_TOP
+
+114          16 LOAD_GLOBAL              5 (NULL + getattr)
+             28 LOAD_FAST                0 (_utils)
+             30 LOAD_CONST               3 ('_v2_utf8_patched')
+             32 LOAD_CONST               4 (False)
+             34 PRECALL                  3
+             38 CALL                     3
+             48 POP_JUMP_FORWARD_IF_FALSE     2 (to 54)
+
+115          50 LOAD_CONST               2 (None)
+             52 RETURN_VALUE
+
+116     >>   54 LOAD_GLOBAL              7 (NULL + open)
+             66 LOAD_GLOBAL              8 (os)
+             78 LOAD_ATTR                5 (devnull)
+             88 LOAD_CONST               5 ('w')
+             90 LOAD_CONST               6 ('utf-8')
+             92 LOAD_CONST               7 ('ignore')
+             94 KW_NAMES                 8
+             96 PRECALL                  4
+            100 CALL                     4
+            110 LOAD_FAST                0 (_utils)
+            112 STORE_ATTR               6 (outnull_file)
+
+117         122 LOAD_GLOBAL              7 (NULL + open)
+            134 LOAD_GLOBAL              8 (os)
+            146 LOAD_ATTR                5 (devnull)
+            156 LOAD_CONST               5 ('w')
+            158 LOAD_CONST               6 ('utf-8')
+            160 LOAD_CONST               7 ('ignore')
+            162 KW_NAMES                 8
+            164 PRECALL                  4
+            168 CALL                     4
+            178 LOAD_FAST                0 (_utils)
+            180 STORE_ATTR               7 (errnull_file)
+
+118         190 LOAD_CONST               9 (True)
+            192 LOAD_FAST                0 (_utils)
+            194 STORE_ATTR               8 (_v2_utf8_patched)
+            204 LOAD_CONST               2 (None)
+            206 RETURN_VALUE
+        >>  208 PUSH_EXC_INFO
+
+119         210 LOAD_GLOBAL             18 (Exception)
+            222 CHECK_EXC_MATCH
+            224 POP_JUMP_FORWARD_IF_FALSE     4 (to 234)
+            226 POP_TOP
+
+120         228 POP_EXCEPT
+            230 LOAD_CONST               2 (None)
+            232 RETURN_VALUE
+
+119     >>  234 RERAISE                  0
+        >>  236 COPY                     3
+            238 POP_EXCEPT
+            240 RERAISE                  1
+ExceptionTable:
+  4 to 48 -> 208 [0]
+  54 to 202 -> 208 [0]
+  208 to 226 -> 236 [1] lasti
+  234 to 234 -> 236 [1] lasti
+
+==============================================================================
+## <module>._sanitize_llama_params  (args=1, locals=2)
+# varnames: cfg, params
+123           0 RESUME                   0
+
+126           2 LOAD_GLOBAL              1 (NULL + int)
+             14 LOAD_FAST                0 (cfg)
+             16 LOAD_METHOD              1 (get)
+             38 LOAD_CONST               1 ('local_n_ctx')
+             40 LOAD_CONST               2 (4096)
+             42 PRECALL                  2
+             46 CALL                     2
+             56 PRECALL                  1
+             60 CALL                     1
+
+127          70 LOAD_GLOBAL              1 (NULL + int)
+             82 LOAD_FAST                0 (cfg)
+             84 LOAD_METHOD              1 (get)
+            106 LOAD_CONST               3 ('local_n_threads')
+            108 LOAD_CONST               4 (0)
+            110 PRECALL                  2
+            114 CALL                     2
+            124 PRECALL                  1
+            128 CALL                     1
+
+128         138 LOAD_GLOBAL              1 (NULL + int)
+            150 LOAD_FAST                0 (cfg)
+            152 LOAD_METHOD              1 (get)
+            174 LOAD_CONST               5 ('local_n_gpu_layers')
+            176 LOAD_CONST               4 (0)
+            178 PRECALL                  2
+            182 CALL                     2
+            192 PRECALL                  1
+            196 CALL                     1
+
+129         206 LOAD_GLOBAL              1 (NULL + int)
+            218 LOAD_FAST                0 (cfg)
+            220 LOAD_METHOD              1 (get)
+            242 LOAD_CONST               6 ('local_n_batch')
+            244 LOAD_CONST               7 (512)
+            246 PRECALL                  2
+            250 CALL                     2
+            260 PRECALL                  1
+            264 CALL                     1
+
+125         274 LOAD_CONST               8 (('n_ctx', 'n_threads', 'n_gpu_layers', 'n_batch'))
+            276 BUILD_CONST_KEY_MAP      4
+            278 STORE_FAST               1 (params)
+
+131         280 LOAD_FAST                1 (params)
+            282 LOAD_CONST               9 ('n_threads')
+            284 BINARY_SUBSCR
+            294 LOAD_CONST               4 (0)
+            296 COMPARE_OP               1 (<=)
+            302 POP_JUMP_FORWARD_IF_FALSE    38 (to 380)
+
+132         304 LOAD_GLOBAL              5 (NULL + max)
+            316 LOAD_GLOBAL              7 (NULL + os)
+            328 LOAD_ATTR                4 (cpu_count)
+            338 PRECALL                  0
+            342 CALL                     0
+            352 JUMP_IF_TRUE_OR_POP      1 (to 356)
+            354 LOAD_CONST              10 (1)
+        >>  356 LOAD_CONST              10 (1)
+            358 PRECALL                  2
+            362 CALL                     2
+            372 LOAD_FAST                1 (params)
+            374 LOAD_CONST               9 ('n_threads')
+            376 STORE_SUBSCR
+
+133     >>  380 LOAD_FAST                1 (params)
+            382 LOAD_CONST              11 ('n_batch')
+            384 BINARY_SUBSCR
+            394 LOAD_CONST               4 (0)
+            396 COMPARE_OP               1 (<=)
+            402 POP_JUMP_FORWARD_IF_FALSE     5 (to 414)
+
+134         404 LOAD_CONST               7 (512)
+            406 LOAD_FAST                1 (params)
+            408 LOAD_CONST              11 ('n_batch')
+            410 STORE_SUBSCR
+
+135     >>  414 LOAD_FAST                1 (params)
+            416 LOAD_CONST              12 ('n_ctx')
+            418 BINARY_SUBSCR
+            428 LOAD_CONST               4 (0)
+            430 COMPARE_OP               1 (<=)
+            436 POP_JUMP_FORWARD_IF_FALSE     5 (to 448)
+
+136         438 LOAD_CONST               2 (4096)
+            440 LOAD_FAST                1 (params)
+            442 LOAD_CONST              12 ('n_ctx')
+            444 STORE_SUBSCR
+
+137     >>  448 LOAD_FAST                1 (params)
+            450 RETURN_VALUE
+
+==============================================================================
+## <module>._setup_llama_runtime  (args=0, locals=0)
+140           0 RESUME                   0
+
+148           2 LOAD_GLOBAL              1 (NULL + _ensure_stdio)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 POP_TOP
+
+149          30 LOAD_GLOBAL              3 (NULL + _install_noop_log_callback)
+             42 PRECALL                  0
+             46 CALL                     0
+             56 POP_TOP
+
+150          58 LOAD_GLOBAL              5 (NULL + _patch_llama_utils_utf8)
+             70 PRECALL                  0
+             74 CALL                     0
+             84 POP_TOP
+             86 LOAD_CONST               1 (None)
+             88 RETURN_VALUE
+
+==============================================================================
+## <module>._fit_prompt_to_ctx  (args=5, locals=15)
+# varnames: llm, system, user, n_ctx, max_tokens, reserve, sys_tok, usr_tok, prompt_tokens, room, budget, lo, hi, mid, ratio
+153           0 RESUME                   0
+
+162           2 LOAD_CONST               1 (64)
+              4 STORE_FAST               5 (reserve)
+
+163           6 NOP
+
+164           8 LOAD_FAST                1 (system)
+             10 POP_JUMP_FORWARD_IF_FALSE    42 (to 96)
+             12 LOAD_FAST                0 (llm)
+             14 LOAD_METHOD              0 (tokenize)
+             36 LOAD_FAST                1 (system)
+             38 LOAD_METHOD              1 (encode)
+             60 LOAD_CONST               2 ('utf-8')
+             62 PRECALL                  1
+             66 CALL                     1
+             76 LOAD_CONST               3 (False)
+             78 KW_NAMES                 4
+             80 PRECALL                  2
+             84 CALL                     2
+             94 JUMP_FORWARD             1 (to 98)
+        >>   96 BUILD_LIST               0
+        >>   98 STORE_FAST               6 (sys_tok)
+
+165         100 LOAD_FAST                2 (user)
+            102 POP_JUMP_FORWARD_IF_FALSE    42 (to 188)
+            104 LOAD_FAST                0 (llm)
+            106 LOAD_METHOD              0 (tokenize)
+            128 LOAD_FAST                2 (user)
+            130 LOAD_METHOD              1 (encode)
+            152 LOAD_CONST               2 ('utf-8')
+            154 PRECALL                  1
+            158 CALL                     1
+            168 LOAD_CONST               3 (False)
+            170 KW_NAMES                 4
+            172 PRECALL                  2
+            176 CALL                     2
+            186 JUMP_FORWARD             1 (to 190)
+        >>  188 BUILD_LIST               0
+        >>  190 STORE_FAST               7 (usr_tok)
+            192 JUMP_FORWARD           101 (to 396)
+        >>  194 PUSH_EXC_INFO
+
+166         196 LOAD_GLOBAL              4 (Exception)
+            208 CHECK_EXC_MATCH
+            210 POP_JUMP_FORWARD_IF_FALSE    88 (to 388)
+            212 POP_TOP
+
+169         214 LOAD_GLOBAL              7 (NULL + len)
+            226 LOAD_FAST                1 (system)
+            228 PRECALL                  1
+            232 CALL                     1
+            242 LOAD_GLOBAL              7 (NULL + len)
+            254 LOAD_FAST                2 (user)
+            256 PRECALL                  1
+            260 CALL                     1
+            270 BINARY_OP                0 (+)
+            274 LOAD_CONST               5 (3)
+            276 BINARY_OP                2 (//)
+            280 STORE_FAST               8 (prompt_tokens)
+
+170         282 LOAD_FAST                3 (n_ctx)
+            284 LOAD_FAST                8 (prompt_tokens)
+            286 BINARY_OP               10 (-)
+            290 LOAD_FAST                5 (reserve)
+            292 BINARY_OP               10 (-)
+            296 STORE_FAST               9 (room)
+
+171         298 LOAD_FAST                9 (room)
+            300 LOAD_CONST               1 (64)
+            302 COMPARE_OP               5 (>=)
+            308 POP_JUMP_FORWARD_IF_FALSE    16 (to 342)
+            310 LOAD_GLOBAL              9 (NULL + min)
+            322 LOAD_FAST                4 (max_tokens)
+            324 LOAD_FAST                9 (room)
+            326 PRECALL                  2
+            330 CALL                     2
+            340 JUMP_FORWARD            15 (to 372)
+        >>  342 LOAD_GLOBAL              9 (NULL + min)
+            354 LOAD_FAST                4 (max_tokens)
+            356 LOAD_CONST               1 (64)
+            358 PRECALL                  2
+            362 CALL                     2
+        >>  372 STORE_FAST               4 (max_tokens)
+
+172         374 LOAD_FAST                1 (system)
+            376 LOAD_FAST                2 (user)
+            378 LOAD_FAST                4 (max_tokens)
+            380 BUILD_TUPLE              3
+            382 SWAP                     2
+            384 POP_EXCEPT
+            386 RETURN_VALUE
+
+166     >>  388 RERAISE                  0
+        >>  390 COPY                     3
+            392 POP_EXCEPT
+            394 RERAISE                  1
+
+173     >>  396 LOAD_GLOBAL              7 (NULL + len)
+            408 LOAD_FAST                6 (sys_tok)
+            410 PRECALL                  1
+            414 CALL                     1
+            424 LOAD_GLOBAL              7 (NULL + len)
+            436 LOAD_FAST                7 (usr_tok)
+            438 PRECALL                  1
+            442 CALL                     1
+            452 BINARY_OP                0 (+)
+            456 STORE_FAST               8 (prompt_tokens)
+
+176         458 LOAD_FAST                3 (n_ctx)
+            460 LOAD_FAST                8 (prompt_tokens)
+            462 BINARY_OP               10 (-)
+            466 LOAD_FAST                5 (reserve)
+            468 BINARY_OP               10 (-)
+            472 STORE_FAST               9 (room)
+
+177         474 LOAD_FAST                9 (room)
+            476 LOAD_CONST               1 (64)
+            478 COMPARE_OP               0 (<)
+            484 POP_JUMP_FORWARD_IF_FALSE     2 (to 490)
+
+178         486 LOAD_CONST               1 (64)
+            488 STORE_FAST               9 (room)
+
+179     >>  490 LOAD_GLOBAL              9 (NULL + min)
+            502 LOAD_FAST                4 (max_tokens)
+            504 LOAD_FAST                9 (room)
+            506 PRECALL                  2
+            510 CALL                     2
+            520 STORE_FAST               4 (max_tokens)
+
+182         522 LOAD_FAST                8 (prompt_tokens)
+            524 LOAD_FAST                3 (n_ctx)
+            526 LOAD_FAST                5 (reserve)
+            528 BINARY_OP               10 (-)
+            532 LOAD_FAST                4 (max_tokens)
+            534 BINARY_OP               10 (-)
+            538 COMPARE_OP               4 (>)
+            544 EXTENDED_ARG             1
+            546 POP_JUMP_FORWARD_IF_FALSE   264 (to 1076)
+
+183         548 LOAD_GLOBAL             11 (NULL + max)
+            560 LOAD_FAST                5 (reserve)
+            562 LOAD_CONST               1 (64)
+            564 BINARY_OP                0 (+)
+            568 LOAD_FAST                3 (n_ctx)
+            570 LOAD_FAST                4 (max_tokens)
+            572 BINARY_OP               10 (-)
+            576 LOAD_FAST                5 (reserve)
+            578 BINARY_OP               10 (-)
+            582 PRECALL                  2
+            586 CALL                     2
+            596 STORE_FAST              10 (budget)
+
+184         598 LOAD_CONST               6 (0)
+            600 LOAD_GLOBAL              7 (NULL + len)
+            612 LOAD_FAST                7 (usr_tok)
+            614 PRECALL                  1
+            618 CALL                     1
+            628 STORE_FAST              12 (hi)
+            630 STORE_FAST              11 (lo)
+
+185         632 LOAD_FAST               11 (lo)
+            634 LOAD_FAST               12 (hi)
+            636 COMPARE_OP               0 (<)
+            642 POP_JUMP_FORWARD_IF_FALSE    47 (to 738)
+
+186     >>  644 LOAD_FAST               11 (lo)
+            646 LOAD_FAST               12 (hi)
+            648 BINARY_OP                0 (+)
+            652 LOAD_CONST               7 (1)
+            654 BINARY_OP                0 (+)
+            658 LOAD_CONST               8 (2)
+            660 BINARY_OP                2 (//)
+            664 STORE_FAST              13 (mid)
+
+187         666 LOAD_GLOBAL              7 (NULL + len)
+            678 LOAD_FAST                6 (sys_tok)
+            680 PRECALL                  1
+            684 CALL                     1
+            694 LOAD_FAST               13 (mid)
+            696 BINARY_OP                0 (+)
+            700 LOAD_FAST               10 (budget)
+            702 COMPARE_OP               1 (<=)
+            708 POP_JUMP_FORWARD_IF_FALSE     3 (to 716)
+
+188         710 LOAD_FAST               13 (mid)
+            712 STORE_FAST              11 (lo)
+            714 JUMP_FORWARD             5 (to 726)
+
+190     >>  716 LOAD_FAST               13 (mid)
+            718 LOAD_CONST               7 (1)
+            720 BINARY_OP               10 (-)
+            724 STORE_FAST              12 (hi)
+
+185     >>  726 LOAD_FAST               11 (lo)
+            728 LOAD_FAST               12 (hi)
+            730 COMPARE_OP               0 (<)
+            736 POP_JUMP_BACKWARD_IF_TRUE    47 (to 644)
+
+191     >>  738 NOP
+
+192         740 LOAD_FAST                0 (llm)
+            742 LOAD_METHOD              6 (detokenize)
+            764 LOAD_FAST                7 (usr_tok)
+            766 LOAD_CONST               9 (None)
+            768 LOAD_FAST               11 (lo)
+            770 BUILD_SLICE              2
+            772 BINARY_SUBSCR
+            782 PRECALL                  1
+            786 CALL                     1
+            796 LOAD_METHOD              7 (decode)
+            818 LOAD_CONST               2 ('utf-8')
+            820 LOAD_CONST              10 ('ignore')
+            822 KW_NAMES                11
+            824 PRECALL                  2
+            828 CALL                     2
+            838 STORE_FAST               2 (user)
+            840 JUMP_FORWARD           117 (to 1076)
+        >>  842 PUSH_EXC_INFO
+
+193         844 LOAD_GLOBAL              4 (Exception)
+            856 CHECK_EXC_MATCH
+            858 POP_JUMP_FORWARD_IF_FALSE   104 (to 1068)
+            860 POP_TOP
+
+194         862 LOAD_FAST               10 (budget)
+            864 LOAD_GLOBAL              7 (NULL + len)
+            876 LOAD_FAST                6 (sys_tok)
+            878 PRECALL                  1
+            882 CALL                     1
+            892 BINARY_OP               10 (-)
+            896 LOAD_GLOBAL             11 (NULL + max)
+            908 LOAD_CONST               7 (1)
+            910 LOAD_GLOBAL              7 (NULL + len)
+            922 LOAD_FAST                7 (usr_tok)
+            924 PRECALL                  1
+            928 CALL                     1
+            938 PRECALL                  2
+            942 CALL                     2
+            952 BINARY_OP               11 (/)
+            956 STORE_FAST              14 (ratio)
+
+195         958 LOAD_FAST                2 (user)
+            960 LOAD_CONST               9 (None)
+            962 LOAD_GLOBAL             11 (NULL + max)
+            974 LOAD_CONST               6 (0)
+            976 LOAD_GLOBAL             17 (NULL + int)
+            988 LOAD_GLOBAL              7 (NULL + len)
+           1000 LOAD_FAST                2 (user)
+           1002 PRECALL                  1
+           1006 CALL                     1
+           1016 LOAD_FAST               14 (ratio)
+           1018 BINARY_OP                5 (*)
+           1022 PRECALL                  1
+           1026 CALL                     1
+           1036 PRECALL                  2
+           1040 CALL                     2
+           1050 BUILD_SLICE              2
+           1052 BINARY_SUBSCR
+           1062 STORE_FAST               2 (user)
+           1064 POP_EXCEPT
+           1066 JUMP_FORWARD             4 (to 1076)
+
+193     >> 1068 RERAISE                  0
+        >> 1070 COPY                     3
+           1072 POP_EXCEPT
+           1074 RERAISE                  1
+
+196     >> 1076 LOAD_FAST                1 (system)
+           1078 LOAD_FAST                2 (user)
+           1080 LOAD_FAST                4 (max_tokens)
+           1082 BUILD_TUPLE              3
+           1084 RETURN_VALUE
+ExceptionTable:
+  8 to 190 -> 194 [0]
+  194 to 382 -> 390 [1] lasti
+  388 to 388 -> 390 [1] lasti
+  740 to 838 -> 842 [0]
+  842 to 1062 -> 1070 [1] lasti
+  1068 to 1068 -> 1070 [1] lasti
+
+==============================================================================
+## <module>._chat_local_impl  (args=3, locals=11)
+# varnames: system, user, cfg, llama_cpp, Llama, e, model_path, lp, llm, max_tokens, resp
+206           0 RESUME                   0
+
+213           2 NOP
+
+214           4 LOAD_CONST               1 (0)
+              6 LOAD_CONST               2 (None)
+              8 IMPORT_NAME              0 (llama_cpp)
+             10 STORE_FAST               3 (llama_cpp)
+
+215          12 LOAD_CONST               1 (0)
+             14 LOAD_CONST               3 (('Llama',))
+             16 IMPORT_NAME              0 (llama_cpp)
+             18 IMPORT_FROM              1 (Llama)
+             20 STORE_FAST               4 (Llama)
+             22 POP_TOP
+             24 JUMP_FORWARD            38 (to 102)
+        >>   26 PUSH_EXC_INFO
+
+216          28 LOAD_GLOBAL              4 (Exception)
+             40 CHECK_EXC_MATCH
+             42 POP_JUMP_FORWARD_IF_FALSE    25 (to 94)
+             44 STORE_FAST               5 (e)
+
+217          46 LOAD_GLOBAL              7 (NULL + RuntimeError)
+
+218          58 LOAD_CONST               4 ('本地推理引擎（llama-cpp-python）尚未打包进本程序。\n请在开发环境执行:\n  py -3.11 -m pip install llama-cpp-python\n并把 core.ai.local_infer 加入打包隐藏导入后重打安装包。\n（原始错误: ')
+
+222          60 LOAD_FAST                5 (e)
+
+218          62 FORMAT_VALUE             0
+             64 LOAD_CONST               5 ('）')
+             66 BUILD_STRING             3
+
+217          68 PRECALL                  1
+             72 CALL                     1
+
+223          82 LOAD_FAST                5 (e)
+
+217          84 RAISE_VARARGS            2
+        >>   86 LOAD_CONST               2 (None)
+             88 STORE_FAST               5 (e)
+             90 DELETE_FAST              5 (e)
+             92 RERAISE                  1
+
+216     >>   94 RERAISE                  0
+        >>   96 COPY                     3
+             98 POP_EXCEPT
+            100 RERAISE                  1
+
+225     >>  102 LOAD_GLOBAL              9 (NULL + _setup_llama_runtime)
+            114 PRECALL                  0
+            118 CALL                     0
+            128 POP_TOP
+
+227         130 LOAD_FAST                2 (cfg)
+            132 LOAD_METHOD              5 (get)
+            154 LOAD_CONST               6 ('local_model_path')
+            156 PRECALL                  1
+            160 CALL                     1
+            170 JUMP_IF_TRUE_OR_POP      1 (to 174)
+            172 LOAD_CONST               7 ('')
+        >>  174 STORE_FAST               6 (model_path)
+
+228         176 LOAD_FAST                6 (model_path)
+            178 POP_JUMP_FORWARD_IF_FALSE    31 (to 242)
+            180 LOAD_GLOBAL             12 (os)
+            192 LOAD_ATTR                7 (path)
+            202 LOAD_METHOD              8 (exists)
+            224 LOAD_FAST                6 (model_path)
+            226 PRECALL                  1
+            230 CALL                     1
+            240 POP_JUMP_FORWARD_IF_TRUE    18 (to 278)
+
+229     >>  242 LOAD_GLOBAL              7 (NULL + RuntimeError)
+            254 LOAD_CONST               8 ('本地模型文件不存在: ')
+            256 LOAD_FAST                6 (model_path)
+            258 FORMAT_VALUE             0
+            260 BUILD_STRING             2
+            262 PRECALL                  1
+            266 CALL                     1
+            276 RAISE_VARARGS            1
+
+231     >>  278 LOAD_GLOBAL             19 (NULL + _sanitize_llama_params)
+            290 LOAD_FAST                2 (cfg)
+            292 PRECALL                  1
+            296 CALL                     1
+            306 STORE_FAST               7 (lp)
+
+232         308 PUSH_NULL
+            310 LOAD_FAST                4 (Llama)
+
+233         312 LOAD_FAST                6 (model_path)
+
+234         314 LOAD_FAST                7 (lp)
+            316 LOAD_CONST               9 ('n_ctx')
+            318 BINARY_SUBSCR
+
+235         328 LOAD_FAST                7 (lp)
+            330 LOAD_CONST              10 ('n_threads')
+            332 BINARY_SUBSCR
+
+236         342 LOAD_FAST                7 (lp)
+            344 LOAD_CONST              11 ('n_gpu_layers')
+            346 BINARY_SUBSCR
+
+237         356 LOAD_FAST                7 (lp)
+            358 LOAD_CONST              12 ('n_batch')
+            360 BINARY_SUBSCR
+
+238         370 LOAD_CONST              13 (True)
+
+232         372 KW_NAMES                14
+            374 PRECALL                  6
+            378 CALL                     6
+            388 STORE_FAST               8 (llm)
+
+244         390 NOP
+
+245         392 LOAD_GLOBAL             21 (NULL + int)
+            404 LOAD_FAST                2 (cfg)
+            406 LOAD_METHOD              5 (get)
+            428 LOAD_CONST              15 ('local_max_tokens')
+            430 LOAD_CONST              16 (2048)
+            432 PRECALL                  2
+            436 CALL                     2
+            446 PRECALL                  1
+            450 CALL                     1
+            460 STORE_FAST               9 (max_tokens)
+
+248         462 LOAD_GLOBAL             23 (NULL + _fit_prompt_to_ctx)
+            474 LOAD_FAST                8 (llm)
+            476 LOAD_FAST                0 (system)
+            478 LOAD_FAST                1 (user)
+            480 LOAD_FAST                7 (lp)
+            482 LOAD_CONST               9 ('n_ctx')
+            484 BINARY_SUBSCR
+            494 LOAD_FAST                9 (max_tokens)
+            496 PRECALL                  5
+            500 CALL                     5
+            510 UNPACK_SEQUENCE          3
+            514 STORE_FAST               0 (system)
+            516 STORE_FAST               1 (user)
+            518 STORE_FAST               9 (max_tokens)
+
+249         520 LOAD_FAST                8 (llm)
+            522 LOAD_METHOD             12 (create_chat_completion)
+
+251         544 LOAD_CONST              17 ('system')
+            546 LOAD_FAST                0 (system)
+            548 LOAD_CONST              18 (('role', 'content'))
+            550 BUILD_CONST_KEY_MAP      2
+
+252         552 LOAD_CONST              19 ('user')
+            554 LOAD_FAST                1 (user)
+            556 LOAD_CONST              18 (('role', 'content'))
+            558 BUILD_CONST_KEY_MAP      2
+
+250         560 BUILD_LIST               2
+
+254         562 LOAD_GLOBAL             27 (NULL + float)
+            574 LOAD_FAST                2 (cfg)
+            576 LOAD_METHOD              5 (get)
+            598 LOAD_CONST              20 ('local_temperature')
+            600 LOAD_CONST              21 (0.1)
+            602 PRECALL                  2
+            606 CALL                     2
+            616 PRECALL                  1
+            620 CALL                     1
+
+255         630 LOAD_GLOBAL             27 (NULL + float)
+            642 LOAD_FAST                2 (cfg)
+            644 LOAD_METHOD              5 (get)
+            666 LOAD_CONST              22 ('local_top_p')
+            668 LOAD_CONST              23 (0.9)
+            670 PRECALL                  2
+            674 CALL                     2
+            684 PRECALL                  1
+            688 CALL                     1
+
+256         698 LOAD_FAST                9 (max_tokens)
+
+249         700 KW_NAMES                24
+            702 PRECALL                  4
+            706 CALL                     4
+            716 STORE_FAST              10 (resp)
+
+258         718 LOAD_FAST               10 (resp)
+            720 LOAD_CONST              25 ('choices')
+            722 BINARY_SUBSCR
+            732 LOAD_CONST               1 (0)
+            734 BINARY_SUBSCR
+            744 LOAD_CONST              26 ('message')
+            746 BINARY_SUBSCR
+            756 LOAD_CONST              27 ('content')
+            758 BINARY_SUBSCR
+
+260         768 NOP
+
+261         770 LOAD_FAST                8 (llm)
+            772 LOAD_METHOD             14 (close)
+            794 PRECALL                  0
+            798 CALL                     0
+            808 POP_TOP
+            810 RETURN_VALUE
+        >>  812 PUSH_EXC_INFO
+
+262         814 LOAD_GLOBAL              4 (Exception)
+            826 CHECK_EXC_MATCH
+            828 POP_JUMP_FORWARD_IF_FALSE     3 (to 836)
+            830 POP_TOP
+
+263         832 POP_EXCEPT
+            834 RETURN_VALUE
+
+262     >>  836 RERAISE                  0
+        >>  838 COPY                     3
+            840 POP_EXCEPT
+            842 RERAISE                  1
+        >>  844 PUSH_EXC_INFO
+
+260         846 NOP
+
+261         848 LOAD_FAST                8 (llm)
+            850 LOAD_METHOD             14 (close)
+            872 PRECALL                  0
+            876 CALL                     0
+            886 POP_TOP
+            888 RERAISE                  0
+        >>  890 PUSH_EXC_INFO
+
+262         892 LOAD_GLOBAL              4 (Exception)
+            904 CHECK_EXC_MATCH
+            906 POP_JUMP_FORWARD_IF_FALSE     3 (to 914)
+            908 POP_TOP
+
+263         910 POP_EXCEPT
+            912 RERAISE                  0
+
+262     >>  914 RERAISE                  0
+        >>  916 COPY                     3
+            918 POP_EXCEPT
+            920 RERAISE                  1
+        >>  922 COPY                     3
+            924 POP_EXCEPT
+            926 RERAISE                  1
+ExceptionTable:
+  4 to 22 -> 26 [0]
+  26 to 44 -> 96 [1] lasti
+  46 to 84 -> 86 [1] lasti
+  86 to 94 -> 96 [1] lasti
+  392 to 766 -> 844 [0]
+  770 to 808 -> 812 [1]
+  812 to 830 -> 838 [2] lasti
+  836 to 836 -> 838 [2] lasti
+  844 to 844 -> 922 [1] lasti
+  848 to 886 -> 890 [2]
+  888 to 888 -> 922 [1] lasti
+  890 to 908 -> 916 [3] lasti
+  910 to 912 -> 922 [1] lasti
+  914 to 914 -> 916 [3] lasti
+  916 to 920 -> 922 [1] lasti
+
+==============================================================================
+## <module>._infer_recipe_local_impl  (args=1, locals=7)
+# varnames: raw_text, customer, cfg, extra_hint, system, user, content
+266           0 RESUME                   0
+
+270           2 LOAD_GLOBAL              1 (NULL + build_recipe_prompt)
+             14 LOAD_FAST                0 (raw_text)
+             16 LOAD_FAST                1 (customer)
+             18 LOAD_FAST                3 (extra_hint)
+             20 PRECALL                  3
+             24 CALL                     3
+             34 UNPACK_SEQUENCE          2
+             38 STORE_FAST               4 (system)
+             40 STORE_FAST               5 (user)
+
+271          42 LOAD_GLOBAL              3 (NULL + _chat_local_impl)
+             54 LOAD_FAST                4 (system)
+             56 LOAD_FAST                5 (user)
+             58 LOAD_FAST                2 (cfg)
+             60 PRECALL                  3
+             64 CALL                     3
+             74 STORE_FAST               6 (content)
+
+272          76 LOAD_GLOBAL              5 (NULL + parse_recipe_response)
+             88 LOAD_FAST                6 (content)
+             90 LOAD_FAST                1 (customer)
+             92 KW_NAMES                 1
+             94 PRECALL                  2
+             98 CALL                     2
+            108 RETURN_VALUE
+
+==============================================================================
+## <module>.chat_local  (args=2, locals=3)
+# varnames: system, user, cfg
+275           0 RESUME                   0
+
+277           2 LOAD_FAST                2 (cfg)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 BUILD_MAP                0
+        >>    8 STORE_FAST               2 (cfg)
+
+278          10 LOAD_GLOBAL              1 (NULL + is_local_engine_available)
+             22 PRECALL                  0
+             26 CALL                     0
+             36 POP_JUMP_FORWARD_IF_TRUE    20 (to 78)
+
+279          38 LOAD_GLOBAL              3 (NULL + RuntimeError)
+             50 LOAD_GLOBAL              4 (_LOCAL_MISSING_MSG)
+             62 PRECALL                  1
+             66 CALL                     1
+             76 RAISE_VARARGS            1
+
+280     >>   78 LOAD_GLOBAL              7 (NULL + _chat_local_impl)
+             90 LOAD_FAST                0 (system)
+             92 LOAD_FAST                1 (user)
+             94 LOAD_FAST                2 (cfg)
+             96 PRECALL                  3
+            100 CALL                     3
+            110 RETURN_VALUE
+
+==============================================================================
+## <module>.is_local_engine_available  (args=0, locals=1)
+# varnames: llama_cpp
+283           0 RESUME                   0
+
+285           2 LOAD_GLOBAL              1 (NULL + _setup_llama_runtime)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 POP_TOP
+
+286          30 NOP
+
+287          32 LOAD_CONST               1 (0)
+             34 LOAD_CONST               2 (None)
+             36 IMPORT_NAME              1 (llama_cpp)
+             38 STORE_FAST               0 (llama_cpp)
+
+288          40 LOAD_CONST               3 (True)
+             42 RETURN_VALUE
+        >>   44 PUSH_EXC_INFO
+
+289          46 LOAD_GLOBAL              4 (Exception)
+             58 CHECK_EXC_MATCH
+             60 POP_JUMP_FORWARD_IF_FALSE     4 (to 70)
+             62 POP_TOP
+
+290          64 POP_EXCEPT
+             66 LOAD_CONST               4 (False)
+             68 RETURN_VALUE
+
+289     >>   70 RERAISE                  0
+        >>   72 COPY                     3
+             74 POP_EXCEPT
+             76 RERAISE                  1
+ExceptionTable:
+  32 to 38 -> 44 [0]
+  44 to 62 -> 72 [1] lasti
+  70 to 70 -> 72 [1] lasti
+
+==============================================================================
+## <module>.infer_recipe_local  (args=1, locals=4)
+# varnames: raw_text, customer, cfg, extra_hint
+293           0 RESUME                   0
+
+295           2 LOAD_FAST                2 (cfg)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 BUILD_MAP                0
+        >>    8 STORE_FAST               2 (cfg)
+
+296          10 LOAD_GLOBAL              1 (NULL + is_local_engine_available)
+             22 PRECALL                  0
+             26 CALL                     0
+             36 POP_JUMP_FORWARD_IF_FALSE    19 (to 76)
+
+297          38 LOAD_GLOBAL              3 (NULL + _infer_recipe_local_impl)
+             50 LOAD_FAST                0 (raw_text)
+             52 LOAD_FAST                1 (customer)
+             54 LOAD_FAST                2 (cfg)
+
+298          56 LOAD_FAST                3 (extra_hint)
+
+297          58 KW_NAMES                 1
+             60 PRECALL                  4
+             64 CALL                     4
+             74 RETURN_VALUE
+
+299     >>   76 LOAD_GLOBAL              5 (NULL + RuntimeError)
+             88 LOAD_GLOBAL              6 (_LOCAL_MISSING_MSG)
+            100 PRECALL                  1
+            104 CALL                     1
+            114 RAISE_VARARGS            1
+
+==============================================================================
+## <module>.load_local_model_headless  (args=1, locals=8)
+# varnames: cfg, model_path, size_mb, Llama, lp, llm, e, msg
+303           0 RESUME                   0
+
+308           2 LOAD_FAST                0 (cfg)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('local_model_path')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 JUMP_IF_TRUE_OR_POP      1 (to 46)
+             44 LOAD_CONST               2 ('')
+        >>   46 STORE_FAST               1 (model_path)
+
+309          48 LOAD_FAST                1 (model_path)
+             50 POP_JUMP_FORWARD_IF_FALSE    31 (to 114)
+             52 LOAD_GLOBAL              2 (os)
+             64 LOAD_ATTR                2 (path)
+             74 LOAD_METHOD              3 (exists)
+             96 LOAD_FAST                1 (model_path)
+             98 PRECALL                  1
+            102 CALL                     1
+            112 POP_JUMP_FORWARD_IF_TRUE    18 (to 150)
+
+310     >>  114 LOAD_GLOBAL              9 (NULL + RuntimeError)
+            126 LOAD_CONST               3 ('本地模型文件不存在: ')
+            128 LOAD_FAST                1 (model_path)
+            130 FORMAT_VALUE             0
+            132 BUILD_STRING             2
+            134 PRECALL                  1
+            138 CALL                     1
+            148 RAISE_VARARGS            1
+
+311     >>  150 LOAD_GLOBAL              2 (os)
+            162 LOAD_ATTR                2 (path)
+            172 LOAD_METHOD              5 (getsize)
+            194 LOAD_FAST                1 (model_path)
+            196 PRECALL                  1
+            200 CALL                     1
+            210 LOAD_CONST               4 (1048576)
+            212 BINARY_OP               11 (/)
+            216 STORE_FAST               2 (size_mb)
+
+312         218 LOAD_GLOBAL             13 (NULL + is_local_engine_available)
+            230 PRECALL                  0
+            234 CALL                     0
+            244 POP_JUMP_FORWARD_IF_TRUE     7 (to 260)
+
+313         246 LOAD_CONST               5 ('文件 OK（')
+            248 LOAD_FAST                2 (size_mb)
+            250 LOAD_CONST               6 ('.0f')
+            252 FORMAT_VALUE             4 (with format)
+            254 LOAD_CONST               7 (' MB），但本地引擎未打包')
+            256 BUILD_STRING             3
+            258 RETURN_VALUE
+
+314     >>  260 NOP
+
+315         262 LOAD_CONST               8 (0)
+            264 LOAD_CONST               9 (('Llama',))
+            266 IMPORT_NAME              7 (llama_cpp)
+            268 IMPORT_FROM              8 (Llama)
+            270 STORE_FAST               3 (Llama)
+            272 POP_TOP
+
+317         274 LOAD_GLOBAL             19 (NULL + _setup_llama_runtime)
+            286 PRECALL                  0
+            290 CALL                     0
+            300 POP_TOP
+
+318         302 LOAD_GLOBAL             21 (NULL + _sanitize_llama_params)
+            314 LOAD_FAST                0 (cfg)
+            316 PRECALL                  1
+            320 CALL                     1
+            330 STORE_FAST               4 (lp)
+
+319         332 PUSH_NULL
+            334 LOAD_FAST                3 (Llama)
+
+320         336 LOAD_FAST                1 (model_path)
+
+321         338 LOAD_FAST                4 (lp)
+            340 LOAD_CONST              10 ('n_ctx')
+            342 BINARY_SUBSCR
+
+322         352 LOAD_FAST                4 (lp)
+            354 LOAD_CONST              11 ('n_threads')
+            356 BINARY_SUBSCR
+
+323         366 LOAD_FAST                4 (lp)
+            368 LOAD_CONST              12 ('n_gpu_layers')
+            370 BINARY_SUBSCR
+
+324         380 LOAD_FAST                4 (lp)
+            382 LOAD_CONST              13 ('n_batch')
+            384 BINARY_SUBSCR
+
+325         394 LOAD_CONST              14 (True)
+
+319         396 KW_NAMES                15
+            398 PRECALL                  6
+            402 CALL                     6
+            412 STORE_FAST               5 (llm)
+
+327         414 NOP
+
+328         416 LOAD_FAST                5 (llm)
+            418 LOAD_METHOD             11 (close)
+            440 PRECALL                  0
+            444 CALL                     0
+            454 POP_TOP
+            456 JUMP_FORWARD            16 (to 490)
+        >>  458 PUSH_EXC_INFO
+
+329         460 LOAD_GLOBAL             24 (Exception)
+            472 CHECK_EXC_MATCH
+            474 POP_JUMP_FORWARD_IF_FALSE     3 (to 482)
+            476 POP_TOP
+
+330         478 POP_EXCEPT
+            480 JUMP_FORWARD             4 (to 490)
+
+329     >>  482 RERAISE                  0
+        >>  484 COPY                     3
+            486 POP_EXCEPT
+            488 RERAISE                  1
+        >>  490 JUMP_FORWARD            52 (to 596)
+        >>  492 PUSH_EXC_INFO
+
+331         494 LOAD_GLOBAL             24 (Exception)
+            506 CHECK_EXC_MATCH
+            508 POP_JUMP_FORWARD_IF_FALSE    39 (to 588)
+            510 STORE_FAST               6 (e)
+
+332         512 LOAD_GLOBAL             27 (NULL + str)
+            524 LOAD_FAST                6 (e)
+            526 PRECALL                  1
+            530 CALL                     1
+            540 STORE_FAST               7 (msg)
+
+333         542 LOAD_GLOBAL              9 (NULL + RuntimeError)
+            554 LOAD_CONST              16 ('模型加载失败: ')
+            556 LOAD_FAST                7 (msg)
+            558 FORMAT_VALUE             0
+            560 BUILD_STRING             2
+            562 PRECALL                  1
+            566 CALL                     1
+            576 LOAD_FAST                6 (e)
+            578 RAISE_VARARGS            2
+        >>  580 LOAD_CONST              17 (None)
+            582 STORE_FAST               6 (e)
+            584 DELETE_FAST              6 (e)
+            586 RERAISE                  1
+
+331     >>  588 RERAISE                  0
+        >>  590 COPY                     3
+            592 POP_EXCEPT
+            594 RERAISE                  1
+
+334     >>  596 LOAD_CONST              18 ('已加载（')
+            598 LOAD_FAST                2 (size_mb)
+            600 LOAD_CONST               6 ('.0f')
+            602 FORMAT_VALUE             4 (with format)
+            604 LOAD_CONST              19 (' MB，线程数 ')
+            606 LOAD_FAST                4 (lp)
+            608 LOAD_CONST              11 ('n_threads')
+            610 BINARY_SUBSCR
+            620 FORMAT_VALUE             0
+            622 LOAD_CONST              20 ('）')
+            624 BUILD_STRING             5
+            626 RETURN_VALUE
+ExceptionTable:
+  262 to 412 -> 492 [0]
+  416 to 454 -> 458 [0]
+  456 to 456 -> 492 [0]
+  458 to 476 -> 484 [1] lasti
+  478 to 480 -> 492 [0]
+  482 to 482 -> 484 [1] lasti
+  484 to 488 -> 492 [0]
+  492 to 510 -> 590 [1] lasti
+  512 to 578 -> 580 [1] lasti
+  580 to 588 -> 590 [1] lasti

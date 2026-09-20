@@ -1,0 +1,1373 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "typing",
+   "Callable",
+   "Dict",
+   "List",
+   "Optional",
+   "Sequence",
+   "Set",
+   "Tuple",
+   "ai.data_extract",
+   "ExtractedData",
+   "models",
+   "LayoutType",
+   "PoRecipe",
+   "parsers.base",
+   "SIZE_TOKEN",
+   "doc_text",
+   "size_columns",
+   "split_row_total",
+   "str",
+   "Logger",
+   "TOTAL_WORDS",
+   "_SIZE_CLASS",
+   "SECTION_DELIM",
+   "_SUMMARY_WORDS",
+   "_DEST_LABELS",
+   "MAX_CANDIDATES",
+   "GridInfo",
+   "_row_total_value",
+   "scan_grids",
+   "total_token_candidates",
+   "size_header_anchor",
+   "_default_code_ok",
+   "code_pattern",
+   "dest_anchor_candidates",
+   "section_candidates",
+   "summary_anchor",
+   "compile",
+   "_CODE_OK",
+   "_template_anchor",
+   "_anchor_quality",
+   "color_anchor_candidates",
+   "MatrixCandidate",
+   "_base_recipe",
+   "build_candidates",
+   "_price_anchor",
+   "synthesize_matrix_recipe",
+   "_flaws"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/matrix_synth.py - V2.0.2: code-side synthesis of MATRIX grid recipes.\n\nWhy this module exists\n----------------------\n``core/recipe_synth.py`` synthesizes a ``line_pattern`` for LINE-ITEM layouts from\nthe AI's verbatim sample rows, then proves it by offline replay. Grid layouts\n(COLIN'S / SAKHA / NEW YORKER) had no such path: the AI cannot usefully quote a\n2-D grid row by row, so V2.0.0/V2.0.1 fell back to a SECOND AI call\n(``core/ai/recipe_infer.py``) plus a manual confirmation dialog. That second call\nis the slowest and most failure-prone step in the pipeline (it is what made\nOM-907398 fail outright in V2.0.0).\n\nThe key realisation is that a grid does not need to be *read* by a model at all -\nit needs to be *located*. And a real order grid announces itself structurally:\n\n    * a SIZE HEADER line: a run of size-like tokens ending in a TOTAL token;\n    * DATA ROWS underneath whose printed ROW TOTAL lands, by x-position, exactly\n      in that TOTAL column.\n\nLook-alike tables (assortment-ratio grids, pack break-ups, SUMMARY/GENERAL TOTAL\nrestatements) either miss the second property or sit under their own distinct\nheader, so they can be told apart without reading a single word.\n\nSo this module:\n\n    1. finds every candidate grid in the document (purely structural);\n    2. derives the anchors around it (destination split, section, summary,\n       colour block, colour-code shape) as a small ORDERED candidate set;\n    3. replays each candidate recipe offline with ``registry.parse`` and keeps the\n       FIRST one that reproduces the AI-reported totals exactly.\n\nStep 3 is the same gate ``recipe_synth.verify_recipe`` applies to line items, so a\nmatrix recipe reaching the cache has been proven against the printed totals - no\nsecond AI call, no manual dialog. When nothing verifies we raise and the caller\nfalls back to the legacy inference path exactly as before.\n\nNo customer name is hardcoded anywhere.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass",
+    "field"
+   ],
+   [
+    "Callable",
+    "Dict",
+    "List",
+    "Optional",
+    "Sequence",
+    "Set",
+    "Tuple"
+   ],
+   1,
+   [
+    "ExtractedData"
+   ],
+   [
+    "LayoutType",
+    "PoRecipe"
+   ],
+   [
+    "SIZE_TOKEN",
+    "doc_text",
+    "size_columns",
+    "split_row_total"
+   ],
+   [
+    "<frozenset>",
+    "GESAMT",
+    "SUM",
+    "SUMME",
+    "TOPLAM",
+    "TOTAAL",
+    "TOTAL",
+    "TOTALE",
+    "合计",
+    "小计",
+    "总计"
+   ],
+   "[0-9XxSsMmLl][0-9XxSsMmLl/.\\-]{0,5}",
+   "(?:[A-Z]{3,}\\s+){0,3}[A-Z]{3,}",
+   "(?:SUMMARY|GENERAL|GRAND|TOPLAM)",
+   [
+    "Destination\\s*Code",
+    "Dest\\.?\\s*Code",
+    "Ship[\\s\\-]*To(?:\\s*Code)?",
+    "Consignee(?:\\s*Code)?",
+    "Delivery\\s*Place",
+    "Store\\s*Code"
+   ],
+   48,
+   "GridInfo",
+   "return",
+   "int",
+   4,
+   [
+    "pre_window"
+   ],
+   "total_token",
+   "str",
+   "pre_window",
+   "List[GridInfo]",
+   "List[Tuple[str, List[GridInfo]]]",
+   "tokens",
+   "Sequence[str]",
+   "s",
+   "bool",
+   "samples",
+   "doc",
+   "List[str]",
+   "lines",
+   "dest_pat",
+   "^[A-Za-z0-9][A-Za-z0-9._/-]{0,15}$",
+   "members",
+   "anchor",
+   "pool",
+   "Tuple[int, int]",
+   "grids",
+   "Sequence[GridInfo]",
+   "limit",
+   "MatrixCandidate",
+   "data",
+   "ExtractedData",
+   "fingerprint",
+   "layout",
+   "LayoutType",
+   "PoRecipe",
+   "",
+   [
+    "fingerprint",
+    "log"
+   ],
+   "log",
+   "Logger",
+   "List[MatrixCandidate]",
+   "soft",
+   "Set[str]",
+   [
+    "fingerprint",
+    "source_file",
+    "log"
+   ],
+   "source_file",
+   [
+    "return",
+    "int"
+   ],
+   [
+    "total_token",
+    "str",
+    "pre_window",
+    "int",
+    "return",
+    "List[GridInfo]"
+   ],
+   [
+    "return",
+    "List[Tuple[str, List[GridInfo]]]"
+   ],
+   [
+    "tokens",
+    "Sequence[str]",
+    "total_token",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "samples",
+    "Sequence[str]",
+    "return",
+    "str"
+   ],
+   [
+    "doc",
+    "str",
+    "return",
+    "List[str]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "dest_pat",
+    "str",
+    "return",
+    "List[str]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "return",
+    "str"
+   ],
+   [
+    "members",
+    "Sequence[str]",
+    "return",
+    "str"
+   ],
+   [
+    "anchor",
+    "str",
+    "pool",
+    "Sequence[str]",
+    "return",
+    "Tuple[int, int]"
+   ],
+   [
+    4
+   ],
+   [
+    "grids",
+    "Sequence[GridInfo]",
+    "limit",
+    "int",
+    "return",
+    "List[str]"
+   ],
+   [
+    "data",
+    "ExtractedData",
+    "fingerprint",
+    "str",
+    "total_token",
+    "str",
+    "layout",
+    "LayoutType",
+    "return",
+    "PoRecipe"
+   ],
+   [
+    "data",
+    "ExtractedData",
+    "fingerprint",
+    "str",
+    "log",
+    "Logger",
+    "return",
+    "List[MatrixCandidate]"
+   ],
+   [
+    "lines",
+    "Sequence[str]",
+    "doc",
+    "str",
+    "data",
+    "ExtractedData",
+    "soft",
+    "Set[str]",
+    "return",
+    "str"
+   ],
+   [
+    "data",
+    "ExtractedData",
+    "fingerprint",
+    "str",
+    "source_file",
+    "str",
+    "log",
+    "Logger"
+   ],
+   [
+    "return",
+    "Tuple[int, int]"
+   ]
+  ],
+  "n_instructions": 200
+ },
+ "<module>.GridInfo": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__annotations__",
+   "hits",
+   "rows",
+   "numeric_first",
+   "qty",
+   "field",
+   "list",
+   "code_samples",
+   "pre_lines",
+   "property",
+   "is_2axis"
+  ],
+  "varnames": [],
+  "consts": [
+   "GridInfo",
+   "One distinct size-header signature and what sits underneath it.",
+   "str",
+   "header_text",
+   "List[str]",
+   "tokens",
+   "total_token",
+   0,
+   "int",
+   "hits",
+   "rows",
+   "numeric_first",
+   "qty",
+   [
+    "default_factory"
+   ],
+   "code_samples",
+   "pre_lines",
+   "return",
+   "bool",
+   null,
+   [
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 75
+ },
+ "<module>.GridInfo.is_2axis": {
+  "names": [
+   "rows",
+   "numeric_first"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   "Numeric-leading data rows => the first column is an inseam/length axis.",
+   0,
+   2
+  ],
+  "n_instructions": 14
+ },
+ "<module>._row_total_value": {
+  "names": [
+   "parsers.base",
+   "_to_int",
+   "text"
+  ],
+  "varnames": [
+   "tok",
+   "_to_int"
+  ],
+  "consts": [
+   null,
+   1,
+   [
+    "_to_int"
+   ]
+  ],
+  "n_instructions": 14
+ },
+ "<module>.scan_grids": {
+  "names": [
+   "lines",
+   "join",
+   "size_columns",
+   "get",
+   "GridInfo",
+   "hits",
+   "pre_lines",
+   "append",
+   "len",
+   "text",
+   "startswith",
+   "split_row_total",
+   "rows",
+   "qty",
+   "_row_total_value",
+   "is_number",
+   "numeric_first",
+   "code_samples",
+   "values"
+  ],
+  "varnames": [
+   "pages",
+   "total_token",
+   "pre_window",
+   "grids",
+   "recent",
+   "cur",
+   "page",
+   "line",
+   "txt",
+   "cols",
+   "txc",
+   "g",
+   "pt",
+   "keep",
+   "rt"
+  ],
+  "consts": [
+   "Every distinct grid in the document, found without reading any words.",
+   null,
+   " ",
+   [
+    "header_text",
+    "tokens",
+    "total_token"
+   ],
+   1,
+   40,
+   20,
+   0,
+   2,
+   60
+  ],
+  "n_instructions": 249
+ },
+ "<module>.scan_grids.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.scan_grids.<listcomp>": {
+  "names": [
+   "rows"
+  ],
+  "varnames": [
+   ".0",
+   "g"
+  ],
+  "consts": [
+   0
+  ],
+  "n_instructions": 14
+ },
+ "<module>.total_token_candidates": {
+  "names": [
+   "tokens",
+   "text",
+   "upper",
+   "rstrip",
+   "TOTAL_WORDS",
+   "get",
+   "sorted",
+   "scan_grids",
+   "append"
+  ],
+  "varnames": [
+   "pages",
+   "p",
+   "t",
+   "out",
+   "tok",
+   "grids"
+  ],
+  "consts": [
+   "Exact TOTAL token texts that actually head a grid, best first.",
+   ":.",
+   0,
+   1,
+   [
+    "key"
+   ]
+  ],
+  "n_instructions": 73
+ },
+ "<module>.total_token_candidates.<lambda>": {
+  "names": [],
+  "varnames": [
+   "k"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.size_header_anchor": {
+  "names": [
+   "enumerate",
+   "SIZE_TOKEN",
+   "match",
+   "append",
+   "_SIZE_CLASS",
+   "join"
+  ],
+  "varnames": [
+   "tokens",
+   "total_token",
+   "idxs",
+   "ti",
+   "j",
+   "parts"
+  ],
+  "consts": [
+   "A fullmatch pattern that pins THIS grid's header and no other.\n\n    The label prefix and everything from TOTAL onwards stay literal (that is what\n    distinguishes competing grids); only the size run is generalized so the same\n    layout still parses when a later PO orders a different size range.\n    ",
+   "",
+   -1,
+   1,
+   0,
+   2,
+   null,
+   "(?:\\s+",
+   ")+",
+   "\\s+"
+  ],
+  "n_instructions": 110
+ },
+ "<module>.size_header_anchor.<listcomp>": {
+  "names": [
+   "re",
+   "escape"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>._default_code_ok": {
+  "names": [
+   "bool",
+   "isalnum",
+   "any",
+   "len"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   "The legacy matrix_1axis colour-code heuristic.",
+   4
+  ],
+  "n_instructions": 26
+ },
+ "<module>._default_code_ok.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.code_pattern": {
+  "names": [
+   "all",
+   "join",
+   "sorted",
+   "re",
+   "escape",
+   "max",
+   "min"
+  ],
+  "varnames": [
+   "samples",
+   "specials",
+   "cls",
+   "n"
+  ],
+  "consts": [
+   "A fullmatch pattern for the leading token of a colour row.\n\n    Returns \"\" when the legacy heuristic already accepts every sample, so old\n    behaviour (and old cached recipes) stay bit-identical.\n    ",
+   "",
+   "A-Za-z0-9",
+   2,
+   "(?=.*[A-Za-z])[",
+   "]{%d,}"
+  ],
+  "n_instructions": 70
+ },
+ "<module>.code_pattern.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>.code_pattern.<genexpr>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.code_pattern.<setcomp>": {
+  "names": [
+   "isalnum"
+  ],
+  "varnames": [
+   ".0",
+   "s",
+   "c"
+  ],
+  "consts": [],
+  "n_instructions": 19
+ },
+ "<module>.dest_anchor_candidates": {
+  "names": [
+   "_DEST_LABELS",
+   "re",
+   "finditer",
+   "error",
+   "append",
+   "setdefault",
+   "group",
+   "strip",
+   "set",
+   "add",
+   "sorted",
+   "items",
+   "len",
+   "escape",
+   "replace"
+  ],
+  "varnames": [
+   "doc",
+   "out",
+   "label",
+   "pat",
+   "vals",
+   "found",
+   "m"
+  ],
+  "consts": [
+   "Destination-code anchors present in the document, most plausible first.",
+   "\\s*[:.]+\\s*(\\S+)",
+   "([A-Z][A-Za-z]{2,15}(?:\\s+[A-Za-z]{2,15}){0,2}\\s*Code)\\s*[:.]+\\s*(\\S+)",
+   1,
+   2,
+   [
+    "key"
+   ],
+   "\\ ",
+   "\\s+"
+  ],
+  "n_instructions": 137
+ },
+ "<module>.dest_anchor_candidates.<listcomp>": {
+  "names": [
+   "group"
+  ],
+  "varnames": [
+   ".0",
+   "m"
+  ],
+  "consts": [
+   1
+  ],
+  "n_instructions": 13
+ },
+ "<module>.dest_anchor_candidates.<lambda>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   "kv"
+  ],
+  "consts": [
+   null,
+   1
+  ],
+  "n_instructions": 9
+ },
+ "<module>.section_candidates": {
+  "names": [
+   "enumerate",
+   "re",
+   "search",
+   "error",
+   "compile",
+   "SECTION_DELIM",
+   "range",
+   "max",
+   "strip",
+   "match",
+   "append"
+  ],
+  "varnames": [
+   "lines",
+   "dest_pat",
+   "first",
+   "i",
+   "ln",
+   "out",
+   "rx",
+   "k",
+   "s"
+  ],
+  "consts": [
+   "Section headings that scope the destination blocks (\"\" = no scoping).",
+   -1,
+   "",
+   0,
+   "^",
+   "$",
+   1,
+   8,
+   ":"
+  ],
+  "n_instructions": 108
+ },
+ "<module>.summary_anchor": {
+  "names": [
+   "re",
+   "compile",
+   "_SUMMARY_WORDS",
+   "join",
+   "sorted",
+   "TOTAL_WORDS",
+   "match",
+   "strip"
+  ],
+  "varnames": [
+   "lines",
+   "rx",
+   "ln"
+  ],
+  "consts": [
+   "Anchor for the grand-total restatement grid that must NOT be summed.",
+   "^",
+   "\\s+(?:",
+   "|",
+   ")\\b",
+   "\\s+\\w+",
+   ""
+  ],
+  "n_instructions": 49
+ },
+ "<module>.summary_anchor.<genexpr>": {
+  "names": [
+   "isascii"
+  ],
+  "varnames": [
+   ".0",
+   "w"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>._template_anchor": {
+  "names": [
+   "min",
+   "len",
+   "any",
+   "append",
+   "join"
+  ],
+  "varnames": [
+   "members",
+   "rows",
+   "n",
+   "sep",
+   "parts"
+  ],
+  "consts": [
+   "``COLOR NO: BEI COLOR: BEIGE`` -> ``COLOR\\s+NO:\\s+(\\S+)\\s+COLOR:\\s+(.+)``.\n\n    Every token that is CONSTANT across the members becomes a literal, the first\n    token that varies becomes the colour code, any constant tokens that follow it\n    are consumed as a literal separator and the remainder is the description.\n    Consuming that separator is what stops ``COLOR:`` from leaking into the\n    description on documents that repeat the label twice.\n    ",
+   3,
+   "",
+   0,
+   2,
+   1,
+   null,
+   "(\\S+)",
+   "(.+)",
+   "\\s+"
+  ],
+  "n_instructions": 214
+ },
+ "<module>._template_anchor.<listcomp>": {
+  "names": [
+   "re",
+   "escape"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>._template_anchor.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._template_anchor.<setcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._anchor_quality": {
+  "names": [
+   "re",
+   "compile",
+   "error",
+   "search",
+   "lastindex",
+   "append",
+   "group",
+   "split",
+   "len",
+   "set",
+   "all"
+  ],
+  "varnames": [
+   "anchor",
+   "pool",
+   "rx",
+   "codes",
+   "heads",
+   "hits",
+   "txt",
+   "m",
+   "desc"
+  ],
+  "consts": [
+   "(good, hits) - ``good`` is 1 when the captures look like code + name.",
+   [
+    0,
+    0
+   ],
+   0,
+   null,
+   2,
+   1,
+   ""
+  ],
+  "n_instructions": 145
+ },
+ "<module>._anchor_quality.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "h"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 13
+ },
+ "<module>.color_anchor_candidates": {
+  "names": [
+   "extend",
+   "pre_lines",
+   "split",
+   "len",
+   "any",
+   "setdefault",
+   "tuple",
+   "set",
+   "add",
+   "items",
+   "min",
+   "_template_anchor",
+   "sorted",
+   "_anchor_quality",
+   "append",
+   "sort",
+   "PoRecipe",
+   "color_anchor"
+  ],
+  "varnames": [
+   "grids",
+   "limit",
+   "pool",
+   "g",
+   "groups",
+   "txt",
+   "toks",
+   "n",
+   "scored",
+   "seen",
+   "key",
+   "members",
+   "anchor",
+   "good",
+   "hits",
+   "out",
+   "default"
+  ],
+  "consts": [
+   "Colour-block header anchors: ``<literal prefix> (code) (description)``.",
+   3,
+   0,
+   [
+    3,
+    2,
+    1
+   ],
+   2,
+   null
+  ],
+  "n_instructions": 200
+ },
+ "<module>.color_anchor_candidates.<genexpr>": {
+  "names": [
+   "len",
+   "split"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>.color_anchor_candidates.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "_",
+   "a"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>.MatrixCandidate": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__annotations__"
+  ],
+  "varnames": [],
+  "consts": [
+   "MatrixCandidate",
+   "PoRecipe",
+   "recipe",
+   "str",
+   "why",
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._base_recipe": {
+  "names": [
+   "PoRecipe",
+   "customer",
+   "value",
+   "LayoutType",
+   "MATRIX_2AXIS",
+   "SECTION_DELIM",
+   "bool",
+   "has_color_total",
+   "has_size_total"
+  ],
+  "varnames": [
+   "data",
+   "fingerprint",
+   "total_token",
+   "layout"
+  ],
+  "consts": [
+   null,
+   "2",
+   "rows",
+   true,
+   "^",
+   "$",
+   [
+    "fingerprint",
+    "customer",
+    "layout_type",
+    "version",
+    "total_token",
+    "has_inseam",
+    "grid_orientation",
+    "require_row_total",
+    "section_delim_pattern",
+    "has_color_total",
+    "has_size_total"
+   ]
+  ],
+  "n_instructions": 34
+ },
+ "<module>.build_candidates": {
+  "names": [
+   "recipe_synth",
+   "apply_header_anchors",
+   "synthesize_field_anchor",
+   "_doc_lines",
+   "doc_text",
+   "header",
+   "values",
+   "po_nos",
+   "total_token_candidates",
+   "dest_anchor_candidates",
+   "summary_anchor",
+   "_price_anchor",
+   "sorted",
+   "color_anchor_candidates",
+   "is_2axis",
+   "LayoutType",
+   "MATRIX_2AXIS",
+   "MATRIX_1AXIS",
+   "size_header_anchor",
+   "tokens",
+   "code_pattern",
+   "code_samples",
+   "section_candidates",
+   "append",
+   "PoRecipe",
+   "color_anchor",
+   "_base_recipe",
+   "size_header_token",
+   "color_code_pattern",
+   "destination_anchor",
+   "section_anchor",
+   "breakdown_anchor",
+   "po_no_anchor",
+   "price_anchor",
+   "value",
+   "header_text",
+   "MatrixCandidate",
+   "len",
+   "MAX_CANDIDATES"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "log",
+   "apply_header_anchors",
+   "synthesize_field_anchor",
+   "_doc_lines",
+   "doc",
+   "lines",
+   "soft",
+   "tt",
+   "dest_pats",
+   "summ",
+   "po_anchor",
+   "price_anchor",
+   "out",
+   "total_token",
+   "grids",
+   "colors",
+   "g",
+   "layout",
+   "sh",
+   "cp",
+   "splits",
+   "dp",
+   "sec",
+   "color_set",
+   "ca",
+   "r",
+   "why"
+  ],
+  "consts": [
+   "Every plausible matrix recipe for this document, best guess first.",
+   1,
+   [
+    "apply_header_anchors",
+    "synthesize_field_anchor",
+    "_doc_lines"
+   ],
+   "",
+   0,
+   [
+    "Order No",
+    "ORDER NO",
+    "PO"
+   ],
+   [
+    "prefer"
+   ],
+   [
+    "key"
+   ],
+   [
+    "",
+    ""
+   ],
+   " · grid[",
+   null,
+   38,
+   "…] · dest=",
+   "yes",
+   "no",
+   " · sec=",
+   "-",
+   [
+    "recipe",
+    "why"
+   ]
+  ],
+  "n_instructions": 318
+ },
+ "<module>.build_candidates.<setcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>.build_candidates.<lambda>": {
+  "names": [
+   "rows",
+   "hits"
+  ],
+  "varnames": [
+   "g"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>._price_anchor": {
+  "names": [
+   "recipe_synth",
+   "synthesize_field_anchor",
+   "PoRecipe",
+   "price_anchor",
+   "re",
+   "search",
+   "error",
+   "all_lines",
+   "unit_price",
+   "rstrip",
+   "replace",
+   "findall",
+   "endswith",
+   "len",
+   "any",
+   "escape",
+   "group"
+  ],
+  "varnames": [
+   "lines",
+   "doc",
+   "data",
+   "soft",
+   "synthesize_field_anchor",
+   "default",
+   "price",
+   "ln",
+   "txt",
+   "forms",
+   "cand",
+   "anchor",
+   "tok",
+   "head",
+   "a",
+   "m"
+  ],
+  "consts": [
+   "Keep the default unit-price anchor when it works; else synthesize one.",
+   1,
+   [
+    "synthesize_field_anchor"
+   ],
+   "",
+   null,
+   "%f",
+   "0",
+   ".",
+   ",",
+   "%.2f",
+   [
+    "Unit Price",
+    "UNIT PRICE",
+    "Price"
+   ],
+   [
+    "prefer"
+   ],
+   "\\S+",
+   "\\s*([\\d.,]+)",
+   ".,"
+  ],
+  "n_instructions": 194
+ },
+ "<module>._price_anchor.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.synthesize_matrix_recipe": {
+  "names": [
+   "recipe_synth",
+   "SynthesisError",
+   "verify_recipe",
+   "build_candidates",
+   "len",
+   "enumerate",
+   "recipe",
+   "ok",
+   "_flaws",
+   "parsed_qty",
+   "abs",
+   "expected_qty",
+   "why",
+   "any",
+   "parsed_rows",
+   "note",
+   "text"
+  ],
+  "varnames": [
+   "pages",
+   "data",
+   "fingerprint",
+   "source_file",
+   "log",
+   "SynthesisError",
+   "verify_recipe",
+   "_log",
+   "cands",
+   "best",
+   "passed",
+   "i",
+   "c",
+   "po",
+   "rep",
+   "flaws",
+   "near"
+  ],
+  "consts": [
+   "Return ``(recipe, purchase_order, report)`` for a grid layout.\n\n    Raises :class:`core.recipe_synth.SynthesisError` when no candidate reproduces\n    the AI-reported totals, so the caller can fall back to the legacy path.\n    ",
+   1,
+   [
+    "SynthesisError",
+    "verify_recipe"
+   ],
+   "m",
+   "str",
+   "return",
+   "None",
+   [
+    "fingerprint",
+    "log"
+   ],
+   "文档中未找到可识别的尺码网格（无 TOTAL 列表头）。",
+   "    · 结构探测到 ",
+   " 个候选网格方案，开始离线回放筛选…",
+   null,
+   [
+    "source_file"
+   ],
+   0,
+   [
+    0,
+    0
+   ],
+   "    ✓ 方案 ",
+   "/",
+   " 通过：",
+   "      （",
+   " 行缺颜色代码、",
+   " 行缺颜色名，已选缺失最少的方案）",
+   "auto-synth matrix v2.0.2 · ",
+   " cells / ",
+   " pcs · verified by offline replay",
+   "",
+   "\n最接近的方案：",
+   "\n  ",
+   "已尝试 ",
+   " 种网格解析方案，均无法复现 AI 读到的合计数量。",
+   [
+    "m",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 239
+ },
+ "<module>.synthesize_matrix_recipe._log": {
+  "names": [],
+  "varnames": [
+   "m"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>._flaws": {
+  "names": [
+   "entities",
+   "lines",
+   "getattr",
+   "strip"
+  ],
+  "varnames": [
+   "po",
+   "no_code",
+   "no_desc",
+   "e",
+   "ln"
+  ],
+  "consts": [
+   "(#lines without a colour code, #lines without a colour description).\n\n    The total gate cannot tell a good colour anchor from a bad one - both add up\n    to the same number of pieces - so this is the tie-break between candidates\n    that all reproduce the printed total.\n    ",
+   0,
+   "color_code",
+   "",
+   1,
+   "color_desc"
+  ],
+  "n_instructions": 53
+ }
+}

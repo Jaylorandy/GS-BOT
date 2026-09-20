@@ -1,0 +1,103 @@
+﻿{
+ "sigs": {
+  "_color_desc_from": "(middle: 'str') -> 'str'",
+  "_dedup_entity_lines": "(lines: 'List[OrderLine]') -> 'List[OrderLine]'",
+  "_parse_size_breakdown": "(line: 'str', line_qty: 'int') -> 'List[SizeQty]'",
+  "_pick_po_no": "(m) -> 'str'",
+  "_recover_style_from_line": "(style: 'str', line: 'str') -> 'str'",
+  "merge_wrapped_rows": "(text: 'str') -> 'List[str]'",
+  "_looks_like_style": "(cand: 'str') -> 'bool'",
+  "_min_date": "(recipe: \"'PoRecipe'\", text: 'str') -> 'str'",
+  "_norm_ship": "(s: 'str') -> 'str'",
+  "_to_float": "(s)",
+  "_to_int": "(s) -> 'int'",
+  "_clean": "(m) -> 'str'",
+  "doc_text": "(pages: 'List[PageWords]', *, crop_footer: 'bool' = True) -> 'str'"
+ },
+ "_pick_po_no": {
+  "named_err": "_pick_po_no() takes 1 positional argument but 2 were given",
+  "positional_err": "_pick_po_no() takes 1 positional argument but 2 were given"
+ },
+ "_recover_style_from_line": {
+  "sig": "(style: 'str', line: 'str') -> 'str'",
+  "1-1|1-1 AW11078 BLACK T-SHIRT 100 ": "AW11078",
+  "1-2|1-2 AW11079 WHITE T-SHIRT 200 ": "AW11079",
+  "637JO|637JO 80X BEIGE 100 200": "637JO",
+  "1|1 AW11078 BLACK 100": "AW11078"
+ },
+ "_color_desc_from": {
+  "sig": "(middle: 'str') -> 'str'",
+  "LADIES TROUSERS 08X 08X SAND": "SAND",
+  "SILVER CLOUD 53% LINEN": "LINEN",
+  "DARK BLUE": "DARK BLUE",
+  "BLACK": "BLACK",
+  "": "",
+  "59J 59J DARK BLUE JEANS": "DARK BLUE JEANS"
+ },
+ "_parse_size_breakdown": {
+  "sig": "(line: 'str', line_qty: 'int') -> 'List[SizeQty]'",
+  "S:1, M:2, L:2, XL:1|6": [
+   [
+    "S",
+    1
+   ],
+   [
+    "M",
+    2
+   ],
+   [
+    "L",
+    2
+   ],
+   [
+    "XL",
+    1
+   ]
+  ],
+  "S:150, M:300, L:300, XL:150|900": [
+   [
+    "S",
+    150
+   ],
+   [
+    "M",
+    300
+   ],
+   [
+    "L",
+    300
+   ],
+   [
+    "XL",
+    150
+   ]
+  ],
+  "S:1, M:2, L:2, XL:1|12": [
+   [
+    "S",
+    2
+   ],
+   [
+    "M",
+    4
+   ],
+   [
+    "L",
+    4
+   ],
+   [
+    "XL",
+    2
+   ]
+  ],
+  "|0": []
+ },
+ "_dedup_entity_lines": {
+  "sig": "(lines: 'List[OrderLine]') -> 'List[OrderLine]'"
+ },
+ "_build_entity_test": {
+  "instance": "<class 'core.parsers.line_items.LineItemsParser'>",
+  "layout_type": "line_items"
+ },
+ "doc_text_sig": "(pages: 'List[PageWords]', *, crop_footer: 'bool' = True) -> 'str'"
+}

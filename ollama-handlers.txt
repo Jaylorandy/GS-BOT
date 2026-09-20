@@ -1,0 +1,88 @@
+
+// ============= Ollama Manager IPC Handlers =============
+
+const ollamaManager = require('./ollama-manager');
+
+// 检查 Ollama 状态
+ipcMain.handle('check-ollama-status', async () => {
+  const installed = await ollamaManager.checkOllamaInstalled();
+  const models = installed ? await ollamaManager.getInstalledModels() : [];
+  
+  // 检查服务是否运行
+  let running = false;
+  if (installed) {
+    try {
+      const { spawn } = require('child_process');
+      const test = spawn('curl', ['-s', 'http://localhost:11434/api/tags']);
+      running = await new Promise(r => test.on('close', c => r(c === 0)));
+    } catch {}
+  }
+  
+  return { installed, running, models };
+});
+
+// 安装 Ollama
+ipcMain.handle('install-ollama', async () => {
+  return new Promise((resolve) => {
+    const { spawn } = require('child_process');
+    const platform = process.platform;
+    
+    let cmd, args;
+    if (platform === 'darwin') {
+      cmd = 'brew';
+      args = ['install', 'ollama'];
+    } else if (platform === 'linux') {
+      cmd = 'sh';
+      args = ['-c', 'curl -fsSL https://ollama.com/install.sh | sh'];
+    } else {
+      resolve({ success: false, error: 'Windows installation not supported yet' });
+      return;
+    }
+    
+    const proc = spawn(cmd, args, { stdio: 'pipe' });
+    let error = '';
+    
+    proc.stderr.on('data', (data) => error += data.toString());
+    proc.on('close', (code) => {
+      resolve(code === 0 ? { success: true } : { success: false, error });
+    });
+  });
+});
+
+// 启动 Ollama 服务
+ipcMain.handle('start-ollama-server', async () => {
+  const result = await ollamaManager.startOllamaServer();
+  return { success: true, alreadyRunning: result.alreadyRunning };
+});
+
+// 停止 Ollama 服务
+ipcMain.handle('stop-ollama-server', async () => {
+  await ollamaManager.stopOllamaServer();
+  return { success: true };
+});
+
+// 下载模型
+ipcMain.handle('pull-ollama-model', async (event, { modelName, channel }) => {
+  const mainWindow = BrowserWindow.getAllWindows()[0];
+  
+  ollamaManager.pullModel(
+    modelName,
+    (progress, status) => {
+      mainWindow.webContents.send(channel, { progress, status });
+    },
+    () => {
+      mainWindow.webContents.send(channel, { progress: 100, status: 'Complete' });
+    },
+    (error) => {
+      mainWindow.webContents.send(channel, { progress: -1, status: error });
+    }
+  );
+  
+  return { success: true };
+});
+
+// 删除模型
+ipcMain.handle('remove-ollama-model', async (event, modelName) => {
+  const result = await ollamaManager.removeModel(modelName);
+  return { success: result };
+});

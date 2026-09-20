@@ -1,0 +1,9 @@
+{
+  "lpp_line_items": "LPP SA\nVENDOR: Gs Global Sourcing Co.,Ltd\nPurchase Order\nEntity 1 Order No: 11321589\nSeason: SS26   Shipment date: 2026-03-02   Currency: USD\nTerms of payment: T/T 30 DAYS\nModel No.: 637JO\nSTYLE NO   COLOR NO   DESCRIPTION   PACK   QTY\n637JO-80X-S PACK 2 372\n637JO-08X-M PACK 2 240\n637JO-80X-L PACK 2 240\nTOTAL 852\n",
+  "lpp_variant_numbers": "LPP SA\nVENDOR: Gs Global Sourcing Co.,Ltd\nPurchase Order\nEntity 1 Order No: 11321600\nSeason: SS26   Shipment date: 2026-05-18   Currency: USD\nTerms of payment: T/T 60 DAYS\nModel No.: XL901\nSTYLE NO   COLOR NO   DESCRIPTION   PACK   QTY\nXL901-80X-S PACK 4 744\nXL901-08X-M PACK 4 480\nTOTAL 1224\n",
+  "matrix_grid": "COLIN'S\nDestination Code: PARIS  Destination Code: MILAN\nCOLOR NO  COLOR  XS  S  M  L  XL  TOTAL\n08X  SAND  10  20  30  40  50  150\n08X  SAND  5   10  15  20  25  75\nCOLOR NO  COLOR  XS  S  M  L  XL  TOTAL\n18X  NAVY  12  24  36  48  60  180\nTOTAL  330\n",
+  "parenthesized": "SAKHA (a) (b) (c) (d)\nSTYLE  COLOR  SIZE  QTY\nAB-12  RED    30    100\nAB-12  RED    32    120\nTOTAL 220\n",
+  "euro_numbers": "FRANKIE\nORDER NO.: 124567\nSTYLE  COLOUR  SIZE  QTY  UNIT PRICE\nAW11078  BLACK   S  26.000  158,00\nAW11078  BLACK   M  158,00  158,00\nTOTAL  26.158,00\n",
+  "quotes_apostrophe": "MEN'S TROUSERS (MEN'S)\nSTYLE  COLOR  SIZE  QTY\n637JO  SAND   S     100\nTOTAL 100\n",
+  "empty_and_noise": "\n\n\n   \nTOTAL\n"
+}

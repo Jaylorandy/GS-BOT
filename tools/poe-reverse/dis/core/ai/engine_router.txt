@@ -1,0 +1,213 @@
+# module: core.ai.engine_router
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\engine_router.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/ai/engine_router.py - resolve which inference engine to actually use.\n\n**"本地优先，在线次之"** is the single source of truth for engine selection.\n\nThe UI exposes an *preference* radio (online / local) but the *actual* engine\nused for a recipe inference is decided here, so the user never has to remember\nto flip the radio:\n\n    user prefers local  ->  local ONLY IF the local engine is genuinely usable\n                            (model file present AND llama-cpp-python bundled);\n                            otherwise fall back to online with a logged reason.\n    user prefers online ->  online.\n\nA local engine is "genuinely usable" when:\n    1. a model path is configured,\n    2. the file exists on disk,\n    3. llama-cpp-python is importable (bundled in the installer).\n\nNote: the V.2.0.0 installer bundles llama-cpp-python (collect_all in spec),\nso ``_local_engine_available()`` returns True as long as the GGUF file exists\nand the PyInstaller build included the engine DLLs.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 23           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 25          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 26          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (sys)
+             32 STORE_NAME               4 (sys)
+
+ 29          34 LOAD_CONST              13 (('return', 'None'))
+             36 LOAD_CONST               6 (<code object _ensure_stdio at 0x000002BF946C2040, file "core\ai\engine_router.py", line 29>)
+             38 MAKE_FUNCTION            4 (annotations)
+             40 STORE_NAME               5 (_ensure_stdio)
+
+ 45          42 LOAD_CONST              14 (('cfg', 'dict', 'return', 'tuple[str, str]'))
+             44 LOAD_CONST              10 (<code object resolve_infer_engine at 0x000002BF94741F00, file "core\ai\engine_router.py", line 45>)
+             46 MAKE_FUNCTION            4 (annotations)
+             48 STORE_NAME               6 (resolve_infer_engine)
+
+ 71          50 LOAD_CONST              15 (('return', 'bool'))
+             52 LOAD_CONST              12 (<code object _local_engine_available at 0x000002BF94A65AC0, file "core\ai\engine_router.py", line 71>)
+             54 MAKE_FUNCTION            4 (annotations)
+             56 STORE_NAME               7 (_local_engine_available)
+             58 LOAD_CONST               3 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._ensure_stdio  (args=0, locals=0)
+ 29           0 RESUME                   0
+
+ 36           2 NOP
+
+ 37           4 LOAD_GLOBAL              0 (sys)
+             16 LOAD_ATTR                1 (stdout)
+             26 POP_JUMP_FORWARD_IF_NOT_NONE    38 (to 104)
+
+ 38          28 LOAD_GLOBAL              5 (NULL + open)
+             40 LOAD_GLOBAL              6 (os)
+             52 LOAD_ATTR                4 (devnull)
+             62 LOAD_CONST               2 ('w')
+             64 LOAD_CONST               3 ('utf-8')
+             66 KW_NAMES                 4
+             68 PRECALL                  3
+             72 CALL                     3
+             82 LOAD_GLOBAL              0 (sys)
+             94 STORE_ATTR               1 (stdout)
+
+ 39     >>  104 LOAD_GLOBAL              0 (sys)
+            116 LOAD_ATTR                5 (stderr)
+            126 POP_JUMP_FORWARD_IF_NOT_NONE    40 (to 208)
+
+ 40         128 LOAD_GLOBAL              5 (NULL + open)
+            140 LOAD_GLOBAL              6 (os)
+            152 LOAD_ATTR                4 (devnull)
+            162 LOAD_CONST               2 ('w')
+            164 LOAD_CONST               3 ('utf-8')
+            166 KW_NAMES                 4
+            168 PRECALL                  3
+            172 CALL                     3
+            182 LOAD_GLOBAL              0 (sys)
+            194 STORE_ATTR               5 (stderr)
+            204 LOAD_CONST               1 (None)
+            206 RETURN_VALUE
+
+ 39     >>  208 LOAD_CONST               1 (None)
+            210 RETURN_VALUE
+        >>  212 PUSH_EXC_INFO
+
+ 41         214 LOAD_GLOBAL             12 (Exception)
+            226 CHECK_EXC_MATCH
+            228 POP_JUMP_FORWARD_IF_FALSE     4 (to 238)
+            230 POP_TOP
+
+ 42         232 POP_EXCEPT
+            234 LOAD_CONST               1 (None)
+            236 RETURN_VALUE
+
+ 41     >>  238 RERAISE                  0
+        >>  240 COPY                     3
+            242 POP_EXCEPT
+            244 RERAISE                  1
+ExceptionTable:
+  4 to 202 -> 212 [0]
+  212 to 230 -> 240 [1] lasti
+  238 to 238 -> 240 [1] lasti
+
+==============================================================================
+## <module>.resolve_infer_engine  (args=1, locals=3)
+# varnames: cfg, pref, model_path
+ 45           0 RESUME                   0
+
+ 51           2 LOAD_FAST                0 (cfg)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('infer_engine')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 JUMP_IF_TRUE_OR_POP      1 (to 46)
+             44 LOAD_CONST               2 ('online')
+        >>   46 STORE_FAST               1 (pref)
+
+ 52          48 LOAD_FAST                0 (cfg)
+             50 LOAD_METHOD              0 (get)
+             72 LOAD_CONST               3 ('local_model_path')
+             74 PRECALL                  1
+             78 CALL                     1
+             88 JUMP_IF_TRUE_OR_POP      1 (to 92)
+             90 LOAD_CONST               4 ('')
+        >>   92 LOAD_METHOD              1 (strip)
+            114 PRECALL                  0
+            118 CALL                     0
+            128 STORE_FAST               2 (model_path)
+
+ 54         130 LOAD_FAST                1 (pref)
+            132 LOAD_CONST               5 ('local')
+            134 COMPARE_OP               3 (!=)
+            140 POP_JUMP_FORWARD_IF_FALSE     2 (to 146)
+
+ 55         142 LOAD_CONST               6 (('online', '使用在线 AI（当前偏好）'))
+            144 RETURN_VALUE
+
+ 58     >>  146 LOAD_FAST                2 (model_path)
+            148 POP_JUMP_FORWARD_IF_TRUE     2 (to 154)
+
+ 59         150 LOAD_CONST               7 (('online', '本地已选为偏好，但未指定 GGUF 模型文件 → 回退在线 AI'))
+            152 RETURN_VALUE
+
+ 61     >>  154 LOAD_GLOBAL              4 (os)
+            166 LOAD_ATTR                3 (path)
+            176 LOAD_METHOD              4 (exists)
+            198 LOAD_FAST                2 (model_path)
+            200 PRECALL                  1
+            204 CALL                     1
+            214 POP_JUMP_FORWARD_IF_TRUE     8 (to 232)
+
+ 62         216 LOAD_CONST               2 ('online')
+
+ 63         218 LOAD_CONST               8 ('本地已选为偏好，但模型文件不存在：')
+            220 LOAD_FAST                2 (model_path)
+            222 FORMAT_VALUE             0
+            224 LOAD_CONST               9 (' → 回退在线 AI')
+            226 BUILD_STRING             3
+
+ 62         228 BUILD_TUPLE              2
+            230 RETURN_VALUE
+
+ 64     >>  232 LOAD_GLOBAL             11 (NULL + _local_engine_available)
+            244 PRECALL                  0
+            248 CALL                     0
+            258 POP_JUMP_FORWARD_IF_TRUE     2 (to 264)
+
+ 65         260 LOAD_CONST              10 (('online', '本地已选为偏好，但本地引擎（llama-cpp-python）未打包进本程序 → 回退在线 AI'))
+            262 RETURN_VALUE
+
+ 68     >>  264 LOAD_CONST              11 (('local', '本地引擎就绪，使用本地 AI（离线）'))
+            266 RETURN_VALUE
+
+==============================================================================
+## <module>._local_engine_available  (args=0, locals=1)
+# varnames: llama_cpp
+ 71           0 RESUME                   0
+
+ 72           2 LOAD_GLOBAL              1 (NULL + _ensure_stdio)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 POP_TOP
+
+ 73          30 NOP
+
+ 74          32 LOAD_CONST               1 (0)
+             34 LOAD_CONST               0 (None)
+             36 IMPORT_NAME              1 (llama_cpp)
+             38 STORE_FAST               0 (llama_cpp)
+
+ 75          40 LOAD_CONST               2 (True)
+             42 RETURN_VALUE
+        >>   44 PUSH_EXC_INFO
+
+ 76          46 LOAD_GLOBAL              4 (Exception)
+             58 CHECK_EXC_MATCH
+             60 POP_JUMP_FORWARD_IF_FALSE     4 (to 70)
+             62 POP_TOP
+
+ 77          64 POP_EXCEPT
+             66 LOAD_CONST               3 (False)
+             68 RETURN_VALUE
+
+ 76     >>   70 RERAISE                  0
+        >>   72 COPY                     3
+             74 POP_EXCEPT
+             76 RERAISE                  1
+ExceptionTable:
+  32 to 38 -> 44 [0]
+  44 to 62 -> 72 [1] lasti
+  70 to 70 -> 72 [1] lasti

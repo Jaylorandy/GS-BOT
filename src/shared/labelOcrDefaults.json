@@ -1,0 +1,86 @@
+{
+  "whitelist": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789%/.:;,-+()[]'\" ",
+  "fields": {
+    "fabricCode": [
+      "CODE",
+      "FABRIC CODE",
+      "FABRICCODE",
+      "FABRIC NO",
+      "FABRIC NO.",
+      "ITEM",
+      "ITEM#",
+      "ITEM #",
+      "ITEM NO",
+      "ITEM NO.",
+      "ITEM NUMBER",
+      "TSG REF",
+      "TSG REF.",
+      "REF",
+      "REF.",
+      "编号",
+      "货号"
+    ],
+    "styleNumber": [
+      "编号",
+      "款号",
+      "ART NO",
+      "ART NO.",
+      "ART NR",
+      "ART.NR",
+      "ARTNO",
+      "ARTICLE NO",
+      "ARTICLE NO.",
+      "ARTICLE",
+      "STYLE NUMBER",
+      "STYLE NO",
+      "STYLE NO.",
+      "STYLE#",
+      "STYLE #",
+      "STYLE",
+      "ARTNO.",
+      "品名",
+      "组织"
+    ],
+    "description": [
+      "DESC",
+      "DESCRIPTION",
+      "描述"
+    ],
+    "composition": [
+      "CONT",
+      "COMPOSITION",
+      "CONTENT",
+      "COMPOS",
+      "COMP",
+      "FIBER CONTENT",
+      "FIBRE CONTENT",
+      "MATERIAL",
+      "成分",
+      "成份",
+      "含量"
+    ],
+    "width": [
+      "WIDTH",
+      "WIDTH/CUTTABLE",
+      "WIDTH CUTTABLE",
+      "WID",
+      "W",
+      "门幅",
+      "幅宽"
+    ],
+    "cuttable": [
+      "CUTTABLE",
+      "CUT",
+      "可裁"
+    ],
+    "weight": [
+      "WEIGHT",
+      "B.W.WEIGHT",
+      "B.W. WEIGHT",
+      "A.W.WEIGHT",
+      "A.W. WEIGHT",
+      "GSM",
+      "克重"
+    ]
+  }
+}

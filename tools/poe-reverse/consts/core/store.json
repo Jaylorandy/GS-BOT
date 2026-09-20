@@ -1,0 +1,24 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "cache",
+   "RecipeCache",
+   "layout_fingerprint",
+   "skeleton",
+   "__all__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/store package - persistence (recipe cache, etc.).",
+   1,
+   [
+    "RecipeCache",
+    "layout_fingerprint",
+    "skeleton"
+   ],
+   null
+  ],
+  "n_instructions": 19
+ }
+}

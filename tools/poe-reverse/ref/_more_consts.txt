@@ -1,0 +1,102 @@
+==================== <module>.PurchaseOrder.apply_recipe_overrides ====================
+  consts[0] = "Apply user-confirmed field overrides from the recipe confirm dialog.\n\n        Header-level overrides (po_no, season, ...) are applied to every entity;\n        line-level overrides (style_no, unit_...<len 626>
+  consts[1] = null
+  consts[2] = "color_edits"
+  consts[3] = " / "
+  consts[4] = 1
+  consts[5] = ""
+  consts[6] = ["<frozenset>", "age_sex_desc", "agent_name", "channel", "cir_no", "country_of_origin", "currency", "dc_address", "delivery_date", "destination_code", "freight_terms", "import_po_no", "packing_method"...<len 420>
+  consts[7] = "__ent_overrides__"
+  consts[8] = "__line_overrides__"
+  consts[9] = "__"
+  consts[10] = "customer"
+  consts[11] = "style_no"
+  consts[12] = "style_no_default_reaches_every_OrderLine"
+  consts[13] = "unit_price"
+  consts[14] = ","
+  consts[15] = "su"
+  consts[16] = 0
+  consts[17] = "po_no"
+  consts[18] = "[override] entity "
+  consts[19] = " style_no: "
+  consts[20] = " -> "
+  consts[21] = "␟"
+  consts[22] = [null, ""]
+  consts[23] = "inseam"
+  consts[24] = "sizes"
+
+==================== <module>.PurchaseOrder.apply_field_defaults ====================
+  consts[0] = "Apply persisted, layout-scoped field defaults (cross-PO propagation).\n\n        Unlike :meth:`apply_recipe_overrides` (which is current-file-only and is\n        stripped before caching), these defa...<len 654>
+  consts[1] = "field_defaults"
+  consts[2] = null
+  consts[3] = ""
+  consts[4] = 28
+  consts[5] = 25
+  consts[6] = "…"
+  consts[7] = ": "
+  consts[8] = " → "
+  consts[9] = " (默认)"
+
+==================== <module>.PurchaseOrder.apply_value_clean ====================
+  consts[0] = "Apply user-confirmed cleanup rules from the recipe.\n\n        Called by ``parse_doc`` for EVERY extraction (cached or not), so a\n        correction made in the confirm dialog propagates to all late...<len 733>
+  consts[1] = "cleans"
+  consts[2] = null
+  consts[3] = "pat"
+  consts[4] = ""
+  consts[5] = "repl"
+  consts[6] = "color"
+  consts[7] = 28
+  consts[8] = 25
+  consts[9] = "…"
+  consts[10] = ": "
+  consts[11] = " → "
+
+==================== <module>.PurchaseOrder._cleanable_pairs ====================
+  consts[0] = "Snapshot of all (label, value) strings affected by value/color_clean.\n\n        Used by :meth:`apply_value_clean` to compute a readable diff of what was\n        changed so the log can show the user...<len 242>
+  consts[1] = ["po_no", "season", "currency", "price_term", "payment_terms", "port_loading", "port_discharge", "ship_mode", "vendor_name", "agent_name", "channel", "size_scale", "product_group", "age_sex_desc", "pr...<len 393>
+  consts[2] = "H"
+  consts[3] = 1
+  consts[4] = "·"
+  consts[5] = ""
+  consts[6] = "·customer"
+  consts[7] = "L"
+  consts[8] = "-"
+  consts[9] = "·款式"
+  consts[10] = "·颜色"
+
+==================== <module>.PurchaseOrder._clean_field ====================
+  consts[0] = null
+  consts[1] = ["<frozenset>", "age_sex_desc", "agent_name", "channel", "cir_no", "country_of_origin", "currency", "dc_address", "delivery_date", "destination_code", "freight_terms", "import_po_no", "packing_method"...<len 420>
+  consts[2] = "customer"
+  consts[3] = ""
+  consts[4] = "style_no"
+
+==================== <module>.PurchaseOrder._clean_color ====================
+  consts[0] = null
+  consts[1] = " / "
+  consts[2] = 1
+  consts[3] = ""
+
+==================== <module>.build_row_key ====================
+  consts[0] = "7-segment Template B dedup key (column AA, _Row Key):\n\n        Customer | PO | Style | ColorCode | Size | Inseam | Destination\n\n    V2.0.5：随 28 列改造去掉了第 8 段 PackingMethod —— Packing Method 栏位已从\n ...<len 290>
+  consts[1] = "|"
+  consts[2] = ""
+
+==================== <module>.PoRecipe.to_json ====================
+  consts[0] = null
+  consts[1] = false
+  consts[2] = 2
+  consts[3] = ["ensure_ascii", "indent"]
+
+==================== <module>.PoRecipe.from_json ====================
+  consts[0] = null
+  consts[1] = "cleans"
+  consts[2] = "value_clean"
+  consts[3] = "pat"
+  consts[4] = ""
+  consts[5] = "repl"
+  consts[6] = ["pat", "repl"]
+  consts[7] = "color_clean"
+  consts[8] = "color"
+  consts[9] = "field_defaults"
+  consts[10] = []

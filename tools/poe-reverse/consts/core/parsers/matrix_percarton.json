@@ -1,0 +1,421 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "SIZE_TOKEN",
+   "split_row_total",
+   "_nearest",
+   "_to_int",
+   "_to_float",
+   "doc_text",
+   "_find_percarton_header",
+   "_FRANKIE_MONTHS",
+   "_frankie_date",
+   "_extract_frankie_header",
+   "MatrixPerCartonParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/matrix_percarton.py - colour x size grid where the size columns\nare UNITS PER CARTON and a separate \"Total Units\" column carries the real total.\n\nFRANKIE #1399 (JAPAN/KOREA/TAIWAN INLINE):\n\n    XS S M L XL XXL Units / Carton Total Units     <- size header\n    BLEACH (LIGHT BLUE) 2 3 3 2 10 3,330 $8.35 ... <- colour row\n    OASIS (MEDIUM BLUE) 3 4 4 4 15 4,995 ...\n    SUMMER GREY         3 3 3 2 11 3,663 ...\n    Total Per Size      8 10 10 8 36 11,988 ...    <- sum row\n\nThe size columns print per-carton quantities (2/3/3/2), a \"Units / Carton\" column\nholds the per-colour carton subtotal (10), and the \"Total Units\" column holds the\nrow total (3,330 = per-carton x cartons). Per the product decision the size\ncolumns are output AS PRINTED (per-carton) and \"Total Units\" is captured as\n``printed_row_total`` (not summed into the sizes).\n\nISOLATED: this parser is self-contained. It does NOT modify matrix_1axis /\nmatrix_2axis / line_items or the shared ``size_columns`` helper; its header\ndetection (which tolerates the \"Units / Carton\" label block between the size run\nand the TOTAL token) is local to this module.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "SIZE_TOKEN",
+    "split_row_total",
+    "_nearest",
+    "_to_int",
+    "_to_float",
+    "doc_text"
+   ],
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec"
+   ],
+   "s",
+   "str",
+   "return",
+   "text",
+   "dict",
+   "MatrixPerCartonParser",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 88
+ },
+ "<module>._find_percarton_header": {
+  "names": [
+   "enumerate",
+   "text",
+   "upper",
+   "rstrip",
+   "SIZE_TOKEN",
+   "match",
+   "xc"
+  ],
+  "varnames": [
+   "line_tokens",
+   "ti",
+   "i",
+   "t",
+   "j",
+   "end",
+   "start"
+  ],
+  "consts": [
+   "Return ``([(size_label, xc), ...], total_xc)`` for a per-carton header, or None.\n\n    Tolerates a non-size label block (\"Units / Carton\") between the size run and\n    the TOTAL token, mirroring the FRANKIE header shape.\n    ",
+   null,
+   ":.",
+   "TOTAL",
+   1,
+   0,
+   2
+  ],
+  "n_instructions": 127
+ },
+ "<module>._find_percarton_header.<listcomp>": {
+  "names": [
+   "text",
+   "xc"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>._frankie_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "_FRANKIE_MONTHS",
+   "get",
+   "group",
+   "lower",
+   "len",
+   "int"
+  ],
+  "varnames": [
+   "s",
+   "m",
+   "mo",
+   "y"
+  ],
+  "consts": [
+   "``15-Nov-25`` / ``15-Dec-25`` -> ``2025-11-15`` / ``2025-12-15``.",
+   "",
+   "(\\d{1,2})-([A-Za-z]{3})-(\\d{2,4})$",
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d",
+   1
+  ],
+  "n_instructions": 78
+ },
+ "<module>._extract_frankie_header": {
+  "names": [
+   "re",
+   "search",
+   "group",
+   "strip",
+   "I",
+   "replace",
+   "_frankie_date"
+  ],
+  "varnames": [
+   "text",
+   "h",
+   "m"
+  ],
+  "consts": [
+   "Read the FRANKIE header block and return the OSR header fields.\n\n    Every value is read straight from the document. Fields the layout does NOT\n    print (Inseam / Product Group / Destination / Agent) are left ``\"\"`` so the\n    caller writes them blank. The port/terms row has a fixed column order:\n\n        At Port Date | Country of Origin | Discharge Port | Ship Via | Agent |\n        Payment Terms | Inspector | Ship Terms\n        ``15-Nov-25 CAMBODIA JAPAN SEA FOB 90 DAYS APPROVAL FROM RUTH PLANT FOB SIHANOUKVILLE JAPAN``\n    ",
+   "PO\\s*Number\\s+(\\S+)",
+   1,
+   "",
+   "po_no",
+   "\\b([A-Z][A-Z0-9&'., \\-]{4,60}?\\bINC\\.)",
+   "customer",
+   "(FRANKIE\\s*#\\s*\\d+)",
+   "style_no",
+   "Unit\\s*Cost\\s*\\(?\\s*FOB\\s*\\)?\\s*\\$?([\\d,]+\\.\\d+)",
+   ",",
+   "unit_price",
+   "\\bUSD\\b",
+   "USD",
+   "currency",
+   "(\\d{1,2}-[A-Za-z]{3}-\\d{2,4})\\s+CAMBODIA\\s+(\\S+)\\s+(SEA|AIR|OCEAN|VESSEL)\\s+",
+   "ship_date",
+   2,
+   "port_discharge",
+   3,
+   "ship_mode",
+   "\\bFOB\\b",
+   "FOB",
+   "price_term",
+   "FOB\\s+([A-Z][A-Z]+)\\s+(JAPAN|KOREA|TAIWAN)\\b",
+   "port_loading",
+   "Season\\s+(\\S+\\s+\\d{4})",
+   "season"
+  ],
+  "n_instructions": 213
+ },
+ "<module>.MatrixPerCartonParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "MATRIX_PERCARTON",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "MatrixPerCartonParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.MatrixPerCartonParser.parse": {
+  "names": [
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "_extract_frankie_header",
+   "doc_text",
+   "po_no",
+   "price_term",
+   "currency",
+   "delivery_date",
+   "port_loading",
+   "ship_mode",
+   "port_discharge",
+   "season",
+   "style_no",
+   "_to_float",
+   "lines",
+   "any",
+   "_find_percarton_header",
+   "text",
+   "upper",
+   "startswith",
+   "len",
+   "_to_int",
+   "_nearest",
+   "xc",
+   "int",
+   "round",
+   "isalpha",
+   "isupper",
+   "is_number",
+   "append",
+   "split_row_total",
+   "SizeQty",
+   "sum",
+   "re",
+   "sub",
+   "join",
+   "strip",
+   "OrderLine",
+   "printed_size_totals",
+   "printed_total_qty",
+   "printed_total_amount",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "po",
+   "ent",
+   "size_cols",
+   "total_xc",
+   "size_totals",
+   "printed_qty",
+   "printed_amount",
+   "hdr",
+   "style_no",
+   "unit_price",
+   "page",
+   "line",
+   "nums",
+   "grand_percarton",
+   "t",
+   "col",
+   "code",
+   "idx",
+   "desc_parts",
+   "qty_toks",
+   "keep",
+   "row_total",
+   "sizes",
+   "rv",
+   "carton_sum",
+   "desc"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "customer",
+   "po_no",
+   "price_term",
+   "currency",
+   "ship_date",
+   "port_loading",
+   "ship_mode",
+   "port_discharge",
+   "season",
+   "style_no",
+   "unit_price",
+   0,
+   "TOTAL",
+   2,
+   -1,
+   -2,
+   0.0,
+   "$",
+   1,
+   [
+    "size",
+    "qty"
+   ],
+   "\\(\\s+",
+   "(",
+   " ",
+   "\\s+\\)",
+   ")",
+   "PCS",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes",
+    "printed_row_total"
+   ]
+  ],
+  "n_instructions": 503
+ },
+ "<module>.MatrixPerCartonParser.parse.<genexpr>": {
+  "names": [
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.MatrixPerCartonParser.parse.<listcomp>": {
+  "names": [
+   "SizeQty",
+   "size",
+   "int",
+   "round",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   [
+    "size",
+    "qty"
+   ]
+  ],
+  "n_instructions": 25
+ }
+}

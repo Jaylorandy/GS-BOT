@@ -1,0 +1,225 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "typing",
+   "Dict",
+   "Optional",
+   "models",
+   "LayoutType",
+   "PoRecipe",
+   "PurchaseOrder",
+   "normalize",
+   "normalize_po",
+   "base",
+   "BaseParser",
+   "PageWords",
+   "line_items",
+   "LineItemsParser",
+   "matrix_2axis",
+   "Matrix2AxisParser",
+   "matrix_1axis",
+   "Matrix1AxisParser",
+   "control_sheet",
+   "ControlSheetParser",
+   "matrix_percarton",
+   "MatrixPerCartonParser",
+   "line_items_eu",
+   "LineItemsEuParser",
+   "costco_hybrid",
+   "CostcoHybridParser",
+   "costco_ecom",
+   "CostcoEcomParser",
+   "celio",
+   "CelioParser",
+   "frankie_ecom",
+   "FrankieEcomParser",
+   "bass_pro_ack",
+   "BassProAckParser",
+   "import_po",
+   "ImportPoParser",
+   "anf_po",
+   "AnfPoParser",
+   "anf_commitment",
+   "AnfCommitmentParser",
+   "LINE_ITEMS",
+   "MATRIX_2AXIS",
+   "MATRIX_1AXIS",
+   "CONTROL_SHEET",
+   "MATRIX_PERCARTON",
+   "LINE_ITEMS_EU",
+   "COSTCO_HYBRID",
+   "COSTCO_ECOM",
+   "CELIO",
+   "FRANKIE_ECOM",
+   "BASS_PRO_ACK",
+   "IMPORT_PO",
+   "ANF_PO",
+   "ANF_COMMITMENT",
+   "_REGISTRY",
+   "get_parser",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/registry.py - layout_type -> parser resolution.",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "Dict",
+    "Optional"
+   ],
+   2,
+   [
+    "LayoutType",
+    "PoRecipe",
+    "PurchaseOrder"
+   ],
+   [
+    "normalize_po"
+   ],
+   1,
+   [
+    "BaseParser",
+    "PageWords"
+   ],
+   [
+    "LineItemsParser"
+   ],
+   [
+    "Matrix2AxisParser"
+   ],
+   [
+    "Matrix1AxisParser"
+   ],
+   [
+    "ControlSheetParser"
+   ],
+   [
+    "MatrixPerCartonParser"
+   ],
+   [
+    "LineItemsEuParser"
+   ],
+   [
+    "CostcoHybridParser"
+   ],
+   [
+    "CostcoEcomParser"
+   ],
+   [
+    "CelioParser"
+   ],
+   [
+    "FrankieEcomParser"
+   ],
+   [
+    "BassProAckParser"
+   ],
+   [
+    "ImportPoParser"
+   ],
+   [
+    "AnfPoParser"
+   ],
+   [
+    "AnfCommitmentParser"
+   ],
+   "return",
+   "BaseParser",
+   "",
+   null,
+   [
+    "source_file",
+    "overrides",
+    "log"
+   ],
+   "pages",
+   "list",
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "overrides",
+   "Optional[Dict[str, str]]",
+   "PurchaseOrder",
+   [
+    "return",
+    "BaseParser"
+   ],
+   [
+    "pages",
+    "list",
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "overrides",
+    "Optional[Dict[str, str]]",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 184
+ },
+ "<module>.get_parser": {
+  "names": [
+   "isinstance",
+   "LayoutType",
+   "_REGISTRY",
+   "get",
+   "ValueError"
+  ],
+  "varnames": [
+   "layout_type",
+   "lt",
+   "cls"
+  ],
+  "consts": [
+   null,
+   "No parser registered for layout_type="
+  ],
+  "n_instructions": 36
+ },
+ "<module>.parse": {
+  "names": [
+   "get_parser",
+   "layout_type",
+   "parse",
+   "normalize_po",
+   "Exception",
+   "len"
+  ],
+  "varnames": [
+   "pages",
+   "recipe",
+   "source_file",
+   "overrides",
+   "log",
+   "po",
+   "lines",
+   "_c"
+  ],
+  "consts": [
+   "One call: pick the parser for recipe.layout_type and run it.\n\n    ``overrides`` (the user-confirmed field_overrides from the confirm dialog) is\n    forwarded into ``normalize_po`` so it is applied BEFORE the Ship Date /\n    auto-clean passes — i.e. manually typed values are normalized exactly like\n    extracted ones.  Historically the caller applied overrides AFTER parse_doc,\n    which left user-typed Ship Dates raw (V2.0.19.16 bug).",
+   [
+    "source_file"
+   ],
+   [
+    "overrides"
+   ],
+   "  归一管线（共 ",
+   " 处处理）:",
+   null,
+   12,
+   "    · ",
+   "    · … 其余 ",
+   " 处"
+  ],
+  "n_instructions": 96
+ }
+}

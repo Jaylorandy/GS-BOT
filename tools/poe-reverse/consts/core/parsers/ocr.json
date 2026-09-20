@@ -1,0 +1,38 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "io.ocr",
+   "DEFAULT_DPI",
+   "DEFAULT_VISION_MODEL",
+   "SPARSE_WORDS_PER_PAGE",
+   "local_engine_available",
+   "ocr_pdf_pages",
+   "rasterize_pdf",
+   "text_layer_is_sparse",
+   "__all__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/ocr.py - compatibility shim.\n\nThe real OCR bridge now lives in :mod:`core.io.ocr`, next to ``core.io.pdf``,\nbecause turning a document into tokens is an IO concern rather than a parsing\none. This module only re-exports the public names so any older import path\nkeeps working.\n",
+   0,
+   [
+    "annotations"
+   ],
+   2,
+   [
+    "DEFAULT_DPI",
+    "DEFAULT_VISION_MODEL",
+    "SPARSE_WORDS_PER_PAGE",
+    "local_engine_available",
+    "ocr_pdf_pages",
+    "rasterize_pdf",
+    "text_layer_is_sparse"
+   ],
+   null
+  ],
+  "n_instructions": 33
+ }
+}

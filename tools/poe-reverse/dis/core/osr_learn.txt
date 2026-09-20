@@ -1,0 +1,1306 @@
+# module: core.osr_learn
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\osr_learn.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/osr_learn.py - turn historical OSR exports into per-layout consensus.\n\nV2.0.19.12: close the learning loop. The OSR (``OSR-Sales Order Summary\nReport.xlsx``) is a write-only sink today; this module reads it BACK and derives,\nfor each template, the stable header fields that were CONSISTENTLY the same\nacross past POs (country of origin, currency, price term, product group, ...).\nThose consensus values are then used at extraction time to FILL BLANKS (never\noverwrite a parsed value) on POs of the same layout - zero AI - which also\nreplaces the self-heal AI loop for stable fields.\n\nDesign\n------\n- The consensus store is ``%APPDATA%/Purchase Order Extractor V2/osr_learning.json``\n  (kept SEPARATE from the recipe cache so it never pollutes a ``PoRecipe`` and\n  never triggers the overwrite semantics of ``apply_field_defaults``).\n- Grouping key: ``fp::<fingerprint>`` when the OSR carries the ``_Fingerprint``\n  meta column (V2.0.19.12+ exports), else ``sig::<customer>`` as a best-effort\n  fallback for already-saved 31-column files (in practice one customer == one\n  template; the LPP family shares one fingerprint AND one customer).\n- A field is learned only when its value agrees across >= ``agreement`` fraction\n  of that group's rows (default 0.9), so an occasional wrong/stray value is never\n  propagated across POs.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 24           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 26          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 27          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 28          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (re)
+             40 STORE_NAME               5 (re)
+
+ 29          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (('Counter',))
+             46 IMPORT_NAME              6 (collections)
+             48 IMPORT_FROM              7 (Counter)
+             50 STORE_NAME               7 (Counter)
+             52 POP_TOP
+
+ 30          54 LOAD_CONST               1 (0)
+             56 LOAD_CONST               5 (('Dict', 'List', 'Optional'))
+             58 IMPORT_NAME              8 (typing)
+             60 IMPORT_FROM              9 (Dict)
+             62 STORE_NAME               9 (Dict)
+             64 IMPORT_FROM             10 (List)
+             66 STORE_NAME              10 (List)
+             68 IMPORT_FROM             11 (Optional)
+             70 STORE_NAME              11 (Optional)
+             72 POP_TOP
+
+ 32          74 LOAD_CONST               6 (1)
+             76 LOAD_CONST               7 (('user_config_dir',))
+             78 IMPORT_NAME             12 (store.config)
+             80 IMPORT_FROM             13 (user_config_dir)
+             82 STORE_NAME              13 (user_config_dir)
+             84 POP_TOP
+
+ 34          86 LOAD_CONST               8 ('osr_learning.json')
+             88 STORE_NAME              14 (STORAGE_BASENAME)
+
+ 35          90 LOAD_CONST               9 (0.9)
+             92 STORE_NAME              15 (DEFAULT_AGREEMENT)
+
+ 49          94 LOAD_CONST              10 ('customer')
+
+ 50          96 LOAD_CONST              11 ('season')
+
+ 51          98 LOAD_CONST              12 ('price_term')
+
+ 52         100 LOAD_CONST              13 ('currency')
+
+ 53         102 LOAD_CONST              14 ('delivery_date')
+
+ 54         104 LOAD_CONST              15 ('port_loading')
+
+ 55         106 LOAD_CONST              16 ('port_discharge')
+
+ 56         108 LOAD_CONST              17 ('ship_mode')
+
+ 57         110 LOAD_CONST              18 ('destination_code')
+
+ 58         112 LOAD_CONST              19 ('payment_terms')
+
+ 59         114 LOAD_CONST              20 ('country_of_origin')
+
+ 48         116 LOAD_CONST              21 (('A', 'D', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U'))
+            118 BUILD_CONST_KEY_MAP     11
+            120 STORE_NAME              16 (OSR_FIELD_MAP)
+
+ 63         122 LOAD_CONST              22 (<code object <listcomp> at 0x000002BF94A6EA30, file "core\osr_learn.py", line 63>)
+            124 MAKE_FUNCTION            0
+            126 LOAD_NAME               16 (OSR_FIELD_MAP)
+            128 LOAD_METHOD             17 (values)
+            150 PRECALL                  0
+            154 CALL                     0
+            164 GET_ITER
+            166 PRECALL                  0
+            170 CALL                     0
+            180 STORE_NAME              18 (ENTITY_FIELDS)
+
+ 67         182 LOAD_CONST              15 ('port_loading')
+            184 LOAD_CONST              16 ('port_discharge')
+            186 BUILD_SET                2
+            188 STORE_NAME              19 (_PORT_FIELDS)
+
+ 68         190 BUILD_SET                0
+            192 LOAD_CONST              23 (frozenset({'SHIP', 'EXPRESS', 'OCEAN FREIGHT', 'OCEAN', 'PLANE', 'SEA', 'TRAIN', 'BOAT', 'VESSEL', 'COURIER', 'AIRFREIGHT', 'BY AIR', 'SEA FREIGHT', 'AIR', 'RAIL', 'BY TRUCK', 'BY RAIL', 'MULTIMODAL', 'SEA SHIPMENT', 'COMBINED', 'TRUCK', 'BY SEA', 'AIR FREIGHT', 'SEAFREIGHT', 'ROAD'}))
+            194 SET_UPDATE               1
+            196 STORE_NAME              20 (_SHIP_MODE_WORDS)
+
+ 75         198 BUILD_MAP                0
+
+ 76         200 LOAD_CONST              24 ('VESSEL')
+            202 LOAD_CONST              25 ('SEA')
+
+ 75         204 MAP_ADD                  1
+
+ 76         206 LOAD_CONST              26 ('SHIP')
+            208 LOAD_CONST              25 ('SEA')
+
+ 75         210 MAP_ADD                  1
+
+ 76         212 LOAD_CONST              27 ('BOAT')
+            214 LOAD_CONST              25 ('SEA')
+
+ 75         216 MAP_ADD                  1
+
+ 77         218 LOAD_CONST              25 ('SEA')
+            220 LOAD_CONST              25 ('SEA')
+
+ 75         222 MAP_ADD                  1
+
+ 77         224 LOAD_CONST              28 ('BY SEA')
+            226 LOAD_CONST              25 ('SEA')
+
+ 75         228 MAP_ADD                  1
+
+ 77         230 LOAD_CONST              29 ('OCEAN')
+            232 LOAD_CONST              25 ('SEA')
+
+ 75         234 MAP_ADD                  1
+
+ 77         236 LOAD_CONST              30 ('SEA FREIGHT')
+            238 LOAD_CONST              25 ('SEA')
+
+ 75         240 MAP_ADD                  1
+
+ 78         242 LOAD_CONST              31 ('SEAFREIGHT')
+            244 LOAD_CONST              25 ('SEA')
+
+ 75         246 MAP_ADD                  1
+
+ 78         248 LOAD_CONST              32 ('SEA SHIPMENT')
+            250 LOAD_CONST              25 ('SEA')
+
+ 75         252 MAP_ADD                  1
+
+ 78         254 LOAD_CONST              33 ('OCEAN FREIGHT')
+            256 LOAD_CONST              25 ('SEA')
+
+ 75         258 MAP_ADD                  1
+
+ 79         260 LOAD_CONST              34 ('AIR')
+            262 LOAD_CONST              34 ('AIR')
+
+ 75         264 MAP_ADD                  1
+
+ 79         266 LOAD_CONST              35 ('BY AIR')
+            268 LOAD_CONST              34 ('AIR')
+
+ 75         270 MAP_ADD                  1
+
+ 79         272 LOAD_CONST              36 ('AIR FREIGHT')
+            274 LOAD_CONST              34 ('AIR')
+
+ 75         276 MAP_ADD                  1
+
+ 79         278 LOAD_CONST              37 ('AIRFREIGHT')
+            280 LOAD_CONST              34 ('AIR')
+
+ 75         282 MAP_ADD                  1
+
+ 80         284 LOAD_CONST              38 ('PLANE')
+            286 LOAD_CONST              34 ('AIR')
+
+ 75         288 MAP_ADD                  1
+
+ 81         290 LOAD_CONST              39 ('TRUCK')
+            292 LOAD_CONST              39 ('TRUCK')
+
+ 75         294 MAP_ADD                  1
+
+ 81         296 LOAD_CONST              40 ('BY TRUCK')
+            298 LOAD_CONST              39 ('TRUCK')
+
+ 75         300 MAP_ADD                  1
+
+ 81         302 LOAD_CONST              39 ('TRUCK')
+
+ 82         304 LOAD_CONST              41 ('RAIL')
+            306 LOAD_CONST              41 ('RAIL')
+            308 LOAD_CONST              41 ('RAIL')
+
+ 83         310 LOAD_CONST              42 ('COURIER')
+            312 LOAD_CONST              43 ('EXPRESS')
+
+ 84         314 LOAD_CONST              44 ('COMBINED')
+            316 LOAD_CONST              44 ('COMBINED')
+
+ 75         318 LOAD_CONST              45 (('ROAD', 'RAIL', 'BY RAIL', 'TRAIN', 'COURIER', 'EXPRESS', 'COMBINED', 'MULTIMODAL'))
+            320 BUILD_CONST_KEY_MAP      8
+            322 DICT_UPDATE              1
+            324 STORE_NAME              21 (_SHIP_MODE_CANON)
+
+ 99         326 PUSH_NULL
+            328 LOAD_NAME                5 (re)
+            330 LOAD_ATTR               22 (compile)
+            340 LOAD_CONST              46 ('[€£¥$\\s,.\\-\\d]')
+            342 PRECALL                  1
+            346 CALL                     1
+            356 STORE_NAME              23 (_PRICE_RE)
+
+100         358 PUSH_NULL
+            360 LOAD_NAME                5 (re)
+            362 LOAD_ATTR               22 (compile)
+            372 LOAD_CONST              47 ('^[A-Z]{3}$')
+            374 PRECALL                  1
+            378 CALL                     1
+            388 STORE_NAME              24 (_ISO3_RE)
+
+103         390 LOAD_CONST              85 (('v', 'str', 'return', 'bool'))
+            392 LOAD_CONST              52 (<code object _looks_like_price at 0x000002BF9473E830, file "core\osr_learn.py", line 103>)
+            394 MAKE_FUNCTION            4 (annotations)
+            396 STORE_NAME              25 (_looks_like_price)
+
+110         398 LOAD_CONST              85 (('v', 'str', 'return', 'bool'))
+            400 LOAD_CONST              53 (<code object _is_valid_currency at 0x000002BF94749BC0, file "core\osr_learn.py", line 110>)
+            402 MAKE_FUNCTION            4 (annotations)
+            404 STORE_NAME              26 (_is_valid_currency)
+
+116         406 LOAD_CONST              54 (<code object <lambda> at 0x000002BF94A6E790, file "core\osr_learn.py", line 116>)
+            408 MAKE_FUNCTION            0
+
+117         410 LOAD_CONST              55 (<code object <lambda> at 0x000002BF94A6E4F0, file "core\osr_learn.py", line 117>)
+            412 MAKE_FUNCTION            0
+
+118         414 LOAD_NAME               26 (_is_valid_currency)
+
+115         416 LOAD_CONST              56 (('price_term', 'payment_terms', 'currency'))
+            418 BUILD_CONST_KEY_MAP      3
+            420 STORE_NAME              27 (_FIELD_ACCEPTORS)
+
+122         422 LOAD_CONST              86 (('fld', 'str', 'v', 'str', 'return', 'bool'))
+            424 LOAD_CONST              58 (<code object _field_ok at 0x000002BF94A658A0, file "core\osr_learn.py", line 122>)
+            426 MAKE_FUNCTION            4 (annotations)
+            428 STORE_NAME              28 (_field_ok)
+
+130         430 LOAD_CONST              87 (('return', 'str'))
+            432 LOAD_CONST              59 (<code object _store_path at 0x000002BF9473D7F0, file "core\osr_learn.py", line 130>)
+            434 MAKE_FUNCTION            4 (annotations)
+            436 STORE_NAME              29 (_store_path)
+
+134         438 LOAD_CONST              87 (('return', 'str'))
+            440 LOAD_CONST              60 (<code object _clean at 0x000002BF94A65680, file "core\osr_learn.py", line 134>)
+            442 MAKE_FUNCTION            4 (annotations)
+            444 STORE_NAME              30 (_clean)
+
+138         446 LOAD_CONST              88 (('row', 'dict', 'return', 'str'))
+            448 LOAD_CONST              63 (<code object _fp_of at 0x000002BF94A65AC0, file "core\osr_learn.py", line 138>)
+            450 MAKE_FUNCTION            4 (annotations)
+            452 STORE_NAME              31 (_fp_of)
+
+144         454 LOAD_CONST              87 (('return', 'str'))
+            456 LOAD_CONST              64 (<code object signature_from_po at 0x000002BF94A2F330, file "core\osr_learn.py", line 144>)
+            458 MAKE_FUNCTION            4 (annotations)
+            460 STORE_NAME              32 (signature_from_po)
+
+149         462 LOAD_NAME               15 (DEFAULT_AGREEMENT)
+            464 BUILD_TUPLE              1
+            466 LOAD_CONST              89 (('agreement', 'float', 'return', 'Dict[str, str]'))
+            468 LOAD_CONST              68 (<code object consensus_defaults at 0x000002BF94447FA0, file "core\osr_learn.py", line 149>)
+            470 MAKE_FUNCTION            5 (defaults, annotations)
+            472 STORE_NAME              33 (consensus_defaults)
+
+182         474 LOAD_NAME               15 (DEFAULT_AGREEMENT)
+
+183         476 LOAD_CONST               3 (None)
+            478 LOAD_CONST               3 (None)
+
+182         480 BUILD_TUPLE              3
+            482 LOAD_CONST              90 (('agreement', 'float', 'store_path', 'Optional[str]', 'return', 'dict'))
+            484 LOAD_CONST              71 (<code object learn_from_osr at 0x000002BF9444C970, file "core\osr_learn.py", line 182>)
+            486 MAKE_FUNCTION            5 (defaults, annotations)
+            488 STORE_NAME              34 (learn_from_osr)
+
+219         490 LOAD_CONST              91 ((None,))
+            492 LOAD_CONST              92 (('store_path', 'Optional[str]', 'return', 'dict'))
+            494 LOAD_CONST              72 (<code object load_learning at 0x000002BF949E25B0, file "core\osr_learn.py", line 219>)
+            496 MAKE_FUNCTION            5 (defaults, annotations)
+            498 STORE_NAME              35 (load_learning)
+
+228         500 LOAD_CONST              91 ((None,))
+            502 LOAD_CONST              93 (('store', 'dict', 'store_path', 'Optional[str]', 'return', 'None'))
+            504 LOAD_CONST              75 (<code object save_learning at 0x000002BF94741990, file "core\osr_learn.py", line 228>)
+            506 MAKE_FUNCTION            5 (defaults, annotations)
+            508 STORE_NAME              36 (save_learning)
+
+235         510 LOAD_CONST              94 (('learning', 'dict', 'fp', 'str', 'return', 'Dict[str, str]'))
+            512 LOAD_CONST              78 (<code object lookup_consensus at 0x000002BF949EC6B0, file "core\osr_learn.py", line 235>)
+            514 MAKE_FUNCTION            4 (annotations)
+            516 STORE_NAME              37 (lookup_consensus)
+
+245         518 NOP
+
+246         520 NOP
+
+247         522 NOP
+
+245         524 LOAD_CONST              95 (('', True, True))
+            526 LOAD_CONST              96 (('learning', 'dict', 'fp', 'str', 'fill_only', 'bool', 'warn_on_conflict', 'bool', 'return', 'List[str]'))
+            528 LOAD_CONST              84 (<code object apply_consensus at 0x000002BF94461810, file "core\osr_learn.py", line 245>)
+            530 MAKE_FUNCTION            5 (defaults, annotations)
+            532 STORE_NAME              38 (apply_consensus)
+            534 LOAD_CONST               3 (None)
+            536 RETURN_VALUE
+
+==============================================================================
+## <module>.<listcomp>  (args=1, locals=2)
+# varnames: .0, f
+ 63           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                10 (to 28)
+              8 STORE_FAST               1 (f)
+             10 LOAD_FAST                1 (f)
+             12 LOAD_CONST               0 ('customer')
+             14 COMPARE_OP               3 (!=)
+             20 POP_JUMP_BACKWARD_IF_FALSE     8 (to 6)
+             22 LOAD_FAST                1 (f)
+             24 LIST_APPEND              2
+             26 JUMP_BACKWARD           11 (to 6)
+        >>   28 RETURN_VALUE
+
+==============================================================================
+## <module>._looks_like_price  (args=1, locals=2)
+# varnames: v, s
+103           0 RESUME                   0
+
+104           2 LOAD_FAST                0 (v)
+              4 LOAD_METHOD              0 (strip)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (s)
+
+105          42 LOAD_FAST                1 (s)
+             44 POP_JUMP_FORWARD_IF_FALSE     8 (to 62)
+             46 LOAD_CONST               1 (',')
+             48 LOAD_FAST                1 (s)
+             50 CONTAINS_OP              1
+             52 POP_JUMP_FORWARD_IF_FALSE     6 (to 66)
+             54 LOAD_CONST               2 ('.')
+             56 LOAD_FAST                1 (s)
+             58 CONTAINS_OP              1
+             60 POP_JUMP_FORWARD_IF_FALSE     2 (to 66)
+
+106     >>   62 LOAD_CONST               3 (False)
+             64 RETURN_VALUE
+
+107     >>   66 LOAD_GLOBAL              2 (_PRICE_RE)
+             78 LOAD_METHOD              2 (sub)
+            100 LOAD_CONST               4 ('')
+            102 LOAD_FAST                1 (s)
+            104 PRECALL                  2
+            108 CALL                     2
+            118 LOAD_CONST               4 ('')
+            120 COMPARE_OP               2 (==)
+            126 RETURN_VALUE
+
+==============================================================================
+## <module>._is_valid_currency  (args=1, locals=1)
+# varnames: v
+110           0 RESUME                   0
+
+111           2 LOAD_GLOBAL              1 (NULL + bool)
+             14 LOAD_GLOBAL              2 (_ISO3_RE)
+             26 LOAD_METHOD              2 (match)
+             48 LOAD_FAST                0 (v)
+             50 LOAD_METHOD              3 (strip)
+             72 PRECALL                  0
+             76 CALL                     0
+             86 LOAD_METHOD              4 (upper)
+            108 PRECALL                  0
+            112 CALL                     0
+            122 PRECALL                  1
+            126 CALL                     1
+            136 PRECALL                  1
+            140 CALL                     1
+            150 RETURN_VALUE
+
+==============================================================================
+## <module>.<lambda>  (args=1, locals=1)
+# varnames: v
+116           0 RESUME                   0
+              2 LOAD_GLOBAL              1 (NULL + _looks_like_price)
+             14 LOAD_FAST                0 (v)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 UNARY_NOT
+             32 RETURN_VALUE
+
+==============================================================================
+## <module>.<lambda>  (args=1, locals=1)
+# varnames: v
+117           0 RESUME                   0
+              2 LOAD_GLOBAL              1 (NULL + _looks_like_price)
+             14 LOAD_FAST                0 (v)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 UNARY_NOT
+             32 RETURN_VALUE
+
+==============================================================================
+## <module>._field_ok  (args=2, locals=3)
+# varnames: fld, v, fn
+122           0 RESUME                   0
+
+124           2 LOAD_GLOBAL              0 (_FIELD_ACCEPTORS)
+             14 LOAD_METHOD              1 (get)
+             36 LOAD_FAST                0 (fld)
+             38 PRECALL                  1
+             42 CALL                     1
+             52 STORE_FAST               2 (fn)
+
+125          54 LOAD_FAST                2 (fn)
+             56 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 62)
+
+126          58 LOAD_CONST               2 (True)
+             60 RETURN_VALUE
+
+127     >>   62 PUSH_NULL
+             64 LOAD_FAST                2 (fn)
+             66 LOAD_FAST                1 (v)
+             68 PRECALL                  1
+             72 CALL                     1
+             82 RETURN_VALUE
+
+==============================================================================
+## <module>._store_path  (args=0, locals=0)
+130           0 RESUME                   0
+
+131           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (path)
+             24 LOAD_METHOD              2 (join)
+             46 LOAD_GLOBAL              7 (NULL + str)
+             58 LOAD_GLOBAL              9 (NULL + user_config_dir)
+             70 PRECALL                  0
+             74 CALL                     0
+             84 PRECALL                  1
+             88 CALL                     1
+             98 LOAD_GLOBAL             10 (STORAGE_BASENAME)
+            110 PRECALL                  2
+            114 CALL                     2
+            124 RETURN_VALUE
+
+==============================================================================
+## <module>._clean  (args=1, locals=1)
+# varnames: v
+134           0 RESUME                   0
+
+135           2 LOAD_FAST                0 (v)
+              4 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 10)
+              6 LOAD_CONST               1 ('')
+              8 JUMP_FORWARD            32 (to 74)
+        >>   10 LOAD_GLOBAL              1 (NULL + str)
+             22 LOAD_FAST                0 (v)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 LOAD_METHOD              1 (strip)
+             60 PRECALL                  0
+             64 CALL                     0
+        >>   74 RETURN_VALUE
+
+==============================================================================
+## <module>._fp_of  (args=1, locals=2)
+# varnames: row, aa
+138           0 RESUME                   0
+
+140           2 LOAD_FAST                0 (row)
+              4 LOAD_METHOD              0 (get)
+             26 LOAD_CONST               1 ('AA')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               1 (aa)
+
+141          44 LOAD_FAST                1 (aa)
+             46 POP_JUMP_FORWARD_IF_NONE    15 (to 78)
+             48 LOAD_GLOBAL              3 (NULL + _clean)
+             60 LOAD_FAST                1 (aa)
+             62 PRECALL                  1
+             66 CALL                     1
+             76 JUMP_FORWARD             1 (to 80)
+        >>   78 LOAD_CONST               2 ('')
+        >>   80 RETURN_VALUE
+
+==============================================================================
+## <module>.signature_from_po  (args=1, locals=1)
+# varnames: po
+144           0 RESUME                   0
+
+146           2 LOAD_CONST               1 ('sig::')
+              4 LOAD_GLOBAL              1 (NULL + _clean)
+             16 LOAD_GLOBAL              3 (NULL + getattr)
+             28 LOAD_FAST                0 (po)
+             30 LOAD_CONST               2 ('customer')
+             32 LOAD_CONST               3 ('')
+             34 PRECALL                  3
+             38 CALL                     3
+             48 PRECALL                  1
+             52 CALL                     1
+             62 FORMAT_VALUE             0
+             64 BUILD_STRING             2
+             66 RETURN_VALUE
+
+==============================================================================
+## <module>.consensus_defaults  (args=2, locals=12)
+# varnames: rows, agreement, out, col, fld, vals, r, v, up, cnt, val, n
+149           0 RESUME                   0
+
+156           2 BUILD_MAP                0
+              4 STORE_FAST               2 (out)
+
+157           6 LOAD_GLOBAL              0 (OSR_FIELD_MAP)
+             18 LOAD_METHOD              1 (items)
+             40 PRECALL                  0
+             44 CALL                     0
+             54 GET_ITER
+        >>   56 EXTENDED_ARG             1
+             58 FOR_ITER               257 (to 574)
+             60 UNPACK_SEQUENCE          2
+             64 STORE_FAST               3 (col)
+             66 STORE_FAST               4 (fld)
+
+158          68 BUILD_LIST               0
+             70 STORE_FAST               5 (vals)
+
+159          72 LOAD_FAST                0 (rows)
+             74 GET_ITER
+        >>   76 FOR_ITER               171 (to 420)
+             78 STORE_FAST               6 (r)
+
+160          80 LOAD_GLOBAL              5 (NULL + isinstance)
+             92 LOAD_FAST                6 (r)
+             94 LOAD_GLOBAL              6 (dict)
+            106 PRECALL                  2
+            110 CALL                     2
+            120 POP_JUMP_FORWARD_IF_TRUE     1 (to 124)
+
+161         122 JUMP_BACKWARD           24 (to 76)
+
+162     >>  124 LOAD_GLOBAL              9 (NULL + _clean)
+            136 LOAD_FAST                6 (r)
+            138 LOAD_METHOD              5 (get)
+            160 LOAD_FAST                3 (col)
+            162 PRECALL                  1
+            166 CALL                     1
+            176 PRECALL                  1
+            180 CALL                     1
+            190 STORE_FAST               7 (v)
+
+163         192 LOAD_FAST                7 (v)
+            194 POP_JUMP_FORWARD_IF_TRUE     1 (to 198)
+
+164         196 JUMP_BACKWARD           61 (to 76)
+
+165     >>  198 LOAD_GLOBAL             13 (NULL + _field_ok)
+            210 LOAD_FAST                4 (fld)
+            212 LOAD_FAST                7 (v)
+            214 PRECALL                  2
+            218 CALL                     2
+            228 POP_JUMP_FORWARD_IF_TRUE     1 (to 232)
+
+166         230 JUMP_BACKWARD           78 (to 76)
+
+167     >>  232 LOAD_FAST                7 (v)
+            234 LOAD_METHOD              7 (upper)
+            256 PRECALL                  0
+            260 CALL                     0
+            270 STORE_FAST               8 (up)
+
+168         272 LOAD_FAST                4 (fld)
+            274 LOAD_GLOBAL             16 (_PORT_FIELDS)
+            286 CONTAINS_OP              0
+            288 POP_JUMP_FORWARD_IF_FALSE    10 (to 310)
+            290 LOAD_FAST                8 (up)
+            292 LOAD_GLOBAL             18 (_SHIP_MODE_WORDS)
+            304 CONTAINS_OP              0
+            306 POP_JUMP_FORWARD_IF_FALSE     1 (to 310)
+
+169         308 JUMP_BACKWARD          117 (to 76)
+
+170     >>  310 LOAD_FAST                4 (fld)
+            312 LOAD_CONST               1 ('ship_mode')
+            314 COMPARE_OP               2 (==)
+            320 POP_JUMP_FORWARD_IF_FALSE    27 (to 376)
+
+171         322 LOAD_GLOBAL             20 (_SHIP_MODE_CANON)
+            334 LOAD_METHOD              5 (get)
+            356 LOAD_FAST                8 (up)
+            358 LOAD_FAST                7 (v)
+            360 PRECALL                  2
+            364 CALL                     2
+            374 STORE_FAST               7 (v)
+
+172     >>  376 LOAD_FAST                5 (vals)
+            378 LOAD_METHOD             11 (append)
+            400 LOAD_FAST                7 (v)
+            402 PRECALL                  1
+            406 CALL                     1
+            416 POP_TOP
+            418 JUMP_BACKWARD          172 (to 76)
+
+173     >>  420 LOAD_FAST                5 (vals)
+            422 POP_JUMP_FORWARD_IF_TRUE     1 (to 426)
+
+174         424 JUMP_BACKWARD          185 (to 56)
+
+175     >>  426 LOAD_GLOBAL             25 (NULL + Counter)
+            438 LOAD_FAST                5 (vals)
+            440 PRECALL                  1
+            444 CALL                     1
+            454 STORE_FAST               9 (cnt)
+
+176         456 LOAD_FAST                9 (cnt)
+            458 LOAD_METHOD             13 (most_common)
+            480 LOAD_CONST               2 (1)
+            482 PRECALL                  1
+            486 CALL                     1
+            496 LOAD_CONST               3 (0)
+            498 BINARY_SUBSCR
+            508 UNPACK_SEQUENCE          2
+            512 STORE_FAST              10 (val)
+            514 STORE_FAST              11 (n)
+
+177         516 LOAD_FAST               11 (n)
+            518 LOAD_GLOBAL             29 (NULL + len)
+            530 LOAD_FAST                5 (vals)
+            532 PRECALL                  1
+            536 CALL                     1
+            546 BINARY_OP               11 (/)
+            550 LOAD_FAST                1 (agreement)
+            552 COMPARE_OP               5 (>=)
+            558 POP_JUMP_FORWARD_IF_FALSE     5 (to 570)
+
+178         560 LOAD_FAST               10 (val)
+            562 LOAD_FAST                2 (out)
+            564 LOAD_FAST                4 (fld)
+            566 STORE_SUBSCR
+        >>  570 EXTENDED_ARG             1
+            572 JUMP_BACKWARD          259 (to 56)
+
+179     >>  574 LOAD_FAST                2 (out)
+            576 RETURN_VALUE
+
+==============================================================================
+## <module>.learn_from_osr  (args=4, locals=14)
+# varnames: rows_list, agreement, store_path, on_progress, groups, r, fp, key, store, _n, _i, grp, cons, bucket
+182           0 RESUME                   0
+
+194           2 BUILD_MAP                0
+              4 STORE_FAST               4 (groups)
+
+195           6 LOAD_FAST                0 (rows_list)
+              8 GET_ITER
+        >>   10 FOR_ITER               124 (to 260)
+             12 STORE_FAST               5 (r)
+
+196          14 LOAD_GLOBAL              1 (NULL + isinstance)
+             26 LOAD_FAST                5 (r)
+             28 LOAD_GLOBAL              2 (dict)
+             40 PRECALL                  2
+             44 CALL                     2
+             54 POP_JUMP_FORWARD_IF_TRUE     1 (to 58)
+
+197          56 JUMP_BACKWARD           24 (to 10)
+
+198     >>   58 LOAD_GLOBAL              5 (NULL + _fp_of)
+             70 LOAD_FAST                5 (r)
+             72 PRECALL                  1
+             76 CALL                     1
+             86 STORE_FAST               6 (fp)
+
+199          88 LOAD_FAST                6 (fp)
+             90 POP_JUMP_FORWARD_IF_FALSE     5 (to 102)
+             92 LOAD_CONST               1 ('fp::')
+             94 LOAD_FAST                6 (fp)
+             96 FORMAT_VALUE             0
+             98 BUILD_STRING             2
+            100 JUMP_FORWARD            36 (to 174)
+        >>  102 LOAD_CONST               2 ('sig::')
+            104 LOAD_GLOBAL              7 (NULL + _clean)
+            116 LOAD_FAST                5 (r)
+            118 LOAD_METHOD              4 (get)
+            140 LOAD_CONST               3 ('A')
+            142 PRECALL                  1
+            146 CALL                     1
+            156 PRECALL                  1
+            160 CALL                     1
+            170 FORMAT_VALUE             0
+            172 BUILD_STRING             2
+        >>  174 STORE_FAST               7 (key)
+
+200         176 LOAD_FAST                4 (groups)
+            178 LOAD_METHOD              5 (setdefault)
+            200 LOAD_FAST                7 (key)
+            202 BUILD_LIST               0
+            204 PRECALL                  2
+            208 CALL                     2
+            218 LOAD_METHOD              6 (append)
+            240 LOAD_FAST                5 (r)
+            242 PRECALL                  1
+            246 CALL                     1
+            256 POP_TOP
+            258 JUMP_BACKWARD          125 (to 10)
+
+202     >>  260 LOAD_GLOBAL             15 (NULL + load_learning)
+            272 LOAD_FAST                2 (store_path)
+            274 PRECALL                  1
+            278 CALL                     1
+            288 STORE_FAST               8 (store)
+
+203         290 LOAD_GLOBAL             17 (NULL + len)
+            302 LOAD_FAST                4 (groups)
+            304 PRECALL                  1
+            308 CALL                     1
+            318 STORE_FAST               9 (_n)
+
+204         320 LOAD_GLOBAL             19 (NULL + enumerate)
+            332 LOAD_FAST                4 (groups)
+            334 LOAD_METHOD             10 (items)
+            356 PRECALL                  0
+            360 CALL                     0
+            370 LOAD_CONST               4 (1)
+            372 PRECALL                  2
+            376 CALL                     2
+            386 GET_ITER
+        >>  388 FOR_ITER               174 (to 738)
+            390 UNPACK_SEQUENCE          2
+            394 STORE_FAST              10 (_i)
+            396 UNPACK_SEQUENCE          2
+            400 STORE_FAST               7 (key)
+            402 STORE_FAST              11 (grp)
+
+205         404 LOAD_GLOBAL             23 (NULL + consensus_defaults)
+            416 LOAD_FAST               11 (grp)
+            418 LOAD_FAST                1 (agreement)
+            420 PRECALL                  2
+            424 CALL                     2
+            434 STORE_FAST              12 (cons)
+
+206         436 LOAD_FAST               12 (cons)
+            438 POP_JUMP_FORWARD_IF_TRUE    15 (to 470)
+
+207         440 LOAD_FAST                3 (on_progress)
+            442 POP_JUMP_FORWARD_IF_NONE    12 (to 468)
+
+208         444 PUSH_NULL
+            446 LOAD_FAST                3 (on_progress)
+            448 LOAD_FAST               10 (_i)
+            450 LOAD_FAST                9 (_n)
+            452 PRECALL                  2
+            456 CALL                     2
+            466 POP_TOP
+
+209     >>  468 JUMP_BACKWARD           41 (to 388)
+
+210     >>  470 LOAD_FAST                8 (store)
+            472 LOAD_METHOD              5 (setdefault)
+            494 LOAD_FAST                7 (key)
+            496 BUILD_MAP                0
+            498 LOAD_CONST               6 (0)
+            500 LOAD_CONST               7 (('fields', 'n_rows'))
+            502 BUILD_CONST_KEY_MAP      2
+            504 PRECALL                  2
+            508 CALL                     2
+            518 STORE_FAST              13 (bucket)
+
+211         520 BUILD_MAP                0
+            522 LOAD_FAST               13 (bucket)
+            524 LOAD_METHOD              4 (get)
+            546 LOAD_CONST               8 ('fields')
+            548 BUILD_MAP                0
+            550 PRECALL                  2
+            554 CALL                     2
+            564 DICT_UPDATE              1
+            566 LOAD_FAST               12 (cons)
+            568 DICT_UPDATE              1
+            570 LOAD_FAST               13 (bucket)
+            572 LOAD_CONST               8 ('fields')
+            574 STORE_SUBSCR
+
+212         578 LOAD_GLOBAL             25 (NULL + max)
+            590 LOAD_GLOBAL             27 (NULL + int)
+            602 LOAD_FAST               13 (bucket)
+            604 LOAD_METHOD              4 (get)
+            626 LOAD_CONST               9 ('n_rows')
+            628 LOAD_CONST               6 (0)
+            630 PRECALL                  2
+            634 CALL                     2
+            644 PRECALL                  1
+            648 CALL                     1
+            658 LOAD_GLOBAL             17 (NULL + len)
+            670 LOAD_FAST               11 (grp)
+            672 PRECALL                  1
+            676 CALL                     1
+            686 PRECALL                  2
+            690 CALL                     2
+            700 LOAD_FAST               13 (bucket)
+            702 LOAD_CONST               9 ('n_rows')
+            704 STORE_SUBSCR
+
+213         708 LOAD_FAST                3 (on_progress)
+            710 POP_JUMP_FORWARD_IF_NONE    12 (to 736)
+
+214         712 PUSH_NULL
+            714 LOAD_FAST                3 (on_progress)
+            716 LOAD_FAST               10 (_i)
+            718 LOAD_FAST                9 (_n)
+            720 PRECALL                  2
+            724 CALL                     2
+            734 POP_TOP
+        >>  736 JUMP_BACKWARD          175 (to 388)
+
+215     >>  738 LOAD_GLOBAL             29 (NULL + save_learning)
+            750 LOAD_FAST                8 (store)
+            752 LOAD_FAST                2 (store_path)
+            754 PRECALL                  2
+            758 CALL                     2
+            768 POP_TOP
+
+216         770 LOAD_GLOBAL             17 (NULL + len)
+            782 LOAD_FAST                4 (groups)
+            784 PRECALL                  1
+            788 CALL                     1
+            798 LOAD_GLOBAL             17 (NULL + len)
+            810 LOAD_FAST                0 (rows_list)
+            812 PRECALL                  1
+            816 CALL                     1
+            826 LOAD_CONST              10 (('groups', 'total_rows'))
+            828 BUILD_CONST_KEY_MAP      2
+            830 RETURN_VALUE
+
+==============================================================================
+## <module>.load_learning  (args=1, locals=3)
+# varnames: store_path, p, f
+219           0 RESUME                   0
+
+220           2 LOAD_FAST                0 (store_path)
+              4 JUMP_IF_TRUE_OR_POP     13 (to 32)
+              6 LOAD_GLOBAL              1 (NULL + _store_path)
+             18 PRECALL                  0
+             22 CALL                     0
+        >>   32 STORE_FAST               1 (p)
+
+221          34 NOP
+
+222          36 LOAD_GLOBAL              3 (NULL + open)
+             48 LOAD_FAST                1 (p)
+             50 LOAD_CONST               1 ('utf-8')
+             52 KW_NAMES                 2
+             54 PRECALL                  2
+             58 CALL                     2
+             68 BEFORE_WITH
+             70 STORE_FAST               2 (f)
+
+223          72 LOAD_GLOBAL              5 (NULL + json)
+             84 LOAD_ATTR                3 (load)
+             94 LOAD_FAST                2 (f)
+             96 PRECALL                  1
+            100 CALL                     1
+
+222         110 SWAP                     2
+            112 LOAD_CONST               0 (None)
+            114 LOAD_CONST               0 (None)
+            116 LOAD_CONST               0 (None)
+            118 PRECALL                  2
+            122 CALL                     2
+            132 POP_TOP
+            134 RETURN_VALUE
+        >>  136 PUSH_EXC_INFO
+            138 WITH_EXCEPT_START
+            140 POP_JUMP_FORWARD_IF_TRUE     4 (to 150)
+            142 RERAISE                  2
+        >>  144 COPY                     3
+            146 POP_EXCEPT
+            148 RERAISE                  1
+        >>  150 POP_TOP
+            152 POP_EXCEPT
+            154 POP_TOP
+            156 POP_TOP
+            158 LOAD_CONST               0 (None)
+            160 RETURN_VALUE
+        >>  162 PUSH_EXC_INFO
+
+224         164 LOAD_GLOBAL              8 (OSError)
+            176 LOAD_GLOBAL             10 (ValueError)
+            188 BUILD_TUPLE              2
+            190 CHECK_EXC_MATCH
+            192 POP_JUMP_FORWARD_IF_FALSE     5 (to 204)
+            194 POP_TOP
+
+225         196 BUILD_MAP                0
+            198 SWAP                     2
+            200 POP_EXCEPT
+            202 RETURN_VALUE
+
+224     >>  204 RERAISE                  0
+        >>  206 COPY                     3
+            208 POP_EXCEPT
+            210 RERAISE                  1
+ExceptionTable:
+  36 to 68 -> 162 [0]
+  70 to 108 -> 136 [1] lasti
+  110 to 132 -> 162 [0]
+  136 to 142 -> 144 [3] lasti
+  144 to 148 -> 162 [0]
+  150 to 150 -> 144 [3] lasti
+  152 to 156 -> 162 [0]
+  162 to 198 -> 206 [1] lasti
+  204 to 204 -> 206 [1] lasti
+
+==============================================================================
+## <module>.save_learning  (args=2, locals=4)
+# varnames: store, store_path, p, f
+228           0 RESUME                   0
+
+229           2 LOAD_FAST                1 (store_path)
+              4 JUMP_IF_TRUE_OR_POP     13 (to 32)
+              6 LOAD_GLOBAL              1 (NULL + _store_path)
+             18 PRECALL                  0
+             22 CALL                     0
+        >>   32 STORE_FAST               2 (p)
+
+230          34 LOAD_GLOBAL              3 (NULL + os)
+             46 LOAD_ATTR                2 (makedirs)
+             56 LOAD_GLOBAL              2 (os)
+             68 LOAD_ATTR                3 (path)
+             78 LOAD_METHOD              4 (dirname)
+            100 LOAD_FAST                2 (p)
+            102 PRECALL                  1
+            106 CALL                     1
+            116 LOAD_CONST               1 (True)
+            118 KW_NAMES                 2
+            120 PRECALL                  2
+            124 CALL                     2
+            134 POP_TOP
+
+231         136 LOAD_GLOBAL             11 (NULL + open)
+            148 LOAD_FAST                2 (p)
+            150 LOAD_CONST               3 ('w')
+            152 LOAD_CONST               4 ('utf-8')
+            154 KW_NAMES                 5
+            156 PRECALL                  3
+            160 CALL                     3
+            170 BEFORE_WITH
+            172 STORE_FAST               3 (f)
+
+232         174 LOAD_GLOBAL             13 (NULL + json)
+            186 LOAD_ATTR                7 (dump)
+            196 LOAD_FAST                0 (store)
+            198 LOAD_FAST                3 (f)
+            200 LOAD_CONST               6 (False)
+            202 LOAD_CONST               7 (2)
+            204 KW_NAMES                 8
+            206 PRECALL                  4
+            210 CALL                     4
+            220 POP_TOP
+
+231         222 LOAD_CONST               0 (None)
+            224 LOAD_CONST               0 (None)
+            226 LOAD_CONST               0 (None)
+            228 PRECALL                  2
+            232 CALL                     2
+            242 POP_TOP
+            244 LOAD_CONST               0 (None)
+            246 RETURN_VALUE
+        >>  248 PUSH_EXC_INFO
+            250 WITH_EXCEPT_START
+            252 POP_JUMP_FORWARD_IF_TRUE     4 (to 262)
+            254 RERAISE                  2
+        >>  256 COPY                     3
+            258 POP_EXCEPT
+            260 RERAISE                  1
+        >>  262 POP_TOP
+            264 POP_EXCEPT
+            266 POP_TOP
+            268 POP_TOP
+            270 LOAD_CONST               0 (None)
+            272 RETURN_VALUE
+ExceptionTable:
+  172 to 220 -> 248 [1] lasti
+  248 to 254 -> 256 [3] lasti
+  262 to 262 -> 256 [3] lasti
+
+==============================================================================
+## <module>.lookup_consensus  (args=3, locals=4)
+# varnames: learning, fp, po, bucket
+235           0 RESUME                   0
+
+237           2 LOAD_FAST                1 (fp)
+              4 POP_JUMP_FORWARD_IF_FALSE    48 (to 102)
+
+238           6 LOAD_FAST                0 (learning)
+              8 LOAD_METHOD              0 (get)
+             30 LOAD_CONST               1 ('fp::')
+             32 LOAD_FAST                1 (fp)
+             34 FORMAT_VALUE             0
+             36 BUILD_STRING             2
+             38 PRECALL                  1
+             42 CALL                     1
+             52 STORE_FAST               3 (bucket)
+
+239          54 LOAD_FAST                3 (bucket)
+             56 POP_JUMP_FORWARD_IF_FALSE    22 (to 102)
+
+240          58 LOAD_FAST                3 (bucket)
+             60 LOAD_METHOD              0 (get)
+             82 LOAD_CONST               2 ('fields')
+             84 BUILD_MAP                0
+             86 PRECALL                  2
+             90 CALL                     2
+            100 RETURN_VALUE
+
+241     >>  102 LOAD_FAST                0 (learning)
+            104 LOAD_METHOD              0 (get)
+            126 LOAD_GLOBAL              3 (NULL + signature_from_po)
+            138 LOAD_FAST                2 (po)
+            140 PRECALL                  1
+            144 CALL                     1
+            154 PRECALL                  1
+            158 CALL                     1
+            168 STORE_FAST               3 (bucket)
+
+242         170 LOAD_FAST                3 (bucket)
+            172 JUMP_IF_TRUE_OR_POP      1 (to 176)
+            174 BUILD_MAP                0
+        >>  176 LOAD_METHOD              0 (get)
+            198 LOAD_CONST               2 ('fields')
+            200 BUILD_MAP                0
+            202 PRECALL                  2
+            206 CALL                     2
+            216 RETURN_VALUE
+
+==============================================================================
+## <module>.apply_consensus  (args=5, locals=12)
+# varnames: po, learning, fp, fill_only, warn_on_conflict, fields, lines, fld, val, cur, ei, ent
+245           0 RESUME                   0
+
+255           2 LOAD_FAST                1 (learning)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+256           6 BUILD_LIST               0
+              8 RETURN_VALUE
+
+257     >>   10 LOAD_GLOBAL              1 (NULL + lookup_consensus)
+             22 LOAD_FAST                1 (learning)
+             24 LOAD_FAST                2 (fp)
+             26 LOAD_FAST                0 (po)
+             28 PRECALL                  3
+             32 CALL                     3
+             42 STORE_FAST               5 (fields)
+
+258          44 LOAD_FAST                5 (fields)
+             46 POP_JUMP_FORWARD_IF_TRUE     2 (to 52)
+
+259          48 BUILD_LIST               0
+             50 RETURN_VALUE
+
+260     >>   52 BUILD_LIST               0
+             54 STORE_FAST               6 (lines)
+
+261          56 LOAD_FAST                5 (fields)
+             58 LOAD_METHOD              1 (items)
+             80 PRECALL                  0
+             84 CALL                     0
+             94 GET_ITER
+        >>   96 EXTENDED_ARG             1
+             98 FOR_ITER               416 (to 932)
+            100 UNPACK_SEQUENCE          2
+            104 STORE_FAST               7 (fld)
+            106 STORE_FAST               8 (val)
+
+262         108 LOAD_GLOBAL              5 (NULL + _clean)
+            120 LOAD_FAST                8 (val)
+            122 PRECALL                  1
+            126 CALL                     1
+            136 STORE_FAST               8 (val)
+
+263         138 LOAD_FAST                8 (val)
+            140 POP_JUMP_FORWARD_IF_TRUE     1 (to 144)
+
+264         142 JUMP_BACKWARD           24 (to 96)
+
+268     >>  144 LOAD_GLOBAL              7 (NULL + _field_ok)
+            156 LOAD_FAST                7 (fld)
+            158 LOAD_FAST                8 (val)
+            160 PRECALL                  2
+            164 CALL                     2
+            174 POP_JUMP_FORWARD_IF_TRUE     1 (to 178)
+
+269         176 JUMP_BACKWARD           41 (to 96)
+
+272     >>  178 LOAD_FAST                7 (fld)
+            180 LOAD_GLOBAL              8 (_PORT_FIELDS)
+            192 CONTAINS_OP              0
+            194 POP_JUMP_FORWARD_IF_FALSE    28 (to 252)
+            196 LOAD_FAST                8 (val)
+            198 LOAD_METHOD              5 (upper)
+            220 PRECALL                  0
+            224 CALL                     0
+            234 LOAD_GLOBAL             12 (_SHIP_MODE_WORDS)
+            246 CONTAINS_OP              0
+            248 POP_JUMP_FORWARD_IF_FALSE     1 (to 252)
+
+273         250 JUMP_BACKWARD           78 (to 96)
+
+274     >>  252 LOAD_FAST                7 (fld)
+            254 LOAD_CONST               1 ('ship_mode')
+            256 COMPARE_OP               2 (==)
+            262 POP_JUMP_FORWARD_IF_FALSE    45 (to 354)
+
+275         264 LOAD_GLOBAL             14 (_SHIP_MODE_CANON)
+            276 LOAD_METHOD              8 (get)
+            298 LOAD_FAST                8 (val)
+            300 LOAD_METHOD              5 (upper)
+            322 PRECALL                  0
+            326 CALL                     0
+            336 LOAD_FAST                8 (val)
+            338 PRECALL                  2
+            342 CALL                     2
+            352 STORE_FAST               8 (val)
+
+276     >>  354 LOAD_FAST                7 (fld)
+            356 LOAD_CONST               2 ('customer')
+            358 COMPARE_OP               2 (==)
+            364 POP_JUMP_FORWARD_IF_FALSE   113 (to 592)
+
+277         366 LOAD_GLOBAL              5 (NULL + _clean)
+            378 LOAD_GLOBAL             19 (NULL + getattr)
+            390 LOAD_FAST                0 (po)
+            392 LOAD_CONST               2 ('customer')
+            394 LOAD_CONST               3 ('')
+            396 PRECALL                  3
+            400 CALL                     3
+            410 PRECALL                  1
+            414 CALL                     1
+            424 STORE_FAST               9 (cur)
+
+278         426 LOAD_FAST                9 (cur)
+            428 LOAD_FAST                8 (val)
+            430 COMPARE_OP               2 (==)
+            436 POP_JUMP_FORWARD_IF_FALSE     1 (to 440)
+
+279         438 JUMP_BACKWARD          172 (to 96)
+
+280     >>  440 LOAD_FAST                9 (cur)
+            442 POP_JUMP_FORWARD_IF_FALSE    31 (to 506)
+
+281         444 LOAD_FAST                4 (warn_on_conflict)
+            446 POP_JUMP_FORWARD_IF_FALSE    28 (to 504)
+
+282         448 LOAD_FAST                6 (lines)
+            450 LOAD_METHOD             10 (append)
+            472 LOAD_CONST               4 ("customer: 当前 '")
+            474 LOAD_FAST                9 (cur)
+            476 FORMAT_VALUE             0
+            478 LOAD_CONST               5 ("' ≠ 历史共识 '")
+            480 LOAD_FAST                8 (val)
+            482 FORMAT_VALUE             0
+            484 LOAD_CONST               6 ("'（未覆盖）")
+            486 BUILD_STRING             5
+            488 PRECALL                  1
+            492 CALL                     1
+            502 POP_TOP
+
+283     >>  504 JUMP_BACKWARD          205 (to 96)
+
+284     >>  506 LOAD_GLOBAL             23 (NULL + setattr)
+            518 LOAD_FAST                0 (po)
+            520 LOAD_CONST               2 ('customer')
+            522 LOAD_FAST                8 (val)
+            524 PRECALL                  3
+            528 CALL                     3
+            538 POP_TOP
+
+285         540 LOAD_FAST                6 (lines)
+            542 LOAD_METHOD             10 (append)
+            564 LOAD_CONST               7 ("customer: '' → '")
+            566 LOAD_FAST                8 (val)
+            568 FORMAT_VALUE             0
+            570 LOAD_CONST               8 ("'")
+            572 BUILD_STRING             3
+            574 PRECALL                  1
+            578 CALL                     1
+            588 POP_TOP
+
+286         590 JUMP_BACKWARD          248 (to 96)
+
+287     >>  592 LOAD_GLOBAL             25 (NULL + enumerate)
+            604 LOAD_GLOBAL             19 (NULL + getattr)
+            616 LOAD_FAST                0 (po)
+            618 LOAD_CONST               9 ('entities')
+            620 BUILD_LIST               0
+            622 PRECALL                  3
+            626 CALL                     3
+            636 JUMP_IF_TRUE_OR_POP      1 (to 640)
+            638 BUILD_LIST               0
+        >>  640 PRECALL                  1
+            644 CALL                     1
+            654 GET_ITER
+        >>  656 FOR_ITER               135 (to 928)
+            658 UNPACK_SEQUENCE          2
+            662 STORE_FAST              10 (ei)
+            664 STORE_FAST              11 (ent)
+
+288         666 LOAD_GLOBAL              5 (NULL + _clean)
+            678 LOAD_GLOBAL             19 (NULL + getattr)
+            690 LOAD_FAST               11 (ent)
+            692 LOAD_FAST                7 (fld)
+            694 LOAD_CONST               3 ('')
+            696 PRECALL                  3
+            700 CALL                     3
+            710 PRECALL                  1
+            714 CALL                     1
+            724 STORE_FAST               9 (cur)
+
+289         726 LOAD_FAST                9 (cur)
+            728 LOAD_FAST                8 (val)
+            730 COMPARE_OP               2 (==)
+            736 POP_JUMP_FORWARD_IF_FALSE     1 (to 740)
+
+290         738 JUMP_BACKWARD           42 (to 656)
+
+291     >>  740 LOAD_FAST                9 (cur)
+            742 POP_JUMP_FORWARD_IF_FALSE    40 (to 824)
+
+292         744 LOAD_FAST                4 (warn_on_conflict)
+            746 POP_JUMP_FORWARD_IF_FALSE    37 (to 822)
+
+293         748 LOAD_FAST                6 (lines)
+            750 LOAD_METHOD             10 (append)
+            772 LOAD_CONST              10 ('H')
+            774 LOAD_FAST               10 (ei)
+            776 LOAD_CONST              11 (1)
+            778 BINARY_OP                0 (+)
+            782 FORMAT_VALUE             0
+            784 LOAD_CONST              12 ('·')
+            786 LOAD_FAST                7 (fld)
+            788 FORMAT_VALUE             0
+            790 LOAD_CONST              13 (": 当前 '")
+            792 LOAD_FAST                9 (cur)
+            794 FORMAT_VALUE             0
+            796 LOAD_CONST               5 ("' ≠ 历史共识 '")
+            798 LOAD_FAST                8 (val)
+            800 FORMAT_VALUE             0
+            802 LOAD_CONST               6 ("'（未覆盖）")
+            804 BUILD_STRING             9
+            806 PRECALL                  1
+            810 CALL                     1
+            820 POP_TOP
+
+294     >>  822 JUMP_BACKWARD           84 (to 656)
+
+295     >>  824 LOAD_GLOBAL             23 (NULL + setattr)
+            836 LOAD_FAST               11 (ent)
+            838 LOAD_FAST                7 (fld)
+            840 LOAD_FAST                8 (val)
+            842 PRECALL                  3
+            846 CALL                     3
+            856 POP_TOP
+
+296         858 LOAD_FAST                6 (lines)
+            860 LOAD_METHOD             10 (append)
+            882 LOAD_CONST              10 ('H')
+            884 LOAD_FAST               10 (ei)
+            886 LOAD_CONST              11 (1)
+            888 BINARY_OP                0 (+)
+            892 FORMAT_VALUE             0
+            894 LOAD_CONST              12 ('·')
+            896 LOAD_FAST                7 (fld)
+            898 FORMAT_VALUE             0
+            900 LOAD_CONST              14 (": '' → '")
+            902 LOAD_FAST                8 (val)
+            904 FORMAT_VALUE             0
+            906 LOAD_CONST               8 ("'")
+            908 BUILD_STRING             7
+            910 PRECALL                  1
+            914 CALL                     1
+            924 POP_TOP
+            926 JUMP_BACKWARD          136 (to 656)
+
+287     >>  928 EXTENDED_ARG             1
+            930 JUMP_BACKWARD          418 (to 96)
+
+297     >>  932 LOAD_FAST                6 (lines)
+            934 RETURN_VALUE

@@ -1,0 +1,56 @@
+# module: core.numutil
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\numutil.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/numutil.py - shared numeric tolerance helpers.\n\nCentralised so the synthesis gate (``recipe_synth``) and the breakdown validator\n(``validate``) agree on exactly the same European-thousands ambiguity rule and\nnever drift apart.\n')
+              4 STORE_NAME               0 (__doc__)
+
+  7           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 10          18 LOAD_CONST              10 (('a', 'int', 'b', 'int', 'return', 'bool'))
+             20 LOAD_CONST               8 (<code object thousands_match at 0x000002BF94A2F330, file "core\numutil.py", line 10>)
+             22 MAKE_FUNCTION            4 (annotations)
+             24 STORE_NAME               3 (thousands_match)
+             26 LOAD_CONST               9 (None)
+             28 RETURN_VALUE
+
+==============================================================================
+## <module>.thousands_match  (args=2, locals=2)
+# varnames: a, b
+ 10           0 RESUME                   0
+
+ 19           2 LOAD_FAST                0 (a)
+              4 LOAD_FAST                1 (b)
+              6 COMPARE_OP               2 (==)
+             12 POP_JUMP_FORWARD_IF_FALSE     2 (to 18)
+
+ 20          14 LOAD_CONST               1 (True)
+             16 RETURN_VALUE
+
+ 21     >>   18 LOAD_FAST                1 (b)
+             20 POP_JUMP_FORWARD_IF_TRUE     2 (to 26)
+
+ 22          22 LOAD_CONST               2 (False)
+             24 RETURN_VALUE
+
+ 23     >>   26 LOAD_FAST                0 (a)
+             28 LOAD_FAST                1 (b)
+             30 LOAD_CONST               3 (1000)
+             32 BINARY_OP                5 (*)
+             36 COMPARE_OP               2 (==)
+             42 JUMP_IF_TRUE_OR_POP      8 (to 60)
+             44 LOAD_FAST                1 (b)
+             46 LOAD_FAST                0 (a)
+             48 LOAD_CONST               3 (1000)
+             50 BINARY_OP                5 (*)
+             54 COMPARE_OP               2 (==)
+        >>   60 RETURN_VALUE

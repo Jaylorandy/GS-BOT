@@ -1,0 +1,6 @@
+{"styleNum":"1934/470/807","method":"取前8位","url":"https://www.zara.com/us/en/-p19344708.html","productName":"ZARA United States | New Collection Online"}
+{"styleNum":"7446/444/629","method":"取前8位","url":"https://www.zara.com/us/en/-p74464446.html","productName":"ZARA United States | New Collection Online"}
+{"styleNum":"406018400","method":"取前8位","url":"https://www.zara.com/us/en/-p40601840.html","productName":"ZARA United States | New Collection Online"}
+{"styleNum":"5474/055/407","method":"取前8位","url":"https://www.zara.com/us/en/-p54740554.html","productName":"ZARA United States | New Collection Online"}
+{"styleNum":"7484/892/723","method":"取前8位","url":"https://www.zara.com/us/en/-p74848927.html","productName":"ZARA United States | New Collection Online"}
+{"styleNum":"9632055756","method":"取前8位","url":"https://www.zara.com/us/en/-p96320557.html","productName":"ZARA United States | New Collection Online"}

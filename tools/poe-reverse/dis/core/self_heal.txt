@@ -1,0 +1,1073 @@
+# module: core.self_heal
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\self_heal.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/self_heal.py - turn a blank-but-present field into a healed value AND a\nback-patched, re-cacheable recipe anchor.\n\nWhy this exists\n---------------\nV2\'s cached path is zero-AI: a stored ``PoRecipe`` of regex anchors replays over\nthe PDF and any field the anchor misses stays blank. That is the "漏抓→留空"\nbehaviour. This module is the safety net:\n\n  1. detect anchor fields that parsed to blank while their human-readable LABEL\n     is clearly present in the document (proof the data exists and the anchor\n     simply missed it - not that the PO lacks the field);\n  2. ask the model ONCE, for just those fields (core.ai.focus_extract);\n  3. fill the parsed ``PurchaseOrder`` (never overwrite a value that is already\n     correct);\n  4. when the model\'s value round-trips through ``synthesize_field_anchor``,\n     patch the recipe anchor and write it back to the fingerprint cache, so the\n     NEXT PO of this layout is caught by regex - no more AI for that field.\n\nOnly runs on the CACHED path (caller gates it). When no field is missing-with-\nlabel it returns immediately and costs ZERO AI, so the normal fast path is\nuntouched. When offline it also no-ops. There is no loop: the back-patched\nrecipe is cached for future files; this file\'s ``po`` is already filled.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 25           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 27          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (re)
+             24 STORE_NAME               3 (re)
+
+ 28          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('Dict', 'List', 'Optional', 'Set', 'Tuple'))
+             30 IMPORT_NAME              4 (typing)
+             32 IMPORT_FROM              5 (Dict)
+             34 STORE_NAME               5 (Dict)
+             36 IMPORT_FROM              6 (List)
+             38 STORE_NAME               6 (List)
+             40 IMPORT_FROM              7 (Optional)
+             42 STORE_NAME               7 (Optional)
+             44 IMPORT_FROM              8 (Set)
+             46 STORE_NAME               8 (Set)
+             48 IMPORT_FROM              9 (Tuple)
+             50 STORE_NAME               9 (Tuple)
+             52 POP_TOP
+
+ 30          54 LOAD_CONST               5 (1)
+             56 LOAD_CONST               6 (('PoRecipe', 'PurchaseOrder'))
+             58 IMPORT_NAME             10 (models)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 IMPORT_FROM             12 (PurchaseOrder)
+             66 STORE_NAME              12 (PurchaseOrder)
+             68 POP_TOP
+
+ 31          70 LOAD_CONST               5 (1)
+             72 LOAD_CONST               7 (('doc_text',))
+             74 IMPORT_NAME             13 (parsers.base)
+             76 IMPORT_FROM             14 (doc_text)
+             78 STORE_NAME              14 (doc_text)
+             80 POP_TOP
+
+ 32          82 LOAD_CONST               5 (1)
+             84 LOAD_CONST               8 (('_FIELD_LABEL_HINTS', 'synthesize_field_anchor'))
+             86 IMPORT_NAME             15 (recipe_synth)
+             88 IMPORT_FROM             16 (_FIELD_LABEL_HINTS)
+             90 STORE_NAME              16 (_FIELD_LABEL_HINTS)
+             92 IMPORT_FROM             17 (synthesize_field_anchor)
+             94 STORE_NAME              17 (synthesize_field_anchor)
+             96 POP_TOP
+
+ 38          98 BUILD_LIST               0
+            100 LOAD_CONST               9 ((('customer', 'customer_anchor', False, True), ('po_no', 'po_no_anchor', False, False), ('style_no', 'style_anchor', False, False), ('delivery_date', 'delivery_anchor', True, False), ('season', 'season_anchor', False, False), ('currency', 'currency_anchor', False, False), ('price_term', 'price_term_anchor', False, False), ('payment_terms', 'payment_terms_anchor', False, False), ('port_loading', 'port_loading_anchor', False, False), ('port_discharge', 'port_discharge_anchor', False, False), ('ship_mode', 'ship_mode_anchor', False, False), ('vendor_name', 'vendor_anchor', False, False), ('agent_name', 'agent_anchor', False, False), ('product_desc', 'style_anchor', False, False), ('import_po_no', 'import_po_no_anchor', False, False), ('reference_no', 'reference_no_anchor', False, False), ('cir_no', 'cir_no_anchor', False, False), ('freight_terms', 'freight_terms_anchor', False, False), ('country_of_origin', 'country_of_origin_anchor', False, False), ('dc_address', 'dc_address_anchor', False, False)))
+            102 LIST_EXTEND              1
+            104 STORE_NAME              18 (_HEAL_FIELDS)
+
+ 65         106 LOAD_CONST              10 (('Payment', 'Payment term', 'Payment terms'))
+            108 STORE_NAME              19 (_PAYMENT_HINTS)
+
+ 68         110 LOAD_CONST              11 (('Purchase Order', 'PURCHASE ORDER', 'Buyer', 'Customer'))
+            112 STORE_NAME              20 (_CUSTOMER_HINTS)
+
+ 70         114 LOAD_CONST              12 (('Order No', 'ORDER NO', 'PO No', 'PO#', 'Order Number'))
+            116 STORE_NAME              21 (_PO_NO_HINTS)
+
+ 74         118 PUSH_NULL
+            120 LOAD_NAME                3 (re)
+            122 LOAD_ATTR               22 (compile)
+            132 LOAD_CONST              13 ('(?:date|late)\\s*:')
+            134 LOAD_NAME                3 (re)
+            136 LOAD_ATTR               23 (I)
+            146 PRECALL                  2
+            150 CALL                     2
+            160 STORE_NAME              24 (_DELIVERY_LABEL_RE)
+
+ 77         162 LOAD_CONST              33 (('key', 'str', 'return', 'str'))
+            164 LOAD_CONST              17 (<code object _entity_value at 0x000002BF94A66AB0, file "core\self_heal.py", line 77>)
+            166 MAKE_FUNCTION            4 (annotations)
+            168 STORE_NAME              25 (_entity_value)
+
+ 81         170 LOAD_CONST              34 (('key', 'str', 'doc_low', 'str', 'return', 'bool'))
+            172 LOAD_CONST              20 (<code object _header_label_present at 0x000002BF946C5CF0, file "core\self_heal.py", line 81>)
+            174 MAKE_FUNCTION            4 (annotations)
+            176 STORE_NAME              26 (_header_label_present)
+
+ 93         178 LOAD_CONST              35 (('po', 'PurchaseOrder', 'doc', 'str', 'return', 'Tuple[List[str], bool]'))
+            180 LOAD_CONST              25 (<code object _find_missing at 0x000002BF9444C9D0, file "core\self_heal.py", line 93>)
+            182 MAKE_FUNCTION            4 (annotations)
+            184 STORE_NAME              27 (_find_missing)
+
+120         186 NOP
+
+119         188 LOAD_CONST              36 (('', None))
+            190 LOAD_CONST              37 (('recipe', 'PoRecipe', 'po', 'PurchaseOrder', 'cfg', 'dict', 'source_file', 'str', 'return', 'bool'))
+            192 LOAD_CONST              32 (<code object heal_and_cache at 0x000002BF940D00D0, file "core\self_heal.py", line 119>)
+            194 MAKE_FUNCTION            5 (defaults, annotations)
+            196 STORE_NAME              28 (heal_and_cache)
+            198 LOAD_CONST               3 (None)
+            200 RETURN_VALUE
+
+==============================================================================
+## <module>._entity_value  (args=2, locals=2)
+# varnames: ent, key
+ 77           0 RESUME                   0
+
+ 78           2 LOAD_GLOBAL              1 (NULL + getattr)
+             14 LOAD_FAST                0 (ent)
+             16 LOAD_FAST                1 (key)
+             18 LOAD_CONST               1 ('')
+             20 PRECALL                  3
+             24 CALL                     3
+             34 JUMP_IF_TRUE_OR_POP      1 (to 38)
+             36 LOAD_CONST               1 ('')
+        >>   38 LOAD_METHOD              1 (strip)
+             60 PRECALL                  0
+             64 CALL                     0
+             74 RETURN_VALUE
+
+==============================================================================
+## <module>._header_label_present  (args=2, locals=3)
+# varnames: key, doc_low, hints
+              0 MAKE_CELL                1 (doc_low)
+
+ 81           2 RESUME                   0
+
+ 82           4 LOAD_FAST                0 (key)
+              6 LOAD_CONST               1 ('payment_terms')
+              8 COMPARE_OP               2 (==)
+             14 POP_JUMP_FORWARD_IF_FALSE     8 (to 32)
+
+ 83          16 LOAD_GLOBAL              0 (_PAYMENT_HINTS)
+             28 STORE_FAST               2 (hints)
+             30 JUMP_FORWARD            49 (to 130)
+
+ 84     >>   32 LOAD_FAST                0 (key)
+             34 LOAD_CONST               2 ('customer')
+             36 COMPARE_OP               2 (==)
+             42 POP_JUMP_FORWARD_IF_FALSE     8 (to 60)
+
+ 85          44 LOAD_GLOBAL              2 (_CUSTOMER_HINTS)
+             56 STORE_FAST               2 (hints)
+             58 JUMP_FORWARD            35 (to 130)
+
+ 86     >>   60 LOAD_FAST                0 (key)
+             62 LOAD_CONST               3 ('po_no')
+             64 COMPARE_OP               2 (==)
+             70 POP_JUMP_FORWARD_IF_FALSE     8 (to 88)
+
+ 87          72 LOAD_GLOBAL              4 (_PO_NO_HINTS)
+             84 STORE_FAST               2 (hints)
+             86 JUMP_FORWARD            21 (to 130)
+
+ 89     >>   88 LOAD_GLOBAL              7 (NULL + _FIELD_LABEL_HINTS)
+            100 LOAD_ATTR                4 (get)
+            110 LOAD_FAST                0 (key)
+            112 LOAD_CONST               4 (())
+            114 PRECALL                  2
+            118 CALL                     2
+            128 STORE_FAST               2 (hints)
+
+ 90     >>  130 LOAD_GLOBAL             11 (NULL + any)
+            142 LOAD_CLOSURE             1 (doc_low)
+            144 BUILD_TUPLE              1
+            146 LOAD_CONST               5 (<code object <genexpr> at 0x000002BF94A2FE30, file "core\self_heal.py", line 90>)
+            148 MAKE_FUNCTION            8 (closure)
+            150 LOAD_FAST                2 (hints)
+            152 GET_ITER
+            154 PRECALL                  0
+            158 CALL                     0
+            168 PRECALL                  1
+            172 CALL                     1
+            182 RETURN_VALUE
+
+==============================================================================
+## <module>._header_label_present.<genexpr>  (args=1, locals=2)
+# varnames: .0, h
+              0 COPY_FREE_VARS           1
+
+ 90           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                26 (to 64)
+             12 STORE_FAST               1 (h)
+             14 LOAD_FAST                1 (h)
+             16 LOAD_METHOD              0 (lower)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 LOAD_DEREF               2 (doc_low)
+             54 CONTAINS_OP              0
+             56 YIELD_VALUE
+             58 RESUME                   1
+             60 POP_TOP
+             62 JUMP_BACKWARD           27 (to 10)
+        >>   64 LOAD_CONST               0 (None)
+             66 RETURN_VALUE
+
+==============================================================================
+## <module>._find_missing  (args=2, locals=8)
+# varnames: po, doc, low, missing_header, _attr, per_ent, po_level, delivery_missing
+              0 MAKE_CELL                8 (key)
+
+ 93           2 RESUME                   0
+
+100           4 LOAD_FAST                1 (doc)
+              6 LOAD_METHOD              0 (lower)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 STORE_FAST               2 (low)
+
+101          44 BUILD_LIST               0
+             46 STORE_FAST               3 (missing_header)
+
+102          48 LOAD_GLOBAL              2 (_HEAL_FIELDS)
+             60 GET_ITER
+        >>   62 FOR_ITER               141 (to 346)
+             64 UNPACK_SEQUENCE          4
+             68 STORE_DEREF              8 (key)
+             70 STORE_FAST               4 (_attr)
+             72 STORE_FAST               5 (per_ent)
+             74 STORE_FAST               6 (po_level)
+
+103          76 LOAD_FAST                5 (per_ent)
+             78 POP_JUMP_FORWARD_IF_FALSE     1 (to 82)
+
+104          80 JUMP_BACKWARD           10 (to 62)
+
+105     >>   82 LOAD_GLOBAL              5 (NULL + _header_label_present)
+             94 LOAD_DEREF               8 (key)
+             96 LOAD_FAST                2 (low)
+             98 PRECALL                  2
+            102 CALL                     2
+            112 POP_JUMP_FORWARD_IF_TRUE     1 (to 116)
+
+106         114 JUMP_BACKWARD           27 (to 62)
+
+107     >>  116 LOAD_FAST                6 (po_level)
+            118 POP_JUMP_FORWARD_IF_FALSE    59 (to 238)
+
+109         120 LOAD_GLOBAL              7 (NULL + getattr)
+            132 LOAD_FAST                0 (po)
+            134 LOAD_DEREF               8 (key)
+            136 LOAD_CONST               1 ('')
+            138 PRECALL                  3
+            142 CALL                     3
+            152 JUMP_IF_TRUE_OR_POP      1 (to 156)
+            154 LOAD_CONST               1 ('')
+        >>  156 LOAD_METHOD              4 (strip)
+            178 PRECALL                  0
+            182 CALL                     0
+            192 POP_JUMP_FORWARD_IF_TRUE    21 (to 236)
+
+110         194 LOAD_FAST                3 (missing_header)
+            196 LOAD_METHOD              5 (append)
+            218 LOAD_DEREF               8 (key)
+            220 PRECALL                  1
+            224 CALL                     1
+            234 POP_TOP
+        >>  236 JUMP_BACKWARD           88 (to 62)
+
+111     >>  238 LOAD_GLOBAL             13 (NULL + any)
+            250 LOAD_CLOSURE             8 (key)
+            252 BUILD_TUPLE              1
+            254 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94A2ED30, file "core\self_heal.py", line 111>)
+            256 MAKE_FUNCTION            8 (closure)
+            258 LOAD_FAST                0 (po)
+            260 LOAD_ATTR                7 (entities)
+            270 GET_ITER
+            272 PRECALL                  0
+            276 CALL                     0
+            286 PRECALL                  1
+            290 CALL                     1
+            300 POP_JUMP_FORWARD_IF_FALSE    21 (to 344)
+
+112         302 LOAD_FAST                3 (missing_header)
+            304 LOAD_METHOD              5 (append)
+            326 LOAD_DEREF               8 (key)
+            328 PRECALL                  1
+            332 CALL                     1
+            342 POP_TOP
+        >>  344 JUMP_BACKWARD          142 (to 62)
+
+114     >>  346 LOAD_GLOBAL             13 (NULL + any)
+            358 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94AA95C0, file "core\self_heal.py", line 114>)
+            360 MAKE_FUNCTION            0
+            362 LOAD_FAST                0 (po)
+            364 LOAD_ATTR                7 (entities)
+            374 GET_ITER
+            376 PRECALL                  0
+            380 CALL                     0
+            390 PRECALL                  1
+            394 CALL                     1
+            404 JUMP_IF_FALSE_OR_POP    38 (to 482)
+
+115         406 LOAD_GLOBAL             17 (NULL + bool)
+            418 LOAD_GLOBAL             18 (_DELIVERY_LABEL_RE)
+            430 LOAD_METHOD             10 (search)
+            452 LOAD_FAST                1 (doc)
+            454 PRECALL                  1
+            458 CALL                     1
+            468 PRECALL                  1
+            472 CALL                     1
+
+113     >>  482 STORE_FAST               7 (delivery_missing)
+
+116         484 LOAD_FAST                3 (missing_header)
+            486 LOAD_FAST                7 (delivery_missing)
+            488 BUILD_TUPLE              2
+            490 RETURN_VALUE
+
+==============================================================================
+## <module>._find_missing.<genexpr>  (args=1, locals=2)
+# varnames: .0, e
+              0 COPY_FREE_VARS           1
+
+111           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                21 (to 54)
+             12 STORE_FAST               1 (e)
+             14 LOAD_GLOBAL              1 (NULL + _entity_value)
+             26 LOAD_FAST                1 (e)
+             28 LOAD_DEREF               2 (key)
+             30 PRECALL                  2
+             34 CALL                     2
+             44 UNARY_NOT
+             46 YIELD_VALUE
+             48 RESUME                   1
+             50 POP_TOP
+             52 JUMP_BACKWARD           22 (to 10)
+        >>   54 LOAD_CONST               0 (None)
+             56 RETURN_VALUE
+
+==============================================================================
+## <module>._find_missing.<genexpr>  (args=1, locals=2)
+# varnames: .0, e
+114           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                21 (to 52)
+             10 STORE_FAST               1 (e)
+             12 LOAD_GLOBAL              1 (NULL + _entity_value)
+             24 LOAD_FAST                1 (e)
+             26 LOAD_CONST               0 ('delivery_date')
+             28 PRECALL                  2
+             32 CALL                     2
+             42 UNARY_NOT
+             44 YIELD_VALUE
+             46 RESUME                   1
+             48 POP_TOP
+             50 JUMP_BACKWARD           22 (to 8)
+        >>   52 LOAD_CONST               1 (None)
+             54 RETURN_VALUE
+
+==============================================================================
+## <module>.heal_and_cache  (args=7, locals=31)
+# varnames: pages, recipe, po, cfg, cache, source_file, log, doc, missing_header, delivery_missing, requested, extract_focused_fields, res, header_vals, orders, filled, _attr, per_ent, po_level, val, e, dd_by_po, global_dd, v, lines, soft, k, patched, attr, prefer, anchor
+              0 MAKE_CELL               31 (key)
+
+119           2 RESUME                   0
+
+125           4 LOAD_FAST                2 (po)
+              6 LOAD_ATTR                0 (entities)
+             16 POP_JUMP_FORWARD_IF_TRUE     2 (to 22)
+
+126          18 LOAD_CONST               1 (False)
+             20 RETURN_VALUE
+
+127     >>   22 LOAD_GLOBAL              3 (NULL + doc_text)
+             34 LOAD_FAST                0 (pages)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 STORE_FAST               7 (doc)
+
+128          52 LOAD_GLOBAL              5 (NULL + _find_missing)
+             64 LOAD_FAST                2 (po)
+             66 LOAD_FAST                7 (doc)
+             68 PRECALL                  2
+             72 CALL                     2
+             82 UNPACK_SEQUENCE          2
+             86 STORE_FAST               8 (missing_header)
+             88 STORE_FAST               9 (delivery_missing)
+
+129          90 LOAD_GLOBAL              7 (NULL + list)
+            102 LOAD_FAST                8 (missing_header)
+            104 PRECALL                  1
+            108 CALL                     1
+            118 STORE_FAST              10 (requested)
+
+130         120 LOAD_FAST                9 (delivery_missing)
+            122 POP_JUMP_FORWARD_IF_FALSE    21 (to 166)
+
+131         124 LOAD_FAST               10 (requested)
+            126 LOAD_METHOD              4 (append)
+            148 LOAD_CONST               2 ('delivery_date')
+            150 PRECALL                  1
+            154 CALL                     1
+            164 POP_TOP
+
+132     >>  166 LOAD_FAST               10 (requested)
+            168 POP_JUMP_FORWARD_IF_TRUE     2 (to 174)
+
+133         170 LOAD_CONST               1 (False)
+            172 RETURN_VALUE
+
+135     >>  174 LOAD_CONST               3 (1)
+            176 LOAD_CONST               4 (('extract_focused_fields',))
+            178 IMPORT_NAME              5 (ai.focus_extract)
+            180 IMPORT_FROM              6 (extract_focused_fields)
+            182 STORE_FAST              11 (extract_focused_fields)
+            184 POP_TOP
+
+136         186 PUSH_NULL
+            188 LOAD_FAST               11 (extract_focused_fields)
+            190 LOAD_FAST                7 (doc)
+            192 LOAD_FAST               10 (requested)
+            194 LOAD_FAST                3 (cfg)
+            196 LOAD_FAST                6 (log)
+            198 KW_NAMES                 5
+            200 PRECALL                  4
+            204 CALL                     4
+            214 STORE_FAST              12 (res)
+
+137         216 LOAD_FAST               12 (res)
+            218 POP_JUMP_FORWARD_IF_TRUE     2 (to 224)
+
+138         220 LOAD_CONST               1 (False)
+            222 RETURN_VALUE
+
+139     >>  224 LOAD_FAST               12 (res)
+            226 LOAD_METHOD              7 (get)
+            248 LOAD_CONST               6 ('header')
+            250 BUILD_MAP                0
+            252 PRECALL                  2
+            256 CALL                     2
+            266 STORE_FAST              13 (header_vals)
+
+140         268 LOAD_FAST               12 (res)
+            270 LOAD_METHOD              7 (get)
+            292 LOAD_CONST               7 ('orders')
+            294 BUILD_LIST               0
+            296 PRECALL                  2
+            300 CALL                     2
+            310 STORE_FAST              14 (orders)
+
+142         312 BUILD_LIST               0
+            314 STORE_FAST              15 (filled)
+
+144         316 LOAD_GLOBAL             16 (_HEAL_FIELDS)
+            328 GET_ITER
+        >>  330 FOR_ITER               252 (to 836)
+            332 UNPACK_SEQUENCE          4
+            336 STORE_DEREF             31 (key)
+            338 STORE_FAST              16 (_attr)
+            340 STORE_FAST              17 (per_ent)
+            342 STORE_FAST              18 (po_level)
+
+145         344 LOAD_FAST               17 (per_ent)
+            346 POP_JUMP_FORWARD_IF_FALSE     1 (to 350)
+
+146         348 JUMP_BACKWARD           10 (to 330)
+
+147     >>  350 LOAD_FAST               13 (header_vals)
+            352 LOAD_METHOD              7 (get)
+            374 LOAD_DEREF              31 (key)
+            376 PRECALL                  1
+            380 CALL                     1
+            390 JUMP_IF_TRUE_OR_POP      1 (to 394)
+            392 LOAD_CONST               8 ('')
+        >>  394 LOAD_METHOD              9 (strip)
+            416 PRECALL                  0
+            420 CALL                     0
+            430 STORE_FAST              19 (val)
+
+148         432 LOAD_FAST               19 (val)
+            434 POP_JUMP_FORWARD_IF_TRUE     1 (to 438)
+
+149         436 JUMP_BACKWARD           54 (to 330)
+
+150     >>  438 LOAD_FAST               18 (po_level)
+            440 POP_JUMP_FORWARD_IF_FALSE    99 (to 640)
+
+152         442 LOAD_GLOBAL             21 (NULL + getattr)
+            454 LOAD_FAST                2 (po)
+            456 LOAD_DEREF              31 (key)
+            458 LOAD_CONST               8 ('')
+            460 PRECALL                  3
+            464 CALL                     3
+            474 JUMP_IF_TRUE_OR_POP      1 (to 478)
+            476 LOAD_CONST               8 ('')
+        >>  478 LOAD_METHOD              9 (strip)
+            500 PRECALL                  0
+            504 CALL                     0
+            514 POP_JUMP_FORWARD_IF_FALSE     1 (to 518)
+
+153         516 JUMP_BACKWARD           94 (to 330)
+
+154     >>  518 LOAD_GLOBAL             23 (NULL + setattr)
+            530 LOAD_FAST                2 (po)
+            532 LOAD_DEREF              31 (key)
+            534 LOAD_FAST               19 (val)
+            536 PRECALL                  3
+            540 CALL                     3
+            550 POP_TOP
+
+155         552 LOAD_FAST                2 (po)
+            554 LOAD_ATTR                0 (entities)
+            564 GET_ITER
+        >>  566 FOR_ITER                35 (to 638)
+            568 STORE_FAST              20 (e)
+
+156         570 LOAD_GLOBAL             25 (NULL + _entity_value)
+            582 LOAD_FAST               20 (e)
+            584 LOAD_DEREF              31 (key)
+            586 PRECALL                  2
+            590 CALL                     2
+            600 POP_JUMP_FORWARD_IF_TRUE    17 (to 636)
+
+157         602 LOAD_GLOBAL             23 (NULL + setattr)
+            614 LOAD_FAST               20 (e)
+            616 LOAD_DEREF              31 (key)
+            618 LOAD_FAST               19 (val)
+            620 PRECALL                  3
+            624 CALL                     3
+            634 POP_TOP
+        >>  636 JUMP_BACKWARD           36 (to 566)
+
+155     >>  638 JUMP_FORWARD            76 (to 792)
+
+159     >>  640 LOAD_GLOBAL             27 (NULL + any)
+            652 LOAD_CLOSURE            31 (key)
+            654 BUILD_TUPLE              1
+            656 LOAD_CONST               9 (<code object <genexpr> at 0x000002BF94A2F630, file "core\self_heal.py", line 159>)
+            658 MAKE_FUNCTION            8 (closure)
+            660 LOAD_FAST                2 (po)
+            662 LOAD_ATTR                0 (entities)
+            672 GET_ITER
+            674 PRECALL                  0
+            678 CALL                     0
+            688 PRECALL                  1
+            692 CALL                     1
+            702 POP_JUMP_FORWARD_IF_TRUE     1 (to 706)
+
+160         704 JUMP_BACKWARD          188 (to 330)
+
+161     >>  706 LOAD_FAST                2 (po)
+            708 LOAD_ATTR                0 (entities)
+            718 GET_ITER
+        >>  720 FOR_ITER                35 (to 792)
+            722 STORE_FAST              20 (e)
+
+162         724 LOAD_GLOBAL             25 (NULL + _entity_value)
+            736 LOAD_FAST               20 (e)
+            738 LOAD_DEREF              31 (key)
+            740 PRECALL                  2
+            744 CALL                     2
+            754 POP_JUMP_FORWARD_IF_TRUE    17 (to 790)
+
+163         756 LOAD_GLOBAL             23 (NULL + setattr)
+            768 LOAD_FAST               20 (e)
+            770 LOAD_DEREF              31 (key)
+            772 LOAD_FAST               19 (val)
+            774 PRECALL                  3
+            778 CALL                     3
+            788 POP_TOP
+        >>  790 JUMP_BACKWARD           36 (to 720)
+
+164     >>  792 LOAD_FAST               15 (filled)
+            794 LOAD_METHOD              4 (append)
+            816 LOAD_DEREF              31 (key)
+            818 PRECALL                  1
+            822 CALL                     1
+            832 POP_TOP
+            834 JUMP_BACKWARD          253 (to 330)
+
+167     >>  836 LOAD_FAST                9 (delivery_missing)
+            838 POP_JUMP_FORWARD_IF_FALSE   127 (to 1094)
+
+168         840 LOAD_CONST              10 (<code object <dictcomp> at 0x000002BF9473C670, file "core\self_heal.py", line 168>)
+            842 MAKE_FUNCTION            0
+
+170         844 LOAD_FAST               14 (orders)
+
+168         846 GET_ITER
+            848 PRECALL                  0
+            852 CALL                     0
+            862 STORE_FAST              21 (dd_by_po)
+
+171         864 LOAD_GLOBAL             29 (NULL + next)
+            876 LOAD_CONST              11 (<code object <genexpr> at 0x000002BF94A669A0, file "core\self_heal.py", line 171>)
+            878 MAKE_FUNCTION            0
+            880 LOAD_FAST               14 (orders)
+            882 GET_ITER
+            884 PRECALL                  0
+            888 CALL                     0
+
+172         898 LOAD_CONST               8 ('')
+
+171         900 PRECALL                  2
+            904 CALL                     2
+            914 STORE_FAST              22 (global_dd)
+
+173         916 LOAD_FAST                2 (po)
+            918 LOAD_ATTR                0 (entities)
+            928 GET_ITER
+        >>  930 FOR_ITER                81 (to 1094)
+            932 STORE_FAST              20 (e)
+
+174         934 LOAD_GLOBAL             25 (NULL + _entity_value)
+            946 LOAD_FAST               20 (e)
+            948 LOAD_CONST               2 ('delivery_date')
+            950 PRECALL                  2
+            954 CALL                     2
+            964 POP_JUMP_FORWARD_IF_FALSE     1 (to 968)
+
+175         966 JUMP_BACKWARD           19 (to 930)
+
+176     >>  968 LOAD_FAST               21 (dd_by_po)
+            970 LOAD_METHOD              7 (get)
+            992 LOAD_FAST               20 (e)
+            994 LOAD_ATTR               15 (po_no)
+           1004 PRECALL                  1
+           1008 CALL                     1
+           1018 JUMP_IF_TRUE_OR_POP      1 (to 1022)
+           1020 LOAD_FAST               22 (global_dd)
+        >> 1022 STORE_FAST              23 (v)
+
+177        1024 LOAD_FAST               23 (v)
+           1026 POP_JUMP_FORWARD_IF_FALSE    32 (to 1092)
+
+178        1028 LOAD_FAST               23 (v)
+           1030 LOAD_FAST               20 (e)
+           1032 STORE_ATTR              16 (delivery_date)
+
+179        1042 LOAD_CONST               2 ('delivery_date')
+           1044 LOAD_FAST               15 (filled)
+           1046 CONTAINS_OP              1
+           1048 POP_JUMP_FORWARD_IF_FALSE    21 (to 1092)
+
+180        1050 LOAD_FAST               15 (filled)
+           1052 LOAD_METHOD              4 (append)
+           1074 LOAD_CONST               2 ('delivery_date')
+           1076 PRECALL                  1
+           1080 CALL                     1
+           1090 POP_TOP
+        >> 1092 JUMP_BACKWARD           82 (to 930)
+
+181     >> 1094 LOAD_FAST               15 (filled)
+           1096 POP_JUMP_FORWARD_IF_TRUE     2 (to 1102)
+
+182        1098 LOAD_CONST               1 (False)
+           1100 RETURN_VALUE
+
+183     >> 1102 LOAD_FAST                6 (log)
+           1104 POP_JUMP_FORWARD_IF_FALSE    33 (to 1172)
+
+184        1106 PUSH_NULL
+           1108 LOAD_FAST                6 (log)
+           1110 LOAD_CONST              12 ('  [自愈] AI 补抓到空白字段：')
+           1112 LOAD_CONST              13 (', ')
+           1114 LOAD_METHOD             17 (join)
+           1136 LOAD_FAST               15 (filled)
+           1138 PRECALL                  1
+           1142 CALL                     1
+           1152 FORMAT_VALUE             0
+           1154 BUILD_STRING             2
+           1156 PRECALL                  1
+           1160 CALL                     1
+           1170 POP_TOP
+
+187     >> 1172 LOAD_CONST              14 (<code object <listcomp> at 0x000002BF94A2F230, file "core\self_heal.py", line 187>)
+           1174 MAKE_FUNCTION            0
+           1176 LOAD_FAST                7 (doc)
+           1178 LOAD_METHOD             18 (splitlines)
+           1200 PRECALL                  0
+           1204 CALL                     0
+           1214 GET_ITER
+           1216 PRECALL                  0
+           1220 CALL                     0
+           1230 STORE_FAST              24 (lines)
+
+188        1232 LOAD_GLOBAL             39 (NULL + set)
+           1244 PRECALL                  0
+           1248 CALL                     0
+           1258 STORE_FAST              25 (soft)
+
+189        1260 LOAD_FAST                2 (po)
+           1262 LOAD_ATTR                0 (entities)
+           1272 GET_ITER
+        >> 1274 FOR_ITER                46 (to 1368)
+           1276 STORE_FAST              20 (e)
+
+190        1278 LOAD_CONST              15 (('season', 'currency', 'price_term', 'payment_terms', 'port_loading', 'port_discharge', 'ship_mode', 'vendor_name', 'agent_name', 'product_desc', 'delivery_date', 'import_po_no', 'reference_no', 'cir_no', 'freight_terms', 'country_of_origin', 'dc_address'))
+           1280 GET_ITER
+        >> 1282 FOR_ITER                41 (to 1366)
+           1284 STORE_FAST              26 (k)
+
+195        1286 LOAD_GLOBAL             25 (NULL + _entity_value)
+           1298 LOAD_FAST               20 (e)
+           1300 LOAD_FAST               26 (k)
+           1302 PRECALL                  2
+           1306 CALL                     2
+           1316 STORE_FAST              23 (v)
+
+196        1318 LOAD_FAST               23 (v)
+           1320 POP_JUMP_FORWARD_IF_FALSE    21 (to 1364)
+
+197        1322 LOAD_FAST               25 (soft)
+           1324 LOAD_METHOD             20 (add)
+           1346 LOAD_FAST               23 (v)
+           1348 PRECALL                  1
+           1352 CALL                     1
+           1362 POP_TOP
+        >> 1364 JUMP_BACKWARD           42 (to 1282)
+
+190     >> 1366 JUMP_BACKWARD           47 (to 1274)
+
+198     >> 1368 LOAD_CONST               1 (False)
+           1370 STORE_FAST              27 (patched)
+
+199        1372 LOAD_GLOBAL             16 (_HEAL_FIELDS)
+           1384 GET_ITER
+        >> 1386 EXTENDED_ARG             1
+           1388 FOR_ITER               257 (to 1904)
+           1390 UNPACK_SEQUENCE          4
+           1394 STORE_DEREF             31 (key)
+           1396 STORE_FAST              28 (attr)
+           1398 STORE_FAST              17 (per_ent)
+           1400 STORE_FAST              18 (po_level)
+
+200        1402 LOAD_DEREF              31 (key)
+           1404 LOAD_FAST               15 (filled)
+           1406 CONTAINS_OP              1
+           1408 POP_JUMP_FORWARD_IF_FALSE     1 (to 1412)
+
+201        1410 JUMP_BACKWARD           13 (to 1386)
+
+202     >> 1412 LOAD_DEREF              31 (key)
+           1414 LOAD_CONST               2 ('delivery_date')
+           1416 COMPARE_OP               2 (==)
+           1422 POP_JUMP_FORWARD_IF_FALSE    32 (to 1488)
+
+203        1424 LOAD_GLOBAL             29 (NULL + next)
+           1436 LOAD_CONST              16 (<code object <genexpr> at 0x000002BF94A658A0, file "core\self_heal.py", line 203>)
+           1438 MAKE_FUNCTION            0
+           1440 LOAD_FAST                2 (po)
+           1442 LOAD_ATTR                0 (entities)
+           1452 GET_ITER
+           1454 PRECALL                  0
+           1458 CALL                     0
+
+204        1468 LOAD_CONST               8 ('')
+
+203        1470 PRECALL                  2
+           1474 CALL                     2
+           1484 STORE_FAST              19 (val)
+           1486 JUMP_FORWARD            81 (to 1650)
+
+205     >> 1488 LOAD_FAST               18 (po_level)
+           1490 POP_JUMP_FORWARD_IF_FALSE    38 (to 1568)
+
+206        1492 LOAD_GLOBAL             21 (NULL + getattr)
+           1504 LOAD_FAST                2 (po)
+           1506 LOAD_DEREF              31 (key)
+           1508 LOAD_CONST               8 ('')
+           1510 PRECALL                  3
+           1514 CALL                     3
+           1524 JUMP_IF_TRUE_OR_POP      1 (to 1528)
+           1526 LOAD_CONST               8 ('')
+        >> 1528 LOAD_METHOD              9 (strip)
+           1550 PRECALL                  0
+           1554 CALL                     0
+           1564 STORE_FAST              19 (val)
+           1566 JUMP_FORWARD            41 (to 1650)
+
+208     >> 1568 LOAD_FAST               13 (header_vals)
+           1570 LOAD_METHOD              7 (get)
+           1592 LOAD_DEREF              31 (key)
+           1594 PRECALL                  1
+           1598 CALL                     1
+           1608 JUMP_IF_TRUE_OR_POP      1 (to 1612)
+           1610 LOAD_CONST               8 ('')
+        >> 1612 LOAD_METHOD              9 (strip)
+           1634 PRECALL                  0
+           1638 CALL                     0
+           1648 STORE_FAST              19 (val)
+
+209     >> 1650 LOAD_FAST               19 (val)
+           1652 POP_JUMP_FORWARD_IF_TRUE     1 (to 1656)
+
+210        1654 JUMP_BACKWARD          135 (to 1386)
+
+211     >> 1656 LOAD_DEREF              31 (key)
+           1658 LOAD_CONST              17 ('payment_terms')
+           1660 COMPARE_OP               2 (==)
+           1666 POP_JUMP_FORWARD_IF_FALSE     7 (to 1682)
+           1668 LOAD_GLOBAL             42 (_PAYMENT_HINTS)
+           1680 JUMP_FORWARD            46 (to 1774)
+
+212     >> 1682 LOAD_DEREF              31 (key)
+           1684 LOAD_CONST              18 ('customer')
+           1686 COMPARE_OP               2 (==)
+           1692 POP_JUMP_FORWARD_IF_FALSE     7 (to 1708)
+           1694 LOAD_GLOBAL             44 (_CUSTOMER_HINTS)
+           1706 JUMP_FORWARD            33 (to 1774)
+
+213     >> 1708 LOAD_DEREF              31 (key)
+           1710 LOAD_CONST              19 ('po_no')
+           1712 COMPARE_OP               2 (==)
+           1718 POP_JUMP_FORWARD_IF_FALSE     7 (to 1734)
+           1720 LOAD_GLOBAL             46 (_PO_NO_HINTS)
+           1732 JUMP_FORWARD            20 (to 1774)
+
+214     >> 1734 LOAD_GLOBAL             49 (NULL + _FIELD_LABEL_HINTS)
+           1746 LOAD_ATTR                7 (get)
+           1756 LOAD_DEREF              31 (key)
+           1758 LOAD_CONST              20 (())
+           1760 PRECALL                  2
+           1764 CALL                     2
+
+211     >> 1774 STORE_FAST              29 (prefer)
+
+215        1776 LOAD_GLOBAL             51 (NULL + synthesize_field_anchor)
+           1788 LOAD_FAST               24 (lines)
+           1790 LOAD_FAST                7 (doc)
+           1792 LOAD_FAST               19 (val)
+           1794 LOAD_FAST               25 (soft)
+           1796 LOAD_FAST               29 (prefer)
+           1798 KW_NAMES                21
+           1800 PRECALL                  5
+           1804 CALL                     5
+           1814 STORE_FAST              30 (anchor)
+
+216        1816 LOAD_FAST               30 (anchor)
+           1818 POP_JUMP_FORWARD_IF_FALSE    40 (to 1900)
+           1820 LOAD_FAST               30 (anchor)
+           1822 LOAD_GLOBAL             21 (NULL + getattr)
+           1834 LOAD_FAST                1 (recipe)
+           1836 LOAD_FAST               28 (attr)
+           1838 LOAD_CONST               8 ('')
+           1840 PRECALL                  3
+           1844 CALL                     3
+           1854 COMPARE_OP               3 (!=)
+           1860 POP_JUMP_FORWARD_IF_FALSE    19 (to 1900)
+
+217        1862 LOAD_GLOBAL             23 (NULL + setattr)
+           1874 LOAD_FAST                1 (recipe)
+           1876 LOAD_FAST               28 (attr)
+           1878 LOAD_FAST               30 (anchor)
+           1880 PRECALL                  3
+           1884 CALL                     3
+           1894 POP_TOP
+
+218        1896 LOAD_CONST              22 (True)
+           1898 STORE_FAST              27 (patched)
+        >> 1900 EXTENDED_ARG             1
+           1902 JUMP_BACKWARD          259 (to 1386)
+
+219     >> 1904 LOAD_FAST               27 (patched)
+           1906 POP_JUMP_FORWARD_IF_FALSE    83 (to 2074)
+
+220        1908 NOP
+
+221        1910 LOAD_FAST                4 (cache)
+           1912 LOAD_METHOD             26 (put)
+           1934 LOAD_FAST                1 (recipe)
+           1936 LOAD_ATTR               27 (fingerprint)
+           1946 JUMP_IF_TRUE_OR_POP      1 (to 1950)
+           1948 LOAD_FAST                5 (source_file)
+        >> 1950 LOAD_FAST                1 (recipe)
+           1952 PRECALL                  2
+           1956 CALL                     2
+           1966 POP_TOP
+
+222        1968 LOAD_FAST                6 (log)
+           1970 POP_JUMP_FORWARD_IF_FALSE    11 (to 1994)
+
+223        1972 PUSH_NULL
+           1974 LOAD_FAST                6 (log)
+           1976 LOAD_CONST              23 ('  [自愈] 已把改进锚点回写缓存（下次同版式免 AI）')
+           1978 PRECALL                  1
+           1982 CALL                     1
+           1992 POP_TOP
+        >> 1994 JUMP_FORWARD            39 (to 2074)
+        >> 1996 PUSH_EXC_INFO
+
+224        1998 LOAD_GLOBAL             56 (Exception)
+           2010 CHECK_EXC_MATCH
+           2012 POP_JUMP_FORWARD_IF_FALSE    26 (to 2066)
+           2014 STORE_FAST              20 (e)
+
+225        2016 LOAD_FAST                6 (log)
+           2018 POP_JUMP_FORWARD_IF_FALSE    14 (to 2048)
+
+226        2020 PUSH_NULL
+           2022 LOAD_FAST                6 (log)
+           2024 LOAD_CONST              24 ('  [自愈] 回写缓存失败（忽略）：')
+           2026 LOAD_FAST               20 (e)
+           2028 FORMAT_VALUE             0
+           2030 BUILD_STRING             2
+           2032 PRECALL                  1
+           2036 CALL                     1
+           2046 POP_TOP
+        >> 2048 POP_EXCEPT
+           2050 LOAD_CONST              25 (None)
+           2052 STORE_FAST              20 (e)
+           2054 DELETE_FAST             20 (e)
+           2056 JUMP_FORWARD             8 (to 2074)
+        >> 2058 LOAD_CONST              25 (None)
+           2060 STORE_FAST              20 (e)
+           2062 DELETE_FAST             20 (e)
+           2064 RERAISE                  1
+
+224     >> 2066 RERAISE                  0
+        >> 2068 COPY                     3
+           2070 POP_EXCEPT
+           2072 RERAISE                  1
+
+227     >> 2074 LOAD_CONST              22 (True)
+           2076 RETURN_VALUE
+ExceptionTable:
+  1910 to 1992 -> 1996 [0]
+  1996 to 2014 -> 2068 [1] lasti
+  2016 to 2046 -> 2058 [1] lasti
+  2058 to 2066 -> 2068 [1] lasti
+
+==============================================================================
+## <module>.heal_and_cache.<genexpr>  (args=1, locals=2)
+# varnames: .0, e
+              0 COPY_FREE_VARS           1
+
+159           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                21 (to 54)
+             12 STORE_FAST               1 (e)
+             14 LOAD_GLOBAL              1 (NULL + _entity_value)
+             26 LOAD_FAST                1 (e)
+             28 LOAD_DEREF               2 (key)
+             30 PRECALL                  2
+             34 CALL                     2
+             44 UNARY_NOT
+             46 YIELD_VALUE
+             48 RESUME                   1
+             50 POP_TOP
+             52 JUMP_BACKWARD           22 (to 10)
+        >>   54 LOAD_CONST               0 (None)
+             56 RETURN_VALUE
+
+==============================================================================
+## <module>.heal_and_cache.<dictcomp>  (args=1, locals=2)
+# varnames: .0, o
+168           0 RESUME                   0
+              2 BUILD_MAP                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                59 (to 126)
+
+170           8 STORE_FAST               1 (o)
+             10 LOAD_FAST                1 (o)
+             12 LOAD_METHOD              0 (get)
+             34 LOAD_CONST               0 ('po_no')
+             36 PRECALL                  1
+             40 CALL                     1
+
+168          50 POP_JUMP_BACKWARD_IF_FALSE    23 (to 6)
+
+170          52 LOAD_FAST                1 (o)
+             54 LOAD_METHOD              0 (get)
+             76 LOAD_CONST               1 ('delivery_date')
+             78 PRECALL                  1
+             82 CALL                     1
+
+168          92 POP_JUMP_BACKWARD_IF_FALSE    44 (to 6)
+
+169          94 LOAD_FAST                1 (o)
+             96 LOAD_CONST               0 ('po_no')
+             98 BINARY_SUBSCR
+            108 LOAD_FAST                1 (o)
+            110 LOAD_CONST               1 ('delivery_date')
+            112 BINARY_SUBSCR
+
+168         122 MAP_ADD                  2
+            124 JUMP_BACKWARD           60 (to 6)
+        >>  126 RETURN_VALUE
+
+==============================================================================
+## <module>.heal_and_cache.<genexpr>  (args=1, locals=2)
+# varnames: .0, o
+171           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                33 (to 76)
+             10 STORE_FAST               1 (o)
+
+172          12 LOAD_FAST                1 (o)
+             14 LOAD_METHOD              0 (get)
+             36 LOAD_CONST               0 ('delivery_date')
+             38 PRECALL                  1
+             42 CALL                     1
+
+171          52 POP_JUMP_BACKWARD_IF_FALSE    23 (to 8)
+             54 LOAD_FAST                1 (o)
+             56 LOAD_CONST               0 ('delivery_date')
+             58 BINARY_SUBSCR
+             68 YIELD_VALUE
+             70 RESUME                   1
+             72 POP_TOP
+             74 JUMP_BACKWARD           34 (to 8)
+        >>   76 LOAD_CONST               1 (None)
+             78 RETURN_VALUE
+
+==============================================================================
+## <module>.heal_and_cache.<listcomp>  (args=1, locals=2)
+# varnames: .0, ln
+187           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                24 (to 56)
+              8 STORE_FAST               1 (ln)
+             10 LOAD_FAST                1 (ln)
+             12 LOAD_METHOD              0 (strip)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_BACKWARD_IF_FALSE    22 (to 6)
+             50 LOAD_FAST                1 (ln)
+             52 LIST_APPEND              2
+             54 JUMP_BACKWARD           25 (to 6)
+        >>   56 RETURN_VALUE
+
+==============================================================================
+## <module>.heal_and_cache.<genexpr>  (args=1, locals=2)
+# varnames: .0, e
+203           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                36 (to 82)
+             10 STORE_FAST               1 (e)
+
+204          12 LOAD_GLOBAL              1 (NULL + _entity_value)
+             24 LOAD_FAST                1 (e)
+             26 LOAD_CONST               0 ('delivery_date')
+             28 PRECALL                  2
+             32 CALL                     2
+
+203          42 POP_JUMP_BACKWARD_IF_FALSE    18 (to 8)
+             44 LOAD_GLOBAL              1 (NULL + _entity_value)
+             56 LOAD_FAST                1 (e)
+             58 LOAD_CONST               0 ('delivery_date')
+             60 PRECALL                  2
+             64 CALL                     2
+             74 YIELD_VALUE
+             76 RESUME                   1
+             78 POP_TOP
+             80 JUMP_BACKWARD           37 (to 8)
+        >>   82 LOAD_CONST               1 (None)
+             84 RETURN_VALUE

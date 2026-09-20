@@ -1,0 +1,288 @@
+# module: core.winpath
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\winpath.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/winpath.py - Windows path helpers for reliable Excel file hyperlinks.\n\nExcel's file:// URI handling is fragile with long paths, Unicode, spaces, and\nespecially the '#' character (which Excel treats as a sheet anchor even when\npercent-encoded).  The Windows 8.3 short name is ASCII, has no spaces, and is\nshort enough to stay under Excel's URL limits, so we use it whenever possible.\n")
+              4 STORE_NAME               0 (__doc__)
+
+  8           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (None)
+             10 IMPORT_NAME              1 (os)
+             12 STORE_NAME               1 (os)
+
+  9          14 LOAD_CONST               1 (0)
+             16 LOAD_CONST               2 (None)
+             18 IMPORT_NAME              2 (sys)
+             20 STORE_NAME               2 (sys)
+
+ 10          22 LOAD_CONST               1 (0)
+             24 LOAD_CONST               3 (('Optional',))
+             26 IMPORT_NAME              3 (typing)
+             28 IMPORT_FROM              4 (Optional)
+             30 STORE_NAME               4 (Optional)
+             32 POP_TOP
+
+ 12          34 NOP
+
+ 13          36 LOAD_CONST               1 (0)
+             38 LOAD_CONST               2 (None)
+             40 IMPORT_NAME              5 (ctypes)
+             42 STORE_NAME               5 (ctypes)
+
+ 14          44 LOAD_CONST               1 (0)
+             46 LOAD_CONST               4 (('wintypes',))
+             48 IMPORT_NAME              5 (ctypes)
+             50 IMPORT_FROM              6 (wintypes)
+             52 STORE_NAME               6 (wintypes)
+             54 POP_TOP
+
+ 16          56 LOAD_NAME                5 (ctypes)
+             58 LOAD_ATTR                7 (windll)
+             68 LOAD_ATTR                8 (kernel32)
+             78 STORE_NAME               9 (_kernel32)
+
+ 18          80 LOAD_NAME                6 (wintypes)
+             82 LOAD_ATTR               10 (LPCWSTR)
+             92 LOAD_NAME                6 (wintypes)
+             94 LOAD_ATTR               11 (LPWSTR)
+            104 LOAD_NAME                6 (wintypes)
+            106 LOAD_ATTR               12 (DWORD)
+
+ 17         116 BUILD_LIST               3
+            118 LOAD_NAME                9 (_kernel32)
+            120 LOAD_ATTR               13 (GetShortPathNameW)
+            130 STORE_ATTR              14 (argtypes)
+
+ 20         140 LOAD_NAME                6 (wintypes)
+            142 LOAD_ATTR               12 (DWORD)
+            152 LOAD_NAME                9 (_kernel32)
+            154 LOAD_ATTR               13 (GetShortPathNameW)
+            164 STORE_ATTR              15 (restype)
+
+ 22         174 LOAD_CONST               5 ('long_path')
+            176 LOAD_NAME               16 (str)
+            178 LOAD_CONST               6 ('return')
+            180 LOAD_NAME                4 (Optional)
+            182 LOAD_NAME               16 (str)
+            184 BINARY_SUBSCR
+            194 BUILD_TUPLE              4
+            196 LOAD_CONST               7 (<code object _get_short_path at 0x000002BF946C5B80, file "core\winpath.py", line 22>)
+            198 MAKE_FUNCTION            4 (annotations)
+            200 STORE_NAME              17 (_get_short_path)
+            202 JUMP_FORWARD            25 (to 254)
+        >>  204 PUSH_EXC_INFO
+
+ 31         206 LOAD_NAME               18 (Exception)
+            208 CHECK_EXC_MATCH
+            210 POP_JUMP_FORWARD_IF_FALSE    17 (to 246)
+            212 POP_TOP
+
+ 32         214 LOAD_CONST               5 ('long_path')
+            216 LOAD_NAME               16 (str)
+            218 LOAD_CONST               6 ('return')
+            220 LOAD_NAME                4 (Optional)
+            222 LOAD_NAME               16 (str)
+            224 BINARY_SUBSCR
+            234 BUILD_TUPLE              4
+            236 LOAD_CONST               8 (<code object _get_short_path at 0x000002BF946B7AB0, file "core\winpath.py", line 32>)
+            238 MAKE_FUNCTION            4 (annotations)
+            240 STORE_NAME              17 (_get_short_path)
+            242 POP_EXCEPT
+            244 JUMP_FORWARD             4 (to 254)
+
+ 31     >>  246 RERAISE                  0
+        >>  248 COPY                     3
+            250 POP_EXCEPT
+            252 RERAISE                  1
+
+ 36     >>  254 LOAD_CONST               9 ('full_path')
+            256 LOAD_NAME               16 (str)
+            258 LOAD_CONST               6 ('return')
+            260 LOAD_NAME               16 (str)
+            262 BUILD_TUPLE              4
+            264 LOAD_CONST              10 (<code object file_url_for_excel at 0x000002BF946925B0, file "core\winpath.py", line 36>)
+            266 MAKE_FUNCTION            4 (annotations)
+            268 STORE_NAME              19 (file_url_for_excel)
+
+ 57         270 LOAD_CONST               9 ('full_path')
+            272 LOAD_NAME               16 (str)
+            274 LOAD_CONST              11 ('label')
+            276 LOAD_NAME               16 (str)
+            278 LOAD_CONST               6 ('return')
+            280 LOAD_NAME               16 (str)
+            282 BUILD_TUPLE              6
+            284 LOAD_CONST              12 (<code object excel_hyperlink_formula at 0x000002BF9472B340, file "core\winpath.py", line 57>)
+            286 MAKE_FUNCTION            4 (annotations)
+            288 STORE_NAME              20 (excel_hyperlink_formula)
+            290 LOAD_CONST               2 (None)
+            292 RETURN_VALUE
+ExceptionTable:
+  36 to 200 -> 204 [0]
+  204 to 240 -> 248 [1] lasti
+  246 to 246 -> 248 [1] lasti
+
+==============================================================================
+## <module>._get_short_path  (args=1, locals=3)
+# varnames: long_path, buf, ret
+ 22           0 RESUME                   0
+
+ 24           2 LOAD_FAST                0 (long_path)
+              4 POP_JUMP_FORWARD_IF_FALSE    16 (to 38)
+              6 LOAD_GLOBAL              0 (sys)
+             18 LOAD_ATTR                1 (platform)
+             28 LOAD_CONST               1 ('win32')
+             30 COMPARE_OP               3 (!=)
+             36 POP_JUMP_FORWARD_IF_FALSE     2 (to 42)
+
+ 25     >>   38 LOAD_CONST               2 (None)
+             40 RETURN_VALUE
+
+ 26     >>   42 LOAD_GLOBAL              5 (NULL + ctypes)
+             54 LOAD_ATTR                3 (create_unicode_buffer)
+             64 LOAD_CONST               3 (4096)
+             66 PRECALL                  1
+             70 CALL                     1
+             80 STORE_FAST               1 (buf)
+
+ 27          82 LOAD_GLOBAL              8 (_kernel32)
+             94 LOAD_METHOD              5 (GetShortPathNameW)
+            116 LOAD_FAST                0 (long_path)
+            118 LOAD_FAST                1 (buf)
+            120 LOAD_CONST               3 (4096)
+            122 PRECALL                  3
+            126 CALL                     3
+            136 STORE_FAST               2 (ret)
+
+ 28         138 LOAD_FAST                2 (ret)
+            140 LOAD_CONST               4 (0)
+            142 COMPARE_OP               2 (==)
+            148 POP_JUMP_FORWARD_IF_TRUE     6 (to 162)
+            150 LOAD_FAST                2 (ret)
+            152 LOAD_CONST               3 (4096)
+            154 COMPARE_OP               4 (>)
+            160 POP_JUMP_FORWARD_IF_FALSE     2 (to 166)
+
+ 29     >>  162 LOAD_CONST               2 (None)
+            164 RETURN_VALUE
+
+ 30     >>  166 LOAD_FAST                1 (buf)
+            168 LOAD_ATTR                6 (value)
+            178 RETURN_VALUE
+
+==============================================================================
+## <module>._get_short_path  (args=1, locals=1)
+# varnames: long_path
+ 32           0 RESUME                   0
+
+ 33           2 LOAD_CONST               0 (None)
+              4 RETURN_VALUE
+
+==============================================================================
+## <module>.file_url_for_excel  (args=1, locals=4)
+# varnames: full_path, path, short, url
+ 36           0 RESUME                   0
+
+ 42           2 LOAD_FAST                0 (full_path)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+ 43           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+ 44     >>   10 LOAD_FAST                0 (full_path)
+             12 STORE_FAST               1 (path)
+
+ 45          14 LOAD_GLOBAL              0 (os)
+             26 LOAD_ATTR                1 (path)
+             36 LOAD_METHOD              2 (exists)
+             58 LOAD_FAST                0 (full_path)
+             60 PRECALL                  1
+             64 CALL                     1
+             74 POP_JUMP_FORWARD_IF_FALSE    19 (to 114)
+
+ 46          76 LOAD_GLOBAL              7 (NULL + _get_short_path)
+             88 LOAD_FAST                0 (full_path)
+             90 PRECALL                  1
+             94 CALL                     1
+            104 STORE_FAST               2 (short)
+
+ 47         106 LOAD_FAST                2 (short)
+            108 POP_JUMP_FORWARD_IF_FALSE     2 (to 114)
+
+ 48         110 LOAD_FAST                2 (short)
+            112 STORE_FAST               1 (path)
+
+ 49     >>  114 LOAD_CONST               2 ('file:///')
+            116 LOAD_FAST                1 (path)
+            118 LOAD_METHOD              4 (replace)
+            140 LOAD_CONST               3 ('\\')
+            142 LOAD_CONST               4 ('/')
+            144 PRECALL                  2
+            148 CALL                     2
+            158 BINARY_OP                0 (+)
+            162 STORE_FAST               3 (url)
+
+ 50         164 LOAD_FAST                3 (url)
+            166 LOAD_METHOD              4 (replace)
+            188 LOAD_CONST               5 ('#')
+            190 LOAD_CONST               6 ('%23')
+            192 PRECALL                  2
+            196 CALL                     2
+            206 STORE_FAST               3 (url)
+
+ 51         208 LOAD_GLOBAL              7 (NULL + _get_short_path)
+            220 LOAD_FAST                0 (full_path)
+            222 PRECALL                  1
+            226 CALL                     1
+            236 POP_JUMP_FORWARD_IF_TRUE    22 (to 282)
+
+ 53         238 LOAD_FAST                3 (url)
+            240 LOAD_METHOD              4 (replace)
+            262 LOAD_CONST               7 (' ')
+            264 LOAD_CONST               8 ('%20')
+            266 PRECALL                  2
+            270 CALL                     2
+            280 STORE_FAST               3 (url)
+
+ 54     >>  282 LOAD_FAST                3 (url)
+            284 RETURN_VALUE
+
+==============================================================================
+## <module>.excel_hyperlink_formula  (args=2, locals=3)
+# varnames: full_path, label, url
+ 57           0 RESUME                   0
+
+ 59           2 LOAD_FAST                1 (label)
+              4 JUMP_IF_TRUE_OR_POP      1 (to 8)
+              6 LOAD_CONST               1 ('')
+        >>    8 LOAD_METHOD              0 (replace)
+             30 LOAD_CONST               2 ('"')
+             32 LOAD_CONST               3 ('""')
+             34 PRECALL                  2
+             38 CALL                     2
+             48 STORE_FAST               1 (label)
+
+ 60          50 LOAD_FAST                0 (full_path)
+             52 POP_JUMP_FORWARD_IF_TRUE     2 (to 58)
+
+ 61          54 LOAD_FAST                1 (label)
+             56 RETURN_VALUE
+
+ 62     >>   58 LOAD_GLOBAL              3 (NULL + file_url_for_excel)
+             70 LOAD_FAST                0 (full_path)
+             72 PRECALL                  1
+             76 CALL                     1
+             86 STORE_FAST               2 (url)
+
+ 63          88 LOAD_CONST               4 ('=HYPERLINK("')
+             90 LOAD_FAST                2 (url)
+             92 FORMAT_VALUE             0
+             94 LOAD_CONST               5 ('", "')
+             96 LOAD_FAST                1 (label)
+             98 FORMAT_VALUE             0
+            100 LOAD_CONST               6 ('")')
+            102 BUILD_STRING             5
+            104 RETURN_VALUE

@@ -1,0 +1,779 @@
+.activity-console {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.activity-console.is-dock {
+  height: auto;
+  min-height: unset;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.activity-console.is-complete {
+  position: relative;
+}
+
+.activity-console-dock-status {
+  display: grid;
+  gap: 0.9rem;
+  width: 100%;
+}
+
+.activity-console-dockbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.85rem;
+}
+
+.activity-console-dockbar.minimal {
+  justify-content: flex-end;
+  margin-bottom: 0;
+}
+
+.activity-console-dock-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.activity-console-dock-title {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.activity-console-dock-subtitle {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.activity-console-header,
+.activity-log-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0.9rem 1.4rem;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.activity-console-heading,
+.activity-log-modal-header > div:first-child {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.activity-console-heading h3,
+.activity-log-modal-header h3 {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.activity-console-summary,
+.activity-log-modal-header span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.activity-console-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.activity-console-actions.dock-status {
+  margin-top: 0.85rem;
+}
+
+.activity-console-icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--soft-button-border, var(--glass-border));
+  border-radius: 999px;
+  background: var(--soft-button-bg, var(--glass-bg));
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.activity-console-icon-btn.document {
+  width: 42px;
+  height: 42px;
+}
+
+.activity-console-icon-btn.document.is-active {
+  border-color: rgba(var(--accent-rgb), 0.28);
+  background: rgba(var(--accent-rgb), 0.12);
+}
+
+.activity-console-icon-btn.document.is-complete {
+  border-color: rgba(125, 211, 156, 0.28);
+  background: rgba(125, 211, 156, 0.12);
+}
+
+.activity-console-icon-btn:hover {
+  transform: translateY(-1px);
+  color: var(--text-primary);
+  border-color: rgba(var(--accent-rgb), 0.24);
+  background: rgba(var(--accent-rgb), 0.1);
+  box-shadow: 0 12px 24px rgba(var(--accent-rgb), 0.12);
+}
+
+.activity-console-doc-icon {
+  position: relative;
+  width: 17px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-console-doc-icon .page {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid currentColor;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.activity-console-doc-icon .fold {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 7px;
+  height: 7px;
+  background: currentColor;
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  opacity: 0.9;
+}
+
+.activity-console-doc-icon .line {
+  position: absolute;
+  left: 4px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.activity-console-doc-icon .line-1 {
+  top: 6px;
+  width: 8px;
+}
+
+.activity-console-doc-icon .line-2 {
+  top: 10px;
+  width: 9px;
+}
+
+.activity-console-doc-icon .line-3 {
+  top: 14px;
+  width: 7px;
+}
+
+.activity-console-icon-count {
+  position: absolute;
+  right: -3px;
+  top: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.96);
+  color: var(--accent-ink, #09131e);
+  font-size: 0.64rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 20px rgba(var(--accent-rgb), 0.22);
+}
+
+.activity-console-btn {
+  min-height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--soft-button-border, var(--glass-border));
+  border-radius: 999px;
+  background: var(--soft-button-bg, var(--glass-bg));
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.activity-console-btn.secondary {
+  color: var(--text-muted);
+}
+
+.activity-console-btn.danger {
+  color: var(--error);
+  border-color: rgba(239, 154, 154, 0.22);
+  background: rgba(239, 154, 154, 0.08);
+}
+
+.activity-console-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
+.activity-console-btn:hover {
+  transform: translateY(-1px);
+  color: var(--text-primary);
+  border-color: rgba(var(--accent-rgb), 0.2);
+  background: rgba(var(--accent-rgb), 0.1);
+}
+
+.activity-console-btn.danger:hover {
+  color: var(--error);
+  border-color: rgba(239, 154, 154, 0.32);
+  background: rgba(239, 154, 154, 0.14);
+}
+
+.activity-progress {
+  padding: 0.95rem 1.4rem 0;
+}
+
+.activity-console.is-dock .activity-progress {
+  padding: 0;
+}
+
+.activity-progress.dock-status {
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--accent-rgb), 0.14);
+  background:
+    radial-gradient(circle at top right, rgba(var(--accent-rgb), 0.16), transparent 42%),
+    linear-gradient(180deg, rgba(var(--accent-rgb), 0.08), rgba(var(--accent-rgb), 0.03));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 36px rgba(10, 18, 28, 0.14);
+}
+
+.activity-progress-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 0.45rem;
+}
+
+.activity-progress-label {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+.activity-progress-value {
+  color: var(--highlight-topline-color, var(--accent));
+  font-family: var(--font-mono);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.activity-progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(var(--accent-rgb), 0.1);
+  overflow: hidden;
+}
+
+.activity-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(var(--accent-rgb), 0.95), rgba(var(--accent-rgb), 0.62));
+  transition: width 240ms ease;
+  position: relative;
+}
+
+.activity-progress-fill.active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.22), transparent);
+  animation: activity-progress-sheen 1.4s linear infinite;
+}
+
+.activity-progress-fill.success {
+  background:
+    linear-gradient(90deg, rgba(125, 211, 156, 0.98), rgba(96, 165, 250, 0.78)),
+    linear-gradient(90deg, rgba(var(--accent-rgb), 0.95), rgba(var(--accent-rgb), 0.62));
+  box-shadow: 0 0 18px rgba(125, 211, 156, 0.22);
+}
+
+.activity-progress-detail {
+  margin-top: 0.5rem;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.5;
+}
+
+.activity-completion-card {
+  position: relative;
+  margin: 0.9rem 1.4rem 0;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 18px;
+  border: 1px solid rgba(125, 211, 156, 0.22);
+  background:
+    radial-gradient(circle at top right, rgba(96, 165, 250, 0.18), transparent 42%),
+    linear-gradient(180deg, rgba(125, 211, 156, 0.12), rgba(125, 211, 156, 0.04));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 36px rgba(10, 18, 28, 0.16);
+  overflow: hidden;
+}
+
+.activity-console.is-dock .activity-completion-card {
+  margin: 0.15rem 0 0;
+}
+
+.activity-completion-card.dock-status {
+  margin: 0;
+}
+
+.activity-progress.modal {
+  padding: 1rem 1.4rem 0;
+}
+
+.activity-completion-card.modal {
+  margin: 1rem 1.4rem 0;
+}
+
+.activity-completion-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.activity-completion-pill {
+  flex-shrink: 0;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(125, 211, 156, 0.24);
+  background: rgba(125, 211, 156, 0.12);
+  color: var(--success);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+}
+
+.activity-completion-copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.activity-completion-copy strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.activity-completion-copy p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.activity-completion-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 0.85rem;
+}
+
+.activity-completion-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+}
+
+.activity-completion-issues {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.activity-completion-issue-group {
+  padding: 0.8rem 0.85rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 18, 28, 0.14);
+}
+
+.activity-completion-issue-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0.55rem;
+}
+
+.activity-completion-issue-header strong {
+  color: var(--text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.activity-completion-issue-header span {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.activity-completion-issue-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.activity-completion-issue-chip {
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.activity-completion-issue-chip.muted {
+  color: var(--text-muted);
+}
+
+.activity-completion-chip {
+  min-height: 28px;
+  padding: 0 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.activity-completion-spark {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  pointer-events: none;
+  filter: blur(0.2px);
+}
+
+.activity-completion-spark.spark-a {
+  top: 18px;
+  right: 24px;
+}
+
+.activity-completion-spark.spark-b {
+  top: 38px;
+  right: 62px;
+}
+
+.activity-completion-spark.spark-c {
+  top: 54px;
+  right: 34px;
+}
+
+.activity-completion-card.celebrate {
+  animation: activity-completion-pop 420ms ease;
+}
+
+.activity-completion-card.celebrate .activity-completion-spark {
+  animation: activity-completion-spark 1.1s ease forwards;
+}
+
+.activity-completion-card.celebrate .activity-completion-spark.spark-b {
+  animation-delay: 120ms;
+}
+
+.activity-completion-card.celebrate .activity-completion-spark.spark-c {
+  animation-delay: 220ms;
+}
+
+.activity-console-body,
+.activity-log-modal-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 1rem 1.4rem;
+  font-family: var(--font-mono);
+}
+
+.activity-console-body {
+  flex: 1;
+}
+
+.activity-log-entry {
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 12px;
+  margin-bottom: 0.32rem;
+  border: 1px solid transparent;
+}
+
+.activity-log-entry.preview {
+  background: linear-gradient(180deg, var(--log-bg-start, rgba(255,255,255,0.05)), var(--log-bg-end, rgba(255,255,255,0.02)));
+}
+
+.activity-log-entry.full {
+  background: linear-gradient(180deg, var(--log-bg-start, rgba(255,255,255,0.05)), var(--log-bg-end, rgba(255,255,255,0.02)));
+}
+
+.activity-log-time {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.activity-log-message {
+  min-width: 0;
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.activity-log-entry.preview .activity-log-message {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.activity-log-success {
+  border-color: rgba(144, 213, 173, 0.16);
+}
+
+.activity-log-success .activity-log-message {
+  color: var(--success);
+}
+
+.activity-log-warning {
+  border-color: rgba(240, 198, 116, 0.16);
+}
+
+.activity-log-warning .activity-log-message {
+  color: var(--warning);
+}
+
+.activity-log-error {
+  border-color: rgba(239, 154, 154, 0.16);
+}
+
+.activity-log-error .activity-log-message {
+  color: var(--error);
+}
+
+.activity-log-empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: 2.6rem 1rem;
+  font-size: 0.82rem;
+  line-height: 1.7;
+  font-family: var(--font);
+}
+
+.activity-log-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(8, 12, 18, 0.52);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 30px;
+  pointer-events: auto;
+}
+
+.activity-log-modal {
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--shell-panel-border, var(--glass-border));
+  border-radius: 30px;
+  background: linear-gradient(180deg, var(--popup-gradient-start, rgba(20,20,40,0.95)), var(--popup-gradient-end, rgba(12,18,26,0.95)));
+  box-shadow: var(--surface-shadow-soft);
+  overflow: hidden;
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.activity-log-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: linear-gradient(180deg, var(--popup-gradient-start, rgba(20,20,40,0.98)), var(--popup-gradient-end, rgba(12,18,26,0.94)));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+  .activity-log-modal-body {
+  padding-top: 1rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 960px) {
+  .activity-log-modal-overlay {
+    inset: 12px;
+    align-items: stretch;
+    border-radius: 20px;
+  }
+
+  .activity-log-modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 18px;
+  }
+}
+
+.activity-console-body::-webkit-scrollbar,
+.activity-log-modal-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.activity-console-body::-webkit-scrollbar-track,
+.activity-log-modal-body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.activity-console-body::-webkit-scrollbar-thumb,
+.activity-log-modal-body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+}
+
+.activity-console-body::-webkit-scrollbar-thumb:hover,
+.activity-log-modal-body::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+@keyframes activity-progress-sheen {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes activity-completion-pop {
+  0% {
+    transform: translateY(4px) scale(0.985);
+    opacity: 0.72;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes activity-completion-spark {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) scale(0.35);
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(16px, -18px, 0) scale(1.18);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activity-progress-fill,
+  .activity-console-btn,
+  .activity-completion-card,
+  .activity-completion-spark {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media (max-width: 900px) {
+  .activity-console-header,
+  .activity-log-modal-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .activity-completion-header {
+    flex-direction: column;
+  }
+}
+
+@media (max-height: 760px) {
+  .activity-log-modal-overlay {
+    inset: 12px;
+  }
+
+  .activity-log-modal {
+    max-height: 100%;
+  }
+}

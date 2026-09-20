@@ -1,0 +1,1561 @@
+# module: core.store.cache
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\store\cache.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/store/cache.py - layout fingerprint -> PoRecipe cache.\n\nThe fingerprint is derived from a NORMALIZED skeleton (volatile numbers / style /\ncolor / model codes masked to "#") plus coarse structural markers, so two POs of\nthe same layout (e.g. LPP 637JO and LPP XL901) collide to ONE recipe, while\ndifferent layouts (LPP vs COLIN\'S vs SAKHA) stay distinct.\n\nCache dir: %APPDATA%\\Purchase Order Extractor V2\\recipe_cache\\\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 10           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 12          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (hashlib)
+             24 STORE_NAME               3 (hashlib)
+
+ 13          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (json)
+             32 STORE_NAME               4 (json)
+
+ 14          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (os)
+             40 STORE_NAME               5 (os)
+
+ 15          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               3 (None)
+             46 IMPORT_NAME              6 (re)
+             48 STORE_NAME               6 (re)
+
+ 17          50 LOAD_CONST               4 (2)
+             52 LOAD_CONST               5 (('PoRecipe',))
+             54 IMPORT_NAME              7 (models)
+             56 IMPORT_FROM              8 (PoRecipe)
+             58 STORE_NAME               8 (PoRecipe)
+             60 POP_TOP
+
+ 19          62 LOAD_CONST               6 ('Purchase Order Extractor V2')
+             64 STORE_NAME               9 (APP_NAME)
+
+ 21          66 LOAD_CONST               7 (3)
+             68 STORE_NAME              10 (CACHE_SCHEMA)
+
+ 22          70 PUSH_NULL
+             72 LOAD_NAME                6 (re)
+             74 LOAD_ATTR               11 (compile)
+             84 LOAD_CONST               8 ('[A-Za-z0-9]{2,}')
+             86 PRECALL                  1
+             90 CALL                     1
+            100 STORE_NAME              12 (_MARK_RE)
+
+ 25         102 LOAD_CONST               9 ("'‘’‛`´ʼˮ")
+            104 STORE_NAME              13 (_APOS)
+
+ 28         106 LOAD_CONST              10 (<code object _collapse_tokens at 0x000002BF943828D0, file "core\store\cache.py", line 28>)
+            108 MAKE_FUNCTION            0
+            110 STORE_NAME              14 (_collapse_tokens)
+
+ 62         112 LOAD_CONST              22 (('return', 'str'))
+            114 LOAD_CONST              13 (<code object _appdata at 0x000002BF946C2040, file "core\store\cache.py", line 62>)
+            116 MAKE_FUNCTION            4 (annotations)
+            118 STORE_NAME              15 (_appdata)
+
+ 69         120 LOAD_CONST              14 (<code object _collapse_value_runs at 0x000002BF949E2290, file "core\store\cache.py", line 69>)
+            122 MAKE_FUNCTION            0
+            124 STORE_NAME              16 (_collapse_value_runs)
+
+ 94         126 LOAD_CONST              15 (<code object _normalize_parens at 0x000002BF94464580, file "core\store\cache.py", line 94>)
+            128 MAKE_FUNCTION            0
+            130 STORE_NAME              17 (_normalize_parens)
+
+138         132 LOAD_CONST              23 (('text', 'str', 'return', 'str'))
+            134 LOAD_CONST              17 (<code object skeleton at 0x000002BF94461590, file "core\store\cache.py", line 138>)
+            136 MAKE_FUNCTION            4 (annotations)
+            138 STORE_NAME              18 (skeleton)
+
+202         140 LOAD_CONST              24 (('raw_text', 'str', 'return', 'str'))
+            142 LOAD_CONST              19 (<code object layout_fingerprint at 0x000002BF94999E70, file "core\store\cache.py", line 202>)
+            144 MAKE_FUNCTION            4 (annotations)
+            146 STORE_NAME              19 (layout_fingerprint)
+
+206         148 PUSH_NULL
+            150 LOAD_BUILD_CLASS
+            152 LOAD_CONST              20 (<code object RecipeCache at 0x000002BF94A6A790, file "core\store\cache.py", line 206>)
+            154 MAKE_FUNCTION            0
+            156 LOAD_CONST              21 ('RecipeCache')
+            158 PRECALL                  2
+            162 CALL                     2
+            172 STORE_NAME              20 (RecipeCache)
+            174 LOAD_CONST               3 (None)
+            176 RETURN_VALUE
+
+==============================================================================
+## <module>._collapse_tokens  (args=1, locals=9)
+# varnames: toks, dedup, t, out, changed, n, i, maxL, L
+ 28           0 RESUME                   0
+
+ 39           2 BUILD_LIST               0
+              4 STORE_FAST               1 (dedup)
+
+ 40           6 LOAD_FAST                0 (toks)
+              8 GET_ITER
+        >>   10 FOR_ITER                38 (to 88)
+             12 STORE_FAST               2 (t)
+
+ 41          14 LOAD_FAST                1 (dedup)
+             16 POP_JUMP_FORWARD_IF_FALSE    13 (to 44)
+             18 LOAD_FAST                2 (t)
+             20 LOAD_FAST                1 (dedup)
+             22 LOAD_CONST               1 (-1)
+             24 BINARY_SUBSCR
+             34 COMPARE_OP               2 (==)
+             40 POP_JUMP_FORWARD_IF_FALSE     1 (to 44)
+
+ 42          42 JUMP_BACKWARD           17 (to 10)
+
+ 43     >>   44 LOAD_FAST                1 (dedup)
+             46 LOAD_METHOD              0 (append)
+             68 LOAD_FAST                2 (t)
+             70 PRECALL                  1
+             74 CALL                     1
+             84 POP_TOP
+             86 JUMP_BACKWARD           39 (to 10)
+
+ 45     >>   88 LOAD_FAST                1 (dedup)
+             90 STORE_FAST               3 (out)
+
+ 46          92 LOAD_CONST               2 (True)
+             94 STORE_FAST               4 (changed)
+
+ 47          96 LOAD_FAST                4 (changed)
+             98 POP_JUMP_FORWARD_IF_FALSE   121 (to 342)
+
+ 48     >>  100 LOAD_CONST               3 (False)
+            102 STORE_FAST               4 (changed)
+
+ 49         104 LOAD_GLOBAL              3 (NULL + len)
+            116 LOAD_FAST                3 (out)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 STORE_FAST               5 (n)
+
+ 50         134 LOAD_GLOBAL              5 (NULL + range)
+            146 LOAD_FAST                5 (n)
+            148 PRECALL                  1
+            152 CALL                     1
+            162 GET_ITER
+        >>  164 FOR_ITER                86 (to 338)
+            166 STORE_FAST               6 (i)
+
+ 51         168 LOAD_FAST                5 (n)
+            170 LOAD_FAST                6 (i)
+            172 BINARY_OP               10 (-)
+            176 LOAD_CONST               4 (2)
+            178 BINARY_OP                2 (//)
+            182 STORE_FAST               7 (maxL)
+
+ 52         184 LOAD_GLOBAL              5 (NULL + range)
+            196 LOAD_FAST                7 (maxL)
+            198 LOAD_CONST               5 (0)
+            200 LOAD_CONST               1 (-1)
+            202 PRECALL                  3
+            206 CALL                     3
+            216 GET_ITER
+        >>  218 FOR_ITER                54 (to 328)
+            220 STORE_FAST               8 (L)
+
+ 53         222 LOAD_FAST                3 (out)
+            224 LOAD_FAST                6 (i)
+            226 LOAD_FAST                6 (i)
+            228 LOAD_FAST                8 (L)
+            230 BINARY_OP                0 (+)
+            234 BUILD_SLICE              2
+            236 BINARY_SUBSCR
+            246 LOAD_FAST                3 (out)
+            248 LOAD_FAST                6 (i)
+            250 LOAD_FAST                8 (L)
+            252 BINARY_OP                0 (+)
+            256 LOAD_FAST                6 (i)
+            258 LOAD_CONST               4 (2)
+            260 LOAD_FAST                8 (L)
+            262 BINARY_OP                5 (*)
+            266 BINARY_OP                0 (+)
+            270 BUILD_SLICE              2
+            272 BINARY_SUBSCR
+            282 COMPARE_OP               2 (==)
+            288 POP_JUMP_FORWARD_IF_FALSE    18 (to 326)
+
+ 54         290 LOAD_FAST                3 (out)
+            292 LOAD_FAST                6 (i)
+            294 LOAD_FAST                8 (L)
+            296 BINARY_OP                0 (+)
+            300 LOAD_FAST                6 (i)
+            302 LOAD_CONST               4 (2)
+            304 LOAD_FAST                8 (L)
+            306 BINARY_OP                5 (*)
+            310 BINARY_OP                0 (+)
+            314 BUILD_SLICE              2
+            316 DELETE_SUBSCR
+
+ 55         318 LOAD_CONST               2 (True)
+            320 STORE_FAST               4 (changed)
+
+ 56         322 POP_TOP
+            324 JUMP_FORWARD             1 (to 328)
+
+ 53     >>  326 JUMP_BACKWARD           55 (to 218)
+
+ 57     >>  328 LOAD_FAST                4 (changed)
+            330 POP_JUMP_FORWARD_IF_FALSE     2 (to 336)
+
+ 58         332 POP_TOP
+            334 JUMP_FORWARD             1 (to 338)
+
+ 57     >>  336 JUMP_BACKWARD           87 (to 164)
+
+ 47     >>  338 LOAD_FAST                4 (changed)
+            340 POP_JUMP_BACKWARD_IF_TRUE   121 (to 100)
+
+ 59     >>  342 LOAD_FAST                3 (out)
+            344 RETURN_VALUE
+
+==============================================================================
+## <module>._appdata  (args=0, locals=2)
+# varnames: base, d
+ 62           0 RESUME                   0
+
+ 63           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (environ)
+             24 LOAD_METHOD              2 (get)
+             46 LOAD_CONST               1 ('APPDATA')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 JUMP_IF_TRUE_OR_POP     30 (to 124)
+             64 LOAD_GLOBAL              0 (os)
+             76 LOAD_ATTR                3 (path)
+             86 LOAD_METHOD              4 (expanduser)
+            108 LOAD_CONST               2 ('~/.config')
+            110 PRECALL                  1
+            114 CALL                     1
+        >>  124 STORE_FAST               0 (base)
+
+ 64         126 LOAD_GLOBAL              0 (os)
+            138 LOAD_ATTR                3 (path)
+            148 LOAD_METHOD              5 (join)
+            170 LOAD_FAST                0 (base)
+            172 LOAD_GLOBAL             12 (APP_NAME)
+            184 PRECALL                  2
+            188 CALL                     2
+            198 STORE_FAST               1 (d)
+
+ 65         200 LOAD_GLOBAL              1 (NULL + os)
+            212 LOAD_ATTR                7 (makedirs)
+            222 LOAD_FAST                1 (d)
+            224 LOAD_CONST               3 (True)
+            226 KW_NAMES                 4
+            228 PRECALL                  2
+            232 CALL                     2
+            242 POP_TOP
+
+ 66         244 LOAD_FAST                1 (d)
+            246 RETURN_VALUE
+
+==============================================================================
+## <module>._collapse_value_runs  (args=1, locals=4)
+# varnames: toks, out, buf, t
+ 69           0 RESUME                   0
+
+ 79           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+ 80           6 LOAD_CONST               1 (0)
+              8 STORE_FAST               2 (buf)
+
+ 81          10 LOAD_FAST                0 (toks)
+             12 GET_ITER
+        >>   14 FOR_ITER                74 (to 164)
+             16 STORE_FAST               3 (t)
+
+ 82          18 LOAD_GLOBAL              1 (NULL + set)
+             30 LOAD_FAST                3 (t)
+             32 PRECALL                  1
+             36 CALL                     1
+             46 LOAD_CONST               2 ('#')
+             48 BUILD_SET                1
+             50 COMPARE_OP               1 (<=)
+             56 POP_JUMP_FORWARD_IF_FALSE     6 (to 70)
+
+ 83          58 LOAD_FAST                2 (buf)
+             60 LOAD_CONST               3 (1)
+             62 BINARY_OP               13 (+=)
+             66 STORE_FAST               2 (buf)
+             68 JUMP_BACKWARD           28 (to 14)
+
+ 85     >>   70 LOAD_FAST                2 (buf)
+             72 POP_JUMP_FORWARD_IF_FALSE    23 (to 120)
+
+ 86          74 LOAD_FAST                1 (out)
+             76 LOAD_METHOD              1 (append)
+             98 LOAD_CONST               2 ('#')
+            100 PRECALL                  1
+            104 CALL                     1
+            114 POP_TOP
+
+ 87         116 LOAD_CONST               1 (0)
+            118 STORE_FAST               2 (buf)
+
+ 88     >>  120 LOAD_FAST                1 (out)
+            122 LOAD_METHOD              1 (append)
+            144 LOAD_FAST                3 (t)
+            146 PRECALL                  1
+            150 CALL                     1
+            160 POP_TOP
+            162 JUMP_BACKWARD           75 (to 14)
+
+ 89     >>  164 LOAD_FAST                2 (buf)
+            166 POP_JUMP_FORWARD_IF_FALSE    21 (to 210)
+
+ 90         168 LOAD_FAST                1 (out)
+            170 LOAD_METHOD              1 (append)
+            192 LOAD_CONST               2 ('#')
+            194 PRECALL                  1
+            198 CALL                     1
+            208 POP_TOP
+
+ 91     >>  210 LOAD_FAST                1 (out)
+            212 RETURN_VALUE
+
+==============================================================================
+## <module>._normalize_parens  (args=1, locals=9)
+# varnames: toks, out, i, n, j, ok, res, run, t
+ 94           0 RESUME                   0
+
+103           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+104           6 LOAD_CONST               1 (0)
+              8 STORE_FAST               2 (i)
+
+105          10 LOAD_GLOBAL              1 (NULL + len)
+             22 LOAD_FAST                0 (toks)
+             24 PRECALL                  1
+             28 CALL                     1
+             38 STORE_FAST               3 (n)
+
+106     >>   40 LOAD_FAST                2 (i)
+             42 LOAD_FAST                3 (n)
+             44 COMPARE_OP               0 (<)
+             50 POP_JUMP_FORWARD_IF_FALSE   131 (to 314)
+
+107     >>   52 LOAD_FAST                0 (toks)
+             54 LOAD_FAST                2 (i)
+             56 BINARY_SUBSCR
+             66 LOAD_CONST               2 ('(')
+             68 COMPARE_OP               2 (==)
+             74 POP_JUMP_FORWARD_IF_FALSE    81 (to 238)
+
+108          76 LOAD_FAST                2 (i)
+             78 LOAD_CONST               3 (1)
+             80 BINARY_OP                0 (+)
+             84 STORE_FAST               4 (j)
+
+109          86 LOAD_CONST               4 (False)
+             88 STORE_FAST               5 (ok)
+
+110          90 LOAD_FAST                4 (j)
+             92 LOAD_FAST                3 (n)
+             94 COMPARE_OP               0 (<)
+            100 POP_JUMP_FORWARD_IF_FALSE    39 (to 180)
+
+111     >>  102 LOAD_FAST                0 (toks)
+            104 LOAD_FAST                4 (j)
+            106 BINARY_SUBSCR
+            116 LOAD_CONST               5 (')')
+            118 COMPARE_OP               2 (==)
+            124 POP_JUMP_FORWARD_IF_FALSE     3 (to 132)
+
+112         126 LOAD_CONST               6 (True)
+            128 STORE_FAST               5 (ok)
+
+113         130 JUMP_FORWARD            24 (to 180)
+
+114     >>  132 LOAD_FAST                0 (toks)
+            134 LOAD_FAST                4 (j)
+            136 BINARY_SUBSCR
+            146 LOAD_CONST               7 ('#')
+            148 COMPARE_OP               3 (!=)
+            154 POP_JUMP_FORWARD_IF_FALSE     1 (to 158)
+
+115         156 JUMP_FORWARD            11 (to 180)
+
+116     >>  158 LOAD_FAST                4 (j)
+            160 LOAD_CONST               3 (1)
+            162 BINARY_OP               13 (+=)
+            166 STORE_FAST               4 (j)
+
+110         168 LOAD_FAST                4 (j)
+            170 LOAD_FAST                3 (n)
+            172 COMPARE_OP               0 (<)
+            178 POP_JUMP_BACKWARD_IF_TRUE    39 (to 102)
+
+117     >>  180 LOAD_FAST                5 (ok)
+            182 POP_JUMP_FORWARD_IF_FALSE    27 (to 238)
+
+118         184 LOAD_FAST                1 (out)
+            186 LOAD_METHOD              1 (append)
+            208 LOAD_CONST               8 ('(#)')
+            210 PRECALL                  1
+            214 CALL                     1
+            224 POP_TOP
+
+119         226 LOAD_FAST                4 (j)
+            228 LOAD_CONST               3 (1)
+            230 BINARY_OP                0 (+)
+            234 STORE_FAST               2 (i)
+
+120         236 JUMP_BACKWARD           99 (to 40)
+
+121     >>  238 LOAD_FAST                1 (out)
+            240 LOAD_METHOD              1 (append)
+            262 LOAD_FAST                0 (toks)
+            264 LOAD_FAST                2 (i)
+            266 BINARY_SUBSCR
+            276 PRECALL                  1
+            280 CALL                     1
+            290 POP_TOP
+
+122         292 LOAD_FAST                2 (i)
+            294 LOAD_CONST               3 (1)
+            296 BINARY_OP               13 (+=)
+            300 STORE_FAST               2 (i)
+
+106         302 LOAD_FAST                2 (i)
+            304 LOAD_FAST                3 (n)
+            306 COMPARE_OP               0 (<)
+            312 POP_JUMP_BACKWARD_IF_TRUE   131 (to 52)
+
+123     >>  314 BUILD_LIST               0
+            316 STORE_FAST               6 (res)
+
+124         318 LOAD_CONST               1 (0)
+            320 STORE_FAST               7 (run)
+
+125         322 LOAD_FAST                1 (out)
+            324 GET_ITER
+        >>  326 FOR_ITER                60 (to 448)
+            328 STORE_FAST               8 (t)
+
+126         330 LOAD_FAST                8 (t)
+            332 LOAD_CONST               8 ('(#)')
+            334 COMPARE_OP               2 (==)
+            340 POP_JUMP_FORWARD_IF_FALSE     6 (to 354)
+
+127         342 LOAD_FAST                7 (run)
+            344 LOAD_CONST               3 (1)
+            346 BINARY_OP               13 (+=)
+            350 STORE_FAST               7 (run)
+            352 JUMP_BACKWARD           14 (to 326)
+
+129     >>  354 LOAD_FAST                7 (run)
+            356 POP_JUMP_FORWARD_IF_FALSE    23 (to 404)
+
+130         358 LOAD_FAST                6 (res)
+            360 LOAD_METHOD              1 (append)
+            382 LOAD_CONST               8 ('(#)')
+            384 PRECALL                  1
+            388 CALL                     1
+            398 POP_TOP
+
+131         400 LOAD_CONST               1 (0)
+            402 STORE_FAST               7 (run)
+
+132     >>  404 LOAD_FAST                6 (res)
+            406 LOAD_METHOD              1 (append)
+            428 LOAD_FAST                8 (t)
+            430 PRECALL                  1
+            434 CALL                     1
+            444 POP_TOP
+            446 JUMP_BACKWARD           61 (to 326)
+
+133     >>  448 LOAD_FAST                7 (run)
+            450 POP_JUMP_FORWARD_IF_FALSE    21 (to 494)
+
+134         452 LOAD_FAST                6 (res)
+            454 LOAD_METHOD              1 (append)
+            476 LOAD_CONST               8 ('(#)')
+            478 PRECALL                  1
+            482 CALL                     1
+            492 POP_TOP
+
+135     >>  494 LOAD_FAST                6 (res)
+            496 RETURN_VALUE
+
+==============================================================================
+## <module>.skeleton  (args=1, locals=8)
+# varnames: text, markers, toks, ln, raw, t, body, seq
+138           0 RESUME                   0
+
+152           2 BUILD_LIST               0
+              4 STORE_FAST               1 (markers)
+
+153           6 LOAD_GLOBAL              1 (NULL + re)
+             18 LOAD_ATTR                1 (search)
+             28 LOAD_CONST               1 ('Entity\\s+\\d+\\s+Order No')
+             30 LOAD_FAST                0 (text)
+             32 PRECALL                  2
+             36 CALL                     2
+             46 POP_JUMP_FORWARD_IF_FALSE    21 (to 90)
+
+154          48 LOAD_FAST                1 (markers)
+             50 LOAD_METHOD              2 (append)
+             72 LOAD_CONST               2 ('<<HAS_ENTITY>>')
+             74 PRECALL                  1
+             78 CALL                     1
+             88 POP_TOP
+
+155     >>   90 LOAD_CONST               3 ('Destination Code')
+             92 LOAD_FAST                0 (text)
+             94 CONTAINS_OP              0
+             96 POP_JUMP_FORWARD_IF_FALSE    21 (to 140)
+
+156          98 LOAD_FAST                1 (markers)
+            100 LOAD_METHOD              2 (append)
+            122 LOAD_CONST               4 ('<<HAS_DESTINATION>>')
+            124 PRECALL                  1
+            128 CALL                     1
+            138 POP_TOP
+
+157     >>  140 LOAD_CONST               5 ('COLOR NO')
+            142 LOAD_FAST                0 (text)
+            144 CONTAINS_OP              0
+            146 POP_JUMP_FORWARD_IF_FALSE    21 (to 190)
+
+158         148 LOAD_FAST                1 (markers)
+            150 LOAD_METHOD              2 (append)
+            172 LOAD_CONST               6 ('<<HAS_COLORNO>>')
+            174 PRECALL                  1
+            178 CALL                     1
+            188 POP_TOP
+
+159     >>  190 BUILD_LIST               0
+            192 STORE_FAST               2 (toks)
+
+160         194 LOAD_FAST                0 (text)
+            196 LOAD_METHOD              3 (splitlines)
+            218 PRECALL                  0
+            222 CALL                     0
+            232 GET_ITER
+        >>  234 EXTENDED_ARG             1
+            236 FOR_ITER               356 (to 950)
+            238 STORE_FAST               3 (ln)
+
+161         240 LOAD_FAST                3 (ln)
+            242 LOAD_METHOD              4 (split)
+            264 PRECALL                  0
+            268 CALL                     0
+            278 GET_ITER
+        >>  280 EXTENDED_ARG             1
+            282 FOR_ITER               331 (to 946)
+            284 STORE_FAST               4 (raw)
+
+164         286 LOAD_GLOBAL              1 (NULL + re)
+            298 LOAD_ATTR                1 (search)
+            308 LOAD_CONST               7 ('\\d')
+            310 LOAD_FAST                4 (raw)
+            312 PRECALL                  2
+            316 CALL                     2
+            326 POP_JUMP_FORWARD_IF_FALSE    22 (to 372)
+
+165         328 LOAD_FAST                2 (toks)
+            330 LOAD_METHOD              2 (append)
+            352 LOAD_CONST               8 ('#')
+            354 PRECALL                  1
+            358 CALL                     1
+            368 POP_TOP
+
+166         370 JUMP_BACKWARD           46 (to 280)
+
+169     >>  372 LOAD_GLOBAL             11 (NULL + any)
+            384 LOAD_CONST               9 (<code object <genexpr> at 0x000002BF94A2F230, file "core\store\cache.py", line 169>)
+            386 MAKE_FUNCTION            0
+            388 LOAD_FAST                4 (raw)
+            390 GET_ITER
+            392 PRECALL                  0
+            396 CALL                     0
+            406 PRECALL                  1
+            410 CALL                     1
+            420 POP_JUMP_FORWARD_IF_FALSE    22 (to 466)
+
+170         422 LOAD_FAST                2 (toks)
+            424 LOAD_METHOD              2 (append)
+            446 LOAD_CONST               8 ('#')
+            448 PRECALL                  1
+            452 CALL                     1
+            462 POP_TOP
+
+171         464 JUMP_BACKWARD           93 (to 280)
+
+173     >>  466 LOAD_GLOBAL             11 (NULL + any)
+            478 LOAD_CONST              10 (<code object <genexpr> at 0x000002BF94A6E5D0, file "core\store\cache.py", line 173>)
+            480 MAKE_FUNCTION            0
+            482 LOAD_FAST                4 (raw)
+            484 GET_ITER
+            486 PRECALL                  0
+            490 CALL                     0
+            500 PRECALL                  1
+            504 CALL                     1
+            514 POP_JUMP_FORWARD_IF_FALSE    22 (to 560)
+
+174         516 LOAD_FAST                2 (toks)
+            518 LOAD_METHOD              2 (append)
+            540 LOAD_CONST               8 ('#')
+            542 PRECALL                  1
+            546 CALL                     1
+            556 POP_TOP
+
+175         558 JUMP_BACKWARD          140 (to 280)
+
+178     >>  560 LOAD_CONST              11 ('-')
+            562 LOAD_FAST                4 (raw)
+            564 CONTAINS_OP              0
+            566 POP_JUMP_FORWARD_IF_TRUE    29 (to 626)
+            568 LOAD_CONST              12 ('_')
+            570 LOAD_FAST                4 (raw)
+            572 CONTAINS_OP              0
+            574 POP_JUMP_FORWARD_IF_TRUE    25 (to 626)
+            576 LOAD_CONST              13 ('.')
+            578 LOAD_FAST                4 (raw)
+            580 CONTAINS_OP              0
+            582 POP_JUMP_FORWARD_IF_FALSE    43 (to 670)
+            584 LOAD_GLOBAL              1 (NULL + re)
+            596 LOAD_ATTR                1 (search)
+            606 LOAD_CONST              14 ('[A-Za-z]')
+            608 LOAD_FAST                4 (raw)
+            610 PRECALL                  2
+            614 CALL                     2
+            624 POP_JUMP_FORWARD_IF_FALSE    22 (to 670)
+
+179     >>  626 LOAD_FAST                2 (toks)
+            628 LOAD_METHOD              2 (append)
+            650 LOAD_CONST               8 ('#')
+            652 PRECALL                  1
+            656 CALL                     1
+            666 POP_TOP
+
+180         668 JUMP_BACKWARD          195 (to 280)
+
+182     >>  670 LOAD_GLOBAL              1 (NULL + re)
+            682 LOAD_ATTR                1 (search)
+            692 LOAD_CONST              15 ('[A-Za-z][).]')
+            694 LOAD_FAST                4 (raw)
+            696 PRECALL                  2
+            700 CALL                     2
+            710 POP_JUMP_FORWARD_IF_FALSE    22 (to 756)
+
+183         712 LOAD_FAST                2 (toks)
+            714 LOAD_METHOD              2 (append)
+            736 LOAD_CONST               8 ('#')
+            738 PRECALL                  1
+            742 CALL                     1
+            752 POP_TOP
+
+184         754 JUMP_BACKWARD          238 (to 280)
+
+185     >>  756 LOAD_GLOBAL             12 (_MARK_RE)
+            768 LOAD_METHOD              7 (sub)
+            790 LOAD_CONST               8 ('#')
+            792 LOAD_FAST                4 (raw)
+            794 PRECALL                  2
+            798 CALL                     2
+            808 STORE_FAST               5 (t)
+
+186         810 LOAD_GLOBAL              1 (NULL + re)
+            822 LOAD_ATTR                7 (sub)
+            832 LOAD_CONST              16 ('[.,:;/\\-_&]+')
+            834 LOAD_CONST               8 ('#')
+            836 LOAD_FAST                5 (t)
+            838 PRECALL                  3
+            842 CALL                     3
+            852 STORE_FAST               5 (t)
+
+187         854 LOAD_GLOBAL              1 (NULL + re)
+            866 LOAD_ATTR                8 (fullmatch)
+            876 LOAD_CONST              17 ('[A-Za-z]{1,2}')
+            878 LOAD_FAST                5 (t)
+            880 PRECALL                  2
+            884 CALL                     2
+            894 POP_JUMP_FORWARD_IF_FALSE     2 (to 900)
+
+188         896 LOAD_CONST               8 ('#')
+            898 STORE_FAST               5 (t)
+
+189     >>  900 LOAD_FAST                2 (toks)
+            902 LOAD_METHOD              2 (append)
+            924 LOAD_FAST                5 (t)
+            926 PRECALL                  1
+            930 CALL                     1
+            940 POP_TOP
+            942 EXTENDED_ARG             1
+            944 JUMP_BACKWARD          333 (to 280)
+
+161     >>  946 EXTENDED_ARG             1
+            948 JUMP_BACKWARD          358 (to 234)
+
+190     >>  950 LOAD_GLOBAL             19 (NULL + _normalize_parens)
+            962 LOAD_GLOBAL             21 (NULL + _collapse_value_runs)
+            974 LOAD_GLOBAL             23 (NULL + _collapse_tokens)
+            986 LOAD_FAST                2 (toks)
+            988 PRECALL                  1
+            992 CALL                     1
+           1002 PRECALL                  1
+           1006 CALL                     1
+           1016 PRECALL                  1
+           1020 CALL                     1
+           1030 STORE_FAST               6 (body)
+
+198        1032 LOAD_GLOBAL             25 (NULL + sorted)
+           1044 LOAD_GLOBAL             27 (NULL + set)
+           1056 LOAD_FAST                6 (body)
+           1058 PRECALL                  1
+           1062 CALL                     1
+           1072 PRECALL                  1
+           1076 CALL                     1
+           1086 STORE_FAST               7 (seq)
+
+199        1088 LOAD_CONST              18 ('\n')
+           1090 LOAD_METHOD             14 (join)
+           1112 LOAD_GLOBAL             25 (NULL + sorted)
+           1124 LOAD_FAST                1 (markers)
+           1126 PRECALL                  1
+           1130 CALL                     1
+           1140 LOAD_CONST              19 (' ')
+           1142 LOAD_METHOD             14 (join)
+           1164 LOAD_FAST                7 (seq)
+           1166 PRECALL                  1
+           1170 CALL                     1
+           1180 BUILD_LIST               1
+           1182 BINARY_OP                0 (+)
+           1186 PRECALL                  1
+           1190 CALL                     1
+           1200 RETURN_VALUE
+
+==============================================================================
+## <module>.skeleton.<genexpr>  (args=1, locals=2)
+# varnames: .0, c
+169           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                23 (to 56)
+             10 STORE_FAST               1 (c)
+             12 LOAD_GLOBAL              1 (NULL + ord)
+             24 LOAD_FAST                1 (c)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 LOAD_CONST               0 (127)
+             42 COMPARE_OP               4 (>)
+             48 YIELD_VALUE
+             50 RESUME                   1
+             52 POP_TOP
+             54 JUMP_BACKWARD           24 (to 8)
+        >>   56 LOAD_CONST               1 (None)
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.skeleton.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+173           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                13 (to 36)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_GLOBAL              0 (_APOS)
+             26 CONTAINS_OP              0
+             28 YIELD_VALUE
+             30 RESUME                   1
+             32 POP_TOP
+             34 JUMP_BACKWARD           14 (to 8)
+        >>   36 LOAD_CONST               0 (None)
+             38 RETURN_VALUE
+
+==============================================================================
+## <module>.layout_fingerprint  (args=1, locals=1)
+# varnames: raw_text
+202           0 RESUME                   0
+
+203           2 LOAD_GLOBAL              1 (NULL + hashlib)
+             14 LOAD_ATTR                1 (sha256)
+             24 LOAD_GLOBAL              5 (NULL + skeleton)
+             36 LOAD_FAST                0 (raw_text)
+             38 PRECALL                  1
+             42 CALL                     1
+             52 LOAD_METHOD              3 (encode)
+             74 LOAD_CONST               1 ('utf-8')
+             76 PRECALL                  1
+             80 CALL                     1
+             90 PRECALL                  1
+             94 CALL                     1
+            104 LOAD_METHOD              4 (hexdigest)
+            126 PRECALL                  0
+            130 CALL                     0
+            140 LOAD_CONST               0 (None)
+            142 LOAD_CONST               2 (32)
+            144 BUILD_SLICE              2
+            146 BINARY_SUBSCR
+            156 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache  (args=0, locals=0)
+206           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('RecipeCache')
+              8 STORE_NAME               2 (__qualname__)
+
+207          10 LOAD_CONST              25 ((None,))
+             12 LOAD_CONST              26 (('root', 'str | None'))
+             14 LOAD_CONST               4 (<code object __init__ at 0x000002BF949E25B0, file "core\store\cache.py", line 207>)
+             16 MAKE_FUNCTION            5 (defaults, annotations)
+             18 STORE_NAME               3 (__init__)
+
+212          20 LOAD_CONST              27 (('return', 'None'))
+             22 LOAD_CONST               7 (<code object _maybe_flush_stale_schema at 0x000002BF9444B7A0, file "core\store\cache.py", line 212>)
+             24 MAKE_FUNCTION            4 (annotations)
+             26 STORE_NAME               4 (_maybe_flush_stale_schema)
+
+242          28 LOAD_CONST              28 (('fp', 'str', 'return', 'str'))
+             30 LOAD_CONST              10 (<code object _path at 0x000002BF94A669A0, file "core\store\cache.py", line 242>)
+             32 MAKE_FUNCTION            4 (annotations)
+             34 STORE_NAME               5 (_path)
+
+245          36 LOAD_CONST              29 (('fp', 'str', 'return', 'bool'))
+             38 LOAD_CONST              12 (<code object exists at 0x000002BF94A6A310, file "core\store\cache.py", line 245>)
+             40 MAKE_FUNCTION            4 (annotations)
+             42 STORE_NAME               6 (exists)
+
+248          44 LOAD_CONST              30 (('fp', 'str', 'recipe', 'PoRecipe', 'return', 'None'))
+             46 LOAD_CONST              15 (<code object put at 0x000002BF94715370, file "core\store\cache.py", line 248>)
+             48 MAKE_FUNCTION            4 (annotations)
+             50 STORE_NAME               7 (put)
+
+254          52 LOAD_CONST              31 (('fp', 'str', 'return', 'PoRecipe'))
+             54 LOAD_CONST              16 (<code object get at 0x000002BF94A9C990, file "core\store\cache.py", line 254>)
+             56 MAKE_FUNCTION            4 (annotations)
+             58 STORE_NAME               8 (get)
+
+258          60 LOAD_CONST              29 (('fp', 'str', 'return', 'bool'))
+             62 LOAD_CONST              17 (<code object invalidate at 0x000002BF94A18AB0, file "core\store\cache.py", line 258>)
+             64 MAKE_FUNCTION            4 (annotations)
+             66 STORE_NAME               9 (invalidate)
+
+273          68 LOAD_CONST              32 (('return', 'int'))
+             70 LOAD_CONST              19 (<code object clear_all at 0x000002BF94715A70, file "core\store\cache.py", line 273>)
+             72 MAKE_FUNCTION            4 (annotations)
+             74 STORE_NAME              10 (clear_all)
+
+290          76 LOAD_CONST              32 (('return', 'int'))
+             78 LOAD_CONST              20 (<code object count at 0x000002BF9499A290, file "core\store\cache.py", line 290>)
+             80 MAKE_FUNCTION            4 (annotations)
+             82 STORE_NAME              11 (count)
+
+306          84 LOAD_CONST              33 (('return', 'list[str]'))
+             86 LOAD_CONST              22 (<code object dir_list at 0x000002BF9473C670, file "core\store\cache.py", line 306>)
+             88 MAKE_FUNCTION            4 (annotations)
+             90 STORE_NAME              12 (dir_list)
+
+318          92 LOAD_CONST              34 (('raw_text', 'str'))
+             94 LOAD_CONST              24 (<code object fingerprint_and_load at 0x000002BF9473EAB0, file "core\store\cache.py", line 318>)
+             96 MAKE_FUNCTION            4 (annotations)
+             98 STORE_NAME              13 (fingerprint_and_load)
+            100 LOAD_CONST               1 (None)
+            102 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache.__init__  (args=2, locals=2)
+# varnames: self, root
+207           0 RESUME                   0
+
+208           2 LOAD_FAST                1 (root)
+              4 JUMP_IF_TRUE_OR_POP     43 (to 92)
+              6 LOAD_GLOBAL              0 (os)
+             18 LOAD_ATTR                1 (path)
+             28 LOAD_METHOD              2 (join)
+             50 LOAD_GLOBAL              7 (NULL + _appdata)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 LOAD_CONST               1 ('recipe_cache')
+             78 PRECALL                  2
+             82 CALL                     2
+        >>   92 LOAD_FAST                0 (self)
+             94 STORE_ATTR               4 (dir)
+
+209         104 LOAD_GLOBAL              1 (NULL + os)
+            116 LOAD_ATTR                5 (makedirs)
+            126 LOAD_FAST                0 (self)
+            128 LOAD_ATTR                4 (dir)
+            138 LOAD_CONST               2 (True)
+            140 KW_NAMES                 3
+            142 PRECALL                  2
+            146 CALL                     2
+            156 POP_TOP
+
+210         158 LOAD_FAST                0 (self)
+            160 LOAD_METHOD              6 (_maybe_flush_stale_schema)
+            182 PRECALL                  0
+            186 CALL                     0
+            196 POP_TOP
+            198 LOAD_CONST               0 (None)
+            200 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache._maybe_flush_stale_schema  (args=1, locals=6)
+# varnames: self, marker, cur, flushed, name, f
+212           0 RESUME                   0
+
+219           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (path)
+             24 LOAD_METHOD              2 (join)
+             46 LOAD_FAST                0 (self)
+             48 LOAD_ATTR                3 (dir)
+             58 LOAD_CONST               1 ('.schema')
+             60 PRECALL                  2
+             64 CALL                     2
+             74 STORE_FAST               1 (marker)
+
+220          76 NOP
+
+221          78 LOAD_GLOBAL              9 (NULL + open)
+             90 LOAD_FAST                1 (marker)
+             92 LOAD_CONST               2 ('utf-8')
+             94 KW_NAMES                 3
+             96 PRECALL                  2
+            100 CALL                     2
+            110 LOAD_METHOD              5 (read)
+            132 PRECALL                  0
+            136 CALL                     0
+            146 LOAD_METHOD              6 (strip)
+            168 PRECALL                  0
+            172 CALL                     0
+            182 STORE_FAST               2 (cur)
+            184 JUMP_FORWARD            18 (to 222)
+        >>  186 PUSH_EXC_INFO
+
+222         188 LOAD_GLOBAL             14 (OSError)
+            200 CHECK_EXC_MATCH
+            202 POP_JUMP_FORWARD_IF_FALSE     5 (to 214)
+            204 POP_TOP
+
+223         206 LOAD_CONST               4 ('')
+            208 STORE_FAST               2 (cur)
+            210 POP_EXCEPT
+            212 JUMP_FORWARD             4 (to 222)
+
+222     >>  214 RERAISE                  0
+        >>  216 COPY                     3
+            218 POP_EXCEPT
+            220 RERAISE                  1
+
+224     >>  222 LOAD_FAST                2 (cur)
+            224 LOAD_GLOBAL             17 (NULL + str)
+            236 LOAD_GLOBAL             18 (CACHE_SCHEMA)
+            248 PRECALL                  1
+            252 CALL                     1
+            262 COMPARE_OP               2 (==)
+            268 POP_JUMP_FORWARD_IF_FALSE     2 (to 274)
+
+225         270 LOAD_CONST               5 (None)
+            272 RETURN_VALUE
+
+226     >>  274 LOAD_CONST               6 (0)
+            276 STORE_FAST               3 (flushed)
+
+227         278 LOAD_GLOBAL              1 (NULL + os)
+            290 LOAD_ATTR               10 (listdir)
+            300 LOAD_FAST                0 (self)
+            302 LOAD_ATTR                3 (dir)
+            312 PRECALL                  1
+            316 CALL                     1
+            326 GET_ITER
+        >>  328 FOR_ITER               101 (to 532)
+            330 STORE_FAST               4 (name)
+
+228         332 LOAD_FAST                4 (name)
+            334 LOAD_METHOD             11 (endswith)
+            356 LOAD_CONST               7 ('.json')
+            358 PRECALL                  1
+            362 CALL                     1
+            372 POP_JUMP_FORWARD_IF_FALSE    78 (to 530)
+
+229         374 NOP
+
+230         376 LOAD_GLOBAL              1 (NULL + os)
+            388 LOAD_ATTR               12 (remove)
+            398 LOAD_GLOBAL              0 (os)
+            410 LOAD_ATTR                1 (path)
+            420 LOAD_METHOD              2 (join)
+            442 LOAD_FAST                0 (self)
+            444 LOAD_ATTR                3 (dir)
+            454 LOAD_FAST                4 (name)
+            456 PRECALL                  2
+            460 CALL                     2
+            470 PRECALL                  1
+            474 CALL                     1
+            484 POP_TOP
+
+231         486 LOAD_FAST                3 (flushed)
+            488 LOAD_CONST               8 (1)
+            490 BINARY_OP               13 (+=)
+            494 STORE_FAST               3 (flushed)
+            496 JUMP_BACKWARD           85 (to 328)
+        >>  498 PUSH_EXC_INFO
+
+232         500 LOAD_GLOBAL             14 (OSError)
+            512 CHECK_EXC_MATCH
+            514 POP_JUMP_FORWARD_IF_FALSE     3 (to 522)
+            516 POP_TOP
+
+233         518 POP_EXCEPT
+            520 JUMP_BACKWARD           97 (to 328)
+
+232     >>  522 RERAISE                  0
+        >>  524 COPY                     3
+            526 POP_EXCEPT
+            528 RERAISE                  1
+
+228     >>  530 JUMP_BACKWARD          102 (to 328)
+
+234     >>  532 NOP
+
+235         534 LOAD_GLOBAL              9 (NULL + open)
+            546 LOAD_FAST                1 (marker)
+            548 LOAD_CONST               9 ('w')
+            550 LOAD_CONST               2 ('utf-8')
+            552 KW_NAMES                 3
+            554 PRECALL                  3
+            558 CALL                     3
+            568 BEFORE_WITH
+            570 STORE_FAST               5 (f)
+
+236         572 LOAD_FAST                5 (f)
+            574 LOAD_METHOD             13 (write)
+            596 LOAD_GLOBAL             17 (NULL + str)
+            608 LOAD_GLOBAL             18 (CACHE_SCHEMA)
+            620 PRECALL                  1
+            624 CALL                     1
+            634 PRECALL                  1
+            638 CALL                     1
+            648 POP_TOP
+
+235         650 LOAD_CONST               5 (None)
+            652 LOAD_CONST               5 (None)
+            654 LOAD_CONST               5 (None)
+            656 PRECALL                  2
+            660 CALL                     2
+            670 POP_TOP
+            672 JUMP_FORWARD            11 (to 696)
+        >>  674 PUSH_EXC_INFO
+            676 WITH_EXCEPT_START
+            678 POP_JUMP_FORWARD_IF_TRUE     4 (to 688)
+            680 RERAISE                  2
+        >>  682 COPY                     3
+            684 POP_EXCEPT
+            686 RERAISE                  1
+        >>  688 POP_TOP
+            690 POP_EXCEPT
+            692 POP_TOP
+            694 POP_TOP
+        >>  696 JUMP_FORWARD            16 (to 730)
+        >>  698 PUSH_EXC_INFO
+
+237         700 LOAD_GLOBAL             14 (OSError)
+            712 CHECK_EXC_MATCH
+            714 POP_JUMP_FORWARD_IF_FALSE     3 (to 722)
+            716 POP_TOP
+
+238         718 POP_EXCEPT
+            720 JUMP_FORWARD             4 (to 730)
+
+237     >>  722 RERAISE                  0
+        >>  724 COPY                     3
+            726 POP_EXCEPT
+            728 RERAISE                  1
+
+239     >>  730 LOAD_FAST                3 (flushed)
+            732 POP_JUMP_FORWARD_IF_FALSE    28 (to 790)
+
+240         734 LOAD_GLOBAL             29 (NULL + print)
+            746 LOAD_CONST              10 ('[cache] flushed ')
+            748 LOAD_FAST                3 (flushed)
+            750 FORMAT_VALUE             0
+            752 LOAD_CONST              11 (' stale recipe file(s) for schema ')
+            754 LOAD_GLOBAL             18 (CACHE_SCHEMA)
+            766 FORMAT_VALUE             0
+            768 BUILD_STRING             4
+            770 PRECALL                  1
+            774 CALL                     1
+            784 POP_TOP
+            786 LOAD_CONST               5 (None)
+            788 RETURN_VALUE
+
+239     >>  790 LOAD_CONST               5 (None)
+            792 RETURN_VALUE
+ExceptionTable:
+  78 to 182 -> 186 [0]
+  186 to 208 -> 216 [1] lasti
+  214 to 214 -> 216 [1] lasti
+  376 to 494 -> 498 [1]
+  498 to 516 -> 524 [2] lasti
+  522 to 522 -> 524 [2] lasti
+  534 to 568 -> 698 [0]
+  570 to 648 -> 674 [1] lasti
+  650 to 672 -> 698 [0]
+  674 to 680 -> 682 [3] lasti
+  682 to 686 -> 698 [0]
+  688 to 688 -> 682 [3] lasti
+  690 to 694 -> 698 [0]
+  698 to 716 -> 724 [1] lasti
+  722 to 722 -> 724 [1] lasti
+
+==============================================================================
+## <module>.RecipeCache._path  (args=2, locals=2)
+# varnames: self, fp
+242           0 RESUME                   0
+
+243           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (path)
+             24 LOAD_METHOD              2 (join)
+             46 LOAD_FAST                0 (self)
+             48 LOAD_ATTR                3 (dir)
+             58 LOAD_FAST                1 (fp)
+             60 FORMAT_VALUE             0
+             62 LOAD_CONST               1 ('.json')
+             64 BUILD_STRING             2
+             66 PRECALL                  2
+             70 CALL                     2
+             80 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache.exists  (args=2, locals=2)
+# varnames: self, fp
+245           0 RESUME                   0
+
+246           2 LOAD_GLOBAL              0 (os)
+             14 LOAD_ATTR                1 (path)
+             24 LOAD_METHOD              2 (exists)
+             46 LOAD_FAST                0 (self)
+             48 LOAD_METHOD              3 (_path)
+             70 LOAD_FAST                1 (fp)
+             72 PRECALL                  1
+             76 CALL                     1
+             86 PRECALL                  1
+             90 CALL                     1
+            100 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache.put  (args=3, locals=5)
+# varnames: self, fp, recipe, d, f
+248           0 RESUME                   0
+
+249           2 LOAD_GLOBAL              1 (NULL + json)
+             14 LOAD_ATTR                1 (loads)
+             24 LOAD_FAST                2 (recipe)
+             26 LOAD_METHOD              2 (to_json)
+             48 PRECALL                  0
+             52 CALL                     0
+             62 PRECALL                  1
+             66 CALL                     1
+             76 STORE_FAST               3 (d)
+
+250          78 LOAD_FAST                1 (fp)
+             80 LOAD_FAST                3 (d)
+             82 LOAD_CONST               1 ('fingerprint')
+             84 STORE_SUBSCR
+
+251          88 LOAD_GLOBAL              7 (NULL + open)
+            100 LOAD_FAST                0 (self)
+            102 LOAD_METHOD              4 (_path)
+            124 LOAD_FAST                1 (fp)
+            126 PRECALL                  1
+            130 CALL                     1
+            140 LOAD_CONST               2 ('w')
+            142 LOAD_CONST               3 ('utf-8')
+            144 KW_NAMES                 4
+            146 PRECALL                  3
+            150 CALL                     3
+            160 BEFORE_WITH
+            162 STORE_FAST               4 (f)
+
+252         164 LOAD_GLOBAL              1 (NULL + json)
+            176 LOAD_ATTR                5 (dump)
+            186 LOAD_FAST                3 (d)
+            188 LOAD_FAST                4 (f)
+            190 LOAD_CONST               5 (False)
+            192 LOAD_CONST               6 (2)
+            194 KW_NAMES                 7
+            196 PRECALL                  4
+            200 CALL                     4
+            210 POP_TOP
+
+251         212 LOAD_CONST               0 (None)
+            214 LOAD_CONST               0 (None)
+            216 LOAD_CONST               0 (None)
+            218 PRECALL                  2
+            222 CALL                     2
+            232 POP_TOP
+            234 LOAD_CONST               0 (None)
+            236 RETURN_VALUE
+        >>  238 PUSH_EXC_INFO
+            240 WITH_EXCEPT_START
+            242 POP_JUMP_FORWARD_IF_TRUE     4 (to 252)
+            244 RERAISE                  2
+        >>  246 COPY                     3
+            248 POP_EXCEPT
+            250 RERAISE                  1
+        >>  252 POP_TOP
+            254 POP_EXCEPT
+            256 POP_TOP
+            258 POP_TOP
+            260 LOAD_CONST               0 (None)
+            262 RETURN_VALUE
+ExceptionTable:
+  162 to 210 -> 238 [1] lasti
+  238 to 244 -> 246 [3] lasti
+  252 to 252 -> 246 [3] lasti
+
+==============================================================================
+## <module>.RecipeCache.get  (args=2, locals=3)
+# varnames: self, fp, f
+254           0 RESUME                   0
+
+255           2 LOAD_GLOBAL              1 (NULL + open)
+             14 LOAD_FAST                0 (self)
+             16 LOAD_METHOD              1 (_path)
+             38 LOAD_FAST                1 (fp)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 LOAD_CONST               1 ('utf-8')
+             56 KW_NAMES                 2
+             58 PRECALL                  2
+             62 CALL                     2
+             72 BEFORE_WITH
+             74 STORE_FAST               2 (f)
+
+256          76 LOAD_GLOBAL              5 (NULL + PoRecipe)
+             88 LOAD_ATTR                3 (from_json)
+             98 LOAD_FAST                2 (f)
+            100 LOAD_METHOD              4 (read)
+            122 PRECALL                  0
+            126 CALL                     0
+            136 PRECALL                  1
+            140 CALL                     1
+
+255         150 SWAP                     2
+            152 LOAD_CONST               0 (None)
+            154 LOAD_CONST               0 (None)
+            156 LOAD_CONST               0 (None)
+            158 PRECALL                  2
+            162 CALL                     2
+            172 POP_TOP
+            174 RETURN_VALUE
+        >>  176 PUSH_EXC_INFO
+            178 WITH_EXCEPT_START
+            180 POP_JUMP_FORWARD_IF_TRUE     4 (to 190)
+            182 RERAISE                  2
+        >>  184 COPY                     3
+            186 POP_EXCEPT
+            188 RERAISE                  1
+        >>  190 POP_TOP
+            192 POP_EXCEPT
+            194 POP_TOP
+            196 POP_TOP
+            198 LOAD_CONST               0 (None)
+            200 RETURN_VALUE
+ExceptionTable:
+  74 to 148 -> 176 [1] lasti
+  176 to 182 -> 184 [3] lasti
+  190 to 190 -> 184 [3] lasti
+
+==============================================================================
+## <module>.RecipeCache.invalidate  (args=2, locals=3)
+# varnames: self, fp, p
+258           0 RESUME                   0
+
+264           2 LOAD_FAST                0 (self)
+              4 LOAD_METHOD              0 (_path)
+             26 LOAD_FAST                1 (fp)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               2 (p)
+
+265          44 LOAD_GLOBAL              2 (os)
+             56 LOAD_ATTR                2 (path)
+             66 LOAD_METHOD              3 (exists)
+             88 LOAD_FAST                2 (p)
+             90 PRECALL                  1
+             94 CALL                     1
+            104 POP_JUMP_FORWARD_IF_FALSE    40 (to 186)
+
+266         106 NOP
+
+267         108 LOAD_GLOBAL              3 (NULL + os)
+            120 LOAD_ATTR                4 (remove)
+            130 LOAD_FAST                2 (p)
+            132 PRECALL                  1
+            136 CALL                     1
+            146 POP_TOP
+
+268         148 LOAD_CONST               1 (True)
+            150 RETURN_VALUE
+        >>  152 PUSH_EXC_INFO
+
+269         154 LOAD_GLOBAL             10 (OSError)
+            166 CHECK_EXC_MATCH
+            168 POP_JUMP_FORWARD_IF_FALSE     4 (to 178)
+            170 POP_TOP
+
+270         172 POP_EXCEPT
+            174 LOAD_CONST               2 (False)
+            176 RETURN_VALUE
+
+269     >>  178 RERAISE                  0
+        >>  180 COPY                     3
+            182 POP_EXCEPT
+            184 RERAISE                  1
+
+271     >>  186 LOAD_CONST               2 (False)
+            188 RETURN_VALUE
+ExceptionTable:
+  108 to 146 -> 152 [0]
+  152 to 170 -> 180 [1] lasti
+  178 to 178 -> 180 [1] lasti
+
+==============================================================================
+## <module>.RecipeCache.clear_all  (args=1, locals=3)
+# varnames: self, removed, name
+273           0 RESUME                   0
+
+280           2 LOAD_CONST               1 (0)
+              4 STORE_FAST               1 (removed)
+
+281           6 LOAD_GLOBAL              1 (NULL + os)
+             18 LOAD_ATTR                1 (listdir)
+             28 LOAD_FAST                0 (self)
+             30 LOAD_ATTR                2 (dir)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 GET_ITER
+        >>   56 FOR_ITER               101 (to 260)
+             58 STORE_FAST               2 (name)
+
+282          60 LOAD_FAST                2 (name)
+             62 LOAD_METHOD              3 (endswith)
+             84 LOAD_CONST               2 ('.json')
+             86 PRECALL                  1
+             90 CALL                     1
+            100 POP_JUMP_FORWARD_IF_FALSE    78 (to 258)
+
+283         102 NOP
+
+284         104 LOAD_GLOBAL              1 (NULL + os)
+            116 LOAD_ATTR                4 (remove)
+            126 LOAD_GLOBAL              0 (os)
+            138 LOAD_ATTR                5 (path)
+            148 LOAD_METHOD              6 (join)
+            170 LOAD_FAST                0 (self)
+            172 LOAD_ATTR                2 (dir)
+            182 LOAD_FAST                2 (name)
+            184 PRECALL                  2
+            188 CALL                     2
+            198 PRECALL                  1
+            202 CALL                     1
+            212 POP_TOP
+
+285         214 LOAD_FAST                1 (removed)
+            216 LOAD_CONST               3 (1)
+            218 BINARY_OP               13 (+=)
+            222 STORE_FAST               1 (removed)
+            224 JUMP_BACKWARD           85 (to 56)
+        >>  226 PUSH_EXC_INFO
+
+286         228 LOAD_GLOBAL             14 (OSError)
+            240 CHECK_EXC_MATCH
+            242 POP_JUMP_FORWARD_IF_FALSE     3 (to 250)
+            244 POP_TOP
+
+287         246 POP_EXCEPT
+            248 JUMP_BACKWARD           97 (to 56)
+
+286     >>  250 RERAISE                  0
+        >>  252 COPY                     3
+            254 POP_EXCEPT
+            256 RERAISE                  1
+
+282     >>  258 JUMP_BACKWARD          102 (to 56)
+
+288     >>  260 LOAD_FAST                1 (removed)
+            262 RETURN_VALUE
+ExceptionTable:
+  104 to 222 -> 226 [1]
+  226 to 244 -> 252 [2] lasti
+  250 to 250 -> 252 [2] lasti
+
+==============================================================================
+## <module>.RecipeCache.count  (args=1, locals=3)
+# varnames: self, n, name
+290           0 RESUME                   0
+
+297           2 LOAD_CONST               1 (0)
+              4 STORE_FAST               1 (n)
+
+298           6 NOP
+
+299           8 LOAD_GLOBAL              1 (NULL + os)
+             20 LOAD_ATTR                1 (listdir)
+             30 LOAD_FAST                0 (self)
+             32 LOAD_ATTR                2 (dir)
+             42 PRECALL                  1
+             46 CALL                     1
+             56 GET_ITER
+        >>   58 FOR_ITER                28 (to 116)
+             60 STORE_FAST               2 (name)
+
+300          62 LOAD_FAST                2 (name)
+             64 LOAD_METHOD              3 (endswith)
+             86 LOAD_CONST               2 ('.json')
+             88 PRECALL                  1
+             92 CALL                     1
+            102 POP_JUMP_FORWARD_IF_FALSE     5 (to 114)
+
+301         104 LOAD_FAST                1 (n)
+            106 LOAD_CONST               3 (1)
+            108 BINARY_OP               13 (+=)
+            112 STORE_FAST               1 (n)
+        >>  114 JUMP_BACKWARD           29 (to 58)
+
+299     >>  116 JUMP_FORWARD            16 (to 150)
+        >>  118 PUSH_EXC_INFO
+
+302         120 LOAD_GLOBAL              8 (OSError)
+            132 CHECK_EXC_MATCH
+            134 POP_JUMP_FORWARD_IF_FALSE     3 (to 142)
+            136 POP_TOP
+
+303         138 POP_EXCEPT
+            140 JUMP_FORWARD             4 (to 150)
+
+302     >>  142 RERAISE                  0
+        >>  144 COPY                     3
+            146 POP_EXCEPT
+            148 RERAISE                  1
+
+304     >>  150 LOAD_FAST                1 (n)
+            152 RETURN_VALUE
+ExceptionTable:
+  8 to 114 -> 118 [0]
+  118 to 136 -> 144 [1] lasti
+  142 to 142 -> 144 [1] lasti
+
+==============================================================================
+## <module>.RecipeCache.dir_list  (args=1, locals=1)
+# varnames: self
+306           0 RESUME                   0
+
+313           2 NOP
+
+314           4 LOAD_GLOBAL              1 (NULL + sorted)
+             16 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2F030, file "core\store\cache.py", line 314>)
+             18 MAKE_FUNCTION            0
+             20 LOAD_GLOBAL              3 (NULL + os)
+             32 LOAD_ATTR                2 (listdir)
+             42 LOAD_FAST                0 (self)
+             44 LOAD_ATTR                3 (dir)
+             54 PRECALL                  1
+             58 CALL                     1
+             68 GET_ITER
+             70 PRECALL                  0
+             74 CALL                     0
+             84 PRECALL                  1
+             88 CALL                     1
+             98 RETURN_VALUE
+        >>  100 PUSH_EXC_INFO
+
+315         102 LOAD_GLOBAL              8 (OSError)
+            114 CHECK_EXC_MATCH
+            116 POP_JUMP_FORWARD_IF_FALSE     5 (to 128)
+            118 POP_TOP
+
+316         120 BUILD_LIST               0
+            122 SWAP                     2
+            124 POP_EXCEPT
+            126 RETURN_VALUE
+
+315     >>  128 RERAISE                  0
+        >>  130 COPY                     3
+            132 POP_EXCEPT
+            134 RERAISE                  1
+ExceptionTable:
+  4 to 96 -> 100 [0]
+  100 to 122 -> 130 [1] lasti
+  128 to 128 -> 130 [1] lasti
+
+==============================================================================
+## <module>.RecipeCache.dir_list.<genexpr>  (args=1, locals=2)
+# varnames: .0, n
+314           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                27 (to 64)
+             10 STORE_FAST               1 (n)
+             12 LOAD_FAST                1 (n)
+             14 LOAD_METHOD              0 (endswith)
+             36 LOAD_CONST               0 ('.json')
+             38 PRECALL                  1
+             42 CALL                     1
+             52 POP_JUMP_BACKWARD_IF_FALSE    23 (to 8)
+             54 LOAD_FAST                1 (n)
+             56 YIELD_VALUE
+             58 RESUME                   1
+             60 POP_TOP
+             62 JUMP_BACKWARD           28 (to 8)
+        >>   64 LOAD_CONST               1 (None)
+             66 RETURN_VALUE
+
+==============================================================================
+## <module>.RecipeCache.fingerprint_and_load  (args=2, locals=3)
+# varnames: self, raw_text, fp
+318           0 RESUME                   0
+
+320           2 LOAD_GLOBAL              1 (NULL + layout_fingerprint)
+             14 LOAD_FAST                1 (raw_text)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 STORE_FAST               2 (fp)
+
+321          32 LOAD_FAST                2 (fp)
+             34 LOAD_FAST                0 (self)
+             36 LOAD_METHOD              1 (exists)
+             58 LOAD_FAST                2 (fp)
+             60 PRECALL                  1
+             64 CALL                     1
+             74 POP_JUMP_FORWARD_IF_FALSE    21 (to 118)
+             76 LOAD_FAST                0 (self)
+             78 LOAD_METHOD              2 (get)
+            100 LOAD_FAST                2 (fp)
+            102 PRECALL                  1
+            106 CALL                     1
+            116 JUMP_FORWARD             1 (to 120)
+        >>  118 LOAD_CONST               1 (None)
+        >>  120 BUILD_TUPLE              2
+            122 RETURN_VALUE

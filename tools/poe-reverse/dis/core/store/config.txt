@@ -1,0 +1,855 @@
+# module: core.store.config
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\store\config.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 SETUP_ANNOTATIONS
+              4 LOAD_CONST               0 ('core/store/config.py - V2 config persistence (V.1.5-style schema, V2 path).\n\nIsolated under %APPDATA%\\Purchase Order Extractor V2\\config.json so it never\ncollides with the V.1.5 config at %APPDATA%\\Purchase Order Extractor\\config.json.\n\nSchema (V.1.5-compatible flat fields + V2 extras):\n    {\n      "provider":   "DeepSeek" | "OpenAI" | ...,\n      "api_key":    "sk-...",\n      "base_url":   "https://api.deepseek.com/v1",\n      "model":      "deepseek-chat",\n      "force_json": true,\n      "temperature": 0.2,\n      "top_p":      0.9,\n      "max_tokens": 4096,\n      "infer_timeout": 300,        # V2: seconds (passed to recipe_infer)\n    }\n\nThe legacy V2 schema (only base_url/api_key/model) is still loaded transparently.\n')
+              6 STORE_NAME               0 (__doc__)
+
+ 21           8 LOAD_CONST               1 (0)
+             10 LOAD_CONST               2 (('annotations',))
+             12 IMPORT_NAME              1 (__future__)
+             14 IMPORT_FROM              2 (annotations)
+             16 STORE_NAME               2 (annotations)
+             18 POP_TOP
+
+ 23          20 LOAD_CONST               1 (0)
+             22 LOAD_CONST               3 (None)
+             24 IMPORT_NAME              3 (json)
+             26 STORE_NAME               3 (json)
+
+ 24          28 LOAD_CONST               1 (0)
+             30 LOAD_CONST               3 (None)
+             32 IMPORT_NAME              4 (os)
+             34 STORE_NAME               4 (os)
+
+ 25          36 LOAD_CONST               1 (0)
+             38 LOAD_CONST               4 (('Path',))
+             40 IMPORT_NAME              5 (pathlib)
+             42 IMPORT_FROM              6 (Path)
+             44 STORE_NAME               6 (Path)
+             46 POP_TOP
+
+ 27          48 LOAD_CONST               5 ('Purchase Order Extractor V2')
+             50 STORE_NAME               7 (APP_NAME)
+
+ 28          52 BUILD_MAP                0
+
+ 30          54 LOAD_CONST               6 ('provider')
+             56 LOAD_CONST               7 ('智谱GLM')
+
+ 28          58 MAP_ADD                  1
+
+ 31          60 LOAD_CONST               8 ('api_key')
+             62 LOAD_CONST               9 ('')
+
+ 28          64 MAP_ADD                  1
+
+ 32          66 LOAD_CONST              10 ('base_url')
+             68 LOAD_CONST              11 ('https://open.bigmodel.cn/api/paas/v4')
+
+ 28          70 MAP_ADD                  1
+
+ 33          72 LOAD_CONST              12 ('model')
+             74 LOAD_CONST              13 ('glm-4.6v')
+
+ 28          76 MAP_ADD                  1
+
+ 34          78 LOAD_CONST              14 ('force_json')
+             80 LOAD_CONST              15 (True)
+
+ 28          82 MAP_ADD                  1
+
+ 35          84 LOAD_CONST              16 ('temperature')
+             86 LOAD_CONST              17 (0.2)
+
+ 28          88 MAP_ADD                  1
+
+ 36          90 LOAD_CONST              18 ('top_p')
+             92 LOAD_CONST              19 (0.9)
+
+ 28          94 MAP_ADD                  1
+
+ 37          96 LOAD_CONST              20 ('max_tokens')
+             98 LOAD_CONST              21 (4096)
+
+ 28         100 MAP_ADD                  1
+
+ 38         102 LOAD_CONST              22 ('infer_timeout')
+            104 LOAD_CONST              23 (300)
+
+ 28         106 MAP_ADD                  1
+
+ 40         108 LOAD_CONST              24 ('recipe_model')
+            110 LOAD_CONST               9 ('')
+
+ 28         112 MAP_ADD                  1
+
+ 42         114 LOAD_CONST              25 ('data_timeout')
+            116 LOAD_CONST              23 (300)
+
+ 28         118 MAP_ADD                  1
+
+ 43         120 LOAD_CONST              26 ('recipe_timeout')
+            122 LOAD_CONST              27 (180)
+
+ 28         124 MAP_ADD                  1
+
+ 44         126 LOAD_CONST              28 ('http_retries')
+            128 LOAD_CONST              29 (3)
+
+ 28         130 MAP_ADD                  1
+
+ 45         132 LOAD_CONST              30 ('http_backoff')
+            134 LOAD_CONST              31 (5.0)
+
+ 28         136 MAP_ADD                  1
+
+ 47         138 LOAD_CONST              32 ('infer_engine')
+            140 LOAD_CONST              33 ('online')
+
+ 28         142 MAP_ADD                  1
+
+ 48         144 LOAD_CONST              34 ('local_model_path')
+            146 LOAD_CONST               9 ('')
+
+ 28         148 MAP_ADD                  1
+
+ 49         150 LOAD_CONST              35 ('local_n_ctx')
+            152 LOAD_CONST              21 (4096)
+
+ 28         154 MAP_ADD                  1
+
+ 50         156 LOAD_CONST               1 (0)
+
+ 51         158 LOAD_CONST               1 (0)
+
+ 52         160 LOAD_CONST              36 (512)
+
+ 53         162 LOAD_CONST              37 (0.1)
+
+ 54         164 LOAD_CONST              19 (0.9)
+
+ 55         166 LOAD_CONST              38 (2048)
+
+ 58         168 LOAD_CONST              15 (True)
+
+ 28         170 LOAD_CONST              39 (('local_n_threads', 'local_n_gpu_layers', 'local_n_batch', 'local_temperature', 'local_top_p', 'local_max_tokens', 'osr_consensus'))
+            172 BUILD_CONST_KEY_MAP      7
+            174 DICT_UPDATE              1
+            176 STORE_NAME               8 (DEFAULTS)
+            178 LOAD_CONST              40 ('dict')
+            180 LOAD_NAME                9 (__annotations__)
+            182 LOAD_CONST              41 ('DEFAULTS')
+            184 STORE_SUBSCR
+
+ 62         188 LOAD_CONST              52 (('return', 'Path'))
+            190 LOAD_CONST              44 (<code object user_config_dir at 0x000002BF9444CAA0, file "core\store\config.py", line 62>)
+            192 MAKE_FUNCTION            4 (annotations)
+            194 STORE_NAME              10 (user_config_dir)
+
+ 73         196 LOAD_CONST              52 (('return', 'Path'))
+            198 LOAD_CONST              45 (<code object config_path at 0x000002BF94A6EB10, file "core\store\config.py", line 73>)
+            200 MAKE_FUNCTION            4 (annotations)
+            202 STORE_NAME              11 (config_path)
+
+ 77         204 PUSH_NULL
+            206 LOAD_BUILD_CLASS
+            208 LOAD_CONST              46 (<code object AppConfig at 0x000002BF94A6A430, file "core\store\config.py", line 77>)
+            210 MAKE_FUNCTION            0
+            212 LOAD_CONST              47 ('AppConfig')
+            214 PRECALL                  2
+            218 CALL                     2
+            228 STORE_NAME              12 (AppConfig)
+
+152         230 LOAD_CONST              53 (('return', 'dict'))
+            232 LOAD_CONST              48 (<code object load_config at 0x000002BF94692970, file "core\store\config.py", line 152>)
+            234 MAKE_FUNCTION            4 (annotations)
+            236 STORE_NAME              13 (load_config)
+
+164         238 LOAD_CONST              54 (('cfg', 'dict', 'return', 'None'))
+            240 LOAD_CONST              51 (<code object save_config at 0x000002BF949EE250, file "core\store\config.py", line 164>)
+            242 MAKE_FUNCTION            4 (annotations)
+            244 STORE_NAME              14 (save_config)
+            246 LOAD_CONST               3 (None)
+            248 RETURN_VALUE
+
+==============================================================================
+## <module>.user_config_dir  (args=0, locals=2)
+# varnames: base, d
+ 62           0 RESUME                   0
+
+ 64           2 LOAD_GLOBAL              1 (NULL + getattr)
+             14 LOAD_GLOBAL              2 (os)
+             26 LOAD_CONST               1 ('frozen')
+             28 LOAD_CONST               2 (False)
+             30 PRECALL                  3
+             34 CALL                     3
+             44 POP_JUMP_FORWARD_IF_FALSE    63 (to 172)
+
+ 65          46 LOAD_GLOBAL              2 (os)
+             58 LOAD_ATTR                2 (environ)
+             68 LOAD_METHOD              3 (get)
+             90 LOAD_CONST               3 ('APPDATA')
+             92 PRECALL                  1
+             96 CALL                     1
+            106 JUMP_IF_TRUE_OR_POP     30 (to 168)
+            108 LOAD_GLOBAL              2 (os)
+            120 LOAD_ATTR                4 (path)
+            130 LOAD_METHOD              5 (expanduser)
+            152 LOAD_CONST               4 ('~/.config')
+            154 PRECALL                  1
+            158 CALL                     1
+        >>  168 STORE_FAST               0 (base)
+            170 JUMP_FORWARD            62 (to 296)
+
+ 67     >>  172 LOAD_GLOBAL              2 (os)
+            184 LOAD_ATTR                2 (environ)
+            194 LOAD_METHOD              3 (get)
+            216 LOAD_CONST               3 ('APPDATA')
+            218 PRECALL                  1
+            222 CALL                     1
+            232 JUMP_IF_TRUE_OR_POP     30 (to 294)
+            234 LOAD_GLOBAL              2 (os)
+            246 LOAD_ATTR                4 (path)
+            256 LOAD_METHOD              5 (expanduser)
+            278 LOAD_CONST               4 ('~/.config')
+            280 PRECALL                  1
+            284 CALL                     1
+        >>  294 STORE_FAST               0 (base)
+
+ 68     >>  296 LOAD_GLOBAL              2 (os)
+            308 LOAD_ATTR                4 (path)
+            318 LOAD_METHOD              6 (join)
+            340 LOAD_FAST                0 (base)
+            342 LOAD_GLOBAL             14 (APP_NAME)
+            354 PRECALL                  2
+            358 CALL                     2
+            368 STORE_FAST               1 (d)
+
+ 69         370 LOAD_GLOBAL              3 (NULL + os)
+            382 LOAD_ATTR                8 (makedirs)
+            392 LOAD_FAST                1 (d)
+            394 LOAD_CONST               5 (True)
+            396 KW_NAMES                 6
+            398 PRECALL                  2
+            402 CALL                     2
+            412 POP_TOP
+
+ 70         414 LOAD_GLOBAL             19 (NULL + Path)
+            426 LOAD_FAST                1 (d)
+            428 PRECALL                  1
+            432 CALL                     1
+            442 RETURN_VALUE
+
+==============================================================================
+## <module>.config_path  (args=0, locals=0)
+ 73           0 RESUME                   0
+
+ 74           2 LOAD_GLOBAL              1 (NULL + user_config_dir)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 LOAD_CONST               1 ('config.json')
+             30 BINARY_OP               11 (/)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig  (args=0, locals=0)
+ 77           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('AppConfig')
+              8 STORE_NAME               2 (__qualname__)
+
+ 78          10 LOAD_CONST               1 ("V.1.5-style configuration holder. Mirrors OnlineModel's interface\n    (load/save/ready) so the UI shell ported from V.1.5 binds naturally.")
+             12 STORE_NAME               3 (__doc__)
+
+ 81          14 LOAD_CONST              15 (('return', 'None'))
+             16 LOAD_CONST               4 (<code object __init__ at 0x000002BF9438F200, file "core\store\config.py", line 81>)
+             18 MAKE_FUNCTION            4 (annotations)
+             20 STORE_NAME               4 (__init__)
+
+114          22 LOAD_CONST              15 (('return', 'None'))
+             24 LOAD_CONST               5 (<code object load at 0x000002BF94692B50, file "core\store\config.py", line 114>)
+             26 MAKE_FUNCTION            4 (annotations)
+             28 STORE_NAME               5 (load)
+
+124          30 LOAD_CONST              15 (('return', 'None'))
+             32 LOAD_CONST               6 (<code object save at 0x000002BF946C5A10, file "core\store\config.py", line 124>)
+             34 MAKE_FUNCTION            4 (annotations)
+             36 STORE_NAME               6 (save)
+
+128          38 LOAD_CONST              15 (('return', 'None'))
+             40 LOAD_CONST               7 (<code object clear at 0x000002BF946C2040, file "core\store\config.py", line 128>)
+             42 MAKE_FUNCTION            4 (annotations)
+             44 STORE_NAME               7 (clear)
+
+138          46 LOAD_CONST              16 (('return', 'bool'))
+             48 LOAD_CONST               9 (<code object ready at 0x000002BF949E2290, file "core\store\config.py", line 138>)
+             50 MAKE_FUNCTION            4 (annotations)
+             52 STORE_NAME               8 (ready)
+
+143          54 LOAD_CONST              17 (('return', 'dict'))
+             56 LOAD_CONST              11 (<code object to_dict at 0x000002BF94A65AC0, file "core\store\config.py", line 143>)
+             58 MAKE_FUNCTION            4 (annotations)
+             60 STORE_NAME               9 (to_dict)
+
+146          62 LOAD_NAME               10 (property)
+
+147          64 LOAD_CONST              18 (('return', 'Path'))
+             66 LOAD_CONST              13 (<code object cfg_path at 0x000002BF94AB2C10, file "core\store\config.py", line 146>)
+             68 MAKE_FUNCTION            4 (annotations)
+
+146          70 PRECALL                  0
+             74 CALL                     0
+
+147          84 STORE_NAME              11 (cfg_path)
+             86 LOAD_CONST              14 (None)
+             88 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.__init__  (args=1, locals=1)
+# varnames: self
+ 81           0 RESUME                   0
+
+ 82           2 LOAD_CONST               1 ('智谱GLM')
+              4 LOAD_FAST                0 (self)
+              6 STORE_ATTR               0 (provider)
+
+ 83          16 LOAD_CONST               2 ('')
+             18 LOAD_FAST                0 (self)
+             20 STORE_ATTR               1 (api_key)
+
+ 84          30 LOAD_CONST               3 ('https://open.bigmodel.cn/api/paas/v4')
+             32 LOAD_FAST                0 (self)
+             34 STORE_ATTR               2 (base_url)
+
+ 85          44 LOAD_CONST               4 ('glm-4.6v')
+             46 LOAD_FAST                0 (self)
+             48 STORE_ATTR               3 (model)
+
+ 86          58 LOAD_CONST               5 (True)
+             60 LOAD_FAST                0 (self)
+             62 STORE_ATTR               4 (force_json)
+
+ 87          72 LOAD_CONST               6 (0.2)
+             74 LOAD_FAST                0 (self)
+             76 STORE_ATTR               5 (temperature)
+
+ 88          86 LOAD_CONST               7 (0.9)
+             88 LOAD_FAST                0 (self)
+             90 STORE_ATTR               6 (top_p)
+
+ 89         100 LOAD_CONST               8 (4096)
+            102 LOAD_FAST                0 (self)
+            104 STORE_ATTR               7 (max_tokens)
+
+ 90         114 LOAD_CONST               9 (300)
+            116 LOAD_FAST                0 (self)
+            118 STORE_ATTR               8 (infer_timeout)
+
+ 92         128 LOAD_CONST               2 ('')
+            130 LOAD_FAST                0 (self)
+            132 STORE_ATTR               9 (recipe_model)
+
+ 94         142 LOAD_CONST               9 (300)
+            144 LOAD_FAST                0 (self)
+            146 STORE_ATTR              10 (data_timeout)
+
+ 95         156 LOAD_CONST              10 (180)
+            158 LOAD_FAST                0 (self)
+            160 STORE_ATTR              11 (recipe_timeout)
+
+ 96         170 LOAD_CONST              11 (3)
+            172 LOAD_FAST                0 (self)
+            174 STORE_ATTR              12 (http_retries)
+
+ 97         184 LOAD_CONST              12 (5.0)
+            186 LOAD_FAST                0 (self)
+            188 STORE_ATTR              13 (http_backoff)
+
+ 99         198 LOAD_GLOBAL             28 (DEFAULTS)
+            210 LOAD_CONST              13 ('infer_engine')
+            212 BINARY_SUBSCR
+            222 LOAD_FAST                0 (self)
+            224 STORE_ATTR              15 (infer_engine)
+
+100         234 LOAD_CONST               2 ('')
+            236 LOAD_FAST                0 (self)
+            238 STORE_ATTR              16 (local_model_path)
+
+101         248 LOAD_CONST               8 (4096)
+            250 LOAD_FAST                0 (self)
+            252 STORE_ATTR              17 (local_n_ctx)
+
+102         262 LOAD_CONST              14 (0)
+            264 LOAD_FAST                0 (self)
+            266 STORE_ATTR              18 (local_n_threads)
+
+103         276 LOAD_CONST              14 (0)
+            278 LOAD_FAST                0 (self)
+            280 STORE_ATTR              19 (local_n_gpu_layers)
+
+104         290 LOAD_CONST              15 (512)
+            292 LOAD_FAST                0 (self)
+            294 STORE_ATTR              20 (local_n_batch)
+
+105         304 LOAD_CONST              16 (0.1)
+            306 LOAD_FAST                0 (self)
+            308 STORE_ATTR              21 (local_temperature)
+
+106         318 LOAD_CONST               7 (0.9)
+            320 LOAD_FAST                0 (self)
+            322 STORE_ATTR              22 (local_top_p)
+
+107         332 LOAD_CONST              17 (2048)
+            334 LOAD_FAST                0 (self)
+            336 STORE_ATTR              23 (local_max_tokens)
+
+109         346 LOAD_GLOBAL             28 (DEFAULTS)
+            358 LOAD_CONST              18 ('osr_consensus')
+            360 BINARY_SUBSCR
+            370 LOAD_FAST                0 (self)
+            372 STORE_ATTR              24 (osr_consensus)
+
+110         382 LOAD_GLOBAL             51 (NULL + config_path)
+            394 PRECALL                  0
+            398 CALL                     0
+            408 LOAD_FAST                0 (self)
+            410 STORE_ATTR              26 (_path)
+
+111         420 LOAD_FAST                0 (self)
+            422 LOAD_METHOD             27 (load)
+            444 PRECALL                  0
+            448 CALL                     0
+            458 POP_TOP
+            460 LOAD_CONST               0 (None)
+            462 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.load  (args=1, locals=4)
+# varnames: self, d, k, v
+114           0 RESUME                   0
+
+115           2 NOP
+
+116           4 LOAD_FAST                0 (self)
+              6 LOAD_ATTR                0 (_path)
+             16 LOAD_METHOD              1 (exists)
+             38 PRECALL                  0
+             42 CALL                     0
+             52 POP_JUMP_FORWARD_IF_FALSE    97 (to 248)
+
+117          54 LOAD_GLOBAL              5 (NULL + json)
+             66 LOAD_ATTR                3 (loads)
+             76 LOAD_FAST                0 (self)
+             78 LOAD_ATTR                0 (_path)
+             88 LOAD_METHOD              4 (read_text)
+            110 LOAD_CONST               1 ('utf-8')
+            112 KW_NAMES                 2
+            114 PRECALL                  1
+            118 CALL                     1
+            128 PRECALL                  1
+            132 CALL                     1
+            142 STORE_FAST               1 (d)
+
+118         144 LOAD_FAST                1 (d)
+            146 LOAD_METHOD              5 (items)
+            168 PRECALL                  0
+            172 CALL                     0
+            182 GET_ITER
+        >>  184 FOR_ITER                33 (to 252)
+            186 UNPACK_SEQUENCE          2
+            190 STORE_FAST               2 (k)
+            192 STORE_FAST               3 (v)
+
+119         194 LOAD_FAST                2 (k)
+            196 LOAD_GLOBAL             12 (DEFAULTS)
+            208 CONTAINS_OP              0
+            210 POP_JUMP_FORWARD_IF_FALSE    17 (to 246)
+
+120         212 LOAD_GLOBAL             15 (NULL + setattr)
+            224 LOAD_FAST                0 (self)
+            226 LOAD_FAST                2 (k)
+            228 LOAD_FAST                3 (v)
+            230 PRECALL                  3
+            234 CALL                     3
+            244 POP_TOP
+        >>  246 JUMP_BACKWARD           32 (to 184)
+
+116     >>  248 LOAD_CONST               0 (None)
+            250 RETURN_VALUE
+
+118     >>  252 LOAD_CONST               0 (None)
+            254 RETURN_VALUE
+        >>  256 PUSH_EXC_INFO
+
+121         258 LOAD_GLOBAL             16 (Exception)
+            270 CHECK_EXC_MATCH
+            272 POP_JUMP_FORWARD_IF_FALSE     4 (to 282)
+            274 POP_TOP
+
+122         276 POP_EXCEPT
+            278 LOAD_CONST               0 (None)
+            280 RETURN_VALUE
+
+121     >>  282 RERAISE                  0
+        >>  284 COPY                     3
+            286 POP_EXCEPT
+            288 RERAISE                  1
+ExceptionTable:
+  4 to 246 -> 256 [0]
+  256 to 274 -> 284 [1] lasti
+  282 to 282 -> 284 [1] lasti
+
+==============================================================================
+## <module>.AppConfig.save  (args=1, locals=2)
+# varnames: self, d
+              0 MAKE_CELL                0 (self)
+
+124           2 RESUME                   0
+
+125           4 LOAD_CLOSURE             0 (self)
+              6 BUILD_TUPLE              1
+              8 LOAD_CONST               1 (<code object <dictcomp> at 0x000002BF94A2BF00, file "core\store\config.py", line 125>)
+             10 MAKE_FUNCTION            8 (closure)
+             12 LOAD_GLOBAL              0 (DEFAULTS)
+             24 LOAD_METHOD              1 (keys)
+             46 PRECALL                  0
+             50 CALL                     0
+             60 GET_ITER
+             62 PRECALL                  0
+             66 CALL                     0
+             76 STORE_FAST               1 (d)
+
+126          78 LOAD_DEREF               0 (self)
+             80 LOAD_ATTR                2 (_path)
+             90 LOAD_METHOD              3 (write_text)
+            112 LOAD_GLOBAL              9 (NULL + json)
+            124 LOAD_ATTR                5 (dumps)
+            134 LOAD_FAST                1 (d)
+            136 LOAD_CONST               2 (False)
+            138 LOAD_CONST               3 (2)
+            140 KW_NAMES                 4
+            142 PRECALL                  3
+            146 CALL                     3
+            156 LOAD_CONST               5 ('utf-8')
+            158 KW_NAMES                 6
+            160 PRECALL                  2
+            164 CALL                     2
+            174 POP_TOP
+            176 LOAD_CONST               0 (None)
+            178 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.save.<dictcomp>  (args=1, locals=2)
+# varnames: .0, k
+              0 COPY_FREE_VARS           1
+
+125           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (k)
+             12 LOAD_FAST                1 (k)
+             14 LOAD_GLOBAL              1 (NULL + getattr)
+             26 LOAD_DEREF               2 (self)
+             28 LOAD_FAST                1 (k)
+             30 PRECALL                  2
+             34 CALL                     2
+             44 MAP_ADD                  2
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.clear  (args=1, locals=3)
+# varnames: self, k, v
+128           0 RESUME                   0
+
+129           2 LOAD_GLOBAL              0 (DEFAULTS)
+             14 LOAD_METHOD              1 (items)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 GET_ITER
+        >>   52 FOR_ITER                22 (to 98)
+             54 UNPACK_SEQUENCE          2
+             58 STORE_FAST               1 (k)
+             60 STORE_FAST               2 (v)
+
+130          62 LOAD_GLOBAL              5 (NULL + setattr)
+             74 LOAD_FAST                0 (self)
+             76 LOAD_FAST                1 (k)
+             78 LOAD_FAST                2 (v)
+             80 PRECALL                  3
+             84 CALL                     3
+             94 POP_TOP
+             96 JUMP_BACKWARD           23 (to 52)
+
+131     >>   98 NOP
+
+132         100 LOAD_FAST                0 (self)
+            102 LOAD_ATTR                3 (_path)
+            112 LOAD_METHOD              4 (exists)
+            134 PRECALL                  0
+            138 CALL                     0
+            148 POP_JUMP_FORWARD_IF_FALSE    27 (to 204)
+
+133         150 LOAD_FAST                0 (self)
+            152 LOAD_ATTR                3 (_path)
+            162 LOAD_METHOD              5 (unlink)
+            184 PRECALL                  0
+            188 CALL                     0
+            198 POP_TOP
+            200 LOAD_CONST               0 (None)
+            202 RETURN_VALUE
+
+132     >>  204 LOAD_CONST               0 (None)
+            206 RETURN_VALUE
+        >>  208 PUSH_EXC_INFO
+
+134         210 LOAD_GLOBAL             12 (Exception)
+            222 CHECK_EXC_MATCH
+            224 POP_JUMP_FORWARD_IF_FALSE     4 (to 234)
+            226 POP_TOP
+
+135         228 POP_EXCEPT
+            230 LOAD_CONST               0 (None)
+            232 RETURN_VALUE
+
+134     >>  234 RERAISE                  0
+        >>  236 COPY                     3
+            238 POP_EXCEPT
+            240 RERAISE                  1
+ExceptionTable:
+  100 to 198 -> 208 [0]
+  208 to 226 -> 236 [1] lasti
+  234 to 234 -> 236 [1] lasti
+
+==============================================================================
+## <module>.AppConfig.ready  (args=1, locals=1)
+# varnames: self
+138           0 RESUME                   0
+
+139           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (infer_engine)
+             14 LOAD_CONST               1 ('local')
+             16 COMPARE_OP               2 (==)
+             22 POP_JUMP_FORWARD_IF_FALSE    56 (to 136)
+
+140          24 LOAD_GLOBAL              3 (NULL + bool)
+             36 LOAD_FAST                0 (self)
+             38 LOAD_ATTR                2 (local_model_path)
+             48 PRECALL                  1
+             52 CALL                     1
+             62 JUMP_IF_FALSE_OR_POP    35 (to 134)
+             64 LOAD_GLOBAL              6 (os)
+             76 LOAD_ATTR                4 (path)
+             86 LOAD_METHOD              5 (exists)
+            108 LOAD_FAST                0 (self)
+            110 LOAD_ATTR                2 (local_model_path)
+            120 PRECALL                  1
+            124 CALL                     1
+        >>  134 RETURN_VALUE
+
+141     >>  136 LOAD_GLOBAL              3 (NULL + bool)
+            148 LOAD_FAST                0 (self)
+            150 LOAD_ATTR                6 (api_key)
+            160 JUMP_IF_FALSE_OR_POP    13 (to 188)
+            162 LOAD_FAST                0 (self)
+            164 LOAD_ATTR                7 (base_url)
+            174 JUMP_IF_FALSE_OR_POP     6 (to 188)
+            176 LOAD_FAST                0 (self)
+            178 LOAD_ATTR                8 (model)
+        >>  188 PRECALL                  1
+            192 CALL                     1
+            202 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.to_dict  (args=1, locals=1)
+# varnames: self
+              0 MAKE_CELL                0 (self)
+
+143           2 RESUME                   0
+
+144           4 LOAD_CLOSURE             0 (self)
+              6 BUILD_TUPLE              1
+              8 LOAD_CONST               1 (<code object <dictcomp> at 0x000002BF94AA8E40, file "core\store\config.py", line 144>)
+             10 MAKE_FUNCTION            8 (closure)
+             12 LOAD_GLOBAL              0 (DEFAULTS)
+             24 LOAD_METHOD              1 (keys)
+             46 PRECALL                  0
+             50 CALL                     0
+             60 GET_ITER
+             62 PRECALL                  0
+             66 CALL                     0
+             76 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.to_dict.<dictcomp>  (args=1, locals=2)
+# varnames: .0, k
+              0 COPY_FREE_VARS           1
+
+144           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                19 (to 48)
+             10 STORE_FAST               1 (k)
+             12 LOAD_FAST                1 (k)
+             14 LOAD_GLOBAL              1 (NULL + getattr)
+             26 LOAD_DEREF               2 (self)
+             28 LOAD_FAST                1 (k)
+             30 PRECALL                  2
+             34 CALL                     2
+             44 MAP_ADD                  2
+             46 JUMP_BACKWARD           20 (to 8)
+        >>   48 RETURN_VALUE
+
+==============================================================================
+## <module>.AppConfig.cfg_path  (args=1, locals=1)
+# varnames: self
+146           0 RESUME                   0
+
+148           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (_path)
+             14 RETURN_VALUE
+
+==============================================================================
+## <module>.load_config  (args=0, locals=2)
+# varnames: p, d
+152           0 RESUME                   0
+
+154           2 LOAD_GLOBAL              1 (NULL + config_path)
+             14 PRECALL                  0
+             18 CALL                     0
+             28 STORE_FAST               0 (p)
+
+155          30 LOAD_FAST                0 (p)
+             32 LOAD_METHOD              1 (exists)
+             54 PRECALL                  0
+             58 CALL                     0
+             68 POP_JUMP_FORWARD_IF_TRUE    20 (to 110)
+
+156          70 LOAD_GLOBAL              5 (NULL + dict)
+             82 LOAD_GLOBAL              6 (DEFAULTS)
+             94 PRECALL                  1
+             98 CALL                     1
+            108 RETURN_VALUE
+
+157     >>  110 NOP
+
+158         112 LOAD_GLOBAL              9 (NULL + json)
+            124 LOAD_ATTR                5 (loads)
+            134 LOAD_FAST                0 (p)
+            136 LOAD_METHOD              6 (read_text)
+            158 LOAD_CONST               1 ('utf-8')
+            160 KW_NAMES                 2
+            162 PRECALL                  1
+            166 CALL                     1
+            176 PRECALL                  1
+            180 CALL                     1
+            190 STORE_FAST               1 (d)
+
+159         192 BUILD_MAP                0
+            194 LOAD_GLOBAL              6 (DEFAULTS)
+            206 DICT_UPDATE              1
+            208 LOAD_FAST                1 (d)
+            210 DICT_UPDATE              1
+            212 RETURN_VALUE
+        >>  214 PUSH_EXC_INFO
+
+160         216 LOAD_GLOBAL             14 (Exception)
+            228 CHECK_EXC_MATCH
+            230 POP_JUMP_FORWARD_IF_FALSE    23 (to 278)
+            232 POP_TOP
+
+161         234 LOAD_GLOBAL              5 (NULL + dict)
+            246 LOAD_GLOBAL              6 (DEFAULTS)
+            258 PRECALL                  1
+            262 CALL                     1
+            272 SWAP                     2
+            274 POP_EXCEPT
+            276 RETURN_VALUE
+
+160     >>  278 RERAISE                  0
+        >>  280 COPY                     3
+            282 POP_EXCEPT
+            284 RERAISE                  1
+ExceptionTable:
+  112 to 210 -> 214 [0]
+  214 to 272 -> 280 [1] lasti
+  278 to 278 -> 280 [1] lasti
+
+==============================================================================
+## <module>.save_config  (args=1, locals=3)
+# varnames: cfg, p, cur
+              0 MAKE_CELL                0 (cfg)
+
+164           2 RESUME                   0
+
+165           4 LOAD_GLOBAL              1 (NULL + config_path)
+             16 PRECALL                  0
+             20 CALL                     0
+             30 STORE_FAST               1 (p)
+
+166          32 LOAD_GLOBAL              3 (NULL + load_config)
+             44 PRECALL                  0
+             48 CALL                     0
+             58 STORE_FAST               2 (cur)
+
+167          60 LOAD_FAST                2 (cur)
+             62 LOAD_METHOD              2 (update)
+             84 LOAD_CLOSURE             0 (cfg)
+             86 BUILD_TUPLE              1
+             88 LOAD_CONST               1 (<code object <dictcomp> at 0x000002BF94AA84E0, file "core\store\config.py", line 167>)
+             90 MAKE_FUNCTION            8 (closure)
+             92 LOAD_GLOBAL              6 (DEFAULTS)
+            104 GET_ITER
+            106 PRECALL                  0
+            110 CALL                     0
+            120 PRECALL                  1
+            124 CALL                     1
+            134 POP_TOP
+
+168         136 LOAD_FAST                1 (p)
+            138 LOAD_METHOD              4 (write_text)
+            160 LOAD_GLOBAL             11 (NULL + json)
+            172 LOAD_ATTR                6 (dumps)
+            182 LOAD_FAST                2 (cur)
+            184 LOAD_CONST               2 (False)
+            186 LOAD_CONST               3 (2)
+            188 KW_NAMES                 4
+            190 PRECALL                  3
+            194 CALL                     3
+            204 LOAD_CONST               5 ('utf-8')
+            206 KW_NAMES                 6
+            208 PRECALL                  2
+            212 CALL                     2
+            222 POP_TOP
+            224 LOAD_CONST               0 (None)
+            226 RETURN_VALUE
+
+==============================================================================
+## <module>.save_config.<dictcomp>  (args=1, locals=2)
+# varnames: .0, k
+              0 COPY_FREE_VARS           1
+
+167           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                15 (to 40)
+             10 STORE_FAST               1 (k)
+             12 LOAD_FAST                1 (k)
+             14 LOAD_DEREF               2 (cfg)
+             16 CONTAINS_OP              0
+             18 POP_JUMP_BACKWARD_IF_FALSE     6 (to 8)
+             20 LOAD_FAST                1 (k)
+             22 LOAD_DEREF               2 (cfg)
+             24 LOAD_FAST                1 (k)
+             26 BINARY_SUBSCR
+             36 MAP_ADD                  2
+             38 JUMP_BACKWARD           16 (to 8)
+        >>   40 RETURN_VALUE

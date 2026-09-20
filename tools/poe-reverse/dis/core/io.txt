@@ -1,0 +1,23 @@
+# module: core.io
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\io.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/io package - document loaders.')
+              4 STORE_NAME               0 (__doc__)
+
+  2           6 LOAD_CONST               1 (1)
+              8 LOAD_CONST               2 (('pdf_to_pages',))
+             10 IMPORT_NAME              1 (pdf)
+             12 IMPORT_FROM              2 (pdf_to_pages)
+             14 STORE_NAME               2 (pdf_to_pages)
+             16 POP_TOP
+
+  4          18 LOAD_CONST               3 ('pdf_to_pages')
+             20 BUILD_LIST               1
+             22 STORE_NAME               3 (__all__)
+             24 LOAD_CONST               4 (None)
+             26 RETURN_VALUE

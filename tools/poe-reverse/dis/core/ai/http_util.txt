@@ -1,0 +1,473 @@
+# module: core.ai.http_util
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\http_util.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/ai/http_util.py - shared, retryable JSON POST for online AI calls.\n\nBoth the data-reader (``data_extract``) and the recipe-inferrer\n(``recipe_infer``) talk to OpenAI-compatible endpoints over stdlib ``urllib``.\nThis helper centralises the transport so that a single slow / transient GLM\nresponse no longer kills a whole first-seen PO:\n\n* transient failures (``URLError`` / ``socket.timeout`` / ``ConnectionError`` /\n  ``http.client.HTTPException``) and HTTP 5xx are retried with exponential\n  backoff before giving up;\n* HTTP 4xx (auth / request error) is NOT retried - it would fail the same way;\n* every timeout is configurable via the caller (``timeout`` / ``retries`` /\n  ``backoff``), sourced from the user's config with sensible defaults.\n\nOnly stdlib is used, matching the rest of ``core/ai``.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 17           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 19          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (http.client)
+             24 STORE_NAME               4 (http)
+
+ 20          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              5 (json)
+             32 STORE_NAME               5 (json)
+
+ 21          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              6 (time)
+             40 STORE_NAME               6 (time)
+
+ 22          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               3 (None)
+             46 IMPORT_NAME              7 (urllib.error)
+             48 STORE_NAME               8 (urllib)
+
+ 23          50 LOAD_CONST               1 (0)
+             52 LOAD_CONST               3 (None)
+             54 IMPORT_NAME              9 (urllib.request)
+             56 STORE_NAME               8 (urllib)
+
+ 25          58 LOAD_CONST               4 (180.0)
+             60 STORE_NAME              10 (DEFAULT_TIMEOUT)
+
+ 26          62 LOAD_CONST               5 (3)
+             64 STORE_NAME              11 (DEFAULT_RETRIES)
+
+ 27          66 LOAD_CONST               6 (5.0)
+             68 STORE_NAME              12 (DEFAULT_BACKOFF)
+
+ 35          70 LOAD_CONST               7 (118.0)
+             72 STORE_NAME              13 (DEFAULT_BUDGET)
+
+ 36          74 LOAD_CONST               8 (10.0)
+             76 STORE_NAME              14 (_MIN_ATTEMPT)
+
+ 40          78 LOAD_NAME                8 (urllib)
+             80 LOAD_ATTR               15 (error)
+             90 LOAD_ATTR               16 (URLError)
+
+ 41         100 LOAD_NAME               17 (TimeoutError)
+
+ 42         102 LOAD_NAME               18 (ConnectionError)
+
+ 43         104 LOAD_NAME                4 (http)
+            106 LOAD_ATTR               19 (client)
+            116 LOAD_ATTR               20 (HTTPException)
+
+ 39         126 BUILD_TUPLE              4
+            128 STORE_NAME              21 (_TRANSIENT)
+
+ 47         130 LOAD_CONST               3 (None)
+            132 LOAD_CONST               3 (None)
+
+ 48         134 LOAD_CONST               3 (None)
+            136 LOAD_CONST               3 (None)
+            138 LOAD_CONST               9 ('POExtract/2.0.1')
+
+ 47         140 LOAD_CONST              10 (('timeout', 'retries', 'backoff', 'budget', 'user_agent'))
+            142 BUILD_CONST_KEY_MAP      5
+            144 LOAD_CONST              14 (('return', 'dict'))
+            146 LOAD_CONST              13 (<code object post_json at 0x000002BF940C77C0, file "core\ai\http_util.py", line 47>)
+            148 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            150 STORE_NAME              22 (post_json)
+            152 LOAD_CONST               3 (None)
+            154 RETURN_VALUE
+
+==============================================================================
+## <module>.post_json  (args=3, locals=18)
+# varnames: url, api_key, body_dict, timeout, retries, backoff, budget, user_agent, data, last_err, start, attempt, eff, remaining, req, resp, e, body
+ 47           0 RESUME                   0
+
+ 61           2 LOAD_GLOBAL              1 (NULL + float)
+             14 LOAD_FAST                3 (timeout)
+             16 POP_JUMP_FORWARD_IF_NONE     2 (to 22)
+             18 LOAD_FAST                3 (timeout)
+             20 JUMP_FORWARD             6 (to 34)
+        >>   22 LOAD_GLOBAL              2 (DEFAULT_TIMEOUT)
+        >>   34 PRECALL                  1
+             38 CALL                     1
+             48 STORE_FAST               3 (timeout)
+
+ 62          50 LOAD_GLOBAL              5 (NULL + int)
+             62 LOAD_FAST                4 (retries)
+             64 POP_JUMP_FORWARD_IF_NONE     2 (to 70)
+             66 LOAD_FAST                4 (retries)
+             68 JUMP_FORWARD             6 (to 82)
+        >>   70 LOAD_GLOBAL              6 (DEFAULT_RETRIES)
+        >>   82 PRECALL                  1
+             86 CALL                     1
+             96 STORE_FAST               4 (retries)
+
+ 63          98 LOAD_GLOBAL              1 (NULL + float)
+            110 LOAD_FAST                5 (backoff)
+            112 POP_JUMP_FORWARD_IF_NONE     2 (to 118)
+            114 LOAD_FAST                5 (backoff)
+            116 JUMP_FORWARD             6 (to 130)
+        >>  118 LOAD_GLOBAL              8 (DEFAULT_BACKOFF)
+        >>  130 PRECALL                  1
+            134 CALL                     1
+            144 STORE_FAST               5 (backoff)
+
+ 64         146 LOAD_FAST                6 (budget)
+            148 POP_JUMP_FORWARD_IF_NONE    15 (to 180)
+            150 LOAD_GLOBAL              1 (NULL + float)
+            162 LOAD_FAST                6 (budget)
+            164 PRECALL                  1
+            168 CALL                     1
+            178 JUMP_FORWARD             1 (to 182)
+        >>  180 LOAD_CONST               1 (None)
+        >>  182 STORE_FAST               6 (budget)
+
+ 65         184 LOAD_GLOBAL             11 (NULL + json)
+            196 LOAD_ATTR                6 (dumps)
+            206 LOAD_FAST                2 (body_dict)
+            208 PRECALL                  1
+            212 CALL                     1
+            222 LOAD_METHOD              7 (encode)
+            244 LOAD_CONST               2 ('utf-8')
+            246 PRECALL                  1
+            250 CALL                     1
+            260 STORE_FAST               8 (data)
+
+ 67         262 LOAD_CONST               1 (None)
+            264 STORE_FAST               9 (last_err)
+
+ 68         266 LOAD_GLOBAL             17 (NULL + time)
+            278 LOAD_ATTR                8 (time)
+            288 PRECALL                  0
+            292 CALL                     0
+            302 STORE_FAST              10 (start)
+
+ 69         304 LOAD_GLOBAL             19 (NULL + range)
+            316 LOAD_CONST               3 (1)
+            318 LOAD_FAST                4 (retries)
+            320 LOAD_CONST               3 (1)
+            322 BINARY_OP                0 (+)
+            326 PRECALL                  2
+            330 CALL                     2
+            340 GET_ITER
+        >>  342 EXTENDED_ARG             2
+            344 FOR_ITER               528 (to 1402)
+            346 STORE_FAST              11 (attempt)
+
+ 70         348 LOAD_FAST                3 (timeout)
+            350 STORE_FAST              12 (eff)
+
+ 71         352 LOAD_FAST                6 (budget)
+            354 POP_JUMP_FORWARD_IF_NONE    74 (to 504)
+
+ 72         356 LOAD_FAST                6 (budget)
+            358 LOAD_GLOBAL             17 (NULL + time)
+            370 LOAD_ATTR                8 (time)
+            380 PRECALL                  0
+            384 CALL                     0
+            394 LOAD_FAST               10 (start)
+            396 BINARY_OP               10 (-)
+            400 BINARY_OP               10 (-)
+            404 STORE_FAST              13 (remaining)
+
+ 73         406 LOAD_FAST               13 (remaining)
+            408 LOAD_GLOBAL             20 (_MIN_ATTEMPT)
+            420 COMPARE_OP               1 (<=)
+            426 POP_JUMP_FORWARD_IF_FALSE     3 (to 434)
+
+ 74         428 POP_TOP
+            430 EXTENDED_ARG             1
+            432 JUMP_FORWARD           484 (to 1402)
+
+ 75     >>  434 LOAD_GLOBAL             23 (NULL + min)
+            446 LOAD_FAST                3 (timeout)
+            448 LOAD_GLOBAL             25 (NULL + max)
+            460 LOAD_GLOBAL             20 (_MIN_ATTEMPT)
+            472 LOAD_FAST               13 (remaining)
+            474 PRECALL                  2
+            478 CALL                     2
+            488 PRECALL                  2
+            492 CALL                     2
+            502 STORE_FAST              12 (eff)
+
+ 76     >>  504 LOAD_GLOBAL             26 (urllib)
+            516 LOAD_ATTR               14 (request)
+            526 LOAD_METHOD             15 (Request)
+            548 LOAD_FAST                0 (url)
+            550 LOAD_FAST                8 (data)
+            552 LOAD_CONST               4 ('POST')
+            554 KW_NAMES                 5
+            556 PRECALL                  3
+            560 CALL                     3
+            570 STORE_FAST              14 (req)
+
+ 77         572 LOAD_FAST               14 (req)
+            574 LOAD_METHOD             16 (add_header)
+            596 LOAD_CONST               6 ('Content-Type')
+            598 LOAD_CONST               7 ('application/json')
+            600 PRECALL                  2
+            604 CALL                     2
+            614 POP_TOP
+
+ 78         616 LOAD_FAST               14 (req)
+            618 LOAD_METHOD             16 (add_header)
+            640 LOAD_CONST               8 ('Authorization')
+            642 LOAD_CONST               9 ('Bearer ')
+            644 LOAD_FAST                1 (api_key)
+            646 FORMAT_VALUE             0
+            648 BUILD_STRING             2
+            650 PRECALL                  2
+            654 CALL                     2
+            664 POP_TOP
+
+ 79         666 LOAD_FAST               14 (req)
+            668 LOAD_METHOD             16 (add_header)
+            690 LOAD_CONST              10 ('User-Agent')
+            692 LOAD_FAST                7 (user_agent)
+            694 PRECALL                  2
+            698 CALL                     2
+            708 POP_TOP
+
+ 80         710 NOP
+
+ 81         712 LOAD_GLOBAL             26 (urllib)
+            724 LOAD_ATTR               14 (request)
+            734 LOAD_METHOD             17 (urlopen)
+            756 LOAD_FAST               14 (req)
+            758 LOAD_FAST               12 (eff)
+            760 KW_NAMES                11
+            762 PRECALL                  2
+            766 CALL                     2
+            776 BEFORE_WITH
+            778 STORE_FAST              15 (resp)
+
+ 82         780 LOAD_GLOBAL             11 (NULL + json)
+            792 LOAD_ATTR               18 (loads)
+            802 LOAD_FAST               15 (resp)
+            804 LOAD_METHOD             19 (read)
+            826 PRECALL                  0
+            830 CALL                     0
+            840 LOAD_METHOD             20 (decode)
+            862 LOAD_CONST               2 ('utf-8')
+            864 PRECALL                  1
+            868 CALL                     1
+            878 PRECALL                  1
+            882 CALL                     1
+
+ 81         892 SWAP                     2
+            894 LOAD_CONST               1 (None)
+            896 LOAD_CONST               1 (None)
+            898 LOAD_CONST               1 (None)
+            900 PRECALL                  2
+            904 CALL                     2
+            914 POP_TOP
+            916 SWAP                     2
+            918 POP_TOP
+            920 RETURN_VALUE
+        >>  922 PUSH_EXC_INFO
+            924 WITH_EXCEPT_START
+            926 POP_JUMP_FORWARD_IF_TRUE     4 (to 936)
+            928 RERAISE                  2
+        >>  930 COPY                     3
+            932 POP_EXCEPT
+            934 RERAISE                  1
+        >>  936 POP_TOP
+            938 POP_EXCEPT
+            940 POP_TOP
+            942 POP_TOP
+            944 EXTENDED_ARG             1
+            946 JUMP_BACKWARD          303 (to 342)
+        >>  948 PUSH_EXC_INFO
+
+ 83         950 LOAD_GLOBAL             26 (urllib)
+            962 LOAD_ATTR               21 (error)
+            972 LOAD_ATTR               22 (HTTPError)
+            982 CHECK_EXC_MATCH
+            984 POP_JUMP_FORWARD_IF_FALSE   148 (to 1282)
+            986 STORE_FAST              16 (e)
+
+ 85         988 LOAD_FAST               16 (e)
+            990 LOAD_ATTR               23 (code)
+           1000 LOAD_CONST              12 (500)
+           1002 COMPARE_OP               5 (>=)
+           1008 POP_JUMP_FORWARD_IF_FALSE    37 (to 1084)
+           1010 LOAD_FAST               11 (attempt)
+           1012 LOAD_FAST                4 (retries)
+           1014 COMPARE_OP               0 (<)
+           1020 POP_JUMP_FORWARD_IF_FALSE    31 (to 1084)
+
+ 86        1022 LOAD_FAST               16 (e)
+           1024 STORE_FAST               9 (last_err)
+
+ 87        1026 LOAD_GLOBAL             17 (NULL + time)
+           1038 LOAD_ATTR               24 (sleep)
+           1048 LOAD_FAST                5 (backoff)
+           1050 LOAD_FAST               11 (attempt)
+           1052 BINARY_OP                5 (*)
+           1056 PRECALL                  1
+           1060 CALL                     1
+           1070 POP_TOP
+
+ 88        1072 POP_EXCEPT
+           1074 LOAD_CONST               1 (None)
+           1076 STORE_FAST              16 (e)
+           1078 DELETE_FAST             16 (e)
+           1080 EXTENDED_ARG             1
+           1082 JUMP_BACKWARD          371 (to 342)
+
+ 89     >> 1084 LOAD_CONST              13 ('')
+           1086 STORE_FAST              17 (body)
+
+ 90        1088 NOP
+
+ 91        1090 LOAD_FAST               16 (e)
+           1092 LOAD_METHOD             19 (read)
+           1114 PRECALL                  0
+           1118 CALL                     0
+           1128 LOAD_METHOD             20 (decode)
+           1150 LOAD_CONST               2 ('utf-8')
+           1152 LOAD_CONST              14 ('ignore')
+           1154 PRECALL                  2
+           1158 CALL                     2
+           1168 LOAD_CONST               1 (None)
+           1170 LOAD_CONST              15 (400)
+           1172 BUILD_SLICE              2
+           1174 BINARY_SUBSCR
+           1184 STORE_FAST              17 (body)
+           1186 JUMP_FORWARD            16 (to 1220)
+        >> 1188 PUSH_EXC_INFO
+
+ 92        1190 LOAD_GLOBAL             50 (Exception)
+           1202 CHECK_EXC_MATCH
+           1204 POP_JUMP_FORWARD_IF_FALSE     3 (to 1212)
+           1206 POP_TOP
+
+ 93        1208 POP_EXCEPT
+           1210 JUMP_FORWARD             4 (to 1220)
+
+ 92     >> 1212 RERAISE                  0
+        >> 1214 COPY                     3
+           1216 POP_EXCEPT
+           1218 RERAISE                  1
+
+ 94     >> 1220 LOAD_GLOBAL             53 (NULL + RuntimeError)
+           1232 LOAD_CONST              16 ('AI 请求被拒绝 (HTTP ')
+           1234 LOAD_FAST               16 (e)
+           1236 LOAD_ATTR               23 (code)
+           1246 FORMAT_VALUE             0
+           1248 LOAD_CONST              17 ('): ')
+           1250 LOAD_FAST               17 (body)
+           1252 FORMAT_VALUE             0
+           1254 BUILD_STRING             4
+           1256 PRECALL                  1
+           1260 CALL                     1
+           1270 LOAD_FAST               16 (e)
+           1272 RAISE_VARARGS            2
+        >> 1274 LOAD_CONST               1 (None)
+           1276 STORE_FAST              16 (e)
+           1278 DELETE_FAST             16 (e)
+           1280 RERAISE                  1
+
+ 95     >> 1282 LOAD_GLOBAL             54 (_TRANSIENT)
+           1294 CHECK_EXC_MATCH
+           1296 POP_JUMP_FORWARD_IF_FALSE    48 (to 1394)
+           1298 STORE_FAST              16 (e)
+
+ 96        1300 LOAD_FAST               16 (e)
+           1302 STORE_FAST               9 (last_err)
+
+ 97        1304 LOAD_FAST               11 (attempt)
+           1306 LOAD_FAST                4 (retries)
+           1308 COMPARE_OP               0 (<)
+           1314 POP_JUMP_FORWARD_IF_FALSE    29 (to 1374)
+
+ 98        1316 LOAD_GLOBAL             17 (NULL + time)
+           1328 LOAD_ATTR               24 (sleep)
+           1338 LOAD_FAST                5 (backoff)
+           1340 LOAD_FAST               11 (attempt)
+           1342 BINARY_OP                5 (*)
+           1346 PRECALL                  1
+           1350 CALL                     1
+           1360 POP_TOP
+
+ 99        1362 POP_EXCEPT
+           1364 LOAD_CONST               1 (None)
+           1366 STORE_FAST              16 (e)
+           1368 DELETE_FAST             16 (e)
+           1370 EXTENDED_ARG             2
+           1372 JUMP_BACKWARD          516 (to 342)
+
+100     >> 1374 POP_EXCEPT
+           1376 LOAD_CONST               1 (None)
+           1378 STORE_FAST              16 (e)
+           1380 DELETE_FAST             16 (e)
+           1382 POP_TOP
+           1384 JUMP_FORWARD             8 (to 1402)
+        >> 1386 LOAD_CONST               1 (None)
+           1388 STORE_FAST              16 (e)
+           1390 DELETE_FAST             16 (e)
+           1392 RERAISE                  1
+
+ 95     >> 1394 RERAISE                  0
+        >> 1396 COPY                     3
+           1398 POP_EXCEPT
+           1400 RERAISE                  1
+
+102     >> 1402 LOAD_GLOBAL             53 (NULL + RuntimeError)
+
+103        1414 LOAD_CONST              18 ('AI 请求在 ')
+           1416 LOAD_FAST                4 (retries)
+           1418 FORMAT_VALUE             0
+           1420 LOAD_CONST              19 (' 次重试后仍失败（最后一次：')
+
+104        1422 LOAD_GLOBAL             57 (NULL + type)
+           1434 LOAD_FAST                9 (last_err)
+           1436 PRECALL                  1
+           1440 CALL                     1
+           1450 LOAD_ATTR               29 (__name__)
+
+103        1460 FORMAT_VALUE             0
+           1462 LOAD_CONST              20 (': ')
+
+104        1464 LOAD_FAST                9 (last_err)
+
+103        1466 FORMAT_VALUE             0
+           1468 LOAD_CONST              21 ('）')
+           1470 BUILD_STRING             7
+
+102        1472 PRECALL                  1
+           1476 CALL                     1
+
+104        1486 LOAD_FAST                9 (last_err)
+
+102        1488 RAISE_VARARGS            2
+ExceptionTable:
+  712 to 776 -> 948 [1]
+  778 to 890 -> 922 [2] lasti
+  892 to 914 -> 948 [1]
+  922 to 928 -> 930 [4] lasti
+  930 to 934 -> 948 [1]
+  936 to 936 -> 930 [4] lasti
+  938 to 942 -> 948 [1]
+  948 to 986 -> 1396 [2] lasti
+  988 to 1070 -> 1274 [2] lasti
+  1084 to 1086 -> 1274 [2] lasti
+  1090 to 1184 -> 1188 [2]
+  1186 to 1186 -> 1274 [2] lasti
+  1188 to 1206 -> 1214 [3] lasti
+  1208 to 1210 -> 1274 [2] lasti
+  1212 to 1212 -> 1214 [3] lasti
+  1214 to 1272 -> 1274 [2] lasti
+  1274 to 1298 -> 1396 [2] lasti
+  1300 to 1360 -> 1386 [2] lasti
+  1386 to 1394 -> 1396 [2] lasti

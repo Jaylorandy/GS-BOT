@@ -1,0 +1,549 @@
+# module: core.ai.doc_compress
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai\doc_compress.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("Shrink the document text sent to the AI reader - losslessly for our purpose.\n\nWhy\n---\n``acquire_recipe`` only needs the model to (a) name the layout, (b) read the\nheader fields, (c) report a REPRESENTATIVE SAMPLE of real order lines, and\n(d) report each block's printed TOTAL. It explicitly does NOT need every row:\nthe offline parser re-extracts all rows from the full ``pages`` tokens.\n\nReal POs are dominated by material the prompt already tells the model to\nignore - per-page boilerplate notices, pack break-up tables, bare\nsub-breakdown restatements. On a 48-page LPP order that is ~80% of the text,\nand it costs real wall-time twice over: prefill on the way in, and a slower,\nmore distracted answer on the way out.\n\nThis module drops those repeats while guaranteeing that everything the\nsynthesis step depends on survives:\n\n* every TOTAL / SUBTOTAL / SUMMARY row              -> block_total_qty gate\n* every order-block marker (Order No / Entity ...)  -> entity_anchor + po_nos\n* the first ``keep_priced`` rows of each distinct   -> line_pattern samples\n  priced-row shape, counted per order block\n* the head of the document                          -> header anchors\n\nLines are only ever DROPPED, never rewritten, so any ``raw_line`` the model\ncopies from the compressed text is still findable verbatim in the full text.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 28           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 30          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (re)
+             24 STORE_NAME               3 (re)
+
+ 31          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('Callable', 'List', 'Optional'))
+             30 IMPORT_NAME              4 (typing)
+             32 IMPORT_FROM              5 (Callable)
+             34 STORE_NAME               5 (Callable)
+             36 IMPORT_FROM              6 (List)
+             38 STORE_NAME               6 (List)
+             40 IMPORT_FROM              7 (Optional)
+             42 STORE_NAME               7 (Optional)
+             44 POP_TOP
+
+ 34          46 PUSH_NULL
+             48 LOAD_NAME                3 (re)
+             50 LOAD_ATTR                8 (compile)
+             60 LOAD_CONST               5 ('\\b(TOTAL|SUBTOTAL|SUB-TOTAL|SUMMARY|GRAND)\\b')
+             62 LOAD_NAME                3 (re)
+             64 LOAD_ATTR                9 (I)
+             74 PRECALL                  2
+             78 CALL                     2
+             88 STORE_NAME              10 (_TOTAL_KW)
+
+ 35          90 PUSH_NULL
+             92 LOAD_NAME                3 (re)
+             94 LOAD_ATTR                8 (compile)
+
+ 36         104 LOAD_CONST               6 ('(ORDER\\s*(NO|NUMBER|ID)|ENTITY\\s*\\d|PO\\s*(NO|NUMBER)|CONTRACT\\s*(NO|NUMBER))')
+
+ 37         106 LOAD_NAME                3 (re)
+            108 LOAD_ATTR                9 (I)
+
+ 35         118 PRECALL                  2
+            122 CALL                     2
+            132 STORE_NAME              11 (_ORDER_KW)
+
+ 39         134 PUSH_NULL
+            136 LOAD_NAME                3 (re)
+            138 LOAD_ATTR                8 (compile)
+            148 LOAD_CONST               7 ('\\bPACK\\b')
+            150 LOAD_NAME                3 (re)
+            152 LOAD_ATTR                9 (I)
+            162 PRECALL                  2
+            166 CALL                     2
+            176 STORE_NAME              12 (_PACK_KW)
+
+ 41         178 PUSH_NULL
+            180 LOAD_NAME                3 (re)
+            182 LOAD_ATTR                8 (compile)
+            192 LOAD_CONST               8 ('^[+-]?[\\d.,]+$')
+            194 PRECALL                  1
+            198 CALL                     1
+            208 STORE_NAME              13 (_NUM)
+
+ 42         210 PUSH_NULL
+            212 LOAD_NAME                3 (re)
+            214 LOAD_ATTR                8 (compile)
+            224 LOAD_CONST               9 ('^\\d{1,3}(?:[.,]\\d{3})*[.,]\\d{2}$|^\\d+[.,]\\d{2}$')
+            226 PRECALL                  1
+            230 CALL                     1
+            240 STORE_NAME              14 (_DECIMAL)
+
+ 44         242 LOAD_CONST              10 (40)
+            244 STORE_NAME              15 (HEAD_LINES)
+
+ 45         246 LOAD_CONST              11 (6)
+            248 STORE_NAME              16 (KEEP_PRICED)
+
+ 46         250 LOAD_CONST              12 (2)
+            252 STORE_NAME              17 (KEEP_PLAIN)
+
+ 47         254 LOAD_CONST              13 (1)
+            256 STORE_NAME              18 (KEEP_BOILER)
+
+ 54         258 LOAD_CONST              14 (600)
+            260 STORE_NAME              19 (SAMPLE_CEILING)
+
+ 57         262 LOAD_CONST              29 (('line', 'str', 'return', 'str'))
+            264 LOAD_CONST              18 (<code object _token_shape at 0x000002BF94081450, file "core\ai\doc_compress.py", line 57>)
+            266 MAKE_FUNCTION            4 (annotations)
+            268 STORE_NAME              20 (_token_shape)
+
+ 77         270 LOAD_CONST              30 (('line', 'str', 'return', 'bool'))
+            272 LOAD_CONST              20 (<code object _is_priced at 0x000002BF9499A290, file "core\ai\doc_compress.py", line 77>)
+            274 MAKE_FUNCTION            4 (annotations)
+            276 STORE_NAME              21 (_is_priced)
+
+ 84         278 LOAD_NAME               16 (KEEP_PRICED)
+
+ 85         280 LOAD_NAME               17 (KEEP_PLAIN)
+
+ 86         282 LOAD_CONST               3 (None)
+
+ 84         284 LOAD_CONST              21 (('keep_priced', 'keep_plain', 'log'))
+            286 BUILD_CONST_KEY_MAP      3
+            288 LOAD_CONST              31 (('text', 'str', 'keep_priced', 'int', 'keep_plain', 'int', 'log', 'Optional[Callable[[str], None]]', 'return', 'str'))
+            290 LOAD_CONST              28 (<code object compress_doc_text at 0x000002BF940C7410, file "core\ai\doc_compress.py", line 84>)
+            292 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            294 STORE_NAME              22 (compress_doc_text)
+            296 LOAD_CONST               3 (None)
+            298 RETURN_VALUE
+
+==============================================================================
+## <module>._token_shape  (args=1, locals=3)
+# varnames: line, out, tok
+ 57           0 RESUME                   0
+
+ 64           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+ 65           6 LOAD_FAST                0 (line)
+              8 LOAD_METHOD              0 (split)
+             30 PRECALL                  0
+             34 CALL                     0
+             44 GET_ITER
+        >>   46 FOR_ITER               166 (to 380)
+             48 STORE_FAST               2 (tok)
+
+ 66          50 LOAD_GLOBAL              2 (_DECIMAL)
+             62 LOAD_METHOD              2 (match)
+             84 LOAD_FAST                2 (tok)
+             86 PRECALL                  1
+             90 CALL                     1
+            100 POP_JUMP_FORWARD_IF_FALSE    22 (to 146)
+
+ 67         102 LOAD_FAST                1 (out)
+            104 LOAD_METHOD              3 (append)
+            126 LOAD_CONST               1 ('D')
+            128 PRECALL                  1
+            132 CALL                     1
+            142 POP_TOP
+            144 JUMP_BACKWARD           50 (to 46)
+
+ 68     >>  146 LOAD_GLOBAL              8 (_NUM)
+            158 LOAD_METHOD              2 (match)
+            180 LOAD_FAST                2 (tok)
+            182 PRECALL                  1
+            186 CALL                     1
+            196 POP_JUMP_FORWARD_IF_FALSE    22 (to 242)
+
+ 69         198 LOAD_FAST                1 (out)
+            200 LOAD_METHOD              3 (append)
+            222 LOAD_CONST               2 ('N')
+            224 PRECALL                  1
+            228 CALL                     1
+            238 POP_TOP
+            240 JUMP_BACKWARD           98 (to 46)
+
+ 70     >>  242 LOAD_GLOBAL             11 (NULL + any)
+            254 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A2F130, file "core\ai\doc_compress.py", line 70>)
+            256 MAKE_FUNCTION            0
+            258 LOAD_FAST                2 (tok)
+            260 GET_ITER
+            262 PRECALL                  0
+            266 CALL                     0
+            276 PRECALL                  1
+            280 CALL                     1
+            290 POP_JUMP_FORWARD_IF_FALSE    22 (to 336)
+
+ 71         292 LOAD_FAST                1 (out)
+            294 LOAD_METHOD              3 (append)
+            316 LOAD_CONST               4 ('X')
+            318 PRECALL                  1
+            322 CALL                     1
+            332 POP_TOP
+            334 JUMP_BACKWARD          145 (to 46)
+
+ 73     >>  336 LOAD_FAST                1 (out)
+            338 LOAD_METHOD              3 (append)
+            360 LOAD_CONST               5 ('A')
+            362 PRECALL                  1
+            366 CALL                     1
+            376 POP_TOP
+            378 JUMP_BACKWARD          167 (to 46)
+
+ 74     >>  380 LOAD_CONST               6 (' ')
+            382 LOAD_METHOD              6 (join)
+            404 LOAD_FAST                1 (out)
+            406 PRECALL                  1
+            410 CALL                     1
+            420 RETURN_VALUE
+
+==============================================================================
+## <module>._token_shape.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+ 70           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_FAST                1 (ch)
+             14 LOAD_METHOD              0 (isdigit)
+             36 PRECALL                  0
+             40 CALL                     0
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>._is_priced  (args=1, locals=3)
+# varnames: line, toks, nums
+ 77           0 RESUME                   0
+
+ 79           2 LOAD_FAST                0 (line)
+              4 LOAD_METHOD              0 (split)
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               1 (toks)
+
+ 80          42 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A2FE30, file "core\ai\doc_compress.py", line 80>)
+             44 MAKE_FUNCTION            0
+             46 LOAD_FAST                1 (toks)
+             48 GET_ITER
+             50 PRECALL                  0
+             54 CALL                     0
+             64 STORE_FAST               2 (nums)
+
+ 81          66 LOAD_GLOBAL              3 (NULL + len)
+             78 LOAD_FAST                2 (nums)
+             80 PRECALL                  1
+             84 CALL                     1
+             94 LOAD_CONST               2 (2)
+             96 COMPARE_OP               5 (>=)
+            102 JUMP_IF_FALSE_OR_POP    24 (to 152)
+            104 LOAD_GLOBAL              5 (NULL + any)
+            116 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A65AC0, file "core\ai\doc_compress.py", line 81>)
+            118 MAKE_FUNCTION            0
+            120 LOAD_FAST                2 (nums)
+            122 GET_ITER
+            124 PRECALL                  0
+            128 CALL                     0
+            138 PRECALL                  1
+            142 CALL                     1
+        >>  152 RETURN_VALUE
+
+==============================================================================
+## <module>._is_priced.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+ 80           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                30 (to 68)
+              8 STORE_FAST               1 (t)
+             10 LOAD_GLOBAL              0 (_NUM)
+             22 LOAD_METHOD              1 (match)
+             44 LOAD_FAST                1 (t)
+             46 PRECALL                  1
+             50 CALL                     1
+             60 POP_JUMP_BACKWARD_IF_FALSE    28 (to 6)
+             62 LOAD_FAST                1 (t)
+             64 LIST_APPEND              2
+             66 JUMP_BACKWARD           31 (to 6)
+        >>   68 RETURN_VALUE
+
+==============================================================================
+## <module>._is_priced.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+ 81           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                30 (to 70)
+             10 STORE_FAST               1 (t)
+             12 LOAD_GLOBAL              0 (_DECIMAL)
+             24 LOAD_METHOD              1 (match)
+             46 LOAD_FAST                1 (t)
+             48 PRECALL                  1
+             52 CALL                     1
+             62 YIELD_VALUE
+             64 RESUME                   1
+             66 POP_TOP
+             68 JUMP_BACKWARD           31 (to 8)
+        >>   70 LOAD_CONST               0 (None)
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>.compress_doc_text  (args=1, locals=18)
+# varnames: text, keep_priced, keep_plain, log, raw_lines, kept, boiler, shapes, dropped, sample_kept, i, raw, line, n_boiler, shape, quota, n_shape, out
+ 84           0 RESUME                   0
+
+ 91           2 LOAD_FAST                0 (text)
+              4 LOAD_METHOD              0 (split)
+             26 LOAD_CONST               1 ('\n')
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               4 (raw_lines)
+
+ 92          44 LOAD_GLOBAL              3 (NULL + len)
+             56 LOAD_FAST                4 (raw_lines)
+             58 PRECALL                  1
+             62 CALL                     1
+             72 LOAD_CONST               2 (120)
+             74 COMPARE_OP               0 (<)
+             80 POP_JUMP_FORWARD_IF_FALSE     2 (to 86)
+
+ 93          82 LOAD_FAST                0 (text)
+             84 RETURN_VALUE
+
+ 95     >>   86 BUILD_LIST               0
+             88 STORE_FAST               5 (kept)
+
+ 96          90 BUILD_MAP                0
+             92 STORE_FAST               6 (boiler)
+
+ 97          94 BUILD_MAP                0
+             96 STORE_FAST               7 (shapes)
+
+ 98          98 LOAD_CONST               3 (0)
+            100 STORE_FAST               8 (dropped)
+
+ 99         102 LOAD_CONST               3 (0)
+            104 STORE_FAST               9 (sample_kept)
+
+101         106 LOAD_GLOBAL              5 (NULL + enumerate)
+            118 LOAD_FAST                4 (raw_lines)
+            120 PRECALL                  1
+            124 CALL                     1
+            134 GET_ITER
+        >>  136 EXTENDED_ARG             1
+            138 FOR_ITER               369 (to 878)
+            140 UNPACK_SEQUENCE          2
+            144 STORE_FAST              10 (i)
+            146 STORE_FAST              11 (raw)
+
+102         148 LOAD_FAST               11 (raw)
+            150 LOAD_METHOD              3 (strip)
+            172 PRECALL                  0
+            176 CALL                     0
+            186 STORE_FAST              12 (line)
+
+103         188 LOAD_FAST               12 (line)
+            190 POP_JUMP_FORWARD_IF_TRUE     1 (to 194)
+
+104         192 JUMP_BACKWARD           29 (to 136)
+
+106     >>  194 LOAD_FAST               10 (i)
+            196 LOAD_GLOBAL              8 (HEAD_LINES)
+            208 COMPARE_OP               0 (<)
+            214 POP_JUMP_FORWARD_IF_TRUE    52 (to 320)
+            216 LOAD_GLOBAL             10 (_TOTAL_KW)
+            228 LOAD_METHOD              6 (search)
+            250 LOAD_FAST               12 (line)
+            252 PRECALL                  1
+            256 CALL                     1
+            266 POP_JUMP_FORWARD_IF_TRUE    26 (to 320)
+            268 LOAD_GLOBAL             14 (_ORDER_KW)
+            280 LOAD_METHOD              6 (search)
+            302 LOAD_FAST               12 (line)
+            304 PRECALL                  1
+            308 CALL                     1
+            318 POP_JUMP_FORWARD_IF_FALSE    68 (to 456)
+
+107     >>  320 LOAD_GLOBAL             14 (_ORDER_KW)
+            332 LOAD_METHOD              6 (search)
+            354 LOAD_FAST               12 (line)
+            356 PRECALL                  1
+            360 CALL                     1
+            370 POP_JUMP_FORWARD_IF_FALSE    20 (to 412)
+
+108         372 LOAD_FAST                7 (shapes)
+            374 LOAD_METHOD              8 (clear)
+            396 PRECALL                  0
+            400 CALL                     0
+            410 POP_TOP
+
+109     >>  412 LOAD_FAST                5 (kept)
+            414 LOAD_METHOD              9 (append)
+            436 LOAD_FAST               11 (raw)
+            438 PRECALL                  1
+            442 CALL                     1
+            452 POP_TOP
+
+110         454 JUMP_BACKWARD          160 (to 136)
+
+112     >>  456 LOAD_FAST                9 (sample_kept)
+            458 LOAD_GLOBAL             20 (SAMPLE_CEILING)
+            470 COMPARE_OP               5 (>=)
+            476 POP_JUMP_FORWARD_IF_FALSE     6 (to 490)
+
+113         478 LOAD_FAST                8 (dropped)
+            480 LOAD_CONST               4 (1)
+            482 BINARY_OP               13 (+=)
+            486 STORE_FAST               8 (dropped)
+
+114         488 JUMP_BACKWARD          177 (to 136)
+
+116     >>  490 LOAD_FAST                6 (boiler)
+            492 LOAD_METHOD             11 (get)
+            514 LOAD_FAST               12 (line)
+            516 LOAD_CONST               3 (0)
+            518 PRECALL                  2
+            522 CALL                     2
+            532 STORE_FAST              13 (n_boiler)
+
+117         534 LOAD_FAST               13 (n_boiler)
+            536 LOAD_GLOBAL             24 (KEEP_BOILER)
+            548 COMPARE_OP               5 (>=)
+            554 POP_JUMP_FORWARD_IF_FALSE     6 (to 568)
+
+118         556 LOAD_FAST                8 (dropped)
+            558 LOAD_CONST               4 (1)
+            560 BINARY_OP               13 (+=)
+            564 STORE_FAST               8 (dropped)
+
+119         566 JUMP_BACKWARD          216 (to 136)
+
+120     >>  568 LOAD_FAST               13 (n_boiler)
+            570 LOAD_CONST               4 (1)
+            572 BINARY_OP                0 (+)
+            576 LOAD_FAST                6 (boiler)
+            578 LOAD_FAST               12 (line)
+            580 STORE_SUBSCR
+
+122         584 LOAD_GLOBAL             27 (NULL + _token_shape)
+            596 LOAD_FAST               12 (line)
+            598 PRECALL                  1
+            602 CALL                     1
+            612 STORE_FAST              14 (shape)
+
+123         614 LOAD_GLOBAL             29 (NULL + _is_priced)
+            626 LOAD_FAST               12 (line)
+            628 PRECALL                  1
+            632 CALL                     1
+            642 POP_JUMP_FORWARD_IF_FALSE     2 (to 648)
+            644 LOAD_FAST                1 (keep_priced)
+            646 JUMP_FORWARD             1 (to 650)
+        >>  648 LOAD_FAST                2 (keep_plain)
+        >>  650 STORE_FAST              15 (quota)
+
+124         652 LOAD_GLOBAL             30 (_PACK_KW)
+            664 LOAD_METHOD              6 (search)
+            686 LOAD_FAST               12 (line)
+            688 PRECALL                  1
+            692 CALL                     1
+            702 POP_JUMP_FORWARD_IF_FALSE    16 (to 736)
+
+125         704 LOAD_GLOBAL             33 (NULL + min)
+            716 LOAD_FAST               15 (quota)
+            718 LOAD_CONST               4 (1)
+            720 PRECALL                  2
+            724 CALL                     2
+            734 STORE_FAST              15 (quota)
+
+126     >>  736 LOAD_FAST                7 (shapes)
+            738 LOAD_METHOD             11 (get)
+            760 LOAD_FAST               14 (shape)
+            762 LOAD_CONST               3 (0)
+            764 PRECALL                  2
+            768 CALL                     2
+            778 STORE_FAST              16 (n_shape)
+
+127         780 LOAD_FAST               16 (n_shape)
+            782 LOAD_FAST               15 (quota)
+            784 COMPARE_OP               5 (>=)
+            790 POP_JUMP_FORWARD_IF_FALSE     7 (to 806)
+
+128         792 LOAD_FAST                8 (dropped)
+            794 LOAD_CONST               4 (1)
+            796 BINARY_OP               13 (+=)
+            800 STORE_FAST               8 (dropped)
+
+129         802 EXTENDED_ARG             1
+            804 JUMP_BACKWARD          335 (to 136)
+
+130     >>  806 LOAD_FAST               16 (n_shape)
+            808 LOAD_CONST               4 (1)
+            810 BINARY_OP                0 (+)
+            814 LOAD_FAST                7 (shapes)
+            816 LOAD_FAST               14 (shape)
+            818 STORE_SUBSCR
+
+131         822 LOAD_FAST                5 (kept)
+            824 LOAD_METHOD              9 (append)
+            846 LOAD_FAST               11 (raw)
+            848 PRECALL                  1
+            852 CALL                     1
+            862 POP_TOP
+
+132         864 LOAD_FAST                9 (sample_kept)
+            866 LOAD_CONST               4 (1)
+            868 BINARY_OP               13 (+=)
+            872 STORE_FAST               9 (sample_kept)
+            874 EXTENDED_ARG             1
+            876 JUMP_BACKWARD          371 (to 136)
+
+134     >>  878 LOAD_CONST               1 ('\n')
+            880 LOAD_METHOD             17 (join)
+            902 LOAD_FAST                5 (kept)
+            904 PRECALL                  1
+            908 CALL                     1
+            918 STORE_FAST              17 (out)
+
+135         920 LOAD_FAST                3 (log)
+            922 POP_JUMP_FORWARD_IF_FALSE    49 (to 1022)
+            924 LOAD_FAST                8 (dropped)
+            926 POP_JUMP_FORWARD_IF_FALSE    47 (to 1022)
+
+136         928 PUSH_NULL
+            930 LOAD_FAST                3 (log)
+            932 LOAD_CONST               5 ('    · 送 AI 文本压缩：')
+            934 LOAD_GLOBAL              3 (NULL + len)
+            946 LOAD_FAST                0 (text)
+            948 PRECALL                  1
+            952 CALL                     1
+            962 FORMAT_VALUE             0
+            964 LOAD_CONST               6 (' → ')
+            966 LOAD_GLOBAL              3 (NULL + len)
+            978 LOAD_FAST               17 (out)
+            980 PRECALL                  1
+            984 CALL                     1
+            994 FORMAT_VALUE             0
+            996 LOAD_CONST               7 (' 字符（丢弃 ')
+
+137         998 LOAD_FAST                8 (dropped)
+
+136        1000 FORMAT_VALUE             0
+           1002 LOAD_CONST               8 (' 行重复/样板行）')
+           1004 BUILD_STRING             7
+           1006 PRECALL                  1
+           1010 CALL                     1
+           1020 POP_TOP
+
+138     >> 1022 LOAD_FAST               17 (out)
+           1024 RETURN_VALUE

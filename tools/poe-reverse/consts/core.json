@@ -1,0 +1,13 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core package - Purchase Order Extractor V2 unified data contract & engine.",
+   null
+  ],
+  "n_instructions": 5
+ }
+}

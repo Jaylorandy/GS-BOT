@@ -1,0 +1,497 @@
+======================== <module>.VerifyReport
+names: ['__name__', '__module__', '__qualname__', 'ok', '__annotations__', 'field', 'list', 'problems', 'parsed_rows', 'expected_rows', 'parsed_qty', 'expected_qty', 'parsed_pos', 'expected_pos', 'extra_rows', 'notes', 'text', 'ai_hint']
+varnames: []
+  [0] 'VerifyReport'
+  [1] False
+  [2] 'bool'
+  [3] 'ok'
+  [4] ['default_factory']
+  [5] 'List[str]'
+  [6] 'problems'
+  [7] 0
+  [8] 'int'
+  [9] 'parsed_rows'
+  [10] 'expected_rows'
+  [11] 'parsed_qty'
+  [12] 'expected_qty'
+  [13] 'parsed_pos'
+  [14] 'expected_pos'
+  [15] 'extra_rows'
+  [16] 'notes'
+  [17] 'return'
+  [18] 'str'
+  [19] None
+  [20] ['return', 'str']
+n_instr: 101
+======================== <module>.VerifyReport.ai_hint
+names: ['parsed_rows', 'parsed_qty', 'sorted', 'set', 'parsed_pos', 'expected_rows', 'expected_qty', 'expected_pos', 'problems', 'append', 'join']
+varnames: ['self', 'bits']
+  [0] None
+  [1] 'A rule was synthesized from your answer and replayed over the same document. The result does NOT agree with what you reported:'
+  [2] '  rule found : '
+  [3] ' order rows, '
+  [4] ' pcs total, PO numbers '
+  [5] '  you  said  : '
+  [6] ' sample rows, '
+  [7] ' pcs (printed total), PO numbers '
+  [8] 'Problems found:'
+  [9] 8
+  [10] "Re-read the document: report 'block_total_qty' from the printed TOTAL row for each PO, and a representative SAMPLE of order lines (you do not need to list every line). Answer again with corrected JSON."
+  [11] '\n'
+n_instr: 77
+======================== <module>.VerifyReport.ai_hint.<listcomp>
+names: []
+varnames: ['.0', 'p']
+  [0] '  - '
+n_instr: 12
+======================== <module>.VerifyReport.text
+names: ['parsed_rows', 'parsed_qty', 'expected_rows', 'expected_qty', 'problems', 'join', 'notes']
+varnames: ['self', 'head', 'body']
+  [0] None
+  [1] '离线回放 '
+  [2] ' 行 / '
+  [3] ' 件（AI 读到 '
+  [4] ' 件）'
+  [5] '；'
+  [6] ''
+n_instr: 52
+======================== <module>._amount_misread_rows
+names: ['_doc_lines', 'doc_text', 'split', '_TOTAL_LABEL', 'match', 'len', '_QTY_TOKEN', '_MONEY_TOKEN', '_num', 'int', 'setdefault']
+varnames: ['pages', 'out', 'ln', 'toks', 'qty', 'amt']
+  [0] 'Map ``{printed quantity -> printed amount}`` for two-number total rows.\n\n    An LPP block total prints as a bare, UNLABELLED two-number row::\n\n        8000 81,600.00        <- Quantity | Total Amount\n\n    Nothing ...
+  [1] 0
+  [2] 1
+  [3] None
+  [4] 2
+n_instr: 120
+======================== <module>._explains_amount_misread
+names: ['get', 'abs', 'max']
+varnames: ['mis', 'parsed', 'expected', 'amt']
+  [0] "True when ``expected`` is the AMOUNT printed beside quantity ``parsed``.\n\n    That combination means the document itself corroborates the parser: the row\n    it summed to ``parsed`` is printed verbatim, and the model...
+  [1] 0
+  [2] False
+  [3] None
+  [4] 2.0
+  [5] 0.02
+n_instr: 56
+======================== <module>._make_page
+names: ['enumerate', 'split', 'append', 'Token', 'PageWords', 'max', 'len']
+varnames: ['lines', 'pi', 'toks', 'yi', 'line', 'xi', 'w']
+  [0] 'Build a real PageWords from probe text (tokens with synthetic coords).'
+  [1] 40.0
+  [2] 12.0
+  [3] 30.0
+  [4] 10.0
+  [5] ['text', 'x0', 'y0', 'x1', 'y1', 'page']
+  [6] 0.0
+  [7] ['default']
+  [8] ['page', 'width', 'height', 'tokens']
+n_instr: 81
+======================== <module>._make_page.<genexpr>
+names: ['x1']
+varnames: ['.0', 't']
+  [0] None
+n_instr: 14
+======================== <module>._rows_only_the_rule_found
+names: ['all_lines', 're', 'compile', 'line_pattern', 'error', '_doc_lines', 'doc_text', 'match', '_norm_ws', 'split', 'any', 'append']
+varnames: ['pages', 'recipe', 'data', 'seen', 'out', 'rx', 'ln', 'n', 'toks']
+  [0] 'Document rows the synthesized rule matched but the AI never reported.'
+n_instr: 113
+======================== <module>._rows_only_the_rule_found.<genexpr>
+names: []
+varnames: ['.0', 't']
+  [0] None
+n_instr: 16
+======================== <module>._rows_only_the_rule_found.<setcomp>
+names: ['locator']
+varnames: ['.0', 'l']
+n_instr: 13
+======================== <module>._short_json_err
+names: ['str', 'len']
+varnames: ['e', 'msg']
+  [0] "Compress a parse error into a concise hint for the model's next attempt."
+  [1] 400
+  [2] None
+  [3] '…'
+n_instr: 23
+======================== <module>._synthesize_structural_recipe
+names: ['PoRecipe', 'value', 'has_color_total', 'has_size_total']
+varnames: ['fingerprint', 'layout_type', 'log', 'label', 'recipe']
+  [0] None
+  [1] ''
+  [2] '2'
+  [3] ['fingerprint', 'customer', 'layout_type', 'version']
+  [4] False
+  [5] '  · '
+  [6] '版式：按独立 '
+  [7] ' 规则解析'
+n_instr: 35
+======================== <module>.acquire_recipe
+names: ['matrix_synth', 'synthesize_matrix_recipe', 'doc_text', 'is_control_sheet', 'parsers', 'registry', 'synthesize_control_sheet_recipe', 'parse', 'entities', 'customer', 'len', 'total_qty', 'note', 'is_matrix_percarton', 'synthesize_matrix_percarton_recipe', 'sum', '_STRUCTURAL_DETECTORS', 'layout_type', 'range', 'extract_po_data', 'ValueError', '_short_json_err', 'summary', 'synthesize_recipe', 'UnsupportedLayout', 'SynthesisError', 'str', 'ai_hint', 'MAX_MATRIX_TRIES', 'parsed_rows', 'parsed_qty', 'verify_recipe', 'ok', 'text', '_ESCAPE_HATCH']
+varnames: ['pages', 'fingerprint', 'customer', 'cfg', 'source_file', 'max_tries', 'log', 'seed_hint', '_log', 'synthesize_matrix_recipe', 'text', '_registry', 'recipe', 'po', '_detect', '_label', '_synth', '_layout', 'hint', 'last', 'json_failed', 'matrix_tries', 'last_data', 'attempt', 'data', 'e', 'unsupported', 'rep']
+  [0] 'AI reads the PO -> code synthesizes a rule -> the rule must replay exactly.\n\n    On success the returned recipe is safe to cache: every later PO of the same\n    layout is parsed offline with zero AI calls. On failure...
+  [1] 'msg'
+  [2] 'str'
+  [3] 'return'
+  [4] 'None'
+  [5] 1
+  [6] ['synthesize_matrix_recipe']
+  [7] '  · 控制表版式：纯结构化抽取（Label: value，无需 AI）…'
+  [8] ['registry']
+  [9] ['fingerprint', 'log']
+  [10] ['source_file']
+  [11] 'auto-synth control_sheet · '
+  [12] ' POs / '
+  [13] ' pcs · structural (no AI)'
+  [14] '  ✓ 控制表结构化抽取：'
+  [15] ' 份 PO / '
+  [16] ' 件'
+  [17] None
+  [18] '  × 控制表结构化抽取为空，回退常规 AI 流程…'
+  [19] '  · 每箱件数矩阵版式：纯结构化抽取（无需 AI）…'
+  [20] 'auto-synth matrix_percarton · '
+  [21] ' colors / '
+  [22] ' pcs (per-carton) · structural (no AI)'
+  [23] '  ✓ 每箱件数矩阵抽取：'
+  [24] ' 色 / 每箱合计 '
+  [25] '  × 每箱件数矩阵抽取为空，回退常规 AI 流程…'
+  [26] '  · '
+  [27] '版式：纯结构化抽取（无需 AI）…'
+  [28] 'auto-synth '
+  [29] ' · '
+  [30] '  ✓ '
+  [31] '抽取：'
+  [32] ' 实体 / '
+  [33] '  × '
+  [34] '抽取为空，回退常规 AI 流程…'
+  [35] ''
+  [36] False
+  [37] 0
+  [38] '  AI 读单（第 '
+  [39] '/'
+  [40] ' 次）…'
+  [41] ['customer', 'cfg', 'extra_hint', 'seed_hint']
+  [42] True
+  [43] '  × AI 返回无法解析（第 '
+  [44] ' 次）：'
+  [45] '  AI 读到：'
+  [46] '  · 版式为网格型，改用结构化网格定位（无需二次 AI）…'
+  [47] ['fingerprint', 'source_file', 'log']
+  [48] '  × 网格规则自动合成失败：'
+  [49] '  ✓ 网格规则自动合成并通过回放校验：'
+  [50] ' 行 / '
+  [51] '  × 规则合成失败：'
+  [52] '  ✓ 离线回放校验通过：'
+  [53] 'auto-synth v2 · '
+  [54] ' rows / '
+  [55] ' pcs · verified by offline replay'
+  [56] '  × 回放校验不通过：'
+  [57] '  ✓ 改按网格版式自动合成并通过回放校验：'
+  [58] '已连续 '
+  [59] ' 次尝试，AI 返回的内容仍无法解析为有效 JSON（可能输出被截断或缺少逗号）。请稍后重试，或在左栏勾选『高级：推断后人工确认配方』手动处理该 PDF。\n最后一次错误：'
+  [60] ' 次尝试，合成的解析规则仍无法复现 AI 读到的数据，为避免导出错误数字，已停止处理该文件。\n最后一次差异：'
+  [61] ['msg', 'str', 'return', 'None']
+n_instr: 727
+======================== <module>.acquire_recipe.<genexpr>
+names: ['len', 'lines']
+varnames: ['.0', 'e']
+  [0] None
+n_instr: 17
+======================== <module>.acquire_recipe._log
+names: []
+varnames: ['msg']
+  [0] None
+n_instr: 14
+======================== <module>.detect_structural_layout
+names: ['is_control_sheet', 'LayoutType', 'CONTROL_SHEET', 'value', 'is_matrix_percarton', 'MATRIX_PERCARTON', '_STRUCTURAL_DETECTORS']
+varnames: ['text', '_detect', '_label', '_synth', '_layout']
+  [0] "Return the layout_type the current structural detectors would choose.\n\n    This is a cheap, parser-free mirror of the structural branch in\n    ``acquire_recipe``. It lets the UI invalidate a cached recipe when the\n ...
+  [1] None
+n_instr: 40
+======================== <module>.is_anf_commitment
+names: ['bool', 're', 'search']
+varnames: ['text']
+  [0] 'Structural signal for an A&F Commitment sheet: a ``Commitment #`` number,\n    a ``Key Item`` number, and a ``Tech Pack #`` - one commitment per file. A PO\n    PDF uses ``Commitment:`` (colon) and never carries ``Key I...
+  [1] 'Commitment\\s*#\\s*\\d+'
+  [2] 'Key\\s+Item\\s+\\d+'
+  [3] 'Tech\\s+Pack\\s*#'
+n_instr: 25
+======================== <module>.is_anf_po
+names: ['lower', 're', 'search']
+varnames: ['text', 't', 'brand']
+  [0] 'Structural signal for an A&F Purchase Order: A&F / AFH / Hollister\n    issuer, a ``Purchase Order:`` header, a ``Commitment:`` reference, and at\n    least one long-SKU summary row (``ddd-ddd-ddddd-STYLE-COLOR-SIZECODE...
+  [1] 'abercrombie'
+  [2] 'hollister'
+  [3] '\\bafh\\b'
+  [4] False
+  [5] 'purchase order:'
+  [6] 'commitment:'
+  [7] '\\d+-\\d+-\\d+-\\d+-\\d+-\\d+'
+  [8] True
+n_instr: 48
+======================== <module>.is_bass_pro_ack
+names: ['bool', 're', 'search']
+varnames: ['text']
+  [0] 'Structural signal for a Bass Pro Shops Order Acknowledgement: an\n    ``Order Acknowledgement`` header, the ``SKU/Cust Style`` grid label, and the\n    ``Size >`` / ``Qty >`` colour x size rows (no TOTAL column).'
+  [1] 'Order Acknowledgement'
+  [2] 'SKU/Cust Style'
+  [3] 'Size\\s*>'
+  [4] 'Qty\\s*>'
+n_instr: 26
+======================== <module>.is_celio
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for CELIO France Implant-order PO (header fields +\n    two packaging blocks + size-breakdown matrix, EU decimals).'
+  [1] 'CELIO FRANCE'
+  [2] 'PURCHASE ORDER'
+n_instr: 12
+======================== <module>.is_control_sheet
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for the A&F Control Sheet architecture.'
+  [1] 'Control Sheet'
+  [2] 'Quantity:'
+  [3] 'Pack Ratio'
+n_instr: 16
+======================== <module>.is_costco_ecom
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for Costco US .com (line items + colour x label grid).'
+  [1] '5 STAR APPAREL'
+  [2] 'US - ECOM'
+  [3] 'US-ECOM'
+n_instr: 16
+======================== <module>.is_costco_hybrid
+names: ['bool', 're', 'search', 'is_costco_ecom']
+varnames: ['text']
+  [0] 'Structural signal for Costco US 3-page hybrid (colour x size per-carton grid).'
+  [1] '5 STAR APPAREL'
+  [2] 'Costco\\s+US\\s+in'
+n_instr: 21
+======================== <module>.is_frankie_ecom
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for the FRANKIE ECOM variant (WELL WORN / COSTCO TAIWAN\n    ECOM): the size columns carry TOTAL UNITS (not per-carton) and there is a\n    separate ``Cartons`` packing column beside ``Total Units``.\n...
+  [1] 'Units / Carton'
+  [2] 'Units/Carton'
+  [3] False
+  [4] 'FRANKIE'
+  [5] 'Total Units'
+  [6] 'Cartons'
+n_instr: 26
+======================== <module>.is_import_po
+names: ['re', 'search', 'bool', 'M']
+varnames: ['text']
+  [0] 'Structural signal for a TJX-style Import PO fixed-column item table:\n    the ``PG/LN ... COLOR ... DETAILED DESCRIPTION ... UNITS SETS BOX`` header\n    AND at least one item row (``N/N CATG LOCAL COST COLOR ...``). De...
+  [1] 'PG/LN'
+  [2] 'DETAILED DESCRIPTION'
+  [3] '\\bUNITS\\b'
+  [4] '\\bSETS\\b'
+  [5] '\\bBOX\\b'
+  [6] False
+  [7] '^\\d+[/-]\\d+\\s+\\d+\\s+\\d+\\s+[\\d.,]+\\s+\\S+'
+n_instr: 50
+======================== <module>.is_line_items_eu
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for the Tally Weijl ORDER FORM (European line_items).'
+  [1] 'Tally Weijl'
+  [2] 'ORDER FORM'
+n_instr: 12
+======================== <module>.is_matrix_percarton
+names: ['bool']
+varnames: ['text']
+  [0] 'Structural signal for the FRANKIE per-carton matrix (size columns are\n    units-per-carton + a "Total Units" column).'
+  [1] 'Units / Carton'
+  [2] 'Units/Carton'
+n_instr: 12
+======================== <module>.synthesize_anf_commitment_recipe
+names: ['PoRecipe', 'LayoutType', 'ANF_COMMITMENT', 'value']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'recipe']
+  [0] 'Build an A&F Commitment recipe. The sheet is header-only and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).'
+  [1] 'Abercrombie & Fitch'
+  [2] '2'
+  [3] ['fingerprint', 'customer', 'layout_type', 'version']
+  [4] '  · ANF Commitment 版式：结构化抽取（Commitment # / Key Item / Tech Pack #）'
+n_instr: 22
+======================== <module>.synthesize_anf_po_recipe
+names: ['getattr', 'PoRecipe', 'LayoutType', 'ANF_PO', 'value']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'customer', 'recipe']
+  [0] 'Build an A&F PO recipe. The SKU summary rows are column-fixed and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).'
+  [1] None
+  [2] 'customer'
+  [3] ''
+  [4] 'Abercrombie & Fitch'
+  [5] '2'
+  [6] ['fingerprint', 'customer', 'layout_type', 'version']
+  [7] '  · ANF PO 版式：结构化抽取（PO SKU Summary 长 SKU 行）'
+n_instr: 35
+======================== <module>.synthesize_bass_pro_ack_recipe
+names: ['PoRecipe', 'LayoutType', 'BASS_PRO_ACK', 'value', 'has_color_total', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'recipe']
+  [0] 'Build a Bass Pro Order Acknowledgement recipe. The grid is located\n    structurally, so the recipe only pins the layout_type (no anchors needed).'
+  [1] 'BASS PRO SHOPS'
+  [2] '2'
+  [3] ['fingerprint', 'customer', 'layout_type', 'version']
+  [4] True
+  [5] False
+  [6] '  · BASS PRO 订单确认版式：按独立 bass_pro_ack 规则解析（SKU 行 + Size>/Qty> 色×码矩阵）'
+n_instr: 28
+======================== <module>.synthesize_celio_recipe
+names: ['_synthesize_structural_recipe', 'LayoutType', 'CELIO']
+varnames: ['pages', 'data', 'fingerprint', 'log']
+  [0] None
+  [1] 'CELIO France'
+n_instr: 10
+======================== <module>.synthesize_control_sheet_recipe
+names: ['getattr', 'PoRecipe', 'LayoutType', 'CONTROL_SHEET', 'value', '_CONTROL_SHEET_FIELDS', 'dict', 'has_color_total', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'customer', 'recipe']
+  [0] 'Build a Control Sheet recipe. The anchors are generic ``Label: value``\n    patterns (see :data:`_CONTROL_SHEET_FIELDS`); no customer logic is hardcoded.\n    ``data`` may be None (structural path skips the AI read enti...
+  [1] None
+  [2] 'customer'
+  [3] ''
+  [4] '2'
+  [5] 'entity'
+  [6] ['fingerprint', 'customer', 'layout_type', 'version', 'entity_anchor', 'field_map']
+  [7] False
+  [8] '  · 控制表版式：按 Label: value 表头字段解析（独立 control_sheet 规则）'
+n_instr: 46
+======================== <module>.synthesize_costco_ecom_recipe
+names: ['_synthesize_structural_recipe', 'LayoutType', 'COSTCO_ECOM', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'recipe']
+  [0] None
+  [1] 'Costco US .com'
+  [2] True
+n_instr: 15
+======================== <module>.synthesize_costco_hybrid_recipe
+names: ['_synthesize_structural_recipe', 'LayoutType', 'COSTCO_HYBRID']
+varnames: ['pages', 'data', 'fingerprint', 'log']
+  [0] None
+  [1] 'Costco US 混合'
+n_instr: 10
+======================== <module>.synthesize_frankie_ecom_recipe
+names: ['getattr', 'PoRecipe', 'LayoutType', 'FRANKIE_ECOM', 'value', 'has_color_total', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'customer', 'recipe']
+  [0] 'Build a FRANKIE ECOM recipe. The grid is located structurally, so the recipe\n    only pins the layout_type (no anchors needed, fully cacheable, zero AI).'
+  [1] None
+  [2] 'customer'
+  [3] ''
+  [4] '2'
+  [5] ['fingerprint', 'customer', 'layout_type', 'version']
+  [6] False
+  [7] True
+  [8] '  · FRANKIE ECOM 版式：按独立 frankie_ecom 规则解析（尺寸列即 PCS 总量，Cartons 列忽略）'
+n_instr: 39
+======================== <module>.synthesize_import_po_recipe
+names: ['getattr', 'PoRecipe', 'LayoutType', 'IMPORT_PO', 'value', 'has_color_total', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'customer', 'recipe']
+  [0] 'Build a TJX Import PO recipe. The item table is column-fixed and read\n    structurally, so the recipe only pins the layout_type (no anchors needed).'
+  [1] None
+  [2] 'customer'
+  [3] ''
+  [4] '2'
+  [5] ['fingerprint', 'customer', 'layout_type', 'version']
+  [6] False
+  [7] '  · Import PO 固定列版式：按独立 import_po 规则解析（COLOR 列即颜色代码）'
+n_instr: 39
+======================== <module>.synthesize_line_items_eu_recipe
+names: ['_synthesize_structural_recipe', 'LayoutType', 'LINE_ITEMS_EU']
+varnames: ['pages', 'data', 'fingerprint', 'log']
+  [0] None
+  [1] '欧式行项目'
+n_instr: 10
+======================== <module>.synthesize_matrix_percarton_recipe
+names: ['getattr', 'PoRecipe', 'LayoutType', 'MATRIX_PERCARTON', 'value', 'has_color_total', 'has_size_total']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'customer', 'recipe']
+  [0] 'Build a per-carton matrix recipe. The parser locates the grid structurally,\n    so the recipe only pins the layout_type (no anchors needed).'
+  [1] None
+  [2] 'customer'
+  [3] ''
+  [4] '2'
+  [5] ['fingerprint', 'customer', 'layout_type', 'version']
+  [6] False
+  [7] True
+  [8] '  · 每箱件数矩阵版式：按独立 matrix_percarton 规则解析'
+n_instr: 39
+======================== <module>.synthesize_recipe
+names: ['layout_type', 'LayoutType', 'LINE_ITEMS', 'value', 'UnsupportedLayout', 'doc_text', 'merge_wrapped_rows', 'locate_samples', 'line_count', 'len', 'join', 'SynthesisError', 'synthesize_line_pattern', 'PoRecipe', 'customer', 'bool', 'has_color_total', 'has_size_total', 'synthesize_entity_anchor', 'po_nos', 'entity_anchor', 'po_no_anchor', 'apply_header_anchors', 'any', 'size_encoding', 'dedup_style_size', 'header', 'values', 'synthesize_field_anchor']
+varnames: ['pages', 'data', 'fingerprint', 'log', 'doc', 'lines', 'samples', 'missing', 'total', 'shown', 'pattern', 'unit', 'used', 'recipe', 'entity_anchor', 'po_no_anchor', 'done', 'soft', 'po', 'anc']
+  [0] "Build a candidate ``PoRecipe`` from the AI's reading. Not yet trusted."
+  [1] '版式 '
+  [2] ' 是网格型，规则合成暂不支持（走旧推断链路）。'
+  [3] ['data']
+  [4] 2
+  [5] '\n'
+  [6] None
+  [7] 5
+  [8] 'AI 报告的 '
+  [9] ' 行里只有 '
+  [10] ' 行能在 PDF 原文中对上号，无法据此合成规则。'
+  [11] 'These lines you reported could NOT be found in the document text:\n'
+  [12] "\n'raw_line' must be copied character-for-character from the document, tokens separated by single spaces."
+  [13] ['ai_hint']
+  [14] '    · '
+  [15] ' 行未能在原文定位，已从样例中剔除'
+  [16] '    · 行规则由 '
+  [17] '/'
+  [18] ' 条真实样例归纳而成'
+  [19] '    · line_pattern = '
+  [20] '2'
+  [21] ['fingerprint', 'customer', 'layout_type', 'version', 'line_pattern', 'order_unit']
+  [22] '    · entity_anchor = '
+  [23] ''
+  [24] '    · 未找到可复用的订单号标签，按单一订单处理'
+  [25] ['log']
+  [26] '    · 表头锚点：'
+  [27] ', '
+  [28] 'ratio_units'
+  [29] '    · 检测到尺码比例/每码件数编码 (size_encoding=ratio_units)'
+  [30] 'MERCH FIRST VENDOR'
+  [31] 'STYLE UNITS CODE'
+  [32] True
+  [33] '    · 检测到重复明细/汇总双表，开启按 (款/色/码) 去重'
+  [34] '    · po_no_anchor = '
+n_instr: 335
+======================== <module>.synthesize_recipe.<genexpr>
+names: ['_RATIO_BLOCK', 'search', 'line']
+varnames: ['.0', 's']
+  [0] None
+n_instr: 18
+======================== <module>.synthesize_recipe.<setcomp>
+names: []
+varnames: ['.0', 'p']
+n_instr: 11
+======================== <module>.verify_recipe
+names: ['VerifyReport', 'line_count', 'total_qty', 'po_nos', 'registry', 'parse', 'Exception', 'problems', 'append', 'sum', 'entities', 'parsed_rows', 'parsed_qty', 'parsed_pos', 'expected_rows', 'get', 'po_no', 'qty_by_po', 'bool', 'expected_pos', 'set', '_amount_misread_rows', 'expected_qty', 'sorted', '_explains_amount_misread', 'notes', '_thousands_match', 'validate', 'validate_breakdown', 'message', 'ok']
+varnames: ['pages', 'recipe', 'data', 'source_file', 'rep', 'po', 'e', 'got', 'ent', 'want', 'pos_match', 'mis', 'exp_total', 'k', 'g', 'w', 'validate_breakdown', 'bp']
+  [0] 'Replay the candidate recipe offline and hard-compare against the AI data.'
+  [1] ['expected_rows', 'expected_qty', 'expected_pos']
+  [2] ['source_file']
+  [3] '回放解析异常：'
+  [4] None
+  [5] '回放仅得 '
+  [6] ' 行，少于 AI 样本数 '
+  [7] '，规则可能过严（漏抽真实行）'
+  [8] 0
+  [9] '订单 '
+  [10] ' 的 AI 合计 '
+  [11] ' 实为金额列（同行数量列 '
+  [12] '），已按文档校正'
+  [13] 'AI 合计 '
+  [14] '总数量不符（'
+  [15] ' vs '
+  [16] '）'
+  [17] '订单号集合不符（'
+  [18] ' 数量不符（'
+  [19] 1
+  [20] ['validate_breakdown']
+n_instr: 381
+======================== <module>.verify_recipe.<genexpr>
+names: ['lines', 'len', 'sizes']
+varnames: ['.0', 'ent', 'ln']
+  [0] None
+n_instr: 23
+======================== <module>.verify_recipe.<listcomp>
+names: ['po_no']
+varnames: ['.0', 'ent']
+n_instr: 13

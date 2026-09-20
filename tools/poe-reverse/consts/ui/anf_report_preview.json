@@ -1,0 +1,1457 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "tkinter",
+   "filedialog",
+   "messagebox",
+   "tk",
+   "ttk",
+   "theme_glass",
+   "tg",
+   "output.customer_anf",
+   "build_anf_report",
+   "RAWDATA_HEADERS",
+   "core.anf_corrections",
+   "_get_val",
+   "_set_val",
+   "record_edits",
+   "iter_rawdata",
+   "_SHEET_META",
+   "_PREVIEW_W",
+   "_PREVIEW_H",
+   "_PREVIEW_MIN_W",
+   "_PREVIEW_MIN_H",
+   "_EDIT_FIELDS",
+   "_PINK",
+   "_begin_label_edit",
+   "_open_anf_pdf",
+   "_ensure_style",
+   "_col_width",
+   "_build_tab",
+   "_build_rawdata_tab",
+   "_get_field",
+   "_build_confirm_tab",
+   "show_anf_preview"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/anf_report_preview.py - ANF Special Report 输出版面预览窗口（第三窗口）。\n\n对照设计稿：标题栏「A」图标 + 「ANF Special Report — {tech_pack}」+ 关闭 ×；\n下方 ttk.Notebook 标签页 POChart / POList / RawData / 信息确认。\n\nV2.0.19.26 / V2.0.19.27 变更：\n  * RawData 页改为**可编辑网格**：除 SIZE / QTY 外所有列（含 COLOR_CODE /\n    COLOR_NAME）单元格为粉红色只读 Label，双击切换 Entry 编辑、回车或失焦提交写回实体；\n    修改会通过 fingerprint 记忆，后续同版式 PDF 自动预填。\n  * V2.0.19.27：RawData 编辑加一次性 guard，避免 entry.destroy() 触发延迟 FocusOut\n    重入 _finish 导致 TclError；RawData 页 Canvas 增加 <MouseWheel> 滚动。\n  * 信息确认页：每个 PO 文件名渲染为**超链接**（下划线 + hand2，保持原色），\n    点击直接打开源 PDF；字体颜色不引入粉红色。\n  * 保存时把全部修正写入 ANF 编辑记忆（core.anf_corrections），V2.0.19.27 回放时\n    校验行 sig，防止同 fingerprint 不同产品错位预填。\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "filedialog",
+    "messagebox"
+   ],
+   [
+    "ttk"
+   ],
+   [
+    "build_anf_report",
+    "RAWDATA_HEADERS"
+   ],
+   [
+    "_get_val",
+    "_set_val",
+    "record_edits",
+    "iter_rawdata"
+   ],
+   [
+    2,
+    3
+   ],
+   [
+    3,
+    4
+   ],
+   [
+    1,
+    2
+   ],
+   [
+    "POChart",
+    "POList",
+    "RawData"
+   ],
+   [
+    1200,
+    800
+   ],
+   [
+    1100,
+    700
+   ],
+   [
+    [
+     "PO#",
+     "attr",
+     "po_no"
+    ],
+    [
+     "Style",
+     "attr",
+     "style_no"
+    ],
+    [
+     "Commitment#",
+     "extra",
+     "commitment_no"
+    ],
+    [
+     "KI",
+     "extra",
+     "ki_no"
+    ],
+    [
+     "Mill Name",
+     "extra",
+     "mill_name"
+    ],
+    [
+     "Fabric Ref",
+     "extra",
+     "fabric_ref"
+    ],
+    [
+     "Ship Date",
+     "attr",
+     "delivery_date"
+    ]
+   ],
+   "#F48FB1",
+   "src",
+   "str",
+   60,
+   "hdr_row",
+   "int",
+   "col",
+   "data_start",
+   "max_rows",
+   "return",
+   "notebook",
+   "ttk.Notebook",
+   "tk.Frame",
+   "'tuple[tk.Frame, list]'",
+   "",
+   "stamp",
+   "suffix",
+   "None",
+   [
+    "src",
+    "str"
+   ],
+   [
+    60
+   ],
+   [
+    "hdr_row",
+    "int",
+    "col",
+    "int",
+    "data_start",
+    "int",
+    "max_rows",
+    "int",
+    "return",
+    "int"
+   ],
+   [
+    "notebook",
+    "ttk.Notebook",
+    "return",
+    "tk.Frame"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "notebook",
+    "ttk.Notebook",
+    "return",
+    "'tuple[tk.Frame, list]'"
+   ],
+   [
+    ""
+   ],
+   [
+    "stamp",
+    "str",
+    "suffix",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 113
+ },
+ "<module>._begin_label_edit": {
+  "names": [
+   "master",
+   "grid_info",
+   "int",
+   "cget",
+   "grid_remove",
+   "tg",
+   "COL",
+   "tk",
+   "Entry",
+   "_SANS",
+   "grid",
+   "insert",
+   "focus_set",
+   "select_range",
+   "bind"
+  ],
+  "varnames": [
+   "label",
+   "ent",
+   "ln",
+   "sq",
+   "header",
+   "inner",
+   "info",
+   "row",
+   "col",
+   "text",
+   "COL",
+   "_finish",
+   "_cancel"
+  ],
+  "consts": [
+   "双击粉红 Label 时，在同一 grid 单元格内显示 Entry 供编辑。",
+   "row",
+   "column",
+   "text",
+   "field",
+   "ink",
+   "groove",
+   1,
+   12,
+   15,
+   "center",
+   [
+    "bg",
+    "fg",
+    "insertbackground",
+    "relief",
+    "bd",
+    "font",
+    "width",
+    "justify"
+   ],
+   "nsew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   0,
+   "end",
+   "v",
+   false,
+   null,
+   "<FocusOut>",
+   "<Return>",
+   "<Escape>",
+   [
+    null
+   ]
+  ],
+  "n_instructions": 143
+ },
+ "<module>._begin_label_edit._finish": {
+  "names": [
+   "_set_val",
+   "get",
+   "configure",
+   "destroy",
+   "grid"
+  ],
+  "varnames": [
+   "_event"
+  ],
+  "consts": [
+   null,
+   "v",
+   true,
+   [
+    "text"
+   ]
+  ],
+  "n_instructions": 46
+ },
+ "<module>._begin_label_edit._cancel": {
+  "names": [
+   "destroy",
+   "grid"
+  ],
+  "varnames": [
+   "_event"
+  ],
+  "consts": [
+   null,
+   "v",
+   true
+  ],
+  "n_instructions": 24
+ },
+ "<module>._open_anf_pdf": {
+  "names": [
+   "os",
+   "path",
+   "exists",
+   "startfile",
+   "Exception",
+   "messagebox",
+   "showerror",
+   "showinfo"
+  ],
+  "varnames": [
+   "src"
+  ],
+  "consts": [
+   null,
+   "打开失败",
+   "无法打开文件：\n",
+   "文件缺失",
+   "源 PDF 不存在或路径为空：\n",
+   "(空)"
+  ],
+  "n_instructions": 55
+ },
+ "<module>._ensure_style": {
+  "names": [
+   "tg",
+   "COL",
+   "ttk",
+   "Style",
+   "configure",
+   "FONT_BODY",
+   "_SANS",
+   "map"
+  ],
+  "varnames": [
+   "COL",
+   "style"
+  ],
+  "consts": [
+   "配置 ANF 预览专用的 Treeview / Notebook 高对比样式。",
+   "ANFPreview.Treeview",
+   "panel",
+   "ink",
+   28,
+   0,
+   "flat",
+   [
+    "background",
+    "foreground",
+    "fieldbackground",
+    "font",
+    "rowheight",
+    "borderwidth",
+    "relief"
+   ],
+   "ANFPreview.Treeview.Heading",
+   "gap",
+   12,
+   "bold",
+   [
+    "background",
+    "foreground",
+    "font",
+    "borderwidth",
+    "relief"
+   ],
+   "selected",
+   "accent",
+   "select_fg",
+   [
+    "background",
+    "foreground"
+   ],
+   "ANFPreview.TNotebook",
+   [
+    2,
+    4,
+    2,
+    0
+   ],
+   [
+    "background",
+    "borderwidth",
+    "tabmargins"
+   ],
+   "ANFPreview.TNotebook.Tab",
+   "hair",
+   "ink_2",
+   [
+    16,
+    7
+   ],
+   [
+    "background",
+    "foreground",
+    "font",
+    "padding"
+   ],
+   "active",
+   [
+    "selected",
+    [
+     2,
+     2,
+     2,
+     0
+    ]
+   ],
+   [
+    "background",
+    "foreground",
+    "expand"
+   ],
+   null
+  ],
+  "n_instructions": 133
+ },
+ "<module>._col_width": {
+  "names": [
+   "str",
+   "cell",
+   "value",
+   "min",
+   "max_row",
+   "range",
+   "append",
+   "max"
+  ],
+  "varnames": [
+   "ws",
+   "hdr_row",
+   "col",
+   "data_start",
+   "max_rows",
+   "texts",
+   "end",
+   "r",
+   "v",
+   "max_len"
+  ],
+  "consts": [
+   null,
+   [
+    "row",
+    "column"
+   ],
+   "",
+   1,
+   0,
+   [
+    "default"
+   ],
+   56,
+   260,
+   8,
+   28
+  ],
+  "n_instructions": 82
+ },
+ "<module>._col_width.<genexpr>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._build_tab": {
+  "names": [
+   "tg",
+   "COL",
+   "tk",
+   "Frame",
+   "_SHEET_META",
+   "get",
+   "title",
+   "max_column",
+   "range",
+   "ttk",
+   "Treeview",
+   "list",
+   "enumerate",
+   "heading",
+   "column",
+   "_col_width",
+   "max_row",
+   "all",
+   "insert",
+   "tag_configure",
+   "Scrollbar",
+   "yview",
+   "xview",
+   "configure",
+   "set",
+   "grid",
+   "rowconfigure",
+   "columnconfigure",
+   "_anf_row_count"
+  ],
+  "varnames": [
+   "notebook",
+   "ws",
+   "COL",
+   "frame",
+   "data_start",
+   "ncols",
+   "headers",
+   "disp_headers",
+   "tree",
+   "i",
+   "h",
+   "data_rows",
+   "idx",
+   "vals",
+   "tag",
+   "vsb",
+   "hsb"
+  ],
+  "consts": [
+   "为单个 sheet 创建带 Treeview 的标签页（POChart / POList 只读）。",
+   "gap",
+   [
+    "bg"
+   ],
+   [
+    1,
+    2
+   ],
+   1,
+   "headings",
+   "ANFPreview.Treeview",
+   "browse",
+   [
+    "columns",
+    "show",
+    "style",
+    "selectmode"
+   ],
+   [
+    "text"
+   ],
+   "center",
+   false,
+   56,
+   [
+    "width",
+    "anchor",
+    "stretch",
+    "minwidth"
+   ],
+   0,
+   2,
+   "even",
+   "odd",
+   "",
+   "end",
+   [
+    "values",
+    "tags"
+   ],
+   "panel",
+   "ink",
+   [
+    "background",
+    "foreground"
+   ],
+   "field",
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   "horizontal",
+   [
+    "yscrollcommand",
+    "xscrollcommand"
+   ],
+   "nsew",
+   14,
+   [
+    10,
+    0
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   "ns",
+   [
+    "row",
+    "column",
+    "sticky",
+    "pady"
+   ],
+   "ew",
+   [
+    0,
+    10
+   ],
+   [
+    "weight"
+   ]
+  ],
+  "n_instructions": 292
+ },
+ "<module>._build_tab.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "v"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 13
+ },
+ "<module>._build_tab.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "v"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>._build_rawdata_tab": {
+  "names": [
+   "tg",
+   "COL",
+   "tk",
+   "Frame",
+   "Label",
+   "_SANS",
+   "pack",
+   "Canvas",
+   "ttk",
+   "Scrollbar",
+   "yview",
+   "xview",
+   "configure",
+   "set",
+   "create_window",
+   "RAWDATA_HEADERS",
+   "enumerate",
+   "_PINK",
+   "grid",
+   "iter_rawdata",
+   "str",
+   "size",
+   "qty_safe",
+   "_get_val",
+   "bind",
+   "update_idletasks",
+   "bbox"
+  ],
+  "varnames": [
+   "notebook",
+   "po_results",
+   "COL",
+   "outer",
+   "vsb",
+   "hsb",
+   "inner",
+   "hdrs",
+   "c",
+   "h",
+   "editable",
+   "r",
+   "ent",
+   "ln",
+   "sq",
+   "val",
+   "cell",
+   "_on_mousewheel"
+  ],
+  "consts": [
+   "RawData 可编辑网格：除 SIZE / QTY 外所有列（含 COLOR_CODE / COLOR_NAME）\n    为粉红色只读 Entry，双击编辑、回车/失焦提交写回实体。",
+   "gap",
+   [
+    "bg"
+   ],
+   "（粉红色单元格可双击修改；SIZE / QTY 只读）",
+   "ink_2",
+   11,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "w",
+   14,
+   [
+    8,
+    2
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "panel",
+   0,
+   [
+    "bg",
+    "highlightthickness"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   "horizontal",
+   [
+    "yscrollcommand",
+    "xscrollcommand"
+   ],
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "right",
+   "y",
+   [
+    "side",
+    "fill"
+   ],
+   "bottom",
+   "x",
+   "left",
+   "both",
+   true,
+   [
+    "side",
+    "fill",
+    "expand"
+   ],
+   [
+    8,
+    9
+   ],
+   "ink",
+   "bold",
+   "ridge",
+   1,
+   4,
+   3,
+   15,
+   "center",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "relief",
+    "bd",
+    "padx",
+    "pady",
+    "width",
+    "anchor"
+   ],
+   "nsew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   8,
+   "groove",
+   2,
+   12,
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "relief",
+    "bd",
+    "font",
+    "width",
+    "anchor",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   "<Double-1>",
+   "<MouseWheel>",
+   "all",
+   [
+    "scrollregion"
+   ]
+  ],
+  "n_instructions": 342
+ },
+ "<module>._build_rawdata_tab.<lambda>": {
+  "names": [
+   "_begin_label_edit"
+  ],
+  "varnames": [
+   "e",
+   "cl",
+   "en",
+   "li",
+   "sqq",
+   "hh"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 10
+ },
+ "<module>._build_rawdata_tab._on_mousewheel": {
+  "names": [
+   "yview_scroll",
+   "int",
+   "delta"
+  ],
+  "varnames": [
+   "event"
+  ],
+  "consts": [
+   null,
+   -1,
+   120,
+   "units",
+   "break"
+  ],
+  "n_instructions": 19
+ },
+ "<module>._get_field": {
+  "names": [
+   "str",
+   "getattr",
+   "extra",
+   "get"
+  ],
+  "varnames": [
+   "ent",
+   "kind",
+   "key"
+  ],
+  "consts": [
+   null,
+   "attr",
+   ""
+  ],
+  "n_instructions": 30
+ },
+ "<module>._build_confirm_tab": {
+  "names": [
+   "tg",
+   "COL",
+   "tk",
+   "Frame",
+   "Canvas",
+   "ttk",
+   "Scrollbar",
+   "yview",
+   "configure",
+   "set",
+   "create_window",
+   "pack",
+   "Label",
+   "_SANS",
+   "enumerate",
+   "getattr",
+   "os",
+   "path",
+   "basename",
+   "entities",
+   "po_no",
+   "bind",
+   "_EDIT_FIELDS",
+   "StringVar",
+   "_get_field",
+   "Entry",
+   "append",
+   "total_qty"
+  ],
+  "varnames": [
+   "notebook",
+   "po_results",
+   "outer",
+   "scroll",
+   "inner",
+   "edit_refs",
+   "pi",
+   "po",
+   "src",
+   "base",
+   "title",
+   "link",
+   "ei",
+   "ent",
+   "card",
+   "head",
+   "label",
+   "kind",
+   "key",
+   "row",
+   "var",
+   "entry",
+   "tq",
+   "_on_configure",
+   "_on_mousewheel"
+  ],
+  "consts": [
+   "可编辑「信息确认」页签：每个 PO 实体的实体级字段做成 Entry。\n    每个 PO 标题的文件名渲染为超链接（保持原色），点击打开源 PDF。\n    返回 (frame, edit_refs)。",
+   "gap",
+   [
+    "bg"
+   ],
+   0,
+   [
+    "bg",
+    "highlightthickness"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   [
+    "yscrollcommand"
+   ],
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "right",
+   "y",
+   [
+    "side",
+    "fill"
+   ],
+   "left",
+   "both",
+   true,
+   [
+    "side",
+    "fill",
+    "expand"
+   ],
+   "核对并修正：实体级字段可编辑，明细（POList / RawData）只读。确认无误后点「保存并打开 Excel」。",
+   "ink_2",
+   12,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "w",
+   18,
+   [
+    12,
+    6
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "source_file_path",
+   "",
+   "source_file",
+   "PO",
+   1,
+   [
+    10,
+    4
+   ],
+   "PO ",
+   " · ",
+   "accent",
+   14,
+   "bold",
+   [
+    "side"
+   ],
+   "underline",
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "cursor"
+   ],
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   "  （点击打开 PDF）",
+   "ink_3",
+   11,
+   "panel",
+   "x",
+   [
+    0,
+    10
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "Entity ",
+   "  ·  ",
+   "ink",
+   [
+    8,
+    4
+   ],
+   3,
+   "e",
+   [
+    "text",
+    "width",
+    "anchor",
+    "bg",
+    "fg",
+    "font"
+   ],
+   [
+    "value"
+   ],
+   "field",
+   "flat",
+   [
+    "textvariable",
+    "bg",
+    "fg",
+    "insertbackground",
+    "relief",
+    "font",
+    "highlightbackground",
+    "highlightthickness",
+    "highlightcolor"
+   ],
+   [
+    6,
+    0
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "Total Qty（只读）：",
+   [
+    2,
+    8
+   ],
+   "<MouseWheel>",
+   "<Configure>"
+  ],
+  "n_instructions": 555
+ },
+ "<module>._build_confirm_tab.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e",
+   "w"
+  ],
+  "consts": [
+   null,
+   "accent",
+   [
+    "fg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>._build_confirm_tab._on_configure": {
+  "names": [
+   "configure",
+   "bbox"
+  ],
+  "varnames": [
+   "_e"
+  ],
+  "consts": [
+   null,
+   "all",
+   [
+    "scrollregion"
+   ]
+  ],
+  "n_instructions": 15
+ },
+ "<module>._build_confirm_tab._on_mousewheel": {
+  "names": [
+   "yview_scroll",
+   "int",
+   "delta"
+  ],
+  "varnames": [
+   "event"
+  ],
+  "consts": [
+   null,
+   -1,
+   120,
+   "units",
+   "break"
+  ],
+  "n_instructions": 19
+ },
+ "<module>.show_anf_preview": {
+  "names": [
+   "_ensure_style",
+   "tg",
+   "COL",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "configure",
+   "bind",
+   "Frame",
+   "pack",
+   "Canvas",
+   "create_oval",
+   "create_text",
+   "_SANS",
+   "build_anf_report",
+   "value",
+   "str",
+   "split",
+   "strip",
+   "Exception",
+   "Label",
+   "ttk",
+   "Notebook",
+   "sheetnames",
+   "_build_tab",
+   "add",
+   "append",
+   "_build_rawdata_tab",
+   "_build_confirm_tab",
+   "join",
+   "len",
+   "iter_rawdata",
+   "ge_primary_button",
+   "minsize",
+   "_PREVIEW_MIN_W",
+   "_PREVIEW_MIN_H",
+   "update_idletasks",
+   "winfo_width",
+   "winfo_height",
+   "winfo_rootx",
+   "winfo_rooty",
+   "winfo_screenwidth",
+   "winfo_screenheight",
+   "geometry",
+   "_PREVIEW_W",
+   "_PREVIEW_H",
+   "max",
+   "deiconify",
+   "update"
+  ],
+  "varnames": [
+   "parent",
+   "po_results",
+   "store",
+   "stamp",
+   "suffix",
+   "title_bar",
+   "icon",
+   "display_wb",
+   "tech_pack",
+   "notebook",
+   "tabs",
+   "name",
+   "tab",
+   "raw_tab",
+   "confirm_frame",
+   "bottom",
+   "info_text",
+   "_save_open",
+   "open_btn",
+   "pw",
+   "ph",
+   "px",
+   "py"
+  ],
+  "consts": [
+   "弹出 ANF 报表预览窗口（含可编辑信息确认页签 + 可编辑 RawData 网格）。\n\n    - po_results / store：解析结果，供预览与保存时重建。\n    - stamp / suffix：用于默认保存文件名时间戳与后缀（PO-only 用 _POOnly）。\n    保存时把信息确认页签 + RawData 的编辑写回实体，重建报表并落盘打开，\n    同时记入 ANF 编辑记忆（fingerprint 持久化）。\n    ",
+   "ANF Special Report 预览",
+   "gap",
+   [
+    "bg"
+   ],
+   "<Escape>",
+   "x",
+   18,
+   [
+    16,
+    0
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   24,
+   0,
+   [
+    "width",
+    "height",
+    "bg",
+    "highlightthickness"
+   ],
+   "accent",
+   [
+    "fill",
+    "outline"
+   ],
+   12,
+   13,
+   "A",
+   "select_fg",
+   "bold",
+   [
+    "text",
+    "fill",
+    "font"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "",
+   "POChart",
+   "A1",
+   " Chase",
+   "ANF Special Report — ",
+   "ink",
+   16,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   [
+    10,
+    0
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "×",
+   "ink_3",
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "cursor"
+   ],
+   "right",
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   "ANFPreview.TNotebook",
+   [
+    "style"
+   ],
+   "both",
+   true,
+   14,
+   [
+    14,
+    8
+   ],
+   [
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   [
+    "POChart",
+    "POList"
+   ],
+   [
+    "text"
+   ],
+   "RawData",
+   "信息确认",
+   [
+    4,
+    16
+   ],
+   " · ",
+   " · RawData: ",
+   " 行",
+   "ink_2",
+   11,
+   [
+    8,
+    0
+   ],
+   [
+    "side",
+    "pady"
+   ],
+   "保存并打开 Excel",
+   [
+    "text",
+    "command",
+    "font"
+   ],
+   200,
+   [
+    0,
+    0
+   ],
+   "+",
+   2,
+   null
+  ],
+  "n_instructions": 557
+ },
+ "<module>.show_anf_preview.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "ink_3",
+   [
+    "fg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>.show_anf_preview.<genexpr>": {
+  "names": [
+   "getattr"
+  ],
+  "varnames": [
+   ".0",
+   "n",
+   "t"
+  ],
+  "consts": [
+   [
+    "POChart",
+    "POList"
+   ],
+   ": ",
+   "_anf_row_count",
+   0,
+   " 行",
+   null
+  ],
+  "n_instructions": 30
+ },
+ "<module>.show_anf_preview._save_open": {
+  "names": [
+   "filedialog",
+   "asksaveasfilename",
+   "str",
+   "__import__",
+   "Path",
+   "home",
+   "get",
+   "strip",
+   "setattr",
+   "extra",
+   "getattr",
+   "record_edits",
+   "build_anf_report",
+   "os",
+   "startfile",
+   "Exception",
+   "destroy",
+   "messagebox",
+   "showerror"
+  ],
+  "varnames": [
+   "out",
+   "ent",
+   "kind",
+   "key",
+   "var",
+   "v",
+   "po",
+   "fp",
+   "e"
+  ],
+  "consts": [
+   null,
+   "保存 ANF Special Report",
+   "pathlib",
+   "Desktop",
+   "OSR-ANF-Special_",
+   ".xlsx",
+   [
+    "Excel",
+    "*.xlsx"
+   ],
+   [
+    "title",
+    "initialdir",
+    "initialfile",
+    "defaultextension",
+    "filetypes"
+   ],
+   "attr",
+   "fingerprint",
+   "",
+   [
+    "out_path"
+   ],
+   "保存失败",
+   "无法保存报表：\n"
+  ],
+  "n_instructions": 157
+ }
+}

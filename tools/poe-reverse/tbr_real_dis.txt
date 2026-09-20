@@ -1,0 +1,249 @@
+178           0 RESUME                   0
+
+192           2 BUILD_LIST               0
+              4 STORE_FAST               4 (out)
+
+193           6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 EXTENDED_ARG             1
+             22 FOR_ITER               404 (to 832)
+             24 STORE_FAST               5 (ent)
+
+194          26 LOAD_FAST                5 (ent)
+             28 LOAD_ATTR                1 (lines)
+             38 GET_ITER
+        >>   40 EXTENDED_ARG             1
+             42 FOR_ITER               392 (to 828)
+             44 STORE_FAST               6 (ln)
+
+195          46 LOAD_FAST                6 (ln)
+             48 LOAD_ATTR                2 (sizes)
+             58 GET_ITER
+        >>   60 EXTENDED_ARG             1
+             62 FOR_ITER               380 (to 824)
+             64 STORE_FAST               7 (sq)
+
+196          66 LOAD_GLOBAL              7 (NULL + build_row_key)
+
+197          78 LOAD_FAST                0 (self)
+             80 LOAD_ATTR                4 (customer)
+
+198          90 LOAD_FAST                5 (ent)
+             92 LOAD_ATTR                5 (po_no)
+
+199         102 LOAD_FAST                6 (ln)
+            104 LOAD_ATTR                6 (style_no)
+
+200         114 LOAD_FAST                6 (ln)
+            116 LOAD_ATTR                7 (color_code)
+
+201         126 LOAD_FAST                7 (sq)
+            128 LOAD_ATTR                8 (size)
+
+202         138 LOAD_FAST                6 (ln)
+            140 LOAD_ATTR                9 (inseam)
+
+203         150 LOAD_FAST                5 (ent)
+            152 LOAD_ATTR               10 (destination_code)
+
+196         162 KW_NAMES                 1
+            164 PRECALL                  7
+            168 CALL                     7
+            178 STORE_FAST               8 (rk)
+
+205         180 LOAD_FAST                4 (out)
+            182 LOAD_METHOD             11 (append)
+            204 BUILD_MAP                0
+
+206         206 LOAD_CONST               2 ('A')
+            208 LOAD_FAST                0 (self)
+            210 LOAD_ATTR                4 (customer)
+
+205         220 MAP_ADD                  1
+
+207         222 LOAD_CONST               3 ('B')
+            224 LOAD_FAST                6 (ln)
+            226 LOAD_ATTR                6 (style_no)
+
+205         236 MAP_ADD                  1
+
+208         238 LOAD_CONST               4 ('C')
+            240 LOAD_FAST                5 (ent)
+            242 LOAD_ATTR                5 (po_no)
+
+205         252 MAP_ADD                  1
+
+209         254 LOAD_CONST               5 ('D')
+            256 LOAD_FAST                5 (ent)
+            258 LOAD_ATTR               12 (season)
+
+205         268 MAP_ADD                  1
+
+210         270 LOAD_CONST               6 ('E')
+            272 LOAD_FAST                6 (ln)
+            274 LOAD_ATTR                7 (color_code)
+
+205         284 MAP_ADD                  1
+
+211         286 LOAD_CONST               7 ('F')
+            288 LOAD_FAST                6 (ln)
+            290 LOAD_ATTR               13 (color_desc)
+
+205         300 MAP_ADD                  1
+
+212         302 LOAD_CONST               8 ('G')
+            304 LOAD_FAST                7 (sq)
+            306 LOAD_ATTR                8 (size)
+
+205         316 MAP_ADD                  1
+
+213         318 LOAD_CONST               9 ('H')
+            320 LOAD_FAST                6 (ln)
+            322 LOAD_ATTR                9 (inseam)
+
+205         332 MAP_ADD                  1
+
+214         334 LOAD_CONST              10 ('I')
+            336 LOAD_FAST                7 (sq)
+            338 LOAD_ATTR               14 (qty_safe)
+
+205         348 MAP_ADD                  1
+
+215         350 LOAD_CONST              11 ('J')
+            352 LOAD_FAST                6 (ln)
+            354 LOAD_ATTR               15 (su)
+
+205         364 MAP_ADD                  1
+
+216         366 LOAD_CONST              12 ('K')
+            368 LOAD_FAST                6 (ln)
+            370 LOAD_ATTR               16 (unit_price)
+            380 POP_JUMP_FORWARD_IF_NONE     7 (to 396)
+            382 LOAD_FAST                6 (ln)
+            384 LOAD_ATTR               16 (unit_price)
+            394 JUMP_FORWARD             1 (to 398)
+        >>  396 LOAD_CONST              14 ('')
+
+205     >>  398 MAP_ADD                  1
+
+217         400 LOAD_CONST              15 ('L')
+            402 LOAD_CONST              13 (None)
+
+205         404 MAP_ADD                  1
+
+218         406 LOAD_CONST              16 ('M')
+            408 LOAD_FAST                5 (ent)
+            410 LOAD_ATTR               17 (price_term)
+
+205         420 MAP_ADD                  1
+
+219         422 LOAD_CONST              17 ('N')
+            424 LOAD_FAST                5 (ent)
+            426 LOAD_ATTR               18 (currency)
+
+205         436 MAP_ADD                  1
+
+220         438 LOAD_CONST              18 ('O')
+            440 LOAD_FAST                5 (ent)
+            442 LOAD_ATTR               19 (delivery_date)
+
+205         452 MAP_ADD                  1
+
+221         454 LOAD_CONST              19 ('P')
+            456 LOAD_FAST                5 (ent)
+            458 LOAD_ATTR               20 (port_loading)
+
+205         468 MAP_ADD                  1
+
+222         470 LOAD_CONST              20 ('Q')
+            472 LOAD_FAST                5 (ent)
+            474 LOAD_ATTR               21 (port_discharge)
+
+205         484 MAP_ADD                  1
+
+223         486 LOAD_FAST                5 (ent)
+            488 LOAD_ATTR               22 (ship_mode)
+
+224         498 LOAD_FAST                5 (ent)
+            500 LOAD_ATTR               10 (destination_code)
+
+225         510 LOAD_FAST                5 (ent)
+            512 LOAD_ATTR               23 (payment_terms)
+
+226         522 LOAD_FAST                5 (ent)
+            524 LOAD_ATTR               24 (country_of_origin)
+
+227         534 LOAD_FAST                8 (rk)
+
+228         536 LOAD_FAST                1 (po_version)
+
+229         538 LOAD_FAST                2 (is_current)
+
+235         540 LOAD_FAST                0 (self)
+            542 LOAD_ATTR               25 (source_file_path)
+
+231         552 POP_JUMP_FORWARD_IF_TRUE     7 (to 568)
+
+235         554 LOAD_FAST                0 (self)
+            556 LOAD_ATTR               26 (source_file)
+
+231         566 POP_JUMP_FORWARD_IF_FALSE   105 (to 778)
+        >>  568 LOAD_GLOBAL             55 (NULL + excel_hyperlink_formula)
+
+232         580 LOAD_FAST                0 (self)
+            582 LOAD_ATTR               25 (source_file_path)
+            592 JUMP_IF_TRUE_OR_POP      6 (to 606)
+            594 LOAD_FAST                0 (self)
+            596 LOAD_ATTR               26 (source_file)
+
+233     >>  606 LOAD_FAST                0 (self)
+            608 LOAD_ATTR               26 (source_file)
+            618 POP_JUMP_FORWARD_IF_FALSE    36 (to 692)
+            620 LOAD_GLOBAL             56 (os)
+            632 LOAD_ATTR               29 (path)
+            642 LOAD_METHOD             30 (basename)
+            664 LOAD_FAST                0 (self)
+            666 LOAD_ATTR               26 (source_file)
+            676 PRECALL                  1
+            680 CALL                     1
+            690 JUMP_FORWARD            35 (to 762)
+
+234     >>  692 LOAD_GLOBAL             56 (os)
+            704 LOAD_ATTR               29 (path)
+            714 LOAD_METHOD             30 (basename)
+            736 LOAD_FAST                0 (self)
+            738 LOAD_ATTR               25 (source_file_path)
+            748 PRECALL                  1
+            752 CALL                     1
+
+231     >>  762 PRECALL                  2
+            766 CALL                     2
+            776 JUMP_FORWARD             1 (to 780)
+
+235     >>  778 LOAD_CONST              14 ('')
+
+236     >>  780 LOAD_FAST                3 (import_batch)
+
+237         782 LOAD_FAST                0 (self)
+            784 LOAD_ATTR               31 (fingerprint)
+            794 JUMP_IF_TRUE_OR_POP      1 (to 798)
+            796 LOAD_CONST              14 ('')
+
+205     >>  798 LOAD_CONST              21 (('R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA'))
+            800 BUILD_CONST_KEY_MAP     10
+            802 DICT_UPDATE              1
+            804 PRECALL                  1
+            808 CALL                     1
+            818 POP_TOP
+            820 EXTENDED_ARG             1
+            822 JUMP_BACKWARD          382 (to 60)
+
+195     >>  824 EXTENDED_ARG             1
+            826 JUMP_BACKWARD          394 (to 40)
+
+194     >>  828 EXTENDED_ARG             1
+            830 JUMP_BACKWARD          406 (to 20)
+
+239     >>  832 LOAD_FAST                4 (out)
+            834 RETURN_VALUE

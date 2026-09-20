@@ -1,0 +1,447 @@
+{
+ "A_sizes_merge": {
+  "line": {
+   "style_no": "637JO",
+   "color_code": "90Z",
+   "color_desc": "BLACK",
+   "inseam": "28",
+   "su": "SET",
+   "unit_price": 8.5,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     250
+    ],
+    [
+     "L",
+     "abc"
+    ]
+   ]
+  },
+  "total_qty": 1494
+ },
+ "B_price_12_50": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PCS",
+   "unit_price": 1250.0,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  },
+  "line1": {
+   "style_no": "637JO",
+   "color_code": "90Z",
+   "color_desc": "BLACK",
+   "inseam": "30",
+   "su": "PR",
+   "unit_price": 1250.0,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     200
+    ],
+    [
+     "L",
+     "abc"
+    ]
+   ]
+  }
+ },
+ "B_price_abc": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PCS",
+   "unit_price": null,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  }
+ },
+ "B_price_10": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PCS",
+   "unit_price": 10.0,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  }
+ },
+ "B_price_multi_comma": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PCS",
+   "unit_price": 1055.0,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  }
+ },
+ "C_header_generic": {
+  "entity_index": 0,
+  "style_no": "",
+  "po_no": "888",
+  "channel": "E-COMM",
+  "delivery_date": "2027-01-01",
+  "destination_code": "EG.CL.R",
+  "packing_method": "FLAT",
+  "wash_method": "WM",
+  "washing_color": "WC",
+  "payment_terms": "CAD",
+  "price_term": "CIF",
+  "currency": "USD",
+  "size_scale": "NUM",
+  "product_group": "G",
+  "age_sex_desc": "W",
+  "product_desc": "P",
+  "season": "FW27",
+  "port_loading": "Shanghai",
+  "port_discharge": "NY",
+  "ship_mode": "Air",
+  "vendor_name": "V",
+  "agent_name": "A",
+  "import_po_no": "I",
+  "reference_no": "R",
+  "cir_no": "CC",
+  "freight_terms": "F",
+  "country_of_origin": "CN",
+  "dc_address": "D"
+ },
+ "D_su_empty": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "",
+   "unit_price": 10.2,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  },
+  "line1": {
+   "style_no": "637JO",
+   "color_code": "90Z",
+   "color_desc": "BLACK",
+   "inseam": "30",
+   "su": "",
+   "unit_price": 8.5,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     200
+    ],
+    [
+     "L",
+     "abc"
+    ]
+   ]
+  }
+ },
+ "D_su_pair": {
+  "line0": {
+   "style_no": "637JO",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PAIR",
+   "unit_price": 10.2,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  },
+  "line1": {
+   "style_no": "637JO",
+   "color_code": "90Z",
+   "color_desc": "BLACK",
+   "inseam": "30",
+   "su": "PAIR",
+   "unit_price": 8.5,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     200
+    ],
+    [
+     "L",
+     "abc"
+    ]
+   ]
+  }
+ },
+ "E_defaults_line": {
+  "changes": [
+   "H1·po_no: '11321589' → 'P9' (默认)",
+   "H1·customer: 'LPP SA' → 'NEW CUST' (默认)",
+   "L1-1·款式: '637JO' → 'X1' (默认)",
+   "L1-2·款式: '637JO' → 'X1' (默认)"
+  ],
+  "line0": {
+   "style_no": "X1",
+   "color_code": "80X",
+   "color_desc": "BEIGE",
+   "inseam": "",
+   "su": "PAIR",
+   "unit_price": 10.2,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     744
+    ],
+    [
+     "M",
+     500
+    ]
+   ]
+  },
+  "line1": {
+   "style_no": "X1",
+   "color_code": "90Z",
+   "color_desc": "BLACK",
+   "inseam": "30",
+   "su": "PAIR",
+   "unit_price": 8.5,
+   "printed_row_total": null,
+   "net_amount": null,
+   "sizes": [
+    [
+     "S",
+     200
+    ],
+    [
+     "L",
+     "abc"
+    ]
+   ]
+  },
+  "customer": "NEW CUST",
+  "po_no": "P9"
+ },
+ "F_bad_json": {
+  "error": null
+ },
+ "F_null_str": {
+  "customer": "LPP SA",
+  "pairs": [
+   [
+    "H1·po_no",
+    "11321589"
+   ],
+   [
+    "H1·season",
+    "SS26"
+   ],
+   [
+    "H1·currency",
+    "USD"
+   ],
+   [
+    "H1·price_term",
+    "FOB"
+   ],
+   [
+    "H1·payment_terms",
+    "TT HSBC 180 Days"
+   ],
+   [
+    "H1·port_loading",
+    "Sihanoukville"
+   ],
+   [
+    "H1·port_discharge",
+    "Gdynia"
+   ],
+   [
+    "H1·ship_mode",
+    "Sea"
+   ],
+   [
+    "H1·vendor_name",
+    "Gs Global Sourcing Co.,Ltd"
+   ],
+   [
+    "H1·agent_name",
+    ""
+   ],
+   [
+    "H1·channel",
+    "STANDARD"
+   ],
+   [
+    "H1·size_scale",
+    "ALPHA"
+   ],
+   [
+    "H1·product_group",
+    "C_trousers"
+   ],
+   [
+    "H1·age_sex_desc",
+    "MENS"
+   ],
+   [
+    "H1·product_desc",
+    "MEN'S TROUSERS"
+   ],
+   [
+    "H1·destination_code",
+    ""
+   ],
+   [
+    "H1·wash_method",
+    ""
+   ],
+   [
+    "H1·washing_color",
+    ""
+   ],
+   [
+    "H1·packing_method",
+    "MULTIPACK"
+   ],
+   [
+    "H1·delivery_date",
+    "2026-03-02"
+   ],
+   [
+    "H1·import_po_no",
+    ""
+   ],
+   [
+    "H1·reference_no",
+    ""
+   ],
+   [
+    "H1·cir_no",
+    ""
+   ],
+   [
+    "H1·freight_terms",
+    ""
+   ],
+   [
+    "H1·country_of_origin",
+    ""
+   ],
+   [
+    "H1·dc_address",
+    ""
+   ],
+   [
+    "H1·customer",
+    "LPP SA"
+   ],
+   [
+    "L1-1·款式",
+    "637JO"
+   ],
+   [
+    "L1-1·颜色",
+    "80X / BEIGE"
+   ],
+   [
+    "L1-2·款式",
+    "637JO"
+   ],
+   [
+    "L1-2·颜色",
+    "90Z / BLACK"
+   ]
+  ]
+ },
+ "G_qty_safe": {
+  "spaced": 5,
+  "float_str": 0,
+  "bool_true": 1,
+  "empty_str": 0,
+  "neg_str": -3,
+  "zero_str": 0
+ },
+ "H_key_priority": {
+  "line1_inseam": "31"
+ },
+ "H_key_priority_inseam": {
+  "line1_inseam": "31"
+ },
+ "I_ent1": {
+  "po_no_0": "11321589",
+  "po_no_1": "BBBB"
+ }
+}

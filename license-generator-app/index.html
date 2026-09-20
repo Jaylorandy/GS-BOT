@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GS Bot License Generator</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-card">
+          <div class="brand-mark">GS</div>
+          <div>
+            <div class="eyebrow">License Console</div>
+            <h1>GS Bot License Generator</h1>
+            <p>Separate test and formal licenses, confirm details before signing, and keep a clean issuance history.</p>
+          </div>
+        </div>
+
+        <section class="status-card">
+          <div class="section-title">Signing Key</div>
+          <div id="keyStatusBadge" class="pill neutral">Checking...</div>
+          <p id="keyStatusMessage" class="status-text">Loading signing key status...</p>
+          <button id="selectKeyButton" class="secondary-button" type="button">Choose private.pem</button>
+          <div id="keyPath" class="meta-text"></div>
+          <p class="hint">
+            Formal licenses should use your controlled signing key. Avoid leaving private.pem mixed with delivery files.
+          </p>
+        </section>
+
+        <section class="status-card">
+          <div class="section-title">Runtime</div>
+          <div id="generatorRuntime" class="meta-text">Loading...</div>
+          <div class="meta-pair">
+            <span>Log file</span>
+            <code id="logPath" class="inline-code">-</code>
+          </div>
+        </section>
+      </aside>
+
+      <main class="content">
+        <section class="form-card">
+          <div class="form-header">
+            <div>
+              <div class="eyebrow">Generate</div>
+              <h2>Create a License</h2>
+            </div>
+            <div class="inline-actions">
+              <button id="generateButton" class="primary-button" type="button">Generate license</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label class="field">
+              <span>Customer Name</span>
+              <input id="customerNameInput" type="text" placeholder="Client Name" />
+            </label>
+
+            <label class="field">
+              <span>Email</span>
+              <input id="emailInput" type="email" placeholder="client@example.com" />
+            </label>
+
+            <label class="field">
+              <span>License Mode</span>
+              <select id="licenseModeSelect">
+                <option value="formal">Formal license</option>
+                <option value="test">Test license</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Duration (days)</span>
+              <input id="daysInput" type="number" min="1" step="1" />
+            </label>
+
+            <label class="field field-span-2">
+              <span>Internal Note</span>
+              <textarea id="noteInput" rows="3" placeholder="Optional internal note"></textarea>
+            </label>
+          </div>
+
+          <div class="features-box">
+            <div class="section-title">Feature Access</div>
+            <div id="featureChips" class="chip-grid"></div>
+          </div>
+
+          <div class="summary-card">
+            <div class="section-title">Pre-sign Summary</div>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span class="label">Customer</span>
+                <span id="summaryCustomer">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Mode</span>
+                <span id="summaryMode">-</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Scope</span>
+                <span id="summaryBinding">General</span>
+              </div>
+              <div class="summary-item">
+                <span class="label">Expires</span>
+                <span id="summaryExpiry">-</span>
+              </div>
+              <div class="summary-item summary-span-2">
+                <span class="label">Features</span>
+                <span id="summaryFeatures">-</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="formFeedback" class="feedback"></div>
+        </section>
+
+        <section class="output-card">
+          <div class="output-header">
+            <div>
+              <div class="eyebrow">Result</div>
+              <h2>Generated License</h2>
+            </div>
+            <div class="inline-actions">
+              <button id="copyButton" class="secondary-button" type="button" disabled>Copy key</button>
+              <button id="saveTxtButton" class="secondary-button" type="button" disabled>Save .txt</button>
+              <button id="saveJsonButton" class="secondary-button" type="button" disabled>Save .json</button>
+            </div>
+          </div>
+
+          <textarea id="licenseOutput" class="license-output" readonly placeholder="Generated license key will appear here."></textarea>
+
+          <div class="result-grid">
+            <div class="result-item">
+              <span class="label">Customer</span>
+              <span id="resultCustomer">-</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Expires</span>
+              <span id="resultExpiry">-</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Duration</span>
+              <span id="resultDuration">-</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Signing key</span>
+              <span id="resultKeySource">-</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Mode</span>
+              <span id="resultMode">-</span>
+            </div>
+            <div class="result-item">
+              <span class="label">Verified</span>
+              <span id="resultVerified">-</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="history-card">
+          <div class="output-header">
+            <div>
+              <div class="eyebrow">History</div>
+              <h2>Issued Licenses</h2>
+            </div>
+          </div>
+          <div id="historyEmpty" class="empty-state">No licenses have been issued yet.</div>
+          <div id="historyList" class="history-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>

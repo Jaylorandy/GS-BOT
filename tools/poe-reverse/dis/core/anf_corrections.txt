@@ -1,0 +1,834 @@
+# module: core.anf_corrections
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\anf_corrections.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/anf_corrections.py - persist ANF preview edits keyed by PDF layout fingerprint.\n\nWhen the operator corrects an ANF entity/line field in the preview window\n("信息确认" tab or the editable RawData grid), the correction is stored on disk\nkeyed by the source PDF\'s ``layout_fingerprint``. On the NEXT parse of the same\nPDF, :func:`apply_anf_corrections` replays the stored values so the operator does\nnot have to re-type them — the "memory" the ANF Special flow needs across cases.\n\nThe edits are **value overrides** (the same semantic as the standard confirm\ndialog\'s cleeds), NOT position relocations: where the value is read from in the\nPDF is still decided by the existing parser / recipe, only the extracted value is\noverwritten by the remembered correction.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 14           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 16          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 17          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 18          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               4 (('Dict', 'List', 'Optional'))
+             38 IMPORT_NAME              5 (typing)
+             40 IMPORT_FROM              6 (Dict)
+             42 STORE_NAME               6 (Dict)
+             44 IMPORT_FROM              7 (List)
+             46 STORE_NAME               7 (List)
+             48 IMPORT_FROM              8 (Optional)
+             50 STORE_NAME               8 (Optional)
+             52 POP_TOP
+
+ 26          54 BUILD_LIST               0
+             56 LOAD_CONST               5 ((('PO#', 'ent_attr', 'po_no'), ('PO_CODE', 'ent_extra', 'po_code'), ('TECH_PACK', 'ent_extra', 'tech_pack_no'), ('COMMITMENT', 'ent_extra', 'commitment_no'), ('KI', 'ent_extra', 'ki_no'), ('STYLE_NO', 'ln_attr', 'style_no'), ('COLOR_CODE', 'ln_attr', 'color_code'), ('COLOR_NAME', 'ln_attr', 'color_desc'), ('SHIP_DATE', 'ent_attr', 'delivery_date'), ('SHIP_MODE', 'ent_attr', 'ship_mode'), ('FOB', 'ln_attr', 'unit_price'), ('CURRENCY', 'ent_attr', 'currency'), ('COO', 'ent_attr', 'country_of_origin'), ('CARTON_STD', 'ent_extra', 'carton_std'), ('NDC_DATE', 'ent_extra', 'ndc_date'), ('CANCEL_DATE', 'ent_extra', 'cancel_date'), ('NOT_BEFORE_DATE', 'ent_extra', 'not_before_date'), ('DEAL_PRICE', 'ent_extra', 'deal_price'), ('VENDOR', 'ent_extra', 'vendor_code'), ('FACTORY', 'ent_extra', 'factory_code'), ('MILL', 'ent_extra', 'mill_name'), ('FABRIC', 'ent_extra', 'fabric_ref'), ('EAN', 'ln_extra', 'ean'), ('SHORT_SKU', 'ln_extra', 'short_sku'), ('LONG_SKU', 'ln_extra', 'long_sku'), ('SHADE', 'ln_extra', 'shade'), ('TICKET_TYPE', 'ln_extra', 'ticket_type')))
+             58 LIST_EXTEND              1
+             60 STORE_NAME               9 (EDIT_ACCESS)
+
+ 55          62 LOAD_CONST               6 ((8, 9))
+             64 STORE_NAME              10 (_READONLY_COLS)
+
+ 56          66 LOAD_CONST               7 (<code object <dictcomp> at 0x000002BF94A6E090, file "core\anf_corrections.py", line 56>)
+             68 MAKE_FUNCTION            0
+             70 LOAD_NAME                9 (EDIT_ACCESS)
+             72 GET_ITER
+             74 PRECALL                  0
+             78 CALL                     0
+             88 STORE_NAME              11 (_ACCESS_BY_HEADER)
+
+ 58          90 LOAD_CONST               8 (<code object <listcomp> at 0x000002BF94A6DC30, file "core\anf_corrections.py", line 58>)
+             92 MAKE_FUNCTION            0
+             94 LOAD_NAME                9 (EDIT_ACCESS)
+             96 GET_ITER
+             98 PRECALL                  0
+            102 CALL                     0
+            112 STORE_NAME              12 (EDITABLE_HEADERS)
+
+ 61         114 LOAD_CONST              29 (('header', 'str', 'return', 'str'))
+            116 LOAD_CONST              12 (<code object _get_val at 0x000002BF9444D0D0, file "core\anf_corrections.py", line 61>)
+            118 MAKE_FUNCTION            4 (annotations)
+            120 STORE_NAME              13 (_get_val)
+
+ 72         122 LOAD_CONST              30 (('header', 'str', 'val', 'str', 'return', 'None'))
+            124 LOAD_CONST              15 (<code object _set_val at 0x000002BF949E25B0, file "core\anf_corrections.py", line 72>)
+            126 MAKE_FUNCTION            4 (annotations)
+            128 STORE_NAME              14 (_set_val)
+
+ 85         130 LOAD_CONST              31 (('return', 'str'))
+            132 LOAD_CONST              16 (<code object _row_sig at 0x000002BF94715370, file "core\anf_corrections.py", line 85>)
+            134 MAKE_FUNCTION            4 (annotations)
+            136 STORE_NAME              15 (_row_sig)
+
+ 96         138 LOAD_CONST              32 (('po_results', 'List', 'return', "'List[tuple]'"))
+            140 LOAD_CONST              20 (<code object iter_rawdata at 0x000002BF9473D7F0, file "core\anf_corrections.py", line 96>)
+            142 MAKE_FUNCTION            4 (annotations)
+            144 STORE_NAME              16 (iter_rawdata)
+
+112         146 LOAD_CONST              31 (('return', 'str'))
+            148 LOAD_CONST              21 (<code object _path at 0x000002BF94A9C990, file "core\anf_corrections.py", line 112>)
+            150 MAKE_FUNCTION            4 (annotations)
+            152 STORE_NAME              17 (_path)
+
+119         154 LOAD_CONST              33 (('return', 'dict'))
+            156 LOAD_CONST              23 (<code object _load at 0x000002BF94A9CB20, file "core\anf_corrections.py", line 119>)
+            158 MAKE_FUNCTION            4 (annotations)
+            160 STORE_NAME              18 (_load)
+
+127         162 LOAD_CONST              34 (('data', 'dict', 'return', 'None'))
+            164 LOAD_CONST              25 (<code object _save at 0x000002BF94A18AB0, file "core\anf_corrections.py", line 127>)
+            166 MAKE_FUNCTION            4 (annotations)
+            168 STORE_NAME              19 (_save)
+
+135         170 LOAD_CONST              35 (('fp', 'str', 'po_results', 'List', 'return', 'None'))
+            172 LOAD_CONST              27 (<code object record_edits at 0x000002BF946925B0, file "core\anf_corrections.py", line 135>)
+            174 MAKE_FUNCTION            4 (annotations)
+            176 STORE_NAME              20 (record_edits)
+
+149         178 LOAD_CONST              36 (('fp', 'str', 'return', 'None'))
+            180 LOAD_CONST              28 (<code object apply_anf_corrections at 0x000002BF9444C3E0, file "core\anf_corrections.py", line 149>)
+            182 MAKE_FUNCTION            4 (annotations)
+            184 STORE_NAME              21 (apply_anf_corrections)
+            186 LOAD_CONST               3 (None)
+            188 RETURN_VALUE
+
+==============================================================================
+## <module>.<dictcomp>  (args=1, locals=4)
+# varnames: .0, h, scope, key
+ 56           0 RESUME                   0
+              2 BUILD_MAP                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                11 (to 30)
+              8 UNPACK_SEQUENCE          3
+             12 STORE_FAST               1 (h)
+             14 STORE_FAST               2 (scope)
+             16 STORE_FAST               3 (key)
+             18 LOAD_FAST                1 (h)
+             20 LOAD_FAST                2 (scope)
+             22 LOAD_FAST                3 (key)
+             24 BUILD_TUPLE              2
+             26 MAP_ADD                  2
+             28 JUMP_BACKWARD           12 (to 6)
+        >>   30 RETURN_VALUE
+
+==============================================================================
+## <module>.<listcomp>  (args=1, locals=3)
+# varnames: .0, h, _
+ 58           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 8 (to 24)
+              8 UNPACK_SEQUENCE          3
+             12 STORE_FAST               1 (h)
+             14 STORE_FAST               2 (_)
+             16 STORE_FAST               2 (_)
+             18 LOAD_FAST                1 (h)
+             20 LIST_APPEND              2
+             22 JUMP_BACKWARD            9 (to 6)
+        >>   24 RETURN_VALUE
+
+==============================================================================
+## <module>._get_val  (args=4, locals=6)
+# varnames: ent, ln, sq, header, scope, key
+ 61           0 RESUME                   0
+
+ 62           2 LOAD_GLOBAL              0 (_ACCESS_BY_HEADER)
+             14 LOAD_FAST                3 (header)
+             16 BINARY_SUBSCR
+             26 UNPACK_SEQUENCE          2
+             30 STORE_FAST               4 (scope)
+             32 STORE_FAST               5 (key)
+
+ 63          34 LOAD_FAST                4 (scope)
+             36 LOAD_CONST               1 ('ent_attr')
+             38 COMPARE_OP               2 (==)
+             44 POP_JUMP_FORWARD_IF_FALSE    32 (to 110)
+
+ 64          46 LOAD_GLOBAL              3 (NULL + str)
+             58 LOAD_GLOBAL              5 (NULL + getattr)
+             70 LOAD_FAST                0 (ent)
+             72 LOAD_FAST                5 (key)
+             74 LOAD_CONST               2 ('')
+             76 PRECALL                  3
+             80 CALL                     3
+             90 JUMP_IF_TRUE_OR_POP      1 (to 94)
+             92 LOAD_CONST               2 ('')
+        >>   94 PRECALL                  1
+             98 CALL                     1
+            108 RETURN_VALUE
+
+ 65     >>  110 LOAD_FAST                4 (scope)
+            112 LOAD_CONST               3 ('ent_extra')
+            114 COMPARE_OP               2 (==)
+            120 POP_JUMP_FORWARD_IF_FALSE    42 (to 206)
+
+ 66         122 LOAD_GLOBAL              3 (NULL + str)
+            134 LOAD_FAST                0 (ent)
+            136 LOAD_ATTR                3 (extra)
+            146 LOAD_METHOD              4 (get)
+            168 LOAD_FAST                5 (key)
+            170 LOAD_CONST               2 ('')
+            172 PRECALL                  2
+            176 CALL                     2
+            186 JUMP_IF_TRUE_OR_POP      1 (to 190)
+            188 LOAD_CONST               2 ('')
+        >>  190 PRECALL                  1
+            194 CALL                     1
+            204 RETURN_VALUE
+
+ 67     >>  206 LOAD_FAST                4 (scope)
+            208 LOAD_CONST               4 ('ln_attr')
+            210 COMPARE_OP               2 (==)
+            216 POP_JUMP_FORWARD_IF_FALSE    32 (to 282)
+
+ 68         218 LOAD_GLOBAL              3 (NULL + str)
+            230 LOAD_GLOBAL              5 (NULL + getattr)
+            242 LOAD_FAST                1 (ln)
+            244 LOAD_FAST                5 (key)
+            246 LOAD_CONST               2 ('')
+            248 PRECALL                  3
+            252 CALL                     3
+            262 JUMP_IF_TRUE_OR_POP      1 (to 266)
+            264 LOAD_CONST               2 ('')
+        >>  266 PRECALL                  1
+            270 CALL                     1
+            280 RETURN_VALUE
+
+ 69     >>  282 LOAD_GLOBAL              3 (NULL + str)
+            294 LOAD_FAST                1 (ln)
+            296 LOAD_ATTR                3 (extra)
+            306 LOAD_METHOD              4 (get)
+            328 LOAD_FAST                5 (key)
+            330 LOAD_CONST               2 ('')
+            332 PRECALL                  2
+            336 CALL                     2
+            346 JUMP_IF_TRUE_OR_POP      1 (to 350)
+            348 LOAD_CONST               2 ('')
+        >>  350 PRECALL                  1
+            354 CALL                     1
+            364 RETURN_VALUE
+
+==============================================================================
+## <module>._set_val  (args=5, locals=8)
+# varnames: ent, ln, sq, header, val, scope, key, v
+ 72           0 RESUME                   0
+
+ 73           2 LOAD_GLOBAL              0 (_ACCESS_BY_HEADER)
+             14 LOAD_FAST                3 (header)
+             16 BINARY_SUBSCR
+             26 UNPACK_SEQUENCE          2
+             30 STORE_FAST               5 (scope)
+             32 STORE_FAST               6 (key)
+
+ 74          34 LOAD_FAST                4 (val)
+             36 POP_JUMP_FORWARD_IF_NONE     2 (to 42)
+             38 LOAD_FAST                4 (val)
+             40 JUMP_FORWARD             1 (to 44)
+        >>   42 LOAD_CONST               1 ('')
+        >>   44 STORE_FAST               7 (v)
+
+ 75          46 LOAD_FAST                5 (scope)
+             48 LOAD_CONST               2 ('ent_attr')
+             50 COMPARE_OP               2 (==)
+             56 POP_JUMP_FORWARD_IF_FALSE    19 (to 96)
+
+ 76          58 LOAD_GLOBAL              3 (NULL + setattr)
+             70 LOAD_FAST                0 (ent)
+             72 LOAD_FAST                6 (key)
+             74 LOAD_FAST                7 (v)
+             76 PRECALL                  3
+             80 CALL                     3
+             90 POP_TOP
+             92 LOAD_CONST               0 (None)
+             94 RETURN_VALUE
+
+ 77     >>   96 LOAD_FAST                5 (scope)
+             98 LOAD_CONST               3 ('ent_extra')
+            100 COMPARE_OP               2 (==)
+            106 POP_JUMP_FORWARD_IF_FALSE    12 (to 132)
+
+ 78         108 LOAD_FAST                7 (v)
+            110 LOAD_FAST                0 (ent)
+            112 LOAD_ATTR                2 (extra)
+            122 LOAD_FAST                6 (key)
+            124 STORE_SUBSCR
+            128 LOAD_CONST               0 (None)
+            130 RETURN_VALUE
+
+ 79     >>  132 LOAD_FAST                5 (scope)
+            134 LOAD_CONST               4 ('ln_attr')
+            136 COMPARE_OP               2 (==)
+            142 POP_JUMP_FORWARD_IF_FALSE    19 (to 182)
+
+ 80         144 LOAD_GLOBAL              3 (NULL + setattr)
+            156 LOAD_FAST                1 (ln)
+            158 LOAD_FAST                6 (key)
+            160 LOAD_FAST                7 (v)
+            162 PRECALL                  3
+            166 CALL                     3
+            176 POP_TOP
+            178 LOAD_CONST               0 (None)
+            180 RETURN_VALUE
+
+ 82     >>  182 LOAD_FAST                7 (v)
+            184 LOAD_FAST                1 (ln)
+            186 LOAD_ATTR                2 (extra)
+            196 LOAD_FAST                6 (key)
+            198 STORE_SUBSCR
+            202 LOAD_CONST               0 (None)
+            204 RETURN_VALUE
+
+==============================================================================
+## <module>._row_sig  (args=3, locals=3)
+# varnames: ent, ln, sq
+ 85           0 RESUME                   0
+
+ 87           2 LOAD_CONST               1 ('|')
+              4 LOAD_METHOD              0 (join)
+
+ 88          26 LOAD_GLOBAL              3 (NULL + str)
+             38 LOAD_FAST                0 (ent)
+             40 LOAD_ATTR                2 (po_no)
+             50 JUMP_IF_TRUE_OR_POP      1 (to 54)
+             52 LOAD_CONST               2 ('')
+        >>   54 PRECALL                  1
+             58 CALL                     1
+
+ 89          68 LOAD_GLOBAL              3 (NULL + str)
+             80 LOAD_FAST                1 (ln)
+             82 LOAD_ATTR                3 (style_no)
+             92 JUMP_IF_TRUE_OR_POP      1 (to 96)
+             94 LOAD_CONST               2 ('')
+        >>   96 PRECALL                  1
+            100 CALL                     1
+
+ 90         110 LOAD_GLOBAL              3 (NULL + str)
+            122 LOAD_FAST                1 (ln)
+            124 LOAD_ATTR                4 (color_code)
+            134 JUMP_IF_TRUE_OR_POP      1 (to 138)
+            136 LOAD_CONST               2 ('')
+        >>  138 PRECALL                  1
+            142 CALL                     1
+
+ 91         152 LOAD_GLOBAL              3 (NULL + str)
+            164 LOAD_FAST                1 (ln)
+            166 LOAD_ATTR                5 (color_desc)
+            176 JUMP_IF_TRUE_OR_POP      1 (to 180)
+            178 LOAD_CONST               2 ('')
+        >>  180 PRECALL                  1
+            184 CALL                     1
+
+ 92         194 LOAD_GLOBAL              3 (NULL + str)
+            206 LOAD_FAST                2 (sq)
+            208 POP_JUMP_FORWARD_IF_NONE     7 (to 224)
+            210 LOAD_FAST                2 (sq)
+            212 LOAD_ATTR                6 (size)
+            222 JUMP_FORWARD             1 (to 226)
+        >>  224 LOAD_CONST               2 ('')
+        >>  226 PRECALL                  1
+            230 CALL                     1
+
+ 87         240 BUILD_LIST               5
+            242 PRECALL                  1
+            246 CALL                     1
+            256 RETURN_VALUE
+
+==============================================================================
+## <module>.iter_rawdata  (args=1, locals=6)
+# varnames: po_results, out, po, ent, ln, sq
+ 96           0 RESUME                   0
+
+103           2 BUILD_LIST               0
+              4 STORE_FAST               1 (out)
+
+104           6 LOAD_FAST                0 (po_results)
+              8 GET_ITER
+        >>   10 FOR_ITER                56 (to 124)
+             12 STORE_FAST               2 (po)
+
+105          14 LOAD_FAST                2 (po)
+             16 LOAD_ATTR                0 (entities)
+             26 GET_ITER
+        >>   28 FOR_ITER                46 (to 122)
+             30 STORE_FAST               3 (ent)
+
+106          32 LOAD_FAST                3 (ent)
+             34 LOAD_ATTR                1 (lines)
+             44 GET_ITER
+        >>   46 FOR_ITER                36 (to 120)
+             48 STORE_FAST               4 (ln)
+
+107          50 LOAD_FAST                4 (ln)
+             52 LOAD_ATTR                2 (sizes)
+             62 GET_ITER
+        >>   64 FOR_ITER                26 (to 118)
+             66 STORE_FAST               5 (sq)
+
+108          68 LOAD_FAST                1 (out)
+             70 LOAD_METHOD              3 (append)
+             92 LOAD_FAST                3 (ent)
+             94 LOAD_FAST                4 (ln)
+             96 LOAD_FAST                5 (sq)
+             98 BUILD_TUPLE              3
+            100 PRECALL                  1
+            104 CALL                     1
+            114 POP_TOP
+            116 JUMP_BACKWARD           27 (to 64)
+
+107     >>  118 JUMP_BACKWARD           37 (to 46)
+
+106     >>  120 JUMP_BACKWARD           47 (to 28)
+
+105     >>  122 JUMP_BACKWARD           57 (to 10)
+
+109     >>  124 LOAD_FAST                1 (out)
+            126 RETURN_VALUE
+
+==============================================================================
+## <module>._path  (args=0, locals=2)
+# varnames: _appdata, d
+112           0 RESUME                   0
+
+113           2 LOAD_CONST               1 (0)
+              4 LOAD_CONST               2 (('_appdata',))
+              6 IMPORT_NAME              0 (core.store.cache)
+              8 IMPORT_FROM              1 (_appdata)
+             10 STORE_FAST               0 (_appdata)
+             12 POP_TOP
+
+114          14 LOAD_GLOBAL              4 (os)
+             26 LOAD_ATTR                3 (path)
+             36 LOAD_METHOD              4 (join)
+             58 PUSH_NULL
+             60 LOAD_FAST                0 (_appdata)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 LOAD_CONST               3 ('anf_corrections')
+             78 PRECALL                  2
+             82 CALL                     2
+             92 STORE_FAST               1 (d)
+
+115          94 LOAD_GLOBAL              5 (NULL + os)
+            106 LOAD_ATTR                5 (makedirs)
+            116 LOAD_FAST                1 (d)
+            118 LOAD_CONST               4 (True)
+            120 KW_NAMES                 5
+            122 PRECALL                  2
+            126 CALL                     2
+            136 POP_TOP
+
+116         138 LOAD_GLOBAL              4 (os)
+            150 LOAD_ATTR                3 (path)
+            160 LOAD_METHOD              4 (join)
+            182 LOAD_FAST                1 (d)
+            184 LOAD_CONST               6 ('corrections.json')
+            186 PRECALL                  2
+            190 CALL                     2
+            200 RETURN_VALUE
+
+==============================================================================
+## <module>._load  (args=0, locals=1)
+# varnames: f
+119           0 RESUME                   0
+
+120           2 NOP
+
+121           4 LOAD_GLOBAL              1 (NULL + open)
+             16 LOAD_GLOBAL              3 (NULL + _path)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 LOAD_CONST               1 ('utf-8')
+             44 KW_NAMES                 2
+             46 PRECALL                  2
+             50 CALL                     2
+             60 BEFORE_WITH
+             62 STORE_FAST               0 (f)
+
+122          64 LOAD_GLOBAL              5 (NULL + json)
+             76 LOAD_ATTR                3 (load)
+             86 LOAD_FAST                0 (f)
+             88 PRECALL                  1
+             92 CALL                     1
+
+121         102 SWAP                     2
+            104 LOAD_CONST               0 (None)
+            106 LOAD_CONST               0 (None)
+            108 LOAD_CONST               0 (None)
+            110 PRECALL                  2
+            114 CALL                     2
+            124 POP_TOP
+            126 RETURN_VALUE
+        >>  128 PUSH_EXC_INFO
+            130 WITH_EXCEPT_START
+            132 POP_JUMP_FORWARD_IF_TRUE     4 (to 142)
+            134 RERAISE                  2
+        >>  136 COPY                     3
+            138 POP_EXCEPT
+            140 RERAISE                  1
+        >>  142 POP_TOP
+            144 POP_EXCEPT
+            146 POP_TOP
+            148 POP_TOP
+            150 LOAD_CONST               0 (None)
+            152 RETURN_VALUE
+        >>  154 PUSH_EXC_INFO
+
+123         156 LOAD_GLOBAL              8 (OSError)
+            168 LOAD_GLOBAL             10 (ValueError)
+            180 BUILD_TUPLE              2
+            182 CHECK_EXC_MATCH
+            184 POP_JUMP_FORWARD_IF_FALSE     5 (to 196)
+            186 POP_TOP
+
+124         188 BUILD_MAP                0
+            190 SWAP                     2
+            192 POP_EXCEPT
+            194 RETURN_VALUE
+
+123     >>  196 RERAISE                  0
+        >>  198 COPY                     3
+            200 POP_EXCEPT
+            202 RERAISE                  1
+ExceptionTable:
+  4 to 60 -> 154 [0]
+  62 to 100 -> 128 [1] lasti
+  102 to 124 -> 154 [0]
+  128 to 134 -> 136 [3] lasti
+  136 to 140 -> 154 [0]
+  142 to 142 -> 136 [3] lasti
+  144 to 148 -> 154 [0]
+  154 to 190 -> 198 [1] lasti
+  196 to 196 -> 198 [1] lasti
+
+==============================================================================
+## <module>._save  (args=1, locals=2)
+# varnames: data, f
+127           0 RESUME                   0
+
+128           2 NOP
+
+129           4 LOAD_GLOBAL              1 (NULL + open)
+             16 LOAD_GLOBAL              3 (NULL + _path)
+             28 PRECALL                  0
+             32 CALL                     0
+             42 LOAD_CONST               1 ('w')
+             44 LOAD_CONST               2 ('utf-8')
+             46 KW_NAMES                 3
+             48 PRECALL                  3
+             52 CALL                     3
+             62 BEFORE_WITH
+             64 STORE_FAST               1 (f)
+
+130          66 LOAD_GLOBAL              5 (NULL + json)
+             78 LOAD_ATTR                3 (dump)
+             88 LOAD_FAST                0 (data)
+             90 LOAD_FAST                1 (f)
+             92 LOAD_CONST               4 (False)
+             94 LOAD_CONST               5 (2)
+             96 KW_NAMES                 6
+             98 PRECALL                  4
+            102 CALL                     4
+            112 POP_TOP
+
+129         114 LOAD_CONST               0 (None)
+            116 LOAD_CONST               0 (None)
+            118 LOAD_CONST               0 (None)
+            120 PRECALL                  2
+            124 CALL                     2
+            134 POP_TOP
+            136 LOAD_CONST               0 (None)
+            138 RETURN_VALUE
+        >>  140 PUSH_EXC_INFO
+            142 WITH_EXCEPT_START
+            144 POP_JUMP_FORWARD_IF_TRUE     4 (to 154)
+            146 RERAISE                  2
+        >>  148 COPY                     3
+            150 POP_EXCEPT
+            152 RERAISE                  1
+        >>  154 POP_TOP
+            156 POP_EXCEPT
+            158 POP_TOP
+            160 POP_TOP
+            162 LOAD_CONST               0 (None)
+            164 RETURN_VALUE
+        >>  166 PUSH_EXC_INFO
+
+131         168 LOAD_GLOBAL              8 (OSError)
+            180 CHECK_EXC_MATCH
+            182 POP_JUMP_FORWARD_IF_FALSE     4 (to 192)
+            184 POP_TOP
+
+132         186 POP_EXCEPT
+            188 LOAD_CONST               0 (None)
+            190 RETURN_VALUE
+
+131     >>  192 RERAISE                  0
+        >>  194 COPY                     3
+            196 POP_EXCEPT
+            198 RERAISE                  1
+ExceptionTable:
+  4 to 62 -> 166 [0]
+  64 to 112 -> 140 [1] lasti
+  114 to 134 -> 166 [0]
+  140 to 146 -> 148 [3] lasti
+  148 to 152 -> 166 [0]
+  154 to 154 -> 148 [3] lasti
+  156 to 160 -> 166 [0]
+  166 to 184 -> 194 [1] lasti
+  192 to 192 -> 194 [1] lasti
+
+==============================================================================
+## <module>.record_edits  (args=2, locals=6)
+# varnames: fp, po_results, rows, i, vals, data
+              0 MAKE_CELL                6 (ent)
+              2 MAKE_CELL                7 (ln)
+              4 MAKE_CELL                8 (sq)
+
+135           6 RESUME                   0
+
+138           8 LOAD_FAST                0 (fp)
+             10 POP_JUMP_FORWARD_IF_TRUE     2 (to 16)
+
+139          12 LOAD_CONST               1 (None)
+             14 RETURN_VALUE
+
+140     >>   16 BUILD_LIST               0
+             18 STORE_FAST               2 (rows)
+
+141          20 LOAD_GLOBAL              1 (NULL + enumerate)
+             32 LOAD_GLOBAL              3 (NULL + iter_rawdata)
+             44 LOAD_FAST                1 (po_results)
+             46 PRECALL                  1
+             50 CALL                     1
+             60 PRECALL                  1
+             64 CALL                     1
+             74 GET_ITER
+        >>   76 FOR_ITER                70 (to 218)
+             78 UNPACK_SEQUENCE          2
+             82 STORE_FAST               3 (i)
+             84 UNPACK_SEQUENCE          3
+             88 STORE_DEREF              6 (ent)
+             90 STORE_DEREF              7 (ln)
+             92 STORE_DEREF              8 (sq)
+
+142          94 LOAD_CLOSURE             6 (ent)
+             96 LOAD_CLOSURE             7 (ln)
+             98 LOAD_CLOSURE             8 (sq)
+            100 BUILD_TUPLE              3
+            102 LOAD_CONST               2 (<code object <dictcomp> at 0x000002BF94AA84E0, file "core\anf_corrections.py", line 142>)
+            104 MAKE_FUNCTION            8 (closure)
+            106 LOAD_GLOBAL              4 (EDITABLE_HEADERS)
+            118 GET_ITER
+            120 PRECALL                  0
+            124 CALL                     0
+            134 STORE_FAST               4 (vals)
+
+143         136 LOAD_FAST                2 (rows)
+            138 LOAD_METHOD              3 (append)
+            160 LOAD_FAST                3 (i)
+            162 LOAD_GLOBAL              9 (NULL + _row_sig)
+            174 LOAD_DEREF               6 (ent)
+            176 LOAD_DEREF               7 (ln)
+            178 LOAD_DEREF               8 (sq)
+            180 PRECALL                  3
+            184 CALL                     3
+            194 LOAD_FAST                4 (vals)
+            196 LOAD_CONST               3 (('i', 'sig', 'vals'))
+            198 BUILD_CONST_KEY_MAP      3
+            200 PRECALL                  1
+            204 CALL                     1
+            214 POP_TOP
+            216 JUMP_BACKWARD           71 (to 76)
+
+144     >>  218 LOAD_GLOBAL             11 (NULL + _load)
+            230 PRECALL                  0
+            234 CALL                     0
+            244 STORE_FAST               5 (data)
+
+145         246 LOAD_CONST               4 ('rows')
+            248 LOAD_FAST                2 (rows)
+            250 BUILD_MAP                1
+            252 LOAD_FAST                5 (data)
+            254 LOAD_FAST                0 (fp)
+            256 STORE_SUBSCR
+
+146         260 LOAD_GLOBAL             13 (NULL + _save)
+            272 LOAD_FAST                5 (data)
+            274 PRECALL                  1
+            278 CALL                     1
+            288 POP_TOP
+            290 LOAD_CONST               1 (None)
+            292 RETURN_VALUE
+
+==============================================================================
+## <module>.record_edits.<dictcomp>  (args=1, locals=2)
+# varnames: .0, h
+              0 COPY_FREE_VARS           3
+
+142           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                21 (to 52)
+             10 STORE_FAST               1 (h)
+             12 LOAD_FAST                1 (h)
+             14 LOAD_GLOBAL              1 (NULL + _get_val)
+             26 LOAD_DEREF               2 (ent)
+             28 LOAD_DEREF               3 (ln)
+             30 LOAD_DEREF               4 (sq)
+             32 LOAD_FAST                1 (h)
+             34 PRECALL                  4
+             38 CALL                     4
+             48 MAP_ADD                  2
+             50 JUMP_BACKWARD           22 (to 8)
+        >>   52 RETURN_VALUE
+
+==============================================================================
+## <module>.apply_anf_corrections  (args=2, locals=11)
+# varnames: fp, po, data, by_i, i, ent, ln, sq, r, h, v
+149           0 RESUME                   0
+
+152           2 LOAD_FAST                0 (fp)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+153           6 LOAD_CONST               1 (None)
+              8 RETURN_VALUE
+
+154     >>   10 LOAD_GLOBAL              1 (NULL + _load)
+             22 PRECALL                  0
+             26 CALL                     0
+             36 LOAD_METHOD              1 (get)
+             58 LOAD_FAST                0 (fp)
+             60 PRECALL                  1
+             64 CALL                     1
+             74 STORE_FAST               2 (data)
+
+155          76 LOAD_FAST                2 (data)
+             78 POP_JUMP_FORWARD_IF_TRUE     2 (to 84)
+
+156          80 LOAD_CONST               1 (None)
+             82 RETURN_VALUE
+
+157     >>   84 LOAD_CONST               2 (<code object <dictcomp> at 0x000002BF94A6E5D0, file "core\anf_corrections.py", line 157>)
+             86 MAKE_FUNCTION            0
+             88 LOAD_FAST                2 (data)
+             90 LOAD_METHOD              1 (get)
+            112 LOAD_CONST               3 ('rows')
+            114 BUILD_LIST               0
+            116 PRECALL                  2
+            120 CALL                     2
+            130 GET_ITER
+            132 PRECALL                  0
+            136 CALL                     0
+            146 STORE_FAST               3 (by_i)
+
+158         148 LOAD_GLOBAL              5 (NULL + enumerate)
+            160 LOAD_GLOBAL              7 (NULL + iter_rawdata)
+            172 LOAD_FAST                1 (po)
+            174 BUILD_LIST               1
+            176 PRECALL                  1
+            180 CALL                     1
+            190 PRECALL                  1
+            194 CALL                     1
+            204 GET_ITER
+        >>  206 FOR_ITER               147 (to 502)
+            208 UNPACK_SEQUENCE          2
+            212 STORE_FAST               4 (i)
+            214 UNPACK_SEQUENCE          3
+            218 STORE_FAST               5 (ent)
+            220 STORE_FAST               6 (ln)
+            222 STORE_FAST               7 (sq)
+
+159         224 LOAD_FAST                3 (by_i)
+            226 LOAD_METHOD              1 (get)
+            248 LOAD_FAST                4 (i)
+            250 PRECALL                  1
+            254 CALL                     1
+            264 STORE_FAST               8 (r)
+
+160         266 LOAD_FAST                8 (r)
+            268 POP_JUMP_FORWARD_IF_TRUE     1 (to 272)
+
+161         270 JUMP_BACKWARD           33 (to 206)
+
+164     >>  272 LOAD_FAST                8 (r)
+            274 LOAD_METHOD              1 (get)
+            296 LOAD_CONST               4 ('sig')
+            298 PRECALL                  1
+            302 CALL                     1
+            312 POP_JUMP_FORWARD_IF_FALSE    28 (to 370)
+            314 LOAD_FAST                8 (r)
+            316 LOAD_CONST               4 ('sig')
+            318 BINARY_SUBSCR
+            328 LOAD_GLOBAL              9 (NULL + _row_sig)
+            340 LOAD_FAST                5 (ent)
+            342 LOAD_FAST                6 (ln)
+            344 LOAD_FAST                7 (sq)
+            346 PRECALL                  3
+            350 CALL                     3
+            360 COMPARE_OP               3 (!=)
+            366 POP_JUMP_FORWARD_IF_FALSE     1 (to 370)
+
+165         368 JUMP_BACKWARD           82 (to 206)
+
+166     >>  370 LOAD_FAST                8 (r)
+            372 LOAD_METHOD              1 (get)
+            394 LOAD_CONST               5 ('vals')
+            396 BUILD_MAP                0
+            398 PRECALL                  2
+            402 CALL                     2
+            412 LOAD_METHOD              5 (items)
+            434 PRECALL                  0
+            438 CALL                     0
+            448 GET_ITER
+        >>  450 FOR_ITER                24 (to 500)
+            452 UNPACK_SEQUENCE          2
+            456 STORE_FAST               9 (h)
+            458 STORE_FAST              10 (v)
+
+167         460 LOAD_GLOBAL             13 (NULL + _set_val)
+            472 LOAD_FAST                5 (ent)
+            474 LOAD_FAST                6 (ln)
+            476 LOAD_FAST                7 (sq)
+            478 LOAD_FAST                9 (h)
+            480 LOAD_FAST               10 (v)
+            482 PRECALL                  5
+            486 CALL                     5
+            496 POP_TOP
+            498 JUMP_BACKWARD           25 (to 450)
+
+166     >>  500 JUMP_BACKWARD          148 (to 206)
+
+158     >>  502 LOAD_CONST               1 (None)
+            504 RETURN_VALUE
+
+==============================================================================
+## <module>.apply_anf_corrections.<dictcomp>  (args=1, locals=2)
+# varnames: .0, r
+157           0 RESUME                   0
+              2 BUILD_MAP                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                11 (to 30)
+              8 STORE_FAST               1 (r)
+             10 LOAD_FAST                1 (r)
+             12 LOAD_CONST               0 ('i')
+             14 BINARY_SUBSCR
+             24 LOAD_FAST                1 (r)
+             26 MAP_ADD                  2
+             28 JUMP_BACKWARD           12 (to 6)
+        >>   30 RETURN_VALUE

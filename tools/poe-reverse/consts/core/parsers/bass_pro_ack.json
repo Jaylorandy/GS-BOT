@@ -1,0 +1,330 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "collections",
+   "Counter",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "_to_int",
+   "_to_float",
+   "doc_text",
+   "compile",
+   "_ORDER_RE",
+   "_SKU_RE",
+   "_SKU_GLUED_RE",
+   "I",
+   "_SIZE_RE",
+   "_QTY_RE",
+   "_PRODUCT_TAIL",
+   "_base_style",
+   "_color_desc",
+   "_learn_whse_len",
+   "BassProAckParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/bass_pro_ack.py - Bass Pro Shops Order Acknowledgement.\n\nSource: INTERNATIONAL DIRECT GROUP INC -> BASS PRO SHOPS. Each ``Order #`` is\none delivery entity (Ctrl # groups several). The item block is a colour x size\nmatrix printed as a SKU line followed by a ``Size >`` header row and a ``Qty >``\nrow - there is NO TOTAL column, so sizes/quantities are positionally aligned:\n\n    Ctrl # 707036 Status : OPEN Date 06/11/26 Terms: BP 2% NET 60\n    Order # 14579877 Dept: I24\n    SKU/Cust Style Whse Ln Status Retail Price Qty SP Extension\n    2807P MDW MEDIUM WASH DRIFTWOOD CROP 04 1 OPEN 0.00 1,512\n    Size > 2 4 6 8 10 12 14 16 18\n    Qty > 120 132 192 204 240 228 168 120 108\n    199382050427 ... (per-size UPC, ignored)\n\nWhse (2-4 cap token, e.g. ``MDW``) is the colour CODE; the human-readable colour\nname (``MEDIUM WASH``) is the leading words of the description before the product\n(``DRIFTWOOD CROP``). The SKU-line qty (1,512) equals the sum of the ``Qty >``\nrow, so it is captured as ``printed_row_total`` for cross-checking.\n\nThe text layer sometimes GLUES the Whse code to the colour name (``MDWMEDIUM``\ninstead of ``MDW MEDIUM``) - this parser recovers the split using the warehouse\ncode length learned from the clean (space-separated) SKU lines.\n\nThe per-SKU style (``2807P`` vs ``2807P27``) is a style+season code, NOT a\nper-colour style, so every line in an order is normalised to the base style\n(stripping the 2-digit season suffix) - this keeps ``consolidate_entities_``\nfrom over-splitting one Order # into several entities.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Counter"
+   ],
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "_to_int",
+    "_to_float",
+    "doc_text"
+   ],
+   "Order\\s*#\\s*(\\S+)",
+   "^(?P<style>\\S+)\\s+(?P<whse>[A-Z]{2,4})\\s+(?P<desc>.+?)\\s+(?P<ln>\\d+)\\s+(?P<seq>\\d+)\\s+(?P<status>\\S+)\\s+(?P<retail>[\\d.,]+)\\s+(?P<qty>[\\d.,]+)\\s*$",
+   "^(?P<style>\\S+)\\s+(?P<glued>[A-Z]{2,4}[A-Z]+)\\s+(?P<desc>.+?)\\s+(?P<ln>\\d+)\\s+(?P<seq>\\d+)\\s+(?P<status>\\S+)\\s+(?P<retail>[\\d.,]+)\\s+(?P<qty>[\\d.,]+)\\s*$",
+   "^Size\\s*>\\s*(.*)$",
+   "^Qty\\s*>\\s*(.*)$",
+   "DRIFTWOOD",
+   "CROP",
+   "style",
+   "str",
+   "return",
+   "desc",
+   "full",
+   "int",
+   "BassProAckParser",
+   [
+    "style",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "desc",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "full",
+    "str",
+    "return",
+    "int"
+   ]
+  ],
+  "n_instructions": 117
+ },
+ "<module>._base_style": {
+  "names": [
+   "strip",
+   "re",
+   "match",
+   "group"
+  ],
+  "varnames": [
+   "style",
+   "s",
+   "m"
+  ],
+  "consts": [
+   "Normalise a SKU like ``2807P27`` to its base style ``2807P`` by stripping a\n    trailing 2-digit season suffix (so ``2807P`` and ``2807P27`` collapse to the\n    same garment style).",
+   "",
+   "^(.*[A-Za-z])(\\d{2})$",
+   1
+  ],
+  "n_instructions": 25
+ },
+ "<module>._color_desc": {
+  "names": [
+   "split",
+   "upper",
+   "strip",
+   "_PRODUCT_TAIL",
+   "append",
+   "join"
+  ],
+  "varnames": [
+   "desc",
+   "out",
+   "w"
+  ],
+  "consts": [
+   "Keep the leading colour-name words; stop at the product descriptor.",
+   ",.",
+   " "
+  ],
+  "n_instructions": 39
+ },
+ "<module>._learn_whse_len": {
+  "names": [
+   "_SKU_RE",
+   "finditer",
+   "Counter",
+   "most_common"
+  ],
+  "varnames": [
+   "full",
+   "lens"
+  ],
+  "consts": [
+   "Most common Whse-code length among clean (space-separated) SKU lines.",
+   3,
+   1,
+   0
+  ],
+  "n_instructions": 29
+ },
+ "<module>._learn_whse_len.<listcomp>": {
+  "names": [
+   "len",
+   "group"
+  ],
+  "varnames": [
+   ".0",
+   "m"
+  ],
+  "consts": [
+   "whse"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.BassProAckParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "BASS_PRO_ACK",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "BassProAckParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.BassProAckParser.parse": {
+  "names": [
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "doc_text",
+   "re",
+   "search",
+   "_learn_whse_len",
+   "splitlines",
+   "strip",
+   "_ORDER_RE",
+   "OrderEntity",
+   "group",
+   "entities",
+   "append",
+   "_SKU_RE",
+   "match",
+   "_SKU_GLUED_RE",
+   "_color_desc",
+   "_to_int",
+   "_SIZE_RE",
+   "split",
+   "_QTY_RE",
+   "enumerate",
+   "len",
+   "SizeQty",
+   "_base_style",
+   "lines",
+   "OrderLine"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "po",
+   "full",
+   "whse_len",
+   "ent",
+   "pending_block",
+   "pending_sizes",
+   "raw",
+   "line",
+   "om",
+   "sm",
+   "g_whse",
+   "g_desc",
+   "style",
+   "gm",
+   "glued",
+   "color_word",
+   "szm",
+   "qm",
+   "qvals",
+   "sizes",
+   "i",
+   "sz",
+   "base"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "BASS\\s+PRO\\s+SHOPS",
+   "BASS PRO SHOPS",
+   1,
+   [
+    "po_no"
+   ],
+   [
+    null,
+    null
+   ],
+   "whse",
+   "desc",
+   "style",
+   "glued",
+   " ",
+   "qty",
+   [
+    "style",
+    "color_code",
+    "color_desc",
+    "qty"
+   ],
+   0,
+   [
+    "size",
+    "qty"
+   ],
+   "color_code",
+   "color_desc",
+   "PCS",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes",
+    "printed_row_total"
+   ]
+  ],
+  "n_instructions": 339
+ },
+ "<module>.BassProAckParser.parse.<listcomp>": {
+  "names": [
+   "lines"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ }
+}

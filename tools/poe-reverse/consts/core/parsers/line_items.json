@@ -1,0 +1,669 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "_norm_ship",
+   "_min_date",
+   "merge_wrapped_rows",
+   "_looks_like_style",
+   "SIZE_TOKEN",
+   "LineItemsParser",
+   "_recover_style_from_line",
+   "_parse_size_breakdown",
+   "_pick_po_no",
+   "_clean",
+   "_color_desc_from",
+   "_to_int",
+   "_to_float",
+   "_dedup_entity_lines"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/line_items.py - one row per (style/color/size) with qty.\n\nCovers LPP SA (637JO, XL901): each order line is\n    ``637JO-80X-S PACK 2 372``\nThe Index No (``637JO-80X-S``) embeds style-color-size, so color_code (2nd\ndash-segment) and size (3rd dash-segment) are DERIVED from it; the unit is read\nfrom the line (LPP uses PACK, not PCS) and compared to recipe.order_unit; qty\nfrom the trailing integer. Named groups in recipe.line_pattern are all OPTIONAL\nexcept style/unit/qty -- the engine degrades gracefully when a group is absent.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text",
+    "_norm_ship",
+    "_min_date",
+    "merge_wrapped_rows",
+    "_looks_like_style",
+    "SIZE_TOKEN"
+   ],
+   "LineItemsParser",
+   "style",
+   "str",
+   "line",
+   "return",
+   "line_qty",
+   "int",
+   "List[SizeQty]",
+   "middle",
+   "lines",
+   "List[OrderLine]",
+   [
+    "style",
+    "str",
+    "line",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "line",
+    "str",
+    "line_qty",
+    "int",
+    "return",
+    "List[SizeQty]"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "middle",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "lines",
+    "List[OrderLine]",
+    "return",
+    "List[OrderLine]"
+   ]
+  ],
+  "n_instructions": 93
+ },
+ "<module>.LineItemsParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "LINE_ITEMS",
+   "layout_type",
+   "re",
+   "compile",
+   "_SIZE_TOKEN",
+   "parse",
+   "staticmethod",
+   "_scoped",
+   "classmethod",
+   "_build_entity"
+  ],
+  "varnames": [],
+  "consts": [
+   "LineItemsParser",
+   "^([A-Za-z]{1,4}|\\d{1,3}(?:[./-]\\d{1,3})?):(\\d+)$",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   "anchor",
+   "seg",
+   "doc",
+   "po_no",
+   "chan",
+   "OrderEntity",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ],
+   [
+    "anchor",
+    "str",
+    "seg",
+    "str",
+    "doc",
+    "str"
+   ],
+   [
+    ""
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "seg",
+    "str",
+    "po_no",
+    "str",
+    "chan",
+    "str",
+    "doc",
+    "str",
+    "return",
+    "OrderEntity"
+   ]
+  ],
+  "n_instructions": 40
+ },
+ "<module>.LineItemsParser.parse": {
+  "names": [
+   "line_pattern",
+   "ValueError",
+   "doc_text",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "entity_anchor",
+   "list",
+   "re",
+   "finditer",
+   "enumerate",
+   "start",
+   "len",
+   "_pick_po_no",
+   "channel_anchor",
+   "search",
+   "group",
+   "channel_value",
+   "append",
+   "_first",
+   "po_no_anchor",
+   "_build_entity",
+   "merge_wrapped_rows",
+   "strip",
+   "match",
+   "groupdict",
+   "get",
+   "_recover_style_from_line",
+   "order_unit",
+   "_to_int",
+   "split",
+   "_looks_like_style",
+   "SIZE_TOKEN",
+   "_color_desc_from",
+   "_to_float",
+   "price_anchor",
+   "SizeQty",
+   "size_encoding",
+   "_parse_size_breakdown",
+   "lines",
+   "OrderLine",
+   "dedup_style_size",
+   "_dedup_entity_lines",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "po",
+   "segments",
+   "ms",
+   "i",
+   "m",
+   "start",
+   "end",
+   "po_no",
+   "chan",
+   "seg",
+   "ent",
+   "line",
+   "gd",
+   "style",
+   "unit",
+   "qty",
+   "color_code",
+   "size",
+   "parts",
+   "middle",
+   "color_desc",
+   "unit_price",
+   "sizes",
+   "parsed"
+  ],
+  "consts": [
+   null,
+   "line_items parser requires recipe.line_pattern",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   1,
+   0,
+   "E-COMM",
+   "style",
+   "unit",
+   "qty",
+   "color_code",
+   "size",
+   "-",
+   2,
+   3,
+   "middle",
+   "unit_price",
+   [
+    "size",
+    "qty"
+   ],
+   "ratio_units",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 435
+ },
+ "<module>.LineItemsParser.parse.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>.LineItemsParser._scoped": {
+  "names": [
+   "re",
+   "search",
+   "error"
+  ],
+  "varnames": [
+   "anchor",
+   "seg",
+   "doc"
+  ],
+  "consts": [
+   "Resolve a header anchor: the entity's own block first, then the document.\n\n        Multi-entity POs repeat most header fields inside every ``Entity n`` block,\n        but some (supplier, VPN / product description, ...) are printed ONCE in the\n        cover page above the first block. Entity-scope-only lookup silently loses\n        those; falling back to document scope keeps them without ever overriding a\n        value the entity states for itself.\n        ",
+   null
+  ],
+  "n_instructions": 33
+ },
+ "<module>.LineItemsParser._build_entity": {
+  "names": [
+   "_scoped",
+   "port_loading_anchor",
+   "groups",
+   "lastindex",
+   "group",
+   "strip",
+   "OrderEntity",
+   "_clean",
+   "season_anchor",
+   "_min_date",
+   "currency_anchor",
+   "price_term_anchor",
+   "payment_terms_anchor",
+   "style_anchor",
+   "port_discharge_anchor",
+   "_norm_ship",
+   "ship_mode_anchor",
+   "agent_anchor",
+   "vendor_anchor",
+   "import_po_no_anchor",
+   "reference_no_anchor",
+   "cir_no_anchor",
+   "freight_terms_anchor",
+   "country_of_origin_anchor",
+   "dc_address_anchor",
+   "packing_method",
+   "packing_anchor",
+   "re",
+   "search"
+  ],
+  "varnames": [
+   "cls",
+   "recipe",
+   "seg",
+   "po_no",
+   "chan",
+   "doc",
+   "port_loading",
+   "pm"
+  ],
+  "consts": [
+   null,
+   "",
+   2,
+   1,
+   "po_no",
+   "channel",
+   "season",
+   "delivery_date",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "product_desc",
+   "port_discharge",
+   "port_loading",
+   "ship_mode",
+   "agent_name",
+   "vendor_name",
+   "import_po_no",
+   "reference_no",
+   "cir_no",
+   "freight_terms",
+   "country_of_origin",
+   "dc_address",
+   "packing_method",
+   "MULTIPACK",
+   []
+  ],
+  "n_instructions": 290
+ },
+ "<module>._recover_style_from_line": {
+  "names": [
+   "_looks_like_style",
+   "re",
+   "findall",
+   "fullmatch",
+   "append",
+   "any"
+  ],
+  "varnames": [
+   "style",
+   "line",
+   "candidates",
+   "tok",
+   "c"
+  ],
+  "consts": [
+   "Recover the real style code when ``line_pattern`` captured a sequence\n    number such as ``1-1`` instead of the true style (e.g. TJX ``AW11078``).\n\n    The heuristic scans the remaining tokens on the same line and prefers a\n    candidate that contains both letters and digits. Pure-numeric tokens and\n    the originally-captured value are ignored.\n    ",
+   "\\S+",
+   "\\d[\\d.,]*"
+  ],
+  "n_instructions": 75
+ },
+ "<module>._recover_style_from_line.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "ch"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._parse_size_breakdown": {
+  "names": [
+   "re",
+   "split",
+   "strip",
+   "set",
+   "LineItemsParser",
+   "_SIZE_TOKEN",
+   "match",
+   "group",
+   "int",
+   "append",
+   "add",
+   "sum"
+  ],
+  "varnames": [
+   "line",
+   "line_qty",
+   "toks",
+   "blocks",
+   "cur",
+   "seen",
+   "t",
+   "m",
+   "label",
+   "val",
+   "chosen",
+   "b",
+   "s"
+  ],
+  "consts": [
+   "Parse a TJX ratio/units size encoding out of a logical order row.\n\n    A row carries one or two comma-separated runs of ``LABEL:N`` tokens::\n\n        S:1, M:2, L:2, XL:1          (ratio: 6 per \"pack\")\n        S:150, M:300, L:300, XL:150  (absolute per-size quantities)\n\n    If an absolute run already sums to the row total it is used directly;\n    otherwise a ratio run is scaled by ``row_total // ratio_sum``. Returns ``[]``\n    when no size encoding is present, so the caller keeps its single-size fallback.\n    ",
+   "[,\\s]+",
+   1,
+   2,
+   null,
+   0
+  ],
+  "n_instructions": 174
+ },
+ "<module>._parse_size_breakdown.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "_",
+   "q"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>._parse_size_breakdown.<listcomp>": {
+  "names": [
+   "SizeQty"
+  ],
+  "varnames": [
+   ".0",
+   "sz",
+   "q"
+  ],
+  "consts": [
+   [
+    "size",
+    "qty"
+   ]
+  ],
+  "n_instructions": 16
+ },
+ "<module>._pick_po_no": {
+  "names": [
+   "groupdict",
+   "get",
+   "strip",
+   "groups",
+   "isdigit",
+   "len",
+   "re",
+   "findall",
+   "group"
+  ],
+  "varnames": [
+   "m",
+   "named",
+   "groups",
+   "val",
+   "longer"
+  ],
+  "consts": [
+   "Order number out of an entity_anchor match, robust to group ordering.\n\n    Priority: named group ``po_no`` -> first non-empty positional group. Some AI\n    recipes capture the *block index* first (e.g. ``Entity (?P<channel>\\d+) Order\n    No: (\\d+)``), which would yield \"1\"/\"2\" instead of \"11321589\"; when the picked\n    value is a 1-2 digit number and the matched text contains a clearly longer\n    number, prefer that instead. Customer-agnostic.\n    ",
+   "po_no",
+   "",
+   [],
+   0,
+   2,
+   "\\d{4,}"
+  ],
+  "n_instructions": 73
+ },
+ "<module>._pick_po_no.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "g"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>._clean": {
+  "names": [
+   "groups",
+   "group",
+   "strip"
+  ],
+  "varnames": [
+   "m"
+  ],
+  "consts": [
+   null,
+   "",
+   1,
+   0
+  ],
+  "n_instructions": 25
+ },
+ "<module>._color_desc_from": {
+  "names": [
+   "strip",
+   "split",
+   "reversed",
+   "isalpha",
+   "insert",
+   "join",
+   "append",
+   "base",
+   "extract_color_from_combined"
+  ],
+  "varnames": [
+   "middle",
+   "tokens",
+   "desc",
+   "tok",
+   "candidate",
+   "extract_color_from_combined",
+   "smart",
+   "w"
+  ],
+  "consts": [
+   "从 middle block 智能提取颜色描述（V2.0.19.23 修正）。\n\n    line_items 的 ``middle`` 通常是 PDF 行内从 ``style`` 到数量之间的全部文本。\n    不同客户的颜色列位置不同，因此分两种策略：\n\n    1. LPP / VPN Color 列：颜色名在尾部，前面是产品名和重复的 color code，\n       例如 ``LADIES` TROUSERS 08X 08X SAND``。取**最右侧连续纯字母 token**，\n       得到 ``SAND``（或 ``DARK BROWN``），不串联 color code / 产品名。\n    2. TJX 等 Colour 在左、Description 在右的表格：颜色名在左侧，遇到含数字\n       / % / 斜杠 token 即停，例如 ``SILVER CLOUD 53 %LINEN...`` 得到\n       ``SILVER CLOUD``。\n\n    若两者都取不到，再 fallback 到 extract_color_from_combined。\n    ",
+   "",
+   0,
+   " ",
+   1,
+   [
+    "extract_color_from_combined"
+   ]
+  ],
+  "n_instructions": 132
+ },
+ "<module>._to_int": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "split",
+   "isdigit",
+   "len",
+   "int",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s",
+   "a",
+   "b"
+  ],
+  "consts": [
+   null,
+   0,
+   ",",
+   "",
+   ".",
+   1,
+   3
+  ],
+  "n_instructions": 78
+ },
+ "<module>._to_float": {
+  "names": [
+   "str",
+   "strip",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ".",
+   ""
+  ],
+  "n_instructions": 68
+ },
+ "<module>._dedup_entity_lines": {
+  "names": [
+   "set",
+   "style_no",
+   "color_code",
+   "sizes",
+   "size",
+   "add",
+   "append"
+  ],
+  "varnames": [
+   "lines",
+   "seen",
+   "out",
+   "ln",
+   "key"
+  ],
+  "consts": [
+   "Collapse within-entity rows that share the same (style, color, size).\n\n    Used for suppliers (TJX Import PO) that print the identical item table twice\n    (a detail page and a summary page); without it the replay double-counts. The\n    key is unique per order line in any sane PO, so for normal customers this is a\n    no-op and never drops real data.\n    ",
+   0,
+   ""
+  ],
+  "n_instructions": 47
+ }
+}

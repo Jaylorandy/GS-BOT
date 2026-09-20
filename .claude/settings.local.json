@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(node -e \"const c=require\\('crypto'\\); console.log\\(c.getHashes\\(\\).filter\\(h=>/blake/i.test\\(h\\)\\).join\\(', '\\)||'none'\\)\")",
+      "Bash(ls -la release/license-generator/)",
+      "Bash(which electron *)",
+      "Bash(ls node_modules/.bin/electron)",
+      "Bash(node --check license-generator-app/main.js)",
+      "Bash(node --check license-generator-app/preload.js)",
+      "Bash(node --check license-generator-app/renderer.js)",
+      "Bash(node --check license-generator-core.js)",
+      "Bash(node --check scripts/license-generator-builder-config.js)",
+      "Bash(grep -n \"} else if \\(brandKey === 'hm'\\) {\\\\|Close the listing page after all products\\\\|} else {\\\\s*$\\\\|New Yorker: JSON API path\" main.js)"
+    ]
+  }
+}

@@ -1,0 +1,446 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "pathlib",
+   "Path",
+   "APP_NAME",
+   "DEFAULTS",
+   "__annotations__",
+   "user_config_dir",
+   "config_path",
+   "AppConfig",
+   "load_config",
+   "save_config"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/store/config.py - V2 config persistence (V.1.5-style schema, V2 path).\n\nIsolated under %APPDATA%\\Purchase Order Extractor V2\\config.json so it never\ncollides with the V.1.5 config at %APPDATA%\\Purchase Order Extractor\\config.json.\n\nSchema (V.1.5-compatible flat fields + V2 extras):\n    {\n      \"provider\":   \"DeepSeek\" | \"OpenAI\" | ...,\n      \"api_key\":    \"sk-...\",\n      \"base_url\":   \"https://api.deepseek.com/v1\",\n      \"model\":      \"deepseek-chat\",\n      \"force_json\": true,\n      \"temperature\": 0.2,\n      \"top_p\":      0.9,\n      \"max_tokens\": 4096,\n      \"infer_timeout\": 300,        # V2: seconds (passed to recipe_infer)\n    }\n\nThe legacy V2 schema (only base_url/api_key/model) is still loaded transparently.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Path"
+   ],
+   "Purchase Order Extractor V2",
+   "provider",
+   "智谱GLM",
+   "api_key",
+   "",
+   "base_url",
+   "https://open.bigmodel.cn/api/paas/v4",
+   "model",
+   "glm-4.6v",
+   "force_json",
+   true,
+   "temperature",
+   0.2,
+   "top_p",
+   0.9,
+   "max_tokens",
+   4096,
+   "infer_timeout",
+   300,
+   "recipe_model",
+   "data_timeout",
+   "recipe_timeout",
+   180,
+   "http_retries",
+   3,
+   "http_backoff",
+   5.0,
+   "infer_engine",
+   "online",
+   "local_model_path",
+   "local_n_ctx",
+   512,
+   0.1,
+   2048,
+   [
+    "local_n_threads",
+    "local_n_gpu_layers",
+    "local_n_batch",
+    "local_temperature",
+    "local_top_p",
+    "local_max_tokens",
+    "osr_consensus"
+   ],
+   "dict",
+   "DEFAULTS",
+   "return",
+   "Path",
+   "AppConfig",
+   "cfg",
+   "None",
+   [
+    "return",
+    "Path"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "cfg",
+    "dict",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 119
+ },
+ "<module>.user_config_dir": {
+  "names": [
+   "getattr",
+   "os",
+   "environ",
+   "get",
+   "path",
+   "expanduser",
+   "join",
+   "APP_NAME",
+   "makedirs",
+   "Path"
+  ],
+  "varnames": [
+   "base",
+   "d"
+  ],
+  "consts": [
+   "%APPDATA%\\Purchase Order Extractor V2 (created on first call).",
+   "frozen",
+   false,
+   "APPDATA",
+   "~/.config",
+   true,
+   [
+    "exist_ok"
+   ]
+  ],
+  "n_instructions": 58
+ },
+ "<module>.config_path": {
+  "names": [
+   "user_config_dir"
+  ],
+  "varnames": [],
+  "consts": [
+   null,
+   "config.json"
+  ],
+  "n_instructions": 7
+ },
+ "<module>.AppConfig": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "load",
+   "save",
+   "clear",
+   "ready",
+   "to_dict",
+   "property",
+   "cfg_path"
+  ],
+  "varnames": [],
+  "consts": [
+   "AppConfig",
+   "V.1.5-style configuration holder. Mirrors OnlineModel's interface\n    (load/save/ready) so the UI shell ported from V.1.5 binds naturally.",
+   "return",
+   "None",
+   "bool",
+   "dict",
+   "Path",
+   null,
+   [
+    "return",
+    "None"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "return",
+    "Path"
+   ]
+  ],
+  "n_instructions": 40
+ },
+ "<module>.AppConfig.__init__": {
+  "names": [
+   "provider",
+   "api_key",
+   "base_url",
+   "model",
+   "force_json",
+   "temperature",
+   "top_p",
+   "max_tokens",
+   "infer_timeout",
+   "recipe_model",
+   "data_timeout",
+   "recipe_timeout",
+   "http_retries",
+   "http_backoff",
+   "DEFAULTS",
+   "infer_engine",
+   "local_model_path",
+   "local_n_ctx",
+   "local_n_threads",
+   "local_n_gpu_layers",
+   "local_n_batch",
+   "local_temperature",
+   "local_top_p",
+   "local_max_tokens",
+   "osr_consensus",
+   "config_path",
+   "_path",
+   "load"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "智谱GLM",
+   "",
+   "https://open.bigmodel.cn/api/paas/v4",
+   "glm-4.6v",
+   true,
+   0.2,
+   0.9,
+   4096,
+   300,
+   180,
+   3,
+   5.0,
+   "infer_engine",
+   0,
+   512,
+   0.1,
+   2048,
+   "osr_consensus"
+  ],
+  "n_instructions": 89
+ },
+ "<module>.AppConfig.load": {
+  "names": [
+   "_path",
+   "exists",
+   "json",
+   "loads",
+   "read_text",
+   "items",
+   "DEFAULTS",
+   "setattr",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "d",
+   "k",
+   "v"
+  ],
+  "consts": [
+   null,
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 57
+ },
+ "<module>.AppConfig.save": {
+  "names": [
+   "DEFAULTS",
+   "keys",
+   "_path",
+   "write_text",
+   "json",
+   "dumps"
+  ],
+  "varnames": [
+   "self",
+   "d"
+  ],
+  "consts": [
+   null,
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ],
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 32
+ },
+ "<module>.AppConfig.save.<dictcomp>": {
+  "names": [
+   "getattr"
+  ],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>.AppConfig.clear": {
+  "names": [
+   "DEFAULTS",
+   "items",
+   "setattr",
+   "_path",
+   "exists",
+   "unlink",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "k",
+   "v"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 47
+ },
+ "<module>.AppConfig.ready": {
+  "names": [
+   "infer_engine",
+   "bool",
+   "local_model_path",
+   "os",
+   "path",
+   "exists",
+   "api_key",
+   "base_url",
+   "model"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "local"
+  ],
+  "n_instructions": 32
+ },
+ "<module>.AppConfig.to_dict": {
+  "names": [
+   "DEFAULTS",
+   "keys"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.AppConfig.to_dict.<dictcomp>": {
+  "names": [
+   "getattr"
+  ],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>.AppConfig.cfg_path": {
+  "names": [
+   "_path"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 4
+ },
+ "<module>.load_config": {
+  "names": [
+   "config_path",
+   "exists",
+   "dict",
+   "DEFAULTS",
+   "json",
+   "loads",
+   "read_text",
+   "Exception"
+  ],
+  "varnames": [
+   "p",
+   "d"
+  ],
+  "consts": [
+   "Read raw config dict (always full schema with defaults filled in).",
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 49
+ },
+ "<module>.save_config": {
+  "names": [
+   "config_path",
+   "load_config",
+   "update",
+   "DEFAULTS",
+   "write_text",
+   "json",
+   "dumps"
+  ],
+  "varnames": [
+   "cfg",
+   "p",
+   "cur"
+  ],
+  "consts": [
+   null,
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ],
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 40
+ },
+ "<module>.save_config.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [],
+  "n_instructions": 17
+ }
+}

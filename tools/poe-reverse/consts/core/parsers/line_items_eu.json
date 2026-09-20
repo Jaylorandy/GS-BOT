@@ -1,0 +1,408 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "_EU_MONTHS",
+   "_eu_date",
+   "compile",
+   "_EU_ROW",
+   "_eu_float",
+   "_extract_eu_header",
+   "_extract_eu_grand_total",
+   "LineItemsEuParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/line_items_eu.py - Tally Weijl ORDER FORM (PO 83288).\n\nA European \"line_items\" layout: one row per (style / color / size / qty) with\nEUROPEAN number formatting (comma = decimal, dot / space = thousands) and the\ncolour code + size jammed into ONE token (``AW,32``). Header fields sit in a\n``Label: value`` block plus a page-3 summary block.\n\nRow shape (page 1-2):\n    ``SPACOEMMA AW,32 Pale Stone,32 7612950110925 49,99 EUR 583 7,95 4 634,85``\n        style   code,sz desc,sz      EAN13       retail qty  cost  amount\n\nISOLATED: self-contained. Does not touch line_items / matrix_* / control_sheet\nor the shared helpers; header detection is local to this module.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
+    "may",
+    "jun",
+    "jul",
+    "aug",
+    "sep",
+    "oct",
+    "nov",
+    "dec"
+   ],
+   "s",
+   "str",
+   "return",
+   "^(?P<style>[A-Z][A-Z0-9]*)\\s+(?P<color_code>[A-Z0-9]+),(?P<size>\\d+)\\s+(?P<desc>.+?),(?P<size2>\\d+)\\s+(?P<ean>\\d{13})\\s+\\d+,\\d+\\s+[A-Z]{3}\\s+(?P<qty>\\d[\\d ]*?)(?=\\s+\\d+,\\d+)\\s+(?P<unit_price>\\d+,\\d+)",
+   "text",
+   "dict",
+   "LineItemsEuParser",
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "s",
+    "str"
+   ],
+   [
+    "text",
+    "str",
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 89
+ },
+ "<module>._eu_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "int",
+   "group",
+   "len"
+  ],
+  "varnames": [
+   "s",
+   "m",
+   "d",
+   "mo",
+   "y"
+  ],
+  "consts": [
+   "``22/09/2025`` / ``22/9/25`` -> ``2025-09-22`` (European DD/MM/YYYY).",
+   "",
+   "(\\d{1,2})/(\\d{1,2})/(\\d{2,4})$",
+   1,
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d"
+  ],
+  "n_instructions": 72
+ },
+ "<module>._eu_float": {
+  "names": [
+   "strip",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   "European number -> float. ``7,95`` -> 7.95 ; ``4 634,85`` -> 4634.85.",
+   null,
+   " ",
+   "",
+   ",",
+   "."
+  ],
+  "n_instructions": 71
+ },
+ "<module>._extract_eu_header": {
+  "names": [
+   "re",
+   "search",
+   "group",
+   "S",
+   "I",
+   "_eu_date",
+   "capitalize"
+  ],
+  "varnames": [
+   "text",
+   "h",
+   "m"
+  ],
+  "consts": [
+   "Read the Tally Weijl header + page-3 summary into a field dict.\n\n    Every value is literal (read straight from the document). Fields the layout\n    does not print are left ``\"\"``.\n    ",
+   "No\\s*(\\d{6,})\\b",
+   1,
+   "",
+   "po_no",
+   "Consignee\\s+Vendor\\s*(?:.*?)Tally\\s+Weijl\\s+Trading\\s+AG",
+   "Tally Weijl Trading AG",
+   "customer",
+   "Vendor\\s*(?:Invoice\\s+Address)?\\s*(Jiangsu\\s+Guotai\\s+Guosheng\\s+CO[,. ]*LTD)",
+   "vendor_name",
+   "(Jiangsu\\s+Guotai\\s+Guosheng\\s+CO[,. ]*LTD)",
+   "Origin\\s+of\\s+Goods[^A-Za-z]*([A-Za-z]+)",
+   "country_of_origin",
+   "Country\\s+of\\s+destination\\s+([A-Za-z]+)",
+   "destination",
+   "Transport\\s+Way[^A-Za-z]*([A-Za-z]+)",
+   "ship_mode",
+   "PAYMENT\\s*TT\\s*(\\d+)\\s*days",
+   "TT ",
+   " DAYS",
+   "payment_terms",
+   "Incoterm[^:]*:\\s*(\\d{1,2}/\\d{1,2}/\\d{2,4}),\\s*FOB\\s+([A-Za-z]+)",
+   "ship_date",
+   "FOB",
+   "price_term",
+   2,
+   "port_loading",
+   "USD",
+   "currency",
+   "season",
+   "Collection\\s+Code\\s+(B\\s+\\d{4}(?:\\s+\\d)?)"
+  ],
+  "n_instructions": 231
+ },
+ "<module>._extract_eu_grand_total": {
+  "names": [
+   "lines",
+   "text",
+   "strip",
+   "len",
+   "range",
+   "x0",
+   "x1",
+   "int",
+   "join",
+   "_eu_float"
+  ],
+  "varnames": [
+   "pages",
+   "p",
+   "ln",
+   "toks",
+   "split_i",
+   "i",
+   "qty_toks",
+   "amt_toks",
+   "qty",
+   "amt"
+  ],
+  "consts": [
+   "Return ``(printed_total_qty, printed_total_amount)`` from the ``Total``\n    summary row. Qty and amount are column-aligned with a wide x-gap between\n    them (both use EU space-thousands, so a flat-text split is ambiguous) — we\n    split the tokens on a >30px gap instead. ``Total 13 368 106 275,60`` ->\n    ``(13368, 106275.6)``.",
+   0,
+   "Total",
+   1,
+   null,
+   2,
+   30,
+   "",
+   [
+    null,
+    null
+   ]
+  ],
+  "n_instructions": 141
+ },
+ "<module>._extract_eu_grand_total.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.LineItemsEuParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "LINE_ITEMS_EU",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "LineItemsEuParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.LineItemsEuParser.parse": {
+  "names": [
+   "doc_text",
+   "_extract_eu_header",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "OrderEntity",
+   "set",
+   "split",
+   "strip",
+   "_EU_ROW",
+   "match",
+   "groupdict",
+   "get",
+   "re",
+   "sub",
+   "int",
+   "replace",
+   "_eu_float",
+   "add",
+   "lines",
+   "append",
+   "OrderLine",
+   "SizeQty",
+   "_extract_eu_grand_total",
+   "printed_total_qty",
+   "printed_total_amount",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "hdr",
+   "po",
+   "ent",
+   "seen",
+   "line",
+   "m",
+   "gd",
+   "style",
+   "color_code",
+   "color_desc",
+   "size",
+   "qty",
+   "unit_price",
+   "key"
+  ],
+  "consts": [
+   null,
+   false,
+   [
+    "crop_footer"
+   ],
+   "customer",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "ship_date",
+   "port_loading",
+   "destination",
+   "ship_mode",
+   "country_of_origin",
+   "vendor_name",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "destination_code",
+    "country_of_origin",
+    "vendor_name"
+   ],
+   "\n",
+   "style",
+   "color_code",
+   ",\\d+$",
+   "desc",
+   "size",
+   "qty",
+   "0",
+   " ",
+   0,
+   "unit_price",
+   "PCS",
+   [
+    "size",
+    "qty"
+   ],
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 251
+ }
+}

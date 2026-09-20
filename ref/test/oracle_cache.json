@@ -1,0 +1,32 @@
+{
+ "samples": {
+  "lpp_line_items": {
+   "skeleton": "<<HAS_COLORNO>>\n<<HAS_ENTITY>>\n# T#T",
+   "fp": "5f7b591a2494bfb300d0eb898860d644"
+  },
+  "lpp_variant_numbers": {
+   "skeleton": "<<HAS_COLORNO>>\n<<HAS_ENTITY>>\n# T#T",
+   "fp": "5f7b591a2494bfb300d0eb898860d644"
+  },
+  "matrix_grid": {
+   "skeleton": "<<HAS_COLORNO>>\n<<HAS_DESTINATION>>\n#",
+   "fp": "c8c599efecfd80888b0cf19998b79105"
+  },
+  "parenthesized": {
+   "skeleton": "#",
+   "fp": "334359b90efed75da5f0ada1d5e6b256"
+  },
+  "euro_numbers": {
+   "skeleton": "#",
+   "fp": "334359b90efed75da5f0ada1d5e6b256"
+  },
+  "quotes_apostrophe": {
+   "skeleton": "#",
+   "fp": "334359b90efed75da5f0ada1d5e6b256"
+  },
+  "empty_and_noise": {
+   "skeleton": "#",
+   "fp": "334359b90efed75da5f0ada1d5e6b256"
+  }
+ }
+}

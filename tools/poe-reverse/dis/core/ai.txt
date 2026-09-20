@@ -1,0 +1,32 @@
+# module: core.ai
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\ai.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/ai package - recipe inference (first-seen PO).')
+              4 STORE_NAME               0 (__doc__)
+
+  2           6 LOAD_CONST               1 (1)
+              8 LOAD_CONST               2 (('build_recipe_prompt', 'parse_recipe_response', 'guess_layout_type', 'load_ai_config', 'infer_recipe'))
+             10 IMPORT_NAME              1 (recipe_infer)
+             12 IMPORT_FROM              2 (build_recipe_prompt)
+             14 STORE_NAME               2 (build_recipe_prompt)
+             16 IMPORT_FROM              3 (parse_recipe_response)
+             18 STORE_NAME               3 (parse_recipe_response)
+             20 IMPORT_FROM              4 (guess_layout_type)
+             22 STORE_NAME               4 (guess_layout_type)
+             24 IMPORT_FROM              5 (load_ai_config)
+             26 STORE_NAME               5 (load_ai_config)
+             28 IMPORT_FROM              6 (infer_recipe)
+             30 STORE_NAME               6 (infer_recipe)
+             32 POP_TOP
+
+  5          34 BUILD_LIST               0
+             36 LOAD_CONST               2 (('build_recipe_prompt', 'parse_recipe_response', 'guess_layout_type', 'load_ai_config', 'infer_recipe'))
+             38 LIST_EXTEND              1
+             40 STORE_NAME               7 (__all__)
+             42 LOAD_CONST               3 (None)
+             44 RETURN_VALUE

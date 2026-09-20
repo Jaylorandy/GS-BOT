@@ -1,0 +1,1120 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "field",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "doc_compress",
+   "compress_doc_text",
+   "http_util",
+   "post_json",
+   "APP_NAME",
+   "HEADER_FIELDS",
+   "DATA_SYSTEM_PROMPT",
+   "ExtractedLine",
+   "ExtractedOrder",
+   "ExtractedData",
+   "_extract_json",
+   "_as_int",
+   "_as_float",
+   "_as_str",
+   "_as_bool",
+   "_strip_trailing_commas",
+   "compile",
+   "_MISSING_COMMA",
+   "_repair_missing_commas",
+   "_maybe_close",
+   "_load_json_lenient",
+   "parse_data_response",
+   "build_data_prompt",
+   "load_ai_config",
+   "MAX_INPUT_CHARS",
+   "MAX_OUTPUT_TOKENS",
+   "HTTP_TIMEOUT",
+   "READ_BUDGET",
+   "_thinking_off",
+   "_chat_online",
+   "extract_po_data"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/data_extract.py - the AI READS the purchase order and returns DATA.\n\nWhy this module exists\n----------------------\nV2.0.0 asked the model to *author* a ``line_pattern`` regular expression. Measured\non one real LPP PO with GLM-4.6V, five independent inferences produced four\nunusable recipes (0 matched rows) and one correct one. Regex authoring is a\nbrittle task for an LLM: the output must be character-exact and the model has no\nway to verify it before answering.\n\nV1.5 - which was reliable in production - never asked the model for a regex. It\nasked for the ORDER DATA and let code do the structural work. This module\nrestores that division of labour:\n\n    AI    -> reading comprehension: which rows are real order lines, and what do\n             they say.\n    code  -> rule synthesis (``core/recipe_synth.py`` turns the AI's verbatim\n             sample lines into a cacheable ``PoRecipe``) and verification.\n\nThe returned object is deliberately NOT a ``PurchaseOrder``. It is the ground\ntruth used first to SYNTHESIZE a recipe and then to VERIFY that recipe by\nreplaying it offline. Only a recipe that reproduces this data exactly is allowed\ninto the fingerprint cache.\n\nOnly stdlib (urllib) is used for the online call, matching ``recipe_infer``.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass",
+    "field"
+   ],
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   1,
+   [
+    "compress_doc_text"
+   ],
+   [
+    "post_json"
+   ],
+   "Purchase Order Extractor V2",
+   [
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "packing_method",
+    "product_desc",
+    "style_no",
+    "order_date",
+    "import_po_no",
+    "reference_no",
+    "cir_no",
+    "freight_terms",
+    "country_of_origin",
+    "dc_address"
+   ],
+   "You are a purchase-order READER.\nYou do NOT write code. You do NOT write regular expressions. You only read the\ndocument and report what it says, as one JSON object. No prose, no markdown\noutside the JSON.\n\nOutput schema:\n{\n  \"customer\": \"sold-to / brand name, e.g. LPP SA\",\n  \"layout_type\": \"line_items\" | \"matrix_2axis\" | \"matrix_1axis\",\n  \"has_color_total\": true,\n  \"has_size_total\": true,\n    \"header\": {\n    \"season\": \"\", \"currency\": \"\", \"price_term\": \"\", \"payment_terms\": \"\",\n    \"port_loading\": \"\", \"port_discharge\": \"\", \"ship_mode\": \"\",\n    \"vendor_name\": \"\", \"agent_name\": \"\", \"packing_method\": \"\",\n    \"product_desc\": \"\", \"style_no\": \"\", \"order_date\": \"\",\n    \"import_po_no\": \"\", \"reference_no\": \"\", \"cir_no\": \"\",\n    \"freight_terms\": \"\", \"country_of_origin\": \"\", \"dc_address\": \"\"\n  },\n  \"orders\": [\n    {\n      \"po_no\": \"the ORDER NUMBER itself, never the block index\",\n      \"channel\": \"\",\n      \"delivery_date\": \"YYYY-MM-DD\",\n      \"block_total_qty\": \"the printed TOTAL quantity for this PO, read from its TOTAL/subtotal row. IMPORTANT number format: in these documents a DOT is a THOUSANDS separator and a COMMA is a decimal point (European notation). So '26.000' means 26000 pieces (NOT 26.0) and '158,00' means 158.00. Always report the full integer - e.g. 26000, never drop the thousands.\",\n      \"lines\": [\n        {\n          \"raw_line\": \"the COMPLETE original text line, copied VERBATIM\",\n          \"index_no\": \"the item/index code exactly as printed\",\n          \"style\": \"\", \"color_code\": \"\", \"color_desc\": \"\", \"size\": \"\",\n          \"unit\": \"PCS\",\n          \"qty\": 744,\n          \"unit_price\": 10.20\n        }\n      ]\n    }\n  ]\n}\n\nlayout_type meanings:\n  line_items   - one row per style/colour/size with a quantity (e.g. LPP SA).\n  matrix_2axis - colour blocks, each a size x inseam grid (e.g. COLIN'S trousers).\n  matrix_1axis - colour blocks, each a single row of sizes (e.g. SAKHA).\n\n\"has_color_total\" / \"has_size_total\": whether the document prints SUBTOTALS the\n  system can cross-check its own extraction against.\n    * line_items layouts print ONLY a block GRAND TOTAL - set BOTH to false.\n    * matrix (colour-grid) layouts print a per-row/per-colour TOTAL column and a\n      bottom TOTAL row per size -> set BOTH to true.\n  When unsure, true is the safer choice (the system still verifies the totals\n  agree with what it parses before trusting them).\n\nHARD RULES - breaking any of these makes the whole answer useless:\n\n1. \"raw_line\" MUST be copied character-for-character from the document text\n   below: same tokens, same order, same spelling, single spaces between tokens.\n   Do NOT reformat, translate, abbreviate, re-order or \"clean up\" anything.\n   This string is used to find the row again in the document.\n\n2. List EVERY order block in \"orders\" with its \"po_no\" and its\n   \"block_total_qty\" - none may be omitted; these totals are the reference the\n   system checks its own extraction against.\n   Order LINES, by contrast, are only a REPRESENTATIVE SAMPLE - just enough to\n   infer the row structure. Report AT MOST 8 lines per order block AND AT MOST\n   24 lines for the WHOLE document (fewer is fine). When a document has many\n   blocks, sample a few lines from a couple of blocks and leave \"lines\" empty\n   for the rest - the blocks repeat the same row structure, and the system\n   extracts every row itself from the document. Prefer rows that differ in\n   shape over near-identical ones.\n   Always report \"block_total_qty\" (the printed total for that PO, its TOTAL row).\n   A total row is often UNLABELLED and prints two numbers - the QUANTITY first,\n   the MONEY amount second, matching the column header \"... Quantity Price\n   Total Amount\". For \"8000 81,600.00\" the block_total_qty is 8000, NOT 81600:\n   the token carrying decimals is money, never a quantity. Quantities are whole\n   pieces, so block_total_qty must equal the sum of that block's line\n   quantities - check it before you answer.\n\n3. A REAL order line is a PRICED DETAIL ROW: it carries a description/colour\n   block AND a unit price. Example:\n       637JO-80X-S MEN`S TROUSERS 80X 80X BEIGE PCS 744 10.20 7,588.80\n   These look-alike rows are NOT order lines - never report them:\n     * pack break-up rows, e.g.  637JO-80X-T01 PACK 2 186 372\n       (the \"2\" is pieces-per-pack, not an ordered quantity)\n     * bare sub-breakdown rows, e.g.  637JO-80X-S PCS 372\n       (no description, no colour, no unit price - a partial restatement)\n     * TOTAL / SUBTOTAL / SUMMARY / grand-total rows.\n\n4. \"qty\" is a plain integer, no thousands separator. \"unit_price\" is a plain\n   number (e.g. 10.20 not \"$10.20\"). Report unit_price for EVERY order line\n   that shows one - it is the per-piece price of that SKU/colour/size. If the\n   document prints a UNIT PRICE column or a per-line price token, include it.\n   If the document does not print unit prices at all for a given line, use null\n   (the system will then use the header-level price if one is available).\n\n5. TOTALS use European number format: a DOT groups thousands, a COMMA is the\n   decimal point. \"26.000\" = 26000 pieces, \"1.234\" = 1234, \"158,00\" = 158.00.\n   When you report \"block_total_qty\" (or any \"qty\") copy the full integer the\n   printed TOTAL row shows - \"26.000\" must be reported as 26000, never as 26.\n\n6. Group the lines under the order (PO) they belong to. A document that repeats\n   blocks like \"Entity 1 Order No: 11321589\" has ONE order per block, and the\n   order number is 11321589 - the \"1\" is only a block index. If the document\n   holds a single order, return one element in \"orders\".\n\n7. Use \"\" for anything the document does not state. NEVER invent a value.\n\n8. Output ONE compact JSON object: no indentation, no line breaks inside the\n   JSON, no comments, no trailing commas, no \"...\". Every key and string value\n   must be double-quoted. Keep it valid and complete - a dropped comma or a\n   cut-off tail is the most common failure.\n\nReturn only the JSON object.",
+   "ExtractedLine",
+   "ExtractedOrder",
+   "ExtractedData",
+   "content",
+   "str",
+   "return",
+   "int",
+   "Optional[float]",
+   "bool",
+   "js",
+   "([}\\]\"])(\\s*)([{[\"\\d-])",
+   "dict",
+   "",
+   "doc_text",
+   "customer",
+   "extra_hint",
+   "tuple",
+   60000,
+   16384,
+   300,
+   118.0,
+   "cfg",
+   "system",
+   "user",
+   [
+    "customer",
+    "cfg",
+    "extra_hint",
+    "seed_hint"
+   ],
+   "dict | None",
+   "seed_hint",
+   [
+    "content",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "Optional[float]"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "js",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "js",
+    "str",
+    "return",
+    "dict"
+   ],
+   [
+    "content",
+    "str",
+    "return",
+    "ExtractedData"
+   ],
+   [
+    "",
+    ""
+   ],
+   [
+    "doc_text",
+    "str",
+    "customer",
+    "str",
+    "extra_hint",
+    "str",
+    "return",
+    "tuple"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "cfg",
+    "dict",
+    "return",
+    "dict"
+   ],
+   [
+    "system",
+    "str",
+    "user",
+    "str",
+    "cfg",
+    "dict",
+    "return",
+    "str"
+   ],
+   [
+    "doc_text",
+    "str",
+    "customer",
+    "str",
+    "cfg",
+    "dict | None",
+    "extra_hint",
+    "str",
+    "seed_hint",
+    "str",
+    "return",
+    "ExtractedData"
+   ]
+  ],
+  "n_instructions": 174
+ },
+ "<module>.ExtractedLine": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "raw_line",
+   "__annotations__",
+   "index_no",
+   "style",
+   "color_code",
+   "color_desc",
+   "size",
+   "unit",
+   "qty",
+   "unit_price",
+   "property",
+   "locator"
+  ],
+  "varnames": [],
+  "consts": [
+   "ExtractedLine",
+   "One real order line as the model read it.",
+   "",
+   "str",
+   "raw_line",
+   "index_no",
+   "style",
+   "color_code",
+   "color_desc",
+   "size",
+   "unit",
+   0,
+   "int",
+   "qty",
+   null,
+   "Optional[float]",
+   "unit_price",
+   "return",
+   [
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 71
+ },
+ "<module>.ExtractedLine.locator": {
+  "names": [
+   "index_no",
+   "style"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   "The token used to find this row again (index code preferred)."
+  ],
+  "n_instructions": 7
+ },
+ "<module>.ExtractedOrder": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "po_no",
+   "__annotations__",
+   "channel",
+   "delivery_date",
+   "block_total_qty",
+   "field",
+   "list",
+   "lines",
+   "property",
+   "total_qty"
+  ],
+  "varnames": [],
+  "consts": [
+   "ExtractedOrder",
+   "",
+   "str",
+   "po_no",
+   "channel",
+   "delivery_date",
+   0,
+   "int",
+   "block_total_qty",
+   [
+    "default_factory"
+   ],
+   "List[ExtractedLine]",
+   "lines",
+   "return",
+   null,
+   [
+    "return",
+    "int"
+   ]
+  ],
+  "n_instructions": 50
+ },
+ "<module>.ExtractedOrder.total_qty": {
+  "names": [
+   "block_total_qty",
+   "sum",
+   "lines"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>.ExtractedOrder.total_qty.<genexpr>": {
+  "names": [
+   "int",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "l"
+  ],
+  "consts": [
+   0,
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>.ExtractedData": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "customer",
+   "__annotations__",
+   "layout_type",
+   "field",
+   "dict",
+   "header",
+   "list",
+   "orders",
+   "has_color_total",
+   "has_size_total",
+   "property",
+   "po_nos",
+   "total_qty",
+   "line_count",
+   "all_lines",
+   "qty_by_po",
+   "summary"
+  ],
+  "varnames": [],
+  "consts": [
+   "ExtractedData",
+   "Ground truth read by the AI; the yardstick a synthesized recipe must match.",
+   "",
+   "str",
+   "customer",
+   "line_items",
+   "layout_type",
+   [
+    "default_factory"
+   ],
+   "Dict[str, str]",
+   "header",
+   "List[ExtractedOrder]",
+   "orders",
+   false,
+   "bool",
+   "has_color_total",
+   "has_size_total",
+   "return",
+   "List[str]",
+   "int",
+   "List[ExtractedLine]",
+   "Dict[str, int]",
+   null,
+   [
+    "return",
+    "List[str]"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "return",
+    "List[ExtractedLine]"
+   ],
+   [
+    "return",
+    "Dict[str, int]"
+   ],
+   [
+    "return",
+    "str"
+   ]
+  ],
+  "n_instructions": 89
+ },
+ "<module>.ExtractedData.po_nos": {
+  "names": [
+   "orders"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>.ExtractedData.po_nos.<listcomp>": {
+  "names": [
+   "po_no"
+  ],
+  "varnames": [
+   ".0",
+   "o"
+  ],
+  "consts": [],
+  "n_instructions": 10
+ },
+ "<module>.ExtractedData.total_qty": {
+  "names": [
+   "sum",
+   "orders"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.ExtractedData.total_qty.<genexpr>": {
+  "names": [
+   "total_qty"
+  ],
+  "varnames": [
+   ".0",
+   "o"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.ExtractedData.line_count": {
+  "names": [
+   "sum",
+   "orders"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 12
+ },
+ "<module>.ExtractedData.line_count.<genexpr>": {
+  "names": [
+   "len",
+   "lines"
+  ],
+  "varnames": [
+   ".0",
+   "o"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>.ExtractedData.all_lines": {
+  "names": [
+   "orders"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>.ExtractedData.all_lines.<listcomp>": {
+  "names": [
+   "lines"
+  ],
+  "varnames": [
+   ".0",
+   "o",
+   "l"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>.ExtractedData.qty_by_po": {
+  "names": [
+   "orders",
+   "get",
+   "po_no",
+   "total_qty"
+  ],
+  "varnames": [
+   "self",
+   "out",
+   "o"
+  ],
+  "consts": [
+   null,
+   0
+  ],
+  "n_instructions": 25
+ },
+ "<module>.ExtractedData.summary": {
+  "names": [
+   "customer",
+   "layout_type",
+   "len",
+   "orders",
+   "line_count",
+   "total_qty"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "customer=",
+   " layout=",
+   " orders=",
+   " lines=",
+   " total_qty="
+  ],
+  "n_instructions": 26
+ },
+ "<module>._extract_json": {
+  "names": [
+   "strip",
+   "re",
+   "search",
+   "DOTALL",
+   "group",
+   "find",
+   "rfind"
+  ],
+  "varnames": [
+   "content",
+   "m",
+   "s",
+   "e"
+  ],
+  "consts": [
+   "Pull a JSON object out of a model response (handles ```json fences).",
+   "",
+   "```(?:json)?\\s*(\\{.*\\})\\s*```",
+   1,
+   "{",
+   "}",
+   -1
+  ],
+  "n_instructions": 59
+ },
+ "<module>._as_int": {
+  "names": [
+   "isinstance",
+   "bool",
+   "int",
+   "float",
+   "str",
+   "strip",
+   "replace",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "v",
+   "s"
+  ],
+  "consts": [
+   null,
+   0,
+   ",",
+   "",
+   " "
+  ],
+  "n_instructions": 71
+ },
+ "<module>._as_float": {
+  "names": [
+   "isinstance",
+   "bool",
+   "int",
+   "float",
+   "str",
+   "strip",
+   "replace",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "v",
+   "s"
+  ],
+  "consts": [
+   null,
+   ",",
+   ".",
+   ""
+  ],
+  "n_instructions": 87
+ },
+ "<module>._as_str": {
+  "names": [
+   "isinstance",
+   "int",
+   "float",
+   "bool",
+   "is_integer",
+   "str",
+   "strip"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 48
+ },
+ "<module>._as_bool": {
+  "names": [
+   "isinstance",
+   "bool",
+   "int",
+   "float",
+   "str",
+   "strip",
+   "lower"
+  ],
+  "varnames": [
+   "v",
+   "s"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "true",
+    "1",
+    "yes",
+    "y",
+    "t"
+   ]
+  ],
+  "n_instructions": 39
+ },
+ "<module>._strip_trailing_commas": {
+  "names": [
+   "re",
+   "sub"
+  ],
+  "varnames": [
+   "js"
+  ],
+  "consts": [
+   "Remove a comma that sits right before a closing bracket/brace.",
+   ",(\\s*[}\\]])",
+   "\\1"
+  ],
+  "n_instructions": 9
+ },
+ "<module>._repair_missing_commas": {
+  "names": [
+   "_MISSING_COMMA",
+   "sub"
+  ],
+  "varnames": [
+   "js"
+  ],
+  "consts": [
+   "Insert ',' between two adjacent JSON values that dropped the separator.\n\n    Only fires at structural boundaries, so it never reaches inside a string: a\n    closing quote is only ever \"value-end\" when a sibling value really follows.\n    ",
+   "\\1,\\2\\3"
+  ],
+  "n_instructions": 8
+ },
+ "<module>._maybe_close": {
+  "names": [
+   "append",
+   "pop",
+   "join",
+   "reversed"
+  ],
+  "varnames": [
+   "js",
+   "depth",
+   "in_str",
+   "esc",
+   "ch"
+  ],
+  "consts": [
+   "Append the brackets the model forgot to close (last-resort for truncation).",
+   false,
+   "\\",
+   true,
+   "\"",
+   "[{",
+   "]",
+   -1,
+   "[",
+   "}",
+   "{",
+   ""
+  ],
+  "n_instructions": 102
+ },
+ "<module>._maybe_close.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   "{",
+   "}",
+   "]",
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>._load_json_lenient": {
+  "names": [
+   "_strip_trailing_commas",
+   "_repair_missing_commas",
+   "_maybe_close",
+   "json",
+   "loads",
+   "JSONDecodeError",
+   "isinstance",
+   "dict",
+   "ValueError"
+  ],
+  "varnames": [
+   "js",
+   "candidates",
+   "last_err",
+   "cand",
+   "obj",
+   "e"
+  ],
+  "consts": [
+   "json.loads, then progressively more aggressive self-healing.\n\n    Raises ValueError (with the raw text) only if every attempt fails. Any healed\n    parse is still subject to the offline replay gate in ``acquire_recipe``, so a\n    wrong heal can never poison the fingerprint cache.\n    ",
+   null,
+   "top-level JSON value is not an object"
+  ],
+  "n_instructions": 82
+ },
+ "<module>.parse_data_response": {
+  "names": [
+   "_extract_json",
+   "_load_json_lenient",
+   "ValueError",
+   "isinstance",
+   "dict",
+   "get",
+   "HEADER_FIELDS",
+   "list",
+   "_as_int",
+   "append",
+   "ExtractedLine",
+   "_as_str",
+   "_as_float",
+   "ExtractedOrder",
+   "ExtractedData",
+   "_as_bool",
+   "orders"
+  ],
+  "varnames": [
+   "content",
+   "js",
+   "d",
+   "e",
+   "header",
+   "orders",
+   "orders_raw",
+   "o",
+   "lines_raw",
+   "lines",
+   "l",
+   "qty",
+   "layout",
+   "data"
+  ],
+  "consts": [
+   "Turn a model response into a normalized :class:`ExtractedData`.\n\n    The model occasionally emits JSON with a dropped comma or a hard truncation\n    (especially on long POs). We attempt self-healing (strip trailing commas,\n    insert missing commas, best-effort close dangling brackets) before giving up.\n    Any healed parse is still subject to the offline replay gate in\n    :func:`acquire_recipe`, so a wrong heal can never poison the cache.\n    ",
+   "AI data response is not valid JSON: ",
+   "\n---raw---\n",
+   "",
+   null,
+   2000,
+   "AI data response is not a JSON object",
+   "orders",
+   "result",
+   "header",
+   "lines",
+   "po_no",
+   "product_list",
+   "qty",
+   "quantity",
+   0,
+   "raw_line",
+   "index_no",
+   "style",
+   "color_code",
+   "color_desc",
+   "size",
+   "unit",
+   "unit_price",
+   [
+    "raw_line",
+    "index_no",
+    "style",
+    "color_code",
+    "color_desc",
+    "size",
+    "unit",
+    "qty",
+    "unit_price"
+   ],
+   "channel",
+   "delivery_date",
+   "block_total_qty",
+   [
+    "po_no",
+    "channel",
+    "delivery_date",
+    "block_total_qty",
+    "lines"
+   ],
+   "layout_type",
+   "line_items",
+   [
+    "line_items",
+    "matrix_2axis",
+    "matrix_1axis"
+   ],
+   "customer",
+   "has_color_total",
+   "has_size_total",
+   [
+    "customer",
+    "layout_type",
+    "header",
+    "orders",
+    "has_color_total",
+    "has_size_total"
+   ],
+   "AI returned no usable order lines (every 'orders[].lines[]' entry was empty or had qty<=0)"
+  ],
+  "n_instructions": 390
+ },
+ "<module>.parse_data_response.<dictcomp>": {
+  "names": [
+   "_as_str",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [
+   ""
+  ],
+  "n_instructions": 19
+ },
+ "<module>.build_data_prompt": {
+  "names": [
+   "DATA_SYSTEM_PROMPT"
+  ],
+  "varnames": [
+   "doc_text",
+   "customer",
+   "extra_hint",
+   "retry",
+   "hint",
+   "user"
+  ],
+  "consts": [
+   "Build (system, user). ``extra_hint`` feeds back why the previous answer was\n    rejected so the model can self-correct on retry.",
+   "",
+   "\nYOUR PREVIOUS ANSWER WAS REJECTED. Reason:\n",
+   "\nRe-read the document below and answer again, obeying the hard rules exactly. Output the corrected JSON only.\n",
+   "Customer hint: ",
+   "\n",
+   "\nPurchase-order text, one visual line per line:\n----\n",
+   "\n----\n"
+  ],
+  "n_instructions": 36
+ },
+ "<module>.load_ai_config": {
+  "names": [
+   "os",
+   "environ",
+   "get",
+   "path",
+   "expanduser",
+   "join",
+   "APP_NAME",
+   "exists",
+   "open",
+   "json",
+   "load",
+   "Exception"
+  ],
+  "varnames": [
+   "base",
+   "p",
+   "f"
+  ],
+  "consts": [
+   null,
+   "APPDATA",
+   "~/.config",
+   "config.json",
+   "utf-8",
+   [
+    "encoding"
+   ]
+  ],
+  "n_instructions": 81
+ },
+ "<module>._thinking_off": {
+  "names": [
+   "str",
+   "get",
+   "lower"
+  ],
+  "varnames": [
+   "cfg",
+   "model",
+   "base"
+  ],
+  "consts": [
+   "Provider switch that disables the model's internal reasoning pass.\n\n    Reading a purchase order is a mechanical copy task, not a reasoning one,\n    yet reasoning-capable models (Qwen3, ...) run that pass by default. This\n    helper disables the hidden reasoning pass for endpoints that expose such a\n    switch, which is the largest single lever on the per-extraction budget.\n    ",
+   "model",
+   "",
+   "base_url",
+   "qwen",
+   "dashscope",
+   "enable_thinking",
+   false,
+   "glm",
+   "bigmodel",
+   "thinking",
+   "type",
+   "disabled"
+  ],
+  "n_instructions": 55
+ },
+ "<module>._chat_online": {
+  "names": [
+   "get",
+   "RuntimeError",
+   "rstrip",
+   "MAX_OUTPUT_TOKENS",
+   "_thinking_off",
+   "update",
+   "dict",
+   "HTTP_TIMEOUT",
+   "READ_BUDGET",
+   "post_json",
+   "str",
+   "print",
+   "pop"
+  ],
+  "varnames": [
+   "system",
+   "user",
+   "cfg",
+   "url",
+   "body",
+   "extra",
+   "kw",
+   "data",
+   "e",
+   "msg",
+   "k"
+  ],
+  "consts": [
+   null,
+   "api_key",
+   "base_url",
+   "在线 AI 未配置完整。请在左侧『联网模型配置』填写 API Key / 模型 / Base URL 并『保存配置』后重试。",
+   "/",
+   "/chat/completions",
+   "model",
+   "gpt-4o-mini",
+   "system",
+   [
+    "role",
+    "content"
+   ],
+   "user",
+   0.0,
+   "type",
+   "json_object",
+   [
+    "model",
+    "messages",
+    "temperature",
+    "max_tokens",
+    "response_format"
+   ],
+   "allow_thinking",
+   "data_timeout",
+   "http_retries",
+   3,
+   "http_backoff",
+   5,
+   "read_budget",
+   [
+    "timeout",
+    "retries",
+    "backoff",
+    "budget"
+   ],
+   "HTTP 400",
+   "HTTP 422",
+   "[thinking-off] API rejected thinking param (",
+   120,
+   "), retrying without it",
+   true,
+   [
+    "flush"
+   ],
+   "choices",
+   0,
+   "message",
+   "content"
+  ],
+  "n_instructions": 196
+ },
+ "<module>.extract_po_data": {
+  "names": [
+   "load_ai_config",
+   "get",
+   "compress_doc_text",
+   "len",
+   "MAX_INPUT_CHARS",
+   "build_data_prompt",
+   "local_infer",
+   "chat_local",
+   "dict",
+   "max",
+   "int",
+   "_chat_online",
+   "parse_data_response"
+  ],
+  "varnames": [
+   "doc_text",
+   "customer",
+   "cfg",
+   "extra_hint",
+   "seed_hint",
+   "text",
+   "_hint",
+   "system",
+   "user",
+   "chat_local",
+   "lcfg",
+   "content"
+  ],
+  "consts": [
+   "Read the PO with the configured engine and return normalized data.\n\n    Raises on transport failure, invalid JSON, or an empty result - never returns\n    a half-usable object, because the caller uses this as ground truth.\n    ",
+   "compress_input",
+   true,
+   null,
+   "\n",
+   "",
+   "infer_engine",
+   "local",
+   1,
+   [
+    "chat_local"
+   ],
+   "local_max_tokens",
+   2048,
+   4096,
+   [
+    "cfg"
+   ]
+  ],
+  "n_instructions": 117
+ }
+}

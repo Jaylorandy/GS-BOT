@@ -1,0 +1,142 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "http.client",
+   "http",
+   "json",
+   "time",
+   "urllib.error",
+   "urllib",
+   "urllib.request",
+   "DEFAULT_TIMEOUT",
+   "DEFAULT_RETRIES",
+   "DEFAULT_BACKOFF",
+   "DEFAULT_BUDGET",
+   "_MIN_ATTEMPT",
+   "error",
+   "URLError",
+   "TimeoutError",
+   "ConnectionError",
+   "client",
+   "HTTPException",
+   "_TRANSIENT",
+   "post_json"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/ai/http_util.py - shared, retryable JSON POST for online AI calls.\n\nBoth the data-reader (``data_extract``) and the recipe-inferrer\n(``recipe_infer``) talk to OpenAI-compatible endpoints over stdlib ``urllib``.\nThis helper centralises the transport so that a single slow / transient GLM\nresponse no longer kills a whole first-seen PO:\n\n* transient failures (``URLError`` / ``socket.timeout`` / ``ConnectionError`` /\n  ``http.client.HTTPException``) and HTTP 5xx are retried with exponential\n  backoff before giving up;\n* HTTP 4xx (auth / request error) is NOT retried - it would fail the same way;\n* every timeout is configurable via the caller (``timeout`` / ``retries`` /\n  ``backoff``), sourced from the user's config with sensible defaults.\n\nOnly stdlib is used, matching the rest of ``core/ai``.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   180.0,
+   3,
+   5.0,
+   118.0,
+   10.0,
+   "POExtract/2.0.1",
+   [
+    "timeout",
+    "retries",
+    "backoff",
+    "budget",
+    "user_agent"
+   ],
+   "return",
+   "dict",
+   [
+    "return",
+    "dict"
+   ]
+  ],
+  "n_instructions": 62
+ },
+ "<module>.post_json": {
+  "names": [
+   "float",
+   "DEFAULT_TIMEOUT",
+   "int",
+   "DEFAULT_RETRIES",
+   "DEFAULT_BACKOFF",
+   "json",
+   "dumps",
+   "encode",
+   "time",
+   "range",
+   "_MIN_ATTEMPT",
+   "min",
+   "max",
+   "urllib",
+   "request",
+   "Request",
+   "add_header",
+   "urlopen",
+   "loads",
+   "read",
+   "decode",
+   "error",
+   "HTTPError",
+   "code",
+   "sleep",
+   "Exception",
+   "RuntimeError",
+   "_TRANSIENT",
+   "type",
+   "__name__"
+  ],
+  "varnames": [
+   "url",
+   "api_key",
+   "body_dict",
+   "timeout",
+   "retries",
+   "backoff",
+   "budget",
+   "user_agent",
+   "data",
+   "last_err",
+   "start",
+   "attempt",
+   "eff",
+   "remaining",
+   "req",
+   "resp",
+   "e",
+   "body"
+  ],
+  "consts": [
+   "POST ``body_dict`` as JSON to ``url`` with bearer auth; return parsed JSON.\n\n    Retries transient failures (and HTTP 5xx) up to ``retries`` times with\n    exponential backoff. Raises ``RuntimeError`` with a clear message on final\n    failure so the caller can log it (and the UI can show a useful FAIL line).\n\n    ``budget`` (seconds) caps the TOTAL time spent on this call across all\n    attempts: each attempt's effective timeout is shrunk so the next attempt can\n    still fit, and the loop gives up once the budget is exhausted. This keeps a\n    single AI read bounded (~115s) regardless of the configured ``timeout`` or\n    ``retries``.\n    ",
+   null,
+   "utf-8",
+   1,
+   "POST",
+   [
+    "data",
+    "method"
+   ],
+   "Content-Type",
+   "application/json",
+   "Authorization",
+   "Bearer ",
+   "User-Agent",
+   [
+    "timeout"
+   ],
+   500,
+   "",
+   "ignore",
+   400,
+   "AI 请求被拒绝 (HTTP ",
+   "): ",
+   "AI 请求在 ",
+   " 次重试后仍失败（最后一次：",
+   ": ",
+   "）"
+  ],
+  "n_instructions": 311
+ }
+}

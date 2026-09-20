@@ -1,0 +1,395 @@
+# module: core.parsers.registry
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\registry.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/registry.py - layout_type -> parser resolution.')
+              4 STORE_NAME               0 (__doc__)
+
+  2           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+  4          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('Dict', 'Optional'))
+             22 IMPORT_NAME              3 (typing)
+             24 IMPORT_FROM              4 (Dict)
+             26 STORE_NAME               4 (Dict)
+             28 IMPORT_FROM              5 (Optional)
+             30 STORE_NAME               5 (Optional)
+             32 POP_TOP
+
+  6          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'PoRecipe', 'PurchaseOrder'))
+             38 IMPORT_NAME              6 (models)
+             40 IMPORT_FROM              7 (LayoutType)
+             42 STORE_NAME               7 (LayoutType)
+             44 IMPORT_FROM              8 (PoRecipe)
+             46 STORE_NAME               8 (PoRecipe)
+             48 IMPORT_FROM              9 (PurchaseOrder)
+             50 STORE_NAME               9 (PurchaseOrder)
+             52 POP_TOP
+
+  7          54 LOAD_CONST               4 (2)
+             56 LOAD_CONST               6 (('normalize_po',))
+             58 IMPORT_NAME             10 (normalize)
+             60 IMPORT_FROM             11 (normalize_po)
+             62 STORE_NAME              11 (normalize_po)
+             64 POP_TOP
+
+  8          66 LOAD_CONST               7 (1)
+             68 LOAD_CONST               8 (('BaseParser', 'PageWords'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (PageWords)
+             78 STORE_NAME              14 (PageWords)
+             80 POP_TOP
+
+  9          82 LOAD_CONST               7 (1)
+             84 LOAD_CONST               9 (('LineItemsParser',))
+             86 IMPORT_NAME             15 (line_items)
+             88 IMPORT_FROM             16 (LineItemsParser)
+             90 STORE_NAME              16 (LineItemsParser)
+             92 POP_TOP
+
+ 10          94 LOAD_CONST               7 (1)
+             96 LOAD_CONST              10 (('Matrix2AxisParser',))
+             98 IMPORT_NAME             17 (matrix_2axis)
+            100 IMPORT_FROM             18 (Matrix2AxisParser)
+            102 STORE_NAME              18 (Matrix2AxisParser)
+            104 POP_TOP
+
+ 11         106 LOAD_CONST               7 (1)
+            108 LOAD_CONST              11 (('Matrix1AxisParser',))
+            110 IMPORT_NAME             19 (matrix_1axis)
+            112 IMPORT_FROM             20 (Matrix1AxisParser)
+            114 STORE_NAME              20 (Matrix1AxisParser)
+            116 POP_TOP
+
+ 12         118 LOAD_CONST               7 (1)
+            120 LOAD_CONST              12 (('ControlSheetParser',))
+            122 IMPORT_NAME             21 (control_sheet)
+            124 IMPORT_FROM             22 (ControlSheetParser)
+            126 STORE_NAME              22 (ControlSheetParser)
+            128 POP_TOP
+
+ 13         130 LOAD_CONST               7 (1)
+            132 LOAD_CONST              13 (('MatrixPerCartonParser',))
+            134 IMPORT_NAME             23 (matrix_percarton)
+            136 IMPORT_FROM             24 (MatrixPerCartonParser)
+            138 STORE_NAME              24 (MatrixPerCartonParser)
+            140 POP_TOP
+
+ 14         142 LOAD_CONST               7 (1)
+            144 LOAD_CONST              14 (('LineItemsEuParser',))
+            146 IMPORT_NAME             25 (line_items_eu)
+            148 IMPORT_FROM             26 (LineItemsEuParser)
+            150 STORE_NAME              26 (LineItemsEuParser)
+            152 POP_TOP
+
+ 15         154 LOAD_CONST               7 (1)
+            156 LOAD_CONST              15 (('CostcoHybridParser',))
+            158 IMPORT_NAME             27 (costco_hybrid)
+            160 IMPORT_FROM             28 (CostcoHybridParser)
+            162 STORE_NAME              28 (CostcoHybridParser)
+            164 POP_TOP
+
+ 16         166 LOAD_CONST               7 (1)
+            168 LOAD_CONST              16 (('CostcoEcomParser',))
+            170 IMPORT_NAME             29 (costco_ecom)
+            172 IMPORT_FROM             30 (CostcoEcomParser)
+            174 STORE_NAME              30 (CostcoEcomParser)
+            176 POP_TOP
+
+ 17         178 LOAD_CONST               7 (1)
+            180 LOAD_CONST              17 (('CelioParser',))
+            182 IMPORT_NAME             31 (celio)
+            184 IMPORT_FROM             32 (CelioParser)
+            186 STORE_NAME              32 (CelioParser)
+            188 POP_TOP
+
+ 18         190 LOAD_CONST               7 (1)
+            192 LOAD_CONST              18 (('FrankieEcomParser',))
+            194 IMPORT_NAME             33 (frankie_ecom)
+            196 IMPORT_FROM             34 (FrankieEcomParser)
+            198 STORE_NAME              34 (FrankieEcomParser)
+            200 POP_TOP
+
+ 19         202 LOAD_CONST               7 (1)
+            204 LOAD_CONST              19 (('BassProAckParser',))
+            206 IMPORT_NAME             35 (bass_pro_ack)
+            208 IMPORT_FROM             36 (BassProAckParser)
+            210 STORE_NAME              36 (BassProAckParser)
+            212 POP_TOP
+
+ 20         214 LOAD_CONST               7 (1)
+            216 LOAD_CONST              20 (('ImportPoParser',))
+            218 IMPORT_NAME             37 (import_po)
+            220 IMPORT_FROM             38 (ImportPoParser)
+            222 STORE_NAME              38 (ImportPoParser)
+            224 POP_TOP
+
+ 21         226 LOAD_CONST               7 (1)
+            228 LOAD_CONST              21 (('AnfPoParser',))
+            230 IMPORT_NAME             39 (anf_po)
+            232 IMPORT_FROM             40 (AnfPoParser)
+            234 STORE_NAME              40 (AnfPoParser)
+            236 POP_TOP
+
+ 22         238 LOAD_CONST               7 (1)
+            240 LOAD_CONST              22 (('AnfCommitmentParser',))
+            242 IMPORT_NAME             41 (anf_commitment)
+            244 IMPORT_FROM             42 (AnfCommitmentParser)
+            246 STORE_NAME              42 (AnfCommitmentParser)
+            248 POP_TOP
+
+ 25         250 LOAD_NAME                7 (LayoutType)
+            252 LOAD_ATTR               43 (LINE_ITEMS)
+            262 LOAD_NAME               16 (LineItemsParser)
+
+ 26         264 LOAD_NAME                7 (LayoutType)
+            266 LOAD_ATTR               44 (MATRIX_2AXIS)
+            276 LOAD_NAME               18 (Matrix2AxisParser)
+
+ 27         278 LOAD_NAME                7 (LayoutType)
+            280 LOAD_ATTR               45 (MATRIX_1AXIS)
+            290 LOAD_NAME               20 (Matrix1AxisParser)
+
+ 28         292 LOAD_NAME                7 (LayoutType)
+            294 LOAD_ATTR               46 (CONTROL_SHEET)
+            304 LOAD_NAME               22 (ControlSheetParser)
+
+ 29         306 LOAD_NAME                7 (LayoutType)
+            308 LOAD_ATTR               47 (MATRIX_PERCARTON)
+            318 LOAD_NAME               24 (MatrixPerCartonParser)
+
+ 30         320 LOAD_NAME                7 (LayoutType)
+            322 LOAD_ATTR               48 (LINE_ITEMS_EU)
+            332 LOAD_NAME               26 (LineItemsEuParser)
+
+ 31         334 LOAD_NAME                7 (LayoutType)
+            336 LOAD_ATTR               49 (COSTCO_HYBRID)
+            346 LOAD_NAME               28 (CostcoHybridParser)
+
+ 32         348 LOAD_NAME                7 (LayoutType)
+            350 LOAD_ATTR               50 (COSTCO_ECOM)
+            360 LOAD_NAME               30 (CostcoEcomParser)
+
+ 33         362 LOAD_NAME                7 (LayoutType)
+            364 LOAD_ATTR               51 (CELIO)
+            374 LOAD_NAME               32 (CelioParser)
+
+ 34         376 LOAD_NAME                7 (LayoutType)
+            378 LOAD_ATTR               52 (FRANKIE_ECOM)
+            388 LOAD_NAME               34 (FrankieEcomParser)
+
+ 35         390 LOAD_NAME                7 (LayoutType)
+            392 LOAD_ATTR               53 (BASS_PRO_ACK)
+            402 LOAD_NAME               36 (BassProAckParser)
+
+ 36         404 LOAD_NAME                7 (LayoutType)
+            406 LOAD_ATTR               54 (IMPORT_PO)
+            416 LOAD_NAME               38 (ImportPoParser)
+
+ 37         418 LOAD_NAME                7 (LayoutType)
+            420 LOAD_ATTR               55 (ANF_PO)
+            430 LOAD_NAME               40 (AnfPoParser)
+
+ 38         432 LOAD_NAME                7 (LayoutType)
+            434 LOAD_ATTR               56 (ANF_COMMITMENT)
+            444 LOAD_NAME               42 (AnfCommitmentParser)
+
+ 24         446 BUILD_MAP               14
+            448 STORE_NAME              57 (_REGISTRY)
+
+ 42         450 LOAD_CONST              39 (('return', 'BaseParser'))
+            452 LOAD_CONST              25 (<code object get_parser at 0x000002BF94A196B0, file "core\parsers\registry.py", line 42>)
+            454 MAKE_FUNCTION            4 (annotations)
+            456 STORE_NAME              58 (get_parser)
+
+ 53         458 LOAD_CONST              26 ('')
+
+ 54         460 LOAD_CONST              27 (None)
+
+ 55         462 LOAD_CONST              27 (None)
+
+ 53         464 LOAD_CONST              28 (('source_file', 'overrides', 'log'))
+            466 BUILD_CONST_KEY_MAP      3
+            468 LOAD_CONST              40 (('pages', 'list', 'recipe', 'PoRecipe', 'source_file', 'str', 'overrides', 'Optional[Dict[str, str]]', 'return', 'PurchaseOrder'))
+            470 LOAD_CONST              38 (<code object parse at 0x000002BF94462A20, file "core\parsers\registry.py", line 53>)
+            472 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            474 STORE_NAME              59 (parse)
+            476 LOAD_CONST              27 (None)
+            478 RETURN_VALUE
+
+==============================================================================
+## <module>.get_parser  (args=1, locals=3)
+# varnames: layout_type, lt, cls
+ 42           0 RESUME                   0
+
+ 43           2 LOAD_GLOBAL              1 (NULL + isinstance)
+             14 LOAD_FAST                0 (layout_type)
+             16 LOAD_GLOBAL              2 (LayoutType)
+             28 PRECALL                  2
+             32 CALL                     2
+             42 POP_JUMP_FORWARD_IF_FALSE     3 (to 50)
+
+ 44          44 LOAD_FAST                0 (layout_type)
+             46 STORE_FAST               1 (lt)
+             48 JUMP_FORWARD            15 (to 80)
+
+ 46     >>   50 LOAD_GLOBAL              3 (NULL + LayoutType)
+             62 LOAD_FAST                0 (layout_type)
+             64 PRECALL                  1
+             68 CALL                     1
+             78 STORE_FAST               1 (lt)
+
+ 47     >>   80 LOAD_GLOBAL              4 (_REGISTRY)
+             92 LOAD_METHOD              3 (get)
+            114 LOAD_FAST                1 (lt)
+            116 PRECALL                  1
+            120 CALL                     1
+            130 STORE_FAST               2 (cls)
+
+ 48         132 LOAD_FAST                2 (cls)
+            134 POP_JUMP_FORWARD_IF_NOT_NONE    18 (to 172)
+
+ 49         136 LOAD_GLOBAL              9 (NULL + ValueError)
+            148 LOAD_CONST               1 ('No parser registered for layout_type=')
+            150 LOAD_FAST                0 (layout_type)
+            152 FORMAT_VALUE             2 (repr)
+            154 BUILD_STRING             2
+            156 PRECALL                  1
+            160 CALL                     1
+            170 RAISE_VARARGS            1
+
+ 50     >>  172 PUSH_NULL
+            174 LOAD_FAST                2 (cls)
+            176 PRECALL                  0
+            180 CALL                     0
+            190 RETURN_VALUE
+
+==============================================================================
+## <module>.parse  (args=2, locals=8)
+# varnames: pages, recipe, source_file, overrides, log, po, lines, _c
+ 53           0 RESUME                   0
+
+ 63           2 LOAD_GLOBAL              1 (NULL + get_parser)
+             14 LOAD_FAST                1 (recipe)
+             16 LOAD_ATTR                1 (layout_type)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 LOAD_METHOD              2 (parse)
+             62 LOAD_FAST                0 (pages)
+             64 LOAD_FAST                1 (recipe)
+             66 LOAD_FAST                2 (source_file)
+             68 KW_NAMES                 1
+             70 PRECALL                  3
+             74 CALL                     3
+             84 STORE_FAST               5 (po)
+
+ 68          86 NOP
+
+ 69          88 LOAD_GLOBAL              7 (NULL + normalize_po)
+            100 LOAD_FAST                5 (po)
+            102 LOAD_FAST                1 (recipe)
+            104 LOAD_FAST                3 (overrides)
+            106 KW_NAMES                 2
+            108 PRECALL                  3
+            112 CALL                     3
+            122 STORE_FAST               6 (lines)
+            124 JUMP_FORWARD            18 (to 162)
+        >>  126 PUSH_EXC_INFO
+
+ 70         128 LOAD_GLOBAL              8 (Exception)
+            140 CHECK_EXC_MATCH
+            142 POP_JUMP_FORWARD_IF_FALSE     5 (to 154)
+            144 POP_TOP
+
+ 71         146 BUILD_LIST               0
+            148 STORE_FAST               6 (lines)
+            150 POP_EXCEPT
+            152 JUMP_FORWARD             4 (to 162)
+
+ 70     >>  154 RERAISE                  0
+        >>  156 COPY                     3
+            158 POP_EXCEPT
+            160 RERAISE                  1
+
+ 72     >>  162 LOAD_FAST                4 (log)
+            164 POP_JUMP_FORWARD_IF_FALSE   107 (to 380)
+
+ 73         166 LOAD_FAST                6 (lines)
+            168 POP_JUMP_FORWARD_IF_FALSE   105 (to 380)
+
+ 74         170 PUSH_NULL
+            172 LOAD_FAST                4 (log)
+            174 LOAD_CONST               3 ('  归一管线（共 ')
+            176 LOAD_GLOBAL             11 (NULL + len)
+            188 LOAD_FAST                6 (lines)
+            190 PRECALL                  1
+            194 CALL                     1
+            204 FORMAT_VALUE             0
+            206 LOAD_CONST               4 (' 处处理）:')
+            208 BUILD_STRING             3
+            210 PRECALL                  1
+            214 CALL                     1
+            224 POP_TOP
+
+ 75         226 LOAD_FAST                6 (lines)
+            228 LOAD_CONST               5 (None)
+            230 LOAD_CONST               6 (12)
+            232 BUILD_SLICE              2
+            234 BINARY_SUBSCR
+            244 GET_ITER
+        >>  246 FOR_ITER                16 (to 280)
+            248 STORE_FAST               7 (_c)
+
+ 76         250 PUSH_NULL
+            252 LOAD_FAST                4 (log)
+            254 LOAD_CONST               7 ('    · ')
+            256 LOAD_FAST                7 (_c)
+            258 FORMAT_VALUE             0
+            260 BUILD_STRING             2
+            262 PRECALL                  1
+            266 CALL                     1
+            276 POP_TOP
+            278 JUMP_BACKWARD           17 (to 246)
+
+ 77     >>  280 LOAD_GLOBAL             11 (NULL + len)
+            292 LOAD_FAST                6 (lines)
+            294 PRECALL                  1
+            298 CALL                     1
+            308 LOAD_CONST               6 (12)
+            310 COMPARE_OP               4 (>)
+            316 POP_JUMP_FORWARD_IF_FALSE    31 (to 380)
+
+ 78         318 PUSH_NULL
+            320 LOAD_FAST                4 (log)
+            322 LOAD_CONST               8 ('    · … 其余 ')
+            324 LOAD_GLOBAL             11 (NULL + len)
+            336 LOAD_FAST                6 (lines)
+            338 PRECALL                  1
+            342 CALL                     1
+            352 LOAD_CONST               6 (12)
+            354 BINARY_OP               10 (-)
+            358 FORMAT_VALUE             0
+            360 LOAD_CONST               9 (' 处')
+            362 BUILD_STRING             3
+            364 PRECALL                  1
+            368 CALL                     1
+            378 POP_TOP
+
+ 79     >>  380 LOAD_FAST                5 (po)
+            382 RETURN_VALUE
+ExceptionTable:
+  88 to 122 -> 126 [0]
+  126 to 148 -> 156 [1] lasti
+  154 to 154 -> 156 [1] lasti

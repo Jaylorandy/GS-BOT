@@ -1,0 +1,507 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "Set",
+   "Tuple",
+   "models",
+   "PoRecipe",
+   "PurchaseOrder",
+   "parsers.base",
+   "doc_text",
+   "recipe_synth",
+   "_FIELD_LABEL_HINTS",
+   "synthesize_field_anchor",
+   "_HEAL_FIELDS",
+   "_PAYMENT_HINTS",
+   "_CUSTOMER_HINTS",
+   "_PO_NO_HINTS",
+   "compile",
+   "I",
+   "_DELIVERY_LABEL_RE",
+   "_entity_value",
+   "_header_label_present",
+   "_find_missing",
+   "heal_and_cache"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/self_heal.py - turn a blank-but-present field into a healed value AND a\nback-patched, re-cacheable recipe anchor.\n\nWhy this exists\n---------------\nV2's cached path is zero-AI: a stored ``PoRecipe`` of regex anchors replays over\nthe PDF and any field the anchor misses stays blank. That is the \"漏抓→留空\"\nbehaviour. This module is the safety net:\n\n  1. detect anchor fields that parsed to blank while their human-readable LABEL\n     is clearly present in the document (proof the data exists and the anchor\n     simply missed it - not that the PO lacks the field);\n  2. ask the model ONCE, for just those fields (core.ai.focus_extract);\n  3. fill the parsed ``PurchaseOrder`` (never overwrite a value that is already\n     correct);\n  4. when the model's value round-trips through ``synthesize_field_anchor``,\n     patch the recipe anchor and write it back to the fingerprint cache, so the\n     NEXT PO of this layout is caught by regex - no more AI for that field.\n\nOnly runs on the CACHED path (caller gates it). When no field is missing-with-\nlabel it returns immediately and costs ZERO AI, so the normal fast path is\nuntouched. When offline it also no-ops. There is no loop: the back-patched\nrecipe is cached for future files; this file's ``po`` is already filled.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Dict",
+    "List",
+    "Optional",
+    "Set",
+    "Tuple"
+   ],
+   1,
+   [
+    "PoRecipe",
+    "PurchaseOrder"
+   ],
+   [
+    "doc_text"
+   ],
+   [
+    "_FIELD_LABEL_HINTS",
+    "synthesize_field_anchor"
+   ],
+   [
+    [
+     "customer",
+     "customer_anchor",
+     false,
+     true
+    ],
+    [
+     "po_no",
+     "po_no_anchor",
+     false,
+     false
+    ],
+    [
+     "style_no",
+     "style_anchor",
+     false,
+     false
+    ],
+    [
+     "delivery_date",
+     "delivery_anchor",
+     true,
+     false
+    ],
+    [
+     "season",
+     "season_anchor",
+     false,
+     false
+    ],
+    [
+     "currency",
+     "currency_anchor",
+     false,
+     false
+    ],
+    [
+     "price_term",
+     "price_term_anchor",
+     false,
+     false
+    ],
+    [
+     "payment_terms",
+     "payment_terms_anchor",
+     false,
+     false
+    ],
+    [
+     "port_loading",
+     "port_loading_anchor",
+     false,
+     false
+    ],
+    [
+     "port_discharge",
+     "port_discharge_anchor",
+     false,
+     false
+    ],
+    [
+     "ship_mode",
+     "ship_mode_anchor",
+     false,
+     false
+    ],
+    [
+     "vendor_name",
+     "vendor_anchor",
+     false,
+     false
+    ],
+    [
+     "agent_name",
+     "agent_anchor",
+     false,
+     false
+    ],
+    [
+     "product_desc",
+     "style_anchor",
+     false,
+     false
+    ],
+    [
+     "import_po_no",
+     "import_po_no_anchor",
+     false,
+     false
+    ],
+    [
+     "reference_no",
+     "reference_no_anchor",
+     false,
+     false
+    ],
+    [
+     "cir_no",
+     "cir_no_anchor",
+     false,
+     false
+    ],
+    [
+     "freight_terms",
+     "freight_terms_anchor",
+     false,
+     false
+    ],
+    [
+     "country_of_origin",
+     "country_of_origin_anchor",
+     false,
+     false
+    ],
+    [
+     "dc_address",
+     "dc_address_anchor",
+     false,
+     false
+    ]
+   ],
+   [
+    "Payment",
+    "Payment term",
+    "Payment terms"
+   ],
+   [
+    "Purchase Order",
+    "PURCHASE ORDER",
+    "Buyer",
+    "Customer"
+   ],
+   [
+    "Order No",
+    "ORDER NO",
+    "PO No",
+    "PO#",
+    "Order Number"
+   ],
+   "(?:date|late)\\s*:",
+   "key",
+   "str",
+   "return",
+   "doc_low",
+   "bool",
+   "po",
+   "PurchaseOrder",
+   "doc",
+   "Tuple[List[str], bool]",
+   "",
+   "recipe",
+   "PoRecipe",
+   "cfg",
+   "dict",
+   "source_file",
+   [
+    "key",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "key",
+    "str",
+    "doc_low",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "doc",
+    "str",
+    "return",
+    "Tuple[List[str], bool]"
+   ],
+   [
+    "",
+    null
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "po",
+    "PurchaseOrder",
+    "cfg",
+    "dict",
+    "source_file",
+    "str",
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 88
+ },
+ "<module>._entity_value": {
+  "names": [
+   "getattr",
+   "strip"
+  ],
+  "varnames": [
+   "ent",
+   "key"
+  ],
+  "consts": [
+   null,
+   ""
+  ],
+  "n_instructions": 13
+ },
+ "<module>._header_label_present": {
+  "names": [
+   "_PAYMENT_HINTS",
+   "_CUSTOMER_HINTS",
+   "_PO_NO_HINTS",
+   "_FIELD_LABEL_HINTS",
+   "get",
+   "any"
+  ],
+  "varnames": [
+   "key",
+   "doc_low",
+   "hints"
+  ],
+  "consts": [
+   null,
+   "payment_terms",
+   "customer",
+   "po_no",
+   []
+  ],
+  "n_instructions": 42
+ },
+ "<module>._header_label_present.<genexpr>": {
+  "names": [
+   "lower"
+  ],
+  "varnames": [
+   ".0",
+   "h"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 19
+ },
+ "<module>._find_missing": {
+  "names": [
+   "lower",
+   "_HEAL_FIELDS",
+   "_header_label_present",
+   "getattr",
+   "strip",
+   "append",
+   "any",
+   "entities",
+   "bool",
+   "_DELIVERY_LABEL_RE",
+   "search"
+  ],
+  "varnames": [
+   "po",
+   "doc",
+   "low",
+   "missing_header",
+   "_attr",
+   "per_ent",
+   "po_level",
+   "delivery_missing"
+  ],
+  "consts": [
+   "Return (header_fields_missing_with_label, delivery_date_missing_with_label).\n\n    V2.0.19.24: 检测顺序按 _HEAL_FIELDS 排列——必填字段（customer / po_no /\n    style_no / delivery_date）在前，其余可选字段在后，保证自愈优先补抓必填。\n    ",
+   ""
+  ],
+  "n_instructions": 92
+ },
+ "<module>._find_missing.<genexpr>": {
+  "names": [
+   "_entity_value"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [
+   "delivery_date",
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.heal_and_cache": {
+  "names": [
+   "entities",
+   "doc_text",
+   "_find_missing",
+   "list",
+   "append",
+   "ai.focus_extract",
+   "extract_focused_fields",
+   "get",
+   "_HEAL_FIELDS",
+   "strip",
+   "getattr",
+   "setattr",
+   "_entity_value",
+   "any",
+   "next",
+   "po_no",
+   "delivery_date",
+   "join",
+   "splitlines",
+   "set",
+   "add",
+   "_PAYMENT_HINTS",
+   "_CUSTOMER_HINTS",
+   "_PO_NO_HINTS",
+   "_FIELD_LABEL_HINTS",
+   "synthesize_field_anchor",
+   "put",
+   "fingerprint",
+   "Exception"
+  ],
+  "varnames": [
+   "pages",
+   "recipe",
+   "po",
+   "cfg",
+   "cache",
+   "source_file",
+   "log",
+   "doc",
+   "missing_header",
+   "delivery_missing",
+   "requested",
+   "extract_focused_fields",
+   "res",
+   "header_vals",
+   "orders",
+   "filled",
+   "_attr",
+   "per_ent",
+   "po_level",
+   "val",
+   "e",
+   "dd_by_po",
+   "global_dd",
+   "v",
+   "lines",
+   "soft",
+   "k",
+   "patched",
+   "attr",
+   "prefer",
+   "anchor"
+  ],
+  "consts": [
+   "Self-heal blank-but-present fields; back-patch + re-cache the recipe.\n\n    Returns True if anything was healed. Never raises.\n    ",
+   false,
+   "delivery_date",
+   1,
+   [
+    "extract_focused_fields"
+   ],
+   [
+    "cfg",
+    "log"
+   ],
+   "header",
+   "orders",
+   "",
+   "  [自愈] AI 补抓到空白字段：",
+   ", ",
+   [
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "product_desc",
+    "delivery_date",
+    "import_po_no",
+    "reference_no",
+    "cir_no",
+    "freight_terms",
+    "country_of_origin",
+    "dc_address"
+   ],
+   "payment_terms",
+   "customer",
+   "po_no",
+   [],
+   [
+    "prefer"
+   ],
+   true,
+   "  [自愈] 已把改进锚点回写缓存（下次同版式免 AI）",
+   "  [自愈] 回写缓存失败（忽略）：",
+   null
+  ],
+  "n_instructions": 467
+ },
+ "<module>.heal_and_cache.<genexpr>": {
+  "names": [
+   "_entity_value"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [
+   "delivery_date",
+   null
+  ],
+  "n_instructions": 23
+ },
+ "<module>.heal_and_cache.<dictcomp>": {
+  "names": [
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "o"
+  ],
+  "consts": [
+   "po_no",
+   "delivery_date"
+  ],
+  "n_instructions": 26
+ },
+ "<module>.heal_and_cache.<listcomp>": {
+  "names": [
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [],
+  "n_instructions": 14
+ }
+}

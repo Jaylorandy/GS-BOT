@@ -1,0 +1,603 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "tkinter",
+   "tk",
+   "ttk",
+   "scrolledtext",
+   "core.export_gate",
+   "ExportGateReport",
+   "theme_glass",
+   "getattr",
+   "COL",
+   "FONT_BODY",
+   "FONT_BOLD",
+   "FONT_HINT",
+   "Exception",
+   "int",
+   "FONT_BODY_BIG",
+   "FONT_BOLD_BIG",
+   "FONT_HINT_BIG",
+   "Toplevel",
+   "QuantityMismatchDialog",
+   "BatchExportGateDialog"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/quantity_dialog.py - the export-time quantity interception modal.\n\nShown by ``main_window`` when ``core.export_gate.reconcile_quantities`` finds a\nHARD quantity problem in the current batch. The operator must make an explicit\nchoice: Cancel (default, safe) or Release (export anyway, owning the risk).\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "ttk",
+    "scrolledtext"
+   ],
+   [
+    "ExportGateReport"
+   ],
+   "COL",
+   "FONT_BODY",
+   [
+    "Segoe UI",
+    12
+   ],
+   "FONT_HEAD_BOLD",
+   [
+    "Segoe UI",
+    13,
+    "bold"
+   ],
+   "FONT_HINT",
+   [
+    "Segoe UI",
+    11
+   ],
+   1,
+   1.05,
+   0.5,
+   "bold",
+   "QuantityMismatchDialog",
+   "BatchExportGateDialog"
+  ],
+  "n_instructions": 157
+ },
+ "<module>.QuantityMismatchDialog": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "staticmethod",
+   "_fill",
+   "_cancel",
+   "_release",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "QuantityMismatchDialog",
+   "Modal that blocks export until the operator explicitly cancels or releases.\n\n    ``reports`` is the list of :class:`ExportGateReport` that contained hard\n    blocks. Only appears when at least one hard block exists; warnings from those\n    same reports are shown as advisory notes but never block on their own.\n    ",
+   "reports",
+   "list",
+   "txt",
+   "scrolledtext.ScrolledText",
+   "return",
+   "None",
+   [
+    "reports",
+    "list"
+   ],
+   [
+    "txt",
+    "scrolledtext.ScrolledText",
+    "reports",
+    "list",
+    "return",
+    "None"
+   ],
+   [
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 33
+ },
+ "<module>.QuantityMismatchDialog.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "proceed",
+   "configure",
+   "COL",
+   "get",
+   "Exception",
+   "_reports",
+   "title",
+   "transient",
+   "grab_set",
+   "resizable",
+   "ttk",
+   "Frame",
+   "pack",
+   "tk",
+   "BOTH",
+   "Label",
+   "FONT_BOLD",
+   "W",
+   "scrolledtext",
+   "ScrolledText",
+   "WORD",
+   "_fill",
+   "config",
+   "DISABLED",
+   "FONT_HINT",
+   "X",
+   "Button",
+   "_cancel",
+   "RIGHT",
+   "_release",
+   "focus_set",
+   "bind",
+   "protocol",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "reports",
+   "body",
+   "txt",
+   "hint",
+   "btn_row",
+   "cancel_btn",
+   "release_btn"
+  ],
+  "consts": [
+   null,
+   false,
+   "gap",
+   "#e4e5e6",
+   [
+    "bg"
+   ],
+   "导出拦截：数量校验未通过",
+   true,
+   14,
+   [
+    "padding"
+   ],
+   [
+    "fill",
+    "expand"
+   ],
+   "以下 PO 的数量校验未通过，建议取消导出并核查后再试：",
+   [
+    "text",
+    "font"
+   ],
+   [
+    0,
+    8
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   92,
+   18,
+   "field",
+   "#31353D",
+   "ink",
+   "#ECEEF1",
+   "accent",
+   "#C2A878",
+   "select_fg",
+   "#23262D",
+   [
+    "width",
+    "height",
+    "wrap",
+    "bg",
+    "fg",
+    "insertbackground",
+    "selectbackground",
+    "selectforeground"
+   ],
+   [
+    "state"
+   ],
+   "「取消导出」可返回检查；「仍要导出」将忽略以上提示直接导出。",
+   [
+    8,
+    0
+   ],
+   [
+    10,
+    0
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "取消导出",
+   [
+    "text",
+    "command"
+   ],
+   6,
+   [
+    "side",
+    "padx"
+   ],
+   "仍要导出",
+   "Accent.TButton",
+   [
+    "text",
+    "command",
+    "style"
+   ],
+   [
+    "side"
+   ],
+   "<Escape>",
+   "WM_DELETE_WINDOW"
+  ],
+  "n_instructions": 266
+ },
+ "<module>.QuantityMismatchDialog.__init__.<lambda>": {
+  "names": [
+   "_cancel"
+  ],
+  "varnames": [
+   "_e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.QuantityMismatchDialog._fill": {
+  "names": [
+   "enumerate",
+   "isinstance",
+   "ExportGateReport",
+   "insert",
+   "tk",
+   "END",
+   "customer",
+   "source",
+   "blocks",
+   "warnings"
+  ],
+  "varnames": [
+   "txt",
+   "reports",
+   "i",
+   "r",
+   "b",
+   "w"
+  ],
+  "consts": [
+   null,
+   1,
+   "【PO ",
+   "】",
+   "  |  ",
+   "\n",
+   "  [阻断项]\n",
+   "    - ",
+   "  [提示]\n"
+  ],
+  "n_instructions": 110
+ },
+ "<module>.QuantityMismatchDialog._cancel": {
+  "names": [
+   "proceed",
+   "destroy"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   false
+  ],
+  "n_instructions": 11
+ },
+ "<module>.QuantityMismatchDialog._release": {
+  "names": [
+   "proceed",
+   "destroy"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   true
+  ],
+  "n_instructions": 11
+ },
+ "<module>.BatchExportGateDialog": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "CHOICE_SKIP",
+   "CHOICE_ALL",
+   "CHOICE_CANCEL",
+   "__init__",
+   "staticmethod",
+   "_stat",
+   "_choose",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "BatchExportGateDialog",
+   "Batch export interception modal with per-record skip semantics.\n\n    Replaces the old all-or-nothing :class:`QuantityMismatchDialog`. It is fed the\n    pre-scanned batch (see :func:`core.export_gate.scan_batch`) and shows how many\n    records are safe to export vs. how many are blocked, lists each blocked PO with\n    its reasons, then offers three operator choices:\n\n      * ``SKIP``   -> export only the passing records, drop the blocked ones;\n      * ``ALL``    -> export everything (operator owns the risk);\n      * ``CANCEL`` -> abort the whole export (default / safe).\n    ",
+   "skip",
+   "all",
+   "cancel",
+   "return",
+   "None",
+   [
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 33
+ },
+ "<module>.BatchExportGateDialog.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "CHOICE_CANCEL",
+   "choice",
+   "configure",
+   "COL",
+   "get",
+   "Exception",
+   "title",
+   "transient",
+   "grab_set",
+   "resizable",
+   "ttk",
+   "Frame",
+   "pack",
+   "tk",
+   "BOTH",
+   "Label",
+   "FONT_BOLD_BIG",
+   "W",
+   "sum",
+   "X",
+   "range",
+   "columnconfigure",
+   "_stat",
+   "len",
+   "scrolledtext",
+   "ScrolledText",
+   "WORD",
+   "QuantityMismatchDialog",
+   "_fill",
+   "config",
+   "DISABLED",
+   "FONT_HINT_BIG",
+   "Button",
+   "RIGHT",
+   "focus_set",
+   "bind",
+   "protocol",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "ok_count",
+   "total_count",
+   "blocked_reports",
+   "body",
+   "warn_count",
+   "stats",
+   "c",
+   "txt",
+   "hint",
+   "btn_row",
+   "skip_btn"
+  ],
+  "consts": [
+   null,
+   "gap",
+   "#e4e5e6",
+   [
+    "bg"
+   ],
+   "批量导出：数量校验结果",
+   true,
+   15,
+   [
+    "padding"
+   ],
+   [
+    "fill",
+    "expand"
+   ],
+   "以下 PO 在数量校验中未通过。可跳过问题项导出其余，或选择全部导出。",
+   [
+    "text",
+    "font"
+   ],
+   [
+    0,
+    11
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   4,
+   1,
+   [
+    "weight"
+   ],
+   "总计",
+   0,
+   "可导出",
+   "需跳过",
+   2,
+   "警告",
+   3,
+   92,
+   16,
+   "field",
+   "#31353D",
+   "ink",
+   "#ECEEF1",
+   "accent",
+   "#C2A878",
+   "select_fg",
+   "#23262D",
+   [
+    "width",
+    "height",
+    "wrap",
+    "bg",
+    "fg",
+    "insertbackground",
+    "selectbackground",
+    "selectforeground"
+   ],
+   [
+    "state"
+   ],
+   "「取消导出」可返回检查；「导出通过项」将跳过以上 PO；「全部仍要导出」忽略提示。",
+   [
+    9,
+    0
+   ],
+   [
+    11,
+    0
+   ],
+   "取消导出",
+   [
+    "text",
+    "command"
+   ],
+   6,
+   [
+    "side",
+    "padx"
+   ],
+   "全部仍要导出",
+   "导出通过项并跳过问题项",
+   "Accent.TButton",
+   [
+    "text",
+    "command",
+    "style"
+   ],
+   [
+    "side"
+   ],
+   "<Escape>",
+   "WM_DELETE_WINDOW"
+  ],
+  "n_instructions": 367
+ },
+ "<module>.BatchExportGateDialog.__init__.<genexpr>": {
+  "names": [
+   "len",
+   "warnings"
+  ],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>.BatchExportGateDialog.__init__.<lambda>": {
+  "names": [
+   "_choose",
+   "CHOICE_CANCEL"
+  ],
+  "varnames": [],
+  "consts": [
+   null
+  ],
+  "n_instructions": 9
+ },
+ "<module>.BatchExportGateDialog._stat": {
+  "names": [
+   "ttk",
+   "Frame",
+   "grid",
+   "Label",
+   "FONT_HINT_BIG",
+   "pack",
+   "str",
+   "FONT_BOLD_BIG"
+  ],
+  "varnames": [
+   "parent",
+   "label",
+   "value",
+   "col",
+   "f"
+  ],
+  "consts": [
+   null,
+   "groove",
+   1,
+   9,
+   [
+    "relief",
+    "borderwidth",
+    "padding"
+   ],
+   0,
+   7,
+   "ew",
+   [
+    "row",
+    "column",
+    "padx",
+    "sticky"
+   ],
+   [
+    "text",
+    "font"
+   ]
+  ],
+  "n_instructions": 50
+ },
+ "<module>.BatchExportGateDialog._choose": {
+  "names": [
+   "choice",
+   "destroy"
+  ],
+  "varnames": [
+   "self",
+   "choice"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 11
+ }
+}

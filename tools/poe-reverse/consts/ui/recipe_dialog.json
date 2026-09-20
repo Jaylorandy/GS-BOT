@@ -1,0 +1,2104 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "re",
+   "sys",
+   "tkinter",
+   "tk",
+   "pathlib",
+   "Path",
+   "messagebox",
+   "ttk",
+   "core.models",
+   "PoRecipe",
+   "PurchaseOrder",
+   "SizeQty",
+   "ui._win_raise",
+   "raise_window",
+   "core.recipe_fix",
+   "synth_anchor_for_value",
+   "_HEADER_ANCHORS",
+   "derive_clean_transform",
+   "derive_color_clean",
+   "add_clean",
+   "theme_glass",
+   "getattr",
+   "COL",
+   "FONT_BODY",
+   "FONT_BODY_BIG",
+   "FONT_HEAD",
+   "FONT_BUTTON",
+   "FONT_BUTTON_BOLD",
+   "PRIMARY_KW",
+   "Exception",
+   "get",
+   "C_GAP",
+   "C_PANEL",
+   "C_PANEL_BORDER",
+   "C_INK",
+   "C_INK2",
+   "C_INK3",
+   "C_ACCENT",
+   "C_ACCENT2",
+   "C_ACCENT_SOFT",
+   "C_FIELD",
+   "C_DIVIDER",
+   "C_HAIR",
+   "C_PINK",
+   "_fmt_price",
+   "_to_int",
+   "_PO_HEADER_FIELDS",
+   "_ENTITY_FIELDS",
+   "Toplevel",
+   "RecipeConfirmDialog"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/recipe_dialog.py - confirm the EXTRACTED RESULT, not the recipe.\n\nShown the first time a matrix layout is seen (cache miss + AI configured), or when\nthe \"confirm recipe\" advanced option is on. Ordinary office staff should never see\na regex. Instead they see the extracted order as a clean preview card and may fix a\nwrong field by TYPING THE CORRECT TEXT (the underlying anchor is re-synthesized from\nthe PDF automatically). They confirm, or ask the AI to re-recognize.\n\nReturns (via ``.result``):\n    * a corrected ``PoRecipe``  -> user confirmed\n    * the string ``\"RETRY\"``    -> user asked the AI to re-recognize\n    * ``None``                  -> user cancelled\n\nUI style aligns with the rest of V2: pure-gray \"deep glass\".\n\nField structure (V2.0.19.16 redesign, V2.0.19.20 layout)\n---------------------------------------------------------\nThe dialog is SCHEMA-DRIVEN and NOT per-customer. Three tiers:\n\n  Tier 1 — PO card (PurchaseOrder level):\n      * customer\n      * season, currency, price_term, payment_terms, ship_mode,\n        country_of_origin, su, delivery_date   (shared header fields, editable via entity-0 anchors/defaults)\n  Tier 2 — one Entity card per OrderEntity (so MULTIPLE destinations are each a\n          card; destination_code lives here, not at PO level):\n      * po_no, style_no, delivery_date, port_loading, port_discharge, destination_code\n  Tier 3 — Line matrix (inside each Entity card):\n      * For matrix_2axis (jeans/trousers with inseam): ONE ROW PER (COLOUR, INSEAM)\n        — Inseam column shows the per-row length (30/32/34...).  (Option A)\n      * For line_items / matrix_1axis: ONE ROW PER COLOUR.\n      * Color Code, Color Desc      -> editable (drive colour cleans)\n      * S / M / L / XL ...          -> read-only quantity cells (live sum shown in Qty)\n      * Inseam                      -> read-only (shown per row when present)\n      * 单价 / Qty / Net Amt        -> read-only, computed live\n                                      (Net Amt = Σqty × Unit Price; the export\n                                       writes the live formula =I*K anyway)\n      * 单位 SU                     -> editable, but at the ENTITY header (Tier 2),\n                                       not inside the matrix.\n\nEdits are persisted by WRITING THEM INTO THE RECIPE (never by mutating the\npreview PO, which is re-parsed after the dialog closes):\n  * PO / entity-0 header fields  -> anchors / field_defaults / cleans (self-heal)\n  * entity-i>0 header fields     -> recipe.field_overrides[\"__ent_overrides__\"]\n  * colour renames               -> cleans[\"color\"] (+ field_overrides color_edits)\n  * matrix qty/price/inseam/su   -> recipe.field_overrides[\"__line_overrides__\"]\n``apply_recipe_overrides`` (in core/models.py) consumes the structured overrides.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Path"
+   ],
+   [
+    "messagebox",
+    "ttk"
+   ],
+   [
+    "PoRecipe",
+    "PurchaseOrder",
+    "SizeQty"
+   ],
+   [
+    "raise_window"
+   ],
+   [
+    "synth_anchor_for_value",
+    "_HEADER_ANCHORS",
+    "derive_clean_transform",
+    "derive_color_clean",
+    "add_clean"
+   ],
+   "COL",
+   "FONT_BODY",
+   [
+    "Segoe UI",
+    12
+   ],
+   "FONT_BODY_BIG",
+   "FONT_HEAD_BOLD",
+   [
+    "Segoe UI",
+    13,
+    "bold"
+   ],
+   "FONT_BUTTON",
+   [
+    "Segoe UI",
+    13
+   ],
+   "FONT_BUTTON_BOLD",
+   "PRIMARY_KW",
+   "#3a3d42",
+   "white",
+   "#5b5f66",
+   "flat",
+   [
+    "bg",
+    "fg",
+    "activebackground",
+    "activeforeground",
+    "relief",
+    "borderwidth",
+    "highlightthickness"
+   ],
+   [
+    "bg",
+    "fg",
+    "relief",
+    "borderwidth",
+    "highlightthickness"
+   ],
+   "gap",
+   "#e4e5e6",
+   "panel",
+   "#eef0f2",
+   "panel_border",
+   "#ffffff",
+   "ink",
+   "#23252a",
+   "ink_2",
+   "#52565c",
+   "ink_3",
+   "#868a90",
+   "accent",
+   "accent_2",
+   "accent_soft",
+   "#e7e8ea",
+   "field",
+   "#fbfbfc",
+   "divider",
+   "#d2d4d7",
+   "hair",
+   "#3C424C",
+   "#FFC0CB",
+   [
+    [
+     "season",
+     "季节 / Season",
+     "season_anchor",
+     true,
+     "po"
+    ],
+    [
+     "currency",
+     "币种 / Currency",
+     "currency_anchor",
+     false,
+     "po"
+    ],
+    [
+     "price_term",
+     "价格条款 / Price Term",
+     "price_term_anchor",
+     false,
+     "po"
+    ],
+    [
+     "payment_terms",
+     "付款条款 / Payment Terms",
+     "payment_terms_anchor",
+     false,
+     "po"
+    ],
+    [
+     "ship_mode",
+     "运输方式 / Ship Mode",
+     "ship_mode_anchor",
+     false,
+     "po"
+    ],
+    [
+     "country_of_origin",
+     "原产国 / Country of Origin",
+     "country_of_origin_anchor",
+     false,
+     "po"
+    ],
+    [
+     "su",
+     "单位 / SU",
+     "",
+     false,
+     "po"
+    ],
+    [
+     "delivery_date",
+     "交期 / Delivery Date",
+     "delivery_anchor",
+     false,
+     "po"
+    ]
+   ],
+   [
+    [
+     "po_no",
+     "单号 / PO#",
+     "po_no_anchor",
+     false,
+     "entity"
+    ],
+    [
+     "style_no",
+     "款号 / Style No.",
+     "",
+     false,
+     "entity"
+    ],
+    [
+     "port_loading",
+     "装货港 / Port Loading",
+     "port_loading_anchor",
+     false,
+     "entity"
+    ],
+    [
+     "port_discharge",
+     "目的港 / Port Discharge",
+     "port_discharge_anchor",
+     false,
+     "entity"
+    ],
+    [
+     "destination_code",
+     "目的地代码 / Destination Code",
+     "",
+     false,
+     "entity"
+    ]
+   ],
+   "RecipeConfirmDialog"
+  ],
+  "n_instructions": 284
+ },
+ "<module>._fmt_price": {
+  "names": [
+   "float",
+   "TypeError",
+   "ValueError",
+   "str",
+   "int"
+  ],
+  "varnames": [
+   "v",
+   "f"
+  ],
+  "consts": [
+   null,
+   "",
+   ".2f"
+  ],
+  "n_instructions": 49
+ },
+ "<module>._to_int": {
+  "names": [
+   "max",
+   "int",
+   "float",
+   "str",
+   "replace",
+   "TypeError",
+   "ValueError"
+  ],
+  "varnames": [
+   "s"
+  ],
+  "consts": [
+   null,
+   0,
+   ",",
+   ""
+  ],
+  "n_instructions": 36
+ },
+ "<module>.RecipeConfirmDialog": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "_PROBLEM_LABELS",
+   "__init__",
+   "_set_icon",
+   "_center",
+   "staticmethod",
+   "_color_combined",
+   "_collect_entity_fields",
+   "_compute_highlight_keys",
+   "_build_pdf_link",
+   "_open_pdf",
+   "_build",
+   "_make_scrollable_frame",
+   "_build_po_card",
+   "_on_global_wheel",
+   "_field_unit_grid",
+   "_build_entity_card",
+   "_build_matrix",
+   "_check_pink_filled",
+   "_ok",
+   "_apply_customer_edit",
+   "_apply_header_edit_entity0",
+   "_apply_matrix_edits",
+   "_retry",
+   "_cancel",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "RecipeConfirmDialog",
+   "客户 (Customer) 缺失",
+   "单号 (PO No.) 缺失",
+   "款号 (Style No.) 缺失",
+   "Color Code 缺失",
+   "Color Desc 缺失",
+   "Size 缺失",
+   "Qty 缺失",
+   "Unit Price 缺失",
+   "Ship Date 缺失",
+   "SKU 数量与 PDF 打印值不符（配方合成基础条件）",
+   [
+    "missing_customer",
+    "missing_po_no",
+    "missing_style_no",
+    "missing_color_code",
+    "missing_color_desc",
+    "missing_size",
+    "missing_qty",
+    "missing_unit_price",
+    "missing_ship_date",
+    "qty_deviation"
+   ],
+   null,
+   "recipe",
+   "PoRecipe",
+   "po",
+   "PurchaseOrder",
+   "path",
+   "str",
+   "",
+   "return",
+   "list[str]",
+   [
+    null
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "po",
+    "PurchaseOrder"
+   ],
+   [
+    "path",
+    "str"
+   ],
+   [
+    ""
+   ],
+   [
+    "return",
+    "list[str]"
+   ]
+  ],
+  "n_instructions": 103
+ },
+ "<module>.RecipeConfirmDialog.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "title",
+   "result",
+   "_recipe",
+   "_po",
+   "_doc_lines",
+   "_vars",
+   "_orig",
+   "_warn",
+   "set",
+   "_highlight_keys",
+   "_matrix_vars",
+   "_matrix_orig",
+   "_matrix_col_counts",
+   "tk",
+   "BooleanVar",
+   "_only_var",
+   "list",
+   "_problems",
+   "transient",
+   "grab_set",
+   "bind",
+   "_set_icon",
+   "withdraw",
+   "_build",
+   "_center",
+   "deiconify",
+   "protocol",
+   "_cancel",
+   "wait_window"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "recipe",
+   "po",
+   "doc_lines",
+   "problems"
+  ],
+  "consts": [
+   null,
+   "确认提取结果",
+   false,
+   [
+    "value"
+   ],
+   "<Map>",
+   "+",
+   [
+    "add"
+   ],
+   "<FocusIn>",
+   "WM_DELETE_WINDOW"
+  ],
+  "n_instructions": 149
+ },
+ "<module>.RecipeConfirmDialog.__init__.<lambda>": {
+  "names": [
+   "raise_window"
+  ],
+  "varnames": [
+   "_e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.RecipeConfirmDialog._set_icon": {
+  "names": [
+   "Path",
+   "getattr",
+   "sys",
+   "__file__",
+   "parent",
+   "iconbitmap",
+   "str",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "base"
+  ],
+  "consts": [
+   null,
+   "_MEIPASS",
+   "app.ico"
+  ],
+  "n_instructions": 42
+ },
+ "<module>.RecipeConfirmDialog._center": {
+  "names": [
+   "update_idletasks",
+   "_matrix_col_counts",
+   "sum",
+   "max",
+   "winfo_screenwidth",
+   "winfo_screenheight",
+   "min",
+   "getattr",
+   "winfo_exists",
+   "winfo_reqheight",
+   "int",
+   "winfo_rootx",
+   "winfo_width",
+   "winfo_rooty",
+   "winfo_height",
+   "geometry",
+   "minsize",
+   "resizable"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "margins",
+   "base_w",
+   "max_content",
+   "n",
+   "widths",
+   "content_w",
+   "screen_w",
+   "screen_h",
+   "w",
+   "body",
+   "natural_h",
+   "h",
+   "x",
+   "y"
+  ],
+  "consts": [
+   "Center the dialog on the parent window; fix height at content natural height × 1.3.",
+   [
+    9,
+    4,
+    160
+   ],
+   820,
+   0,
+   11,
+   15,
+   7,
+   5,
+   [
+    8,
+    7,
+    10
+   ],
+   100,
+   "_body",
+   null,
+   1.3,
+   700,
+   40,
+   2,
+   "x",
+   "+",
+   640,
+   600,
+   true
+  ],
+  "n_instructions": 229
+ },
+ "<module>.RecipeConfirmDialog._center.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "w"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.RecipeConfirmDialog._color_combined": {
+  "names": [
+   "join",
+   "filter"
+  ],
+  "varnames": [
+   "code",
+   "desc"
+  ],
+  "consts": [
+   null,
+   " / ",
+   ""
+  ],
+  "n_instructions": 17
+ },
+ "<module>.RecipeConfirmDialog._collect_entity_fields": {
+  "names": [
+   "po_no",
+   "season",
+   "currency",
+   "price_term",
+   "payment_terms",
+   "delivery_date",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "country_of_origin",
+   "destination_code",
+   "lines",
+   "su",
+   "style_no"
+  ],
+  "varnames": [
+   "self",
+   "ent",
+   "i"
+  ],
+  "consts": [
+   "Values for the entity header grid (Tier 2). price_term is read from\n        ent.price_term ONLY — never from payment_terms (old bug fixed).\n\n        V2.0.19.23 patch: SU defaults to \"PCS\" when the parser left it empty,\n        so the operator always sees a sensible unit and the persisted default\n        prevents the field from coming back blank on the next run.\n        ",
+   "",
+   0,
+   "PCS",
+   [
+    "po_no",
+    "season",
+    "currency",
+    "price_term",
+    "payment_terms",
+    "delivery_date",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "country_of_origin",
+    "destination_code",
+    "su",
+    "style_no"
+   ]
+  ],
+  "n_instructions": 90
+ },
+ "<module>.RecipeConfirmDialog._compute_highlight_keys": {
+  "names": [
+   "set",
+   "getattr",
+   "strip",
+   "add",
+   "entities",
+   "_collect_entity_fields",
+   "get",
+   "enumerate",
+   "_problems",
+   "range",
+   "len"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "po",
+   "keys",
+   "vals0",
+   "i",
+   "ent",
+   "p"
+  ],
+  "consts": [
+   "Compute the set of widget keys whose labels should be shown in pink.\n\n        V2.0.19.23: only the business-mandatory fields are highlighted:\n        Customer, PO No., Style No., Ship Date (delivery_date).  Matrix-level\n        mandatory fields (Color Code / Color Desc / Size / Qty / Unit Price)\n        are handled directly inside _build_matrix.\n        ",
+   "customer",
+   "",
+   0,
+   "delivery_date",
+   "h.delivery_date",
+   "po_no",
+   "e",
+   ".po_no",
+   "style_no",
+   ".style_no",
+   "missing_customer",
+   "missing_po_no",
+   "missing_style_no",
+   "missing_ship_date"
+  ],
+  "n_instructions": 205
+ },
+ "<module>.RecipeConfirmDialog._build_pdf_link": {
+  "names": [
+   "getattr",
+   "strip",
+   "os",
+   "path",
+   "isabs",
+   "exists",
+   "basename",
+   "tk",
+   "Label",
+   "FONT_BODY",
+   "C_GAP",
+   "C_PINK",
+   "pack",
+   "bind"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "po",
+   "path",
+   "shown"
+  ],
+  "consts": [
+   "Source-PDF hyperlink (between instruction and PO card, V2.0.19.23 patch).\n\n        Clicking it opens the source PDF with the system default viewer\n        (os.startfile).  Uses ``po.source_file_path`` (full path) when present,\n        falling back to ``source_file`` (basename) — in which case the link is\n        only shown when the basename resolves to an existing file in the CWD.\n\n        V2.0.19.23 patch: placed below the instruction text and rendered in\n        light pink so it sits between the instruction text and the PO card.\n        ",
+   "source_file_path",
+   "",
+   "source_file",
+   null,
+   "打开源 PDF：",
+   "hand2",
+   "#ff80ab",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "cursor",
+    "activeforeground"
+   ],
+   "w",
+   [
+    4,
+    0
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>"
+  ],
+  "n_instructions": 112
+ },
+ "<module>.RecipeConfirmDialog._build_pdf_link.<lambda>": {
+  "names": [
+   "configure",
+   "FONT_BODY"
+  ],
+  "varnames": [
+   "_e"
+  ],
+  "consts": [
+   null,
+   [
+    "font"
+   ]
+  ],
+  "n_instructions": 9
+ },
+ "<module>.RecipeConfirmDialog._open_pdf": {
+  "names": [
+   "os",
+   "startfile",
+   "path",
+   "normpath",
+   "Exception",
+   "messagebox",
+   "showerror"
+  ],
+  "varnames": [
+   "path",
+   "_e"
+  ],
+  "consts": [
+   null,
+   "打开 PDF",
+   "无法打开文件：\n"
+  ],
+  "n_instructions": 63
+ },
+ "<module>.RecipeConfirmDialog._build": {
+  "names": [
+   "_compute_highlight_keys",
+   "_highlight_keys",
+   "ttk",
+   "Frame",
+   "pack",
+   "columnconfigure",
+   "rowconfigure",
+   "tk",
+   "C_GAP",
+   "grid",
+   "Label",
+   "FONT_HEAD",
+   "C_INK",
+   "_problems",
+   "join",
+   "FONT_BODY",
+   "C_PINK",
+   "C_INK2",
+   "_build_pdf_link",
+   "entities",
+   "len",
+   "_active_canvas",
+   "bind_all",
+   "_on_global_wheel",
+   "Canvas",
+   "Scrollbar",
+   "_make_scrollable_frame",
+   "_body",
+   "_build_po_card",
+   "enumerate",
+   "_build_entity_card",
+   "LabelFrame",
+   "Text",
+   "C_FIELD",
+   "insert",
+   "to_json",
+   "configure",
+   "Checkbutton",
+   "_only_var",
+   "FONT_BUTTON",
+   "C_ACCENT_SOFT",
+   "Button",
+   "_cancel",
+   "_retry",
+   "_ok",
+   "FONT_BUTTON_BOLD",
+   "PRIMARY_KW"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "po",
+   "outer",
+   "head",
+   "title_row",
+   "warning_text",
+   "labels",
+   "entities",
+   "n",
+   "canvas",
+   "vsb",
+   "body",
+   "i",
+   "ent",
+   "adv",
+   "txt",
+   "btns",
+   "chk"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "padding"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   1,
+   [
+    "weight"
+   ],
+   20,
+   14,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   "ew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   [
+    "bg"
+   ],
+   "x",
+   "w",
+   [
+    "fill",
+    "anchor"
+   ],
+   "确认提取结果",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "",
+   "【注意】以下校验未通过：",
+   "；",
+   "。",
+   " 浅粉红色标签/字段为必填项缺失，请优先核对并补全。",
+   700,
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "wraplength",
+    "justify"
+   ],
+   [
+    4,
+    0
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   "请核对订单信息是否与 PDF 一致。任一项不对，直接在框里改成正确文字（不用懂公式）。多目的地会显示多张「实体」卡；明细矩阵中仅 Color Code / Color Desc 可编辑，其余字段（尺码数量、单价、Qty、Net Amt）均只读；季节/币种/价格条款/付款条款/运输方式/原产国/单位 / SU/交期 在上方 PO 头卡中可编辑。无误点「确认并保存」。",
+   "<MouseWheel>",
+   [
+    "highlightthickness",
+    "bg"
+   ],
+   "vertical",
+   [
+    "orient"
+   ],
+   "nsew",
+   "ns",
+   "高级（配方原文，仅供核对，不可编辑）",
+   8,
+   [
+    "text",
+    "padding"
+   ],
+   2,
+   [
+    0,
+    4
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   6,
+   [
+    "Consolas",
+    10
+   ],
+   "flat",
+   "none",
+   [
+    "height",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "wrap"
+   ],
+   "1.0",
+   "disabled",
+   [
+    "state"
+   ],
+   [
+    "fill"
+   ],
+   3,
+   [
+    "row",
+    "column",
+    "columnspan",
+    "sticky"
+   ],
+   "仅此PO（不套用到同版式其它PO）",
+   [
+    "text",
+    "variable",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "activebackground",
+    "selectcolor",
+    "borderwidth",
+    "highlightthickness"
+   ],
+   [
+    0,
+    10
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "取消",
+   [
+    "text",
+    "command",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "padx",
+    "pady",
+    "activebackground"
+   ],
+   "信息不对，重新识别",
+   [
+    8,
+    0
+   ],
+   "确认并保存",
+   22,
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "right"
+  ],
+  "n_instructions": 441
+ },
+ "<module>.RecipeConfirmDialog._build.<listcomp>": {
+  "names": [
+   "_PROBLEM_LABELS",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [],
+  "n_instructions": 16
+ },
+ "<module>.RecipeConfirmDialog._make_scrollable_frame": {
+  "names": [
+   "configure",
+   "set",
+   "C_GAP",
+   "yview",
+   "tk",
+   "Frame",
+   "create_window",
+   "bind"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "canvas",
+   "vsb",
+   "body",
+   "_on_cfg"
+  ],
+  "consts": [
+   "Wire a Canvas + Scrollbar and return the inner body Frame.",
+   0,
+   [
+    "yscrollcommand",
+    "highlightthickness",
+    "bg"
+   ],
+   [
+    "command"
+   ],
+   20,
+   16,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "<Configure>"
+  ],
+  "n_instructions": 65
+ },
+ "<module>.RecipeConfirmDialog._make_scrollable_frame._on_cfg": {
+  "names": [
+   "itemconfig",
+   "width"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   [
+    "width"
+   ]
+  ],
+  "n_instructions": 13
+ },
+ "<module>.RecipeConfirmDialog._make_scrollable_frame.<lambda>": {
+  "names": [
+   "configure",
+   "bbox"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "all",
+   [
+    "scrollregion"
+   ]
+  ],
+  "n_instructions": 13
+ },
+ "<module>.RecipeConfirmDialog._build_po_card": {
+  "names": [
+   "tk",
+   "Frame",
+   "C_PANEL",
+   "C_PANEL_BORDER",
+   "pack",
+   "Label",
+   "FONT_HEAD",
+   "C_INK",
+   "columnconfigure",
+   "_field_unit_grid",
+   "customer",
+   "_collect_entity_fields",
+   "entities",
+   "enumerate",
+   "_PO_HEADER_FIELDS",
+   "get"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "recipe",
+   "po",
+   "po_card",
+   "pg",
+   "vals0",
+   "idx",
+   "key",
+   "label",
+   "anchor_attr",
+   "_ml",
+   "_scope",
+   "r",
+   "c"
+  ],
+  "consts": [
+   null,
+   1,
+   0,
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness",
+    "bd"
+   ],
+   "x",
+   20,
+   [
+    0,
+    14
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "订单 (PO)",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "w",
+   16,
+   [
+    12,
+    6
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   [
+    "bg",
+    "padx"
+   ],
+   [
+    0,
+    12
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "pocol",
+   200,
+   [
+    "weight",
+    "uniform",
+    "minsize"
+   ],
+   "customer",
+   "客户 / Customer",
+   "",
+   [
+    "init"
+   ],
+   2,
+   "h."
+  ],
+  "n_instructions": 155
+ },
+ "<module>.RecipeConfirmDialog._on_global_wheel": {
+  "names": [
+   "getattr",
+   "winfo_exists",
+   "yview_scroll",
+   "int",
+   "delta"
+  ],
+  "varnames": [
+   "self",
+   "event",
+   "canvas"
+  ],
+  "consts": [
+   "Scroll whichever canvas is currently active (single-page or current notebook page).",
+   "_active_canvas",
+   null,
+   120,
+   "units"
+  ],
+  "n_instructions": 33
+ },
+ "<module>.RecipeConfirmDialog._field_unit_grid": {
+  "names": [
+   "str",
+   "_orig",
+   "tk",
+   "StringVar",
+   "_vars",
+   "Frame",
+   "grid",
+   "_highlight_keys",
+   "C_PINK",
+   "C_INK2",
+   "Label",
+   "FONT_BODY",
+   "pack",
+   "Entry",
+   "C_FIELD",
+   "C_INK",
+   "C_ACCENT_SOFT"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "row",
+   "col",
+   "key",
+   "label",
+   "init",
+   "cur",
+   "v",
+   "unit",
+   "label_fg"
+  ],
+  "consts": [
+   null,
+   [
+    "value"
+   ],
+   "bg",
+   [
+    "bg"
+   ],
+   "nsew",
+   0,
+   [
+    0,
+    10
+   ],
+   [
+    10,
+    0
+   ],
+   5,
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   "w",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg",
+    "anchor"
+   ],
+   "x",
+   [
+    "fill"
+   ],
+   "flat",
+   1,
+   [
+    "textvariable",
+    "font",
+    "bg",
+    "fg",
+    "relief",
+    "highlightbackground",
+    "highlightthickness",
+    "bd"
+   ]
+  ],
+  "n_instructions": 100
+ },
+ "<module>.RecipeConfirmDialog._build_entity_card": {
+  "names": [
+   "po_no",
+   "tk",
+   "Frame",
+   "C_GAP",
+   "C_DIVIDER",
+   "pack",
+   "Label",
+   "FONT_HEAD",
+   "C_INK",
+   "columnconfigure",
+   "_collect_entity_fields",
+   "enumerate",
+   "_ENTITY_FIELDS",
+   "_field_unit_grid",
+   "get",
+   "_build_matrix"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "ent",
+   "i",
+   "n",
+   "title",
+   "card",
+   "grid",
+   "vals",
+   "idx",
+   "key",
+   "label",
+   "anchor_attr",
+   "_ml",
+   "_scope",
+   "r",
+   "c"
+  ],
+  "consts": [
+   null,
+   "实体 ",
+   1,
+   "/",
+   " · PO ",
+   "",
+   0,
+   [
+    "bg",
+    "highlightthickness",
+    "bd"
+   ],
+   [
+    "height",
+    "bg",
+    "highlightthickness",
+    "bd"
+   ],
+   "x",
+   8,
+   [
+    0,
+    10
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "w",
+   [
+    8,
+    4
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   [
+    0,
+    22
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "bg",
+   16,
+   [
+    "bg",
+    "padx"
+   ],
+   [
+    0,
+    12
+   ],
+   "ecol",
+   150,
+   [
+    "weight",
+    "uniform",
+    "minsize"
+   ],
+   2,
+   "e",
+   ".",
+   [
+    "init"
+   ]
+  ],
+  "n_instructions": 184
+ },
+ "<module>.RecipeConfirmDialog._build_matrix": {
+  "names": [
+   "tk",
+   "Frame",
+   "C_GAP",
+   "pack",
+   "Label",
+   "FONT_HEAD",
+   "C_INK",
+   "lines",
+   "FONT_BODY",
+   "C_INK3",
+   "sizes",
+   "size",
+   "append",
+   "_color_combined",
+   "color_code",
+   "color_desc",
+   "inseam",
+   "strip",
+   "setdefault",
+   "unit_price",
+   "get",
+   "qty_safe",
+   "bool",
+   "getattr",
+   "_recipe",
+   "any",
+   "extend",
+   "_matrix_col_counts",
+   "len",
+   "FONT_BODY_BIG",
+   "enumerate",
+   "Entry",
+   "StringVar",
+   "C_PANEL",
+   "grid",
+   "config",
+   "_matrix_vars",
+   "items",
+   "_fmt_price",
+   "sum",
+   "set",
+   "str",
+   "float",
+   "TypeError",
+   "ValueError",
+   "C_FIELD",
+   "dict",
+   "C_PINK",
+   "startswith",
+   "split",
+   "_matrix_orig"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "ent",
+   "eidx",
+   "sec",
+   "sizes",
+   "ln",
+   "s",
+   "groups",
+   "combined",
+   "inseam",
+   "row_key",
+   "recipe_has_inseam",
+   "any_inseam",
+   "show_inseam",
+   "cols",
+   "tbl",
+   "header_font",
+   "j",
+   "_key",
+   "label",
+   "width",
+   "_editable",
+   "e",
+   "row_idx",
+   "cc_var",
+   "cd_var",
+   "price_var",
+   "inseam_var",
+   "q_vars",
+   "total_var",
+   "net_var",
+   "tot",
+   "p",
+   "readonly_kw",
+   "editable_kw",
+   "cc_empty",
+   "cd_empty",
+   "price_empty",
+   "qty_empty",
+   "key",
+   "_label",
+   "var",
+   "kw",
+   "size",
+   "qv"
+  ],
+  "consts": [
+   "Build the per-entity line matrix using a borderless design.",
+   [
+    "bg"
+   ],
+   "x",
+   [
+    0,
+    14
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   "明细矩阵（仅 Color Code、Color Desc 可编辑）",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "w",
+   8,
+   [
+    8,
+    4
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "（无明细行）",
+   [
+    "anchor",
+    "padx"
+   ],
+   null,
+   "(未命名)",
+   "",
+   "␟",
+   [
+    "code",
+    "desc",
+    "combined",
+    "inseam",
+    "price",
+    "qty"
+   ],
+   "qty",
+   0,
+   "has_inseam",
+   false,
+   [
+    "cc",
+    "Color Code",
+    11,
+    true
+   ],
+   [
+    "cd",
+    "Color Desc",
+    15,
+    true
+   ],
+   [
+    "inseam",
+    "Inseam",
+    7,
+    false
+   ],
+   "sz:",
+   7,
+   [
+    [
+     "price",
+     "单价",
+     8,
+     false
+    ],
+    [
+     "qty",
+     "Qty",
+     7,
+     false
+    ],
+    [
+     "net",
+     "Net Amt",
+     10,
+     false
+    ]
+   ],
+   [
+    0,
+    8
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   [
+    "bold"
+   ],
+   [
+    "value"
+   ],
+   "flat",
+   "readonly",
+   "center",
+   [
+    "textvariable",
+    "width",
+    "font",
+    "relief",
+    "bd",
+    "highlightthickness",
+    "state",
+    "readonlybackground",
+    "fg",
+    "justify"
+   ],
+   "nsew",
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   [
+    "state"
+   ],
+   1,
+   [
+    "start"
+   ],
+   "code",
+   "desc",
+   "price",
+   "inseam",
+   0.0,
+   [
+    "font",
+    "relief",
+    "bd",
+    "highlightthickness",
+    "state",
+    "readonlybackground",
+    "fg",
+    "justify"
+   ],
+   [
+    "font",
+    "relief",
+    "bd",
+    "highlightthickness",
+    "bg",
+    "fg",
+    "justify"
+   ],
+   "cc",
+   "fg",
+   "cd",
+   ":",
+   "net",
+   [
+    "textvariable",
+    "width"
+   ],
+   [
+    "cc",
+    "cd",
+    "price",
+    "inseam",
+    "q",
+    "total",
+    "net"
+   ],
+   "combined",
+   [
+    "code",
+    "desc",
+    "combined",
+    "price",
+    "inseam",
+    "qty"
+   ]
+  ],
+  "n_instructions": 742
+ },
+ "<module>.RecipeConfirmDialog._build_matrix.<genexpr>": {
+  "names": [
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   "qty",
+   0,
+   null
+  ],
+  "n_instructions": 21
+ },
+ "<module>.RecipeConfirmDialog._check_pink_filled": {
+  "names": [
+   "_highlight_keys",
+   "_vars",
+   "get",
+   "strip",
+   "append",
+   "_PO_HEADER_FIELDS",
+   "_ENTITY_FIELDS",
+   "enumerate",
+   "_po",
+   "entities",
+   "_matrix_vars",
+   "items",
+   "tk",
+   "StringVar"
+  ],
+  "varnames": [
+   "self",
+   "missing",
+   "v",
+   "po_lbl",
+   "key",
+   "vk",
+   "ent_lbl",
+   "i",
+   "_",
+   "eidx",
+   "rows",
+   "row_key",
+   "mv",
+   "cc",
+   "cd"
+  ],
+  "consts": [
+   "Return human-readable labels of any pink/mandatory fields that are still empty.\n\n        V2.0.19.23 patch 6: block the \"确认并保存\" button until the operator has\n        filled every pink-highlighted mandatory field.  Applies to PO-level fields,\n        entity header fields, and matrix Color Code / Color Desc.\n        ",
+   "customer",
+   null,
+   "客户 (Customer)",
+   "h.",
+   "e",
+   ".",
+   "实体 ",
+   1,
+   " ",
+   "cc",
+   "cd",
+   " Color Code",
+   " Color Desc"
+  ],
+  "n_instructions": 237
+ },
+ "<module>.RecipeConfirmDialog._check_pink_filled.<dictcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "key",
+   "label",
+   "_"
+  ],
+  "consts": [],
+  "n_instructions": 13
+ },
+ "<module>.RecipeConfirmDialog._ok": {
+  "names": [
+   "_check_pink_filled",
+   "messagebox",
+   "showwarning",
+   "join",
+   "PoRecipe",
+   "from_json",
+   "_recipe",
+   "to_json",
+   "field_overrides",
+   "dict",
+   "getattr",
+   "field_defaults",
+   "bool",
+   "_only_var",
+   "get",
+   "_po",
+   "entities",
+   "_apply_customer_edit",
+   "_collect_entity_fields",
+   "_PO_HEADER_FIELDS",
+   "_vars",
+   "strip",
+   "pop",
+   "enumerate",
+   "_apply_header_edit_entity0",
+   "_ENTITY_FIELDS",
+   "setdefault",
+   "str",
+   "_apply_matrix_edits",
+   "_HEADER_ANCHORS",
+   "re",
+   "compile",
+   "error",
+   "append",
+   "cleans",
+   "items",
+   "isinstance",
+   "list",
+   "showerror",
+   "customer",
+   "_warn",
+   "result",
+   "destroy"
+  ],
+  "varnames": [
+   "self",
+   "unfilled",
+   "d",
+   "only",
+   "po",
+   "entities",
+   "ent0_vals",
+   "su_overrides",
+   "key",
+   "_label",
+   "anchor_attr",
+   "_ml",
+   "_scope",
+   "vk",
+   "new_var",
+   "new_val",
+   "old_val",
+   "i",
+   "_",
+   "ent_overrides",
+   "ent",
+   "vals",
+   "bad",
+   "attr",
+   "pat",
+   "e",
+   "f_name",
+   "rules",
+   "spec"
+  ],
+  "consts": [
+   "Persist confirm-dialog edits into the recipe.\n\n        V2.0.19.23 patch: style_no and su are now written to\n        ``recipe.field_defaults`` when \"仅此PO\" is NOT checked, so the same\n        layout does not keep popping up with empty style_no / SU on later runs.\n        ",
+   "必填项缺失",
+   "以下粉红色必填项尚未填充完整，请先补全后再保存：\n\n",
+   "\n",
+   [
+    "parent"
+   ],
+   null,
+   "field_defaults",
+   0,
+   "h.",
+   "",
+   "su",
+   "PCS",
+   "e",
+   ".",
+   "style_no",
+   "__ent_overrides__",
+   ": ",
+   "pat",
+   "cleans[",
+   "]: ",
+   "配方无效",
+   "以下锚点/清洗正则无法编译：\n",
+   "customer",
+   "部分字段未自动修正"
+  ],
+  "n_instructions": 534
+ },
+ "<module>.RecipeConfirmDialog._ok.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "x"
+  ],
+  "consts": [
+   "  · ",
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>.RecipeConfirmDialog._apply_customer_edit": {
+  "names": [
+   "_vars",
+   "get",
+   "strip",
+   "_orig",
+   "field_overrides",
+   "field_defaults",
+   "pop"
+  ],
+  "varnames": [
+   "self",
+   "d",
+   "only",
+   "new_var",
+   "new_val",
+   "old_val"
+  ],
+  "consts": [
+   null,
+   "customer",
+   ""
+  ],
+  "n_instructions": 58
+ },
+ "<module>.RecipeConfirmDialog._apply_header_edit_entity0": {
+  "names": [
+   "setattr",
+   "field_overrides",
+   "synth_anchor_for_value",
+   "_doc_lines",
+   "re",
+   "search",
+   "groups",
+   "group",
+   "strip",
+   "derive_clean_transform",
+   "add_clean",
+   "field_defaults",
+   "pop"
+  ],
+  "varnames": [
+   "self",
+   "d",
+   "key",
+   "anchor_attr",
+   "new_val",
+   "old_val",
+   "only",
+   "new_anchor",
+   "anchor_ok",
+   "ln",
+   "m",
+   "captured",
+   "spec"
+  ],
+  "consts": [
+   "Entity-0 header edit -> anchor / default / clean (cross-PO self-heal).\n\n        Copied verbatim from the pre-2.0.19.16 single-entity behaviour; only the\n        variable plumbing changed.",
+   "",
+   null,
+   false,
+   1,
+   0
+  ],
+  "n_instructions": 153
+ },
+ "<module>.RecipeConfirmDialog._apply_matrix_edits": {
+  "names": [
+   "_matrix_orig",
+   "items",
+   "_matrix_vars",
+   "get",
+   "strip",
+   "_color_combined",
+   "derive_color_clean",
+   "add_clean",
+   "_warn",
+   "append",
+   "_fmt_price",
+   "str",
+   "_to_int",
+   "setdefault",
+   "field_overrides",
+   "json",
+   "dumps"
+  ],
+  "varnames": [
+   "self",
+   "d",
+   "only",
+   "su_overrides",
+   "color_edits",
+   "_ensure_ov",
+   "eidx",
+   "row_key",
+   "info",
+   "mv",
+   "combined",
+   "orig_code",
+   "new_cc",
+   "new_cd",
+   "new_combined",
+   "spec",
+   "new_price",
+   "orig_price_str",
+   "new_inseam",
+   "size",
+   "qv",
+   "new_q",
+   "orig_q"
+  ],
+  "consts": [
+   null,
+   "combined",
+   "code",
+   "cc",
+   "cd",
+   "color",
+   "颜色：无法从「",
+   "」→「",
+   "」推导清洗规则，本份按您输入的值导出，但后续同版式不会自动套用。",
+   "price",
+   "",
+   "unit_price",
+   "inseam",
+   "su",
+   "q",
+   "qty",
+   0,
+   "sizes",
+   "__line_overrides__",
+   false,
+   [
+    "ensure_ascii"
+   ],
+   "color_edits"
+  ],
+  "n_instructions": 275
+ },
+ "<module>.RecipeConfirmDialog._apply_matrix_edits._ensure_ov": {
+  "names": [
+   "get"
+  ],
+  "varnames": [
+   "row_key",
+   "ov"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.RecipeConfirmDialog._retry": {
+  "names": [
+   "result",
+   "destroy"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "RETRY"
+  ],
+  "n_instructions": 11
+ },
+ "<module>.RecipeConfirmDialog._cancel": {
+  "names": [
+   "result",
+   "destroy"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 11
+ }
+}

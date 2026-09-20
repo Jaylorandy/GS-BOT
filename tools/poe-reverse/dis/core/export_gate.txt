@@ -1,0 +1,425 @@
+# module: core.export_gate
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\export_gate.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/export_gate.py - the export-time secondary quantity interception.\n\nThe synthesis gate (``recipe_synth.verify_recipe``) already proves a recipe\nreproduces the AI-read totals before it enters the cache. This module is the\nSECOND interception, run at export time over the current batch only\n(``self.results``), so a later edit, a value-clean transform, or a stale cache\ncan never ship a silently wrong quantity.\n\nWhat it checks (all quantity-focused, customer-agnostic):\n\n  * HARD (blocks export unless the operator explicitly releases):\n      - colour/size breakdown mismatches vs the PDF's printed subtotals\n        (``validate_breakdown`` - gated by the AI-set recipe flags);\n      - a parsed total of 0 (nothing usable to export);\n      - any negative quantity (clearly wrong).\n  * SOFT (advisory, never blocks):\n      - the structural/price-coverage warnings from ``validate.reconcile``.\n\nA single batch may contain several POs; the gate aggregates every hard problem\nand presents them in one modal so the operator decides once.\n")
+              4 STORE_NAME               0 (__doc__)
+
+ 22           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 24          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('dataclass', 'field'))
+             22 IMPORT_NAME              3 (dataclasses)
+             24 IMPORT_FROM              4 (dataclass)
+             26 STORE_NAME               4 (dataclass)
+             28 IMPORT_FROM              5 (field)
+             30 STORE_NAME               5 (field)
+             32 POP_TOP
+
+ 25          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               4 (('List',))
+             38 IMPORT_NAME              6 (typing)
+             40 IMPORT_FROM              7 (List)
+             42 STORE_NAME               7 (List)
+             44 POP_TOP
+
+ 27          46 LOAD_CONST               5 (1)
+             48 LOAD_CONST               6 (('PoRecipe', 'PurchaseOrder'))
+             50 IMPORT_NAME              8 (models)
+             52 IMPORT_FROM              9 (PoRecipe)
+             54 STORE_NAME               9 (PoRecipe)
+             56 IMPORT_FROM             10 (PurchaseOrder)
+             58 STORE_NAME              10 (PurchaseOrder)
+             60 POP_TOP
+
+ 28          62 LOAD_CONST               5 (1)
+             64 LOAD_CONST               7 (('BreakdownProblem', 'reconcile', 'validate_breakdown', 'validate_totals'))
+             66 IMPORT_NAME             11 (validate)
+             68 IMPORT_FROM             12 (BreakdownProblem)
+             70 STORE_NAME              12 (BreakdownProblem)
+             72 IMPORT_FROM             13 (reconcile)
+             74 STORE_NAME              13 (reconcile)
+             76 IMPORT_FROM             14 (validate_breakdown)
+             78 STORE_NAME              14 (validate_breakdown)
+             80 IMPORT_FROM             15 (validate_totals)
+             82 STORE_NAME              15 (validate_totals)
+             84 POP_TOP
+
+ 31          86 LOAD_NAME                4 (dataclass)
+
+ 32          88 PUSH_NULL
+             90 LOAD_BUILD_CLASS
+             92 LOAD_CONST               8 (<code object ExportGateReport at 0x000002BF946C5A10, file "core\export_gate.py", line 31>)
+             94 MAKE_FUNCTION            0
+             96 LOAD_CONST               9 ('ExportGateReport')
+             98 PRECALL                  2
+            102 CALL                     2
+
+ 31         112 PRECALL                  0
+            116 CALL                     0
+
+ 32         126 STORE_NAME              16 (ExportGateReport)
+
+ 46         128 NOP
+
+ 45         130 LOAD_CONST              22 (('',))
+            132 LOAD_CONST              23 (('po', 'PurchaseOrder', 'recipe', 'PoRecipe', 'source', 'str', 'return', 'ExportGateReport'))
+            134 LOAD_CONST              18 (<code object reconcile_quantities at 0x000002BF9444C830, file "core\export_gate.py", line 45>)
+            136 MAKE_FUNCTION            5 (defaults, annotations)
+            138 STORE_NAME              17 (reconcile_quantities)
+
+ 76         140 LOAD_CONST              24 (('return', 'tuple'))
+            142 LOAD_CONST              20 (<code object scan_batch at 0x000002BF9444CB30, file "core\export_gate.py", line 76>)
+            144 MAKE_FUNCTION            4 (annotations)
+            146 STORE_NAME              18 (scan_batch)
+            148 LOAD_CONST              21 (None)
+            150 RETURN_VALUE
+
+==============================================================================
+## <module>.ExportGateReport  (args=0, locals=0)
+ 31           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('ExportGateReport')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 33          12 LOAD_CONST               1 ('Result of the export-time quantity check for ONE purchase order.')
+             14 STORE_NAME               3 (__doc__)
+
+ 34          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (customer)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('customer')
+             26 STORE_SUBSCR
+
+ 35          30 LOAD_CONST               2 ('')
+             32 STORE_NAME               6 (source)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               5 ('source')
+             40 STORE_SUBSCR
+
+ 36          44 PUSH_NULL
+             46 LOAD_NAME                7 (field)
+             48 LOAD_NAME                8 (list)
+             50 KW_NAMES                 6
+             52 PRECALL                  1
+             56 CALL                     1
+             66 STORE_NAME               9 (blocks)
+             68 LOAD_CONST               7 ('List[str]')
+             70 LOAD_NAME                5 (__annotations__)
+             72 LOAD_CONST               8 ('blocks')
+             74 STORE_SUBSCR
+
+ 37          78 PUSH_NULL
+             80 LOAD_NAME                7 (field)
+             82 LOAD_NAME                8 (list)
+             84 KW_NAMES                 6
+             86 PRECALL                  1
+             90 CALL                     1
+            100 STORE_NAME              10 (warnings)
+            102 LOAD_CONST               7 ('List[str]')
+            104 LOAD_NAME                5 (__annotations__)
+            106 LOAD_CONST               9 ('warnings')
+            108 STORE_SUBSCR
+
+ 38         112 PUSH_NULL
+            114 LOAD_NAME                7 (field)
+            116 LOAD_NAME                8 (list)
+            118 KW_NAMES                 6
+            120 PRECALL                  1
+            124 CALL                     1
+            134 STORE_NAME              11 (breakdown)
+            136 LOAD_CONST              10 ('List[BreakdownProblem]')
+            138 LOAD_NAME                5 (__annotations__)
+            140 LOAD_CONST              11 ('breakdown')
+            142 STORE_SUBSCR
+
+ 40         146 LOAD_NAME               12 (property)
+
+ 41         148 LOAD_CONST              16 (('return', 'bool'))
+            150 LOAD_CONST              14 (<code object ok at 0x000002BF94AB0100, file "core\export_gate.py", line 40>)
+            152 MAKE_FUNCTION            4 (annotations)
+
+ 40         154 PRECALL                  0
+            158 CALL                     0
+
+ 41         168 STORE_NAME              13 (ok)
+            170 LOAD_CONST              15 (None)
+            172 RETURN_VALUE
+
+==============================================================================
+## <module>.ExportGateReport.ok  (args=1, locals=1)
+# varnames: self
+ 40           0 RESUME                   0
+
+ 42           2 LOAD_FAST                0 (self)
+              4 LOAD_ATTR                0 (blocks)
+             14 UNARY_NOT
+             16 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile_quantities  (args=3, locals=7)
+# varnames: po, recipe, source, rep, bp, msg, neg
+ 45           0 RESUME                   0
+
+ 51           2 LOAD_GLOBAL              1 (NULL + ExportGateReport)
+             14 LOAD_FAST                0 (po)
+             16 LOAD_ATTR                1 (customer)
+             26 LOAD_FAST                2 (source)
+             28 KW_NAMES                 1
+             30 PRECALL                  2
+             34 CALL                     2
+             44 STORE_FAST               3 (rep)
+
+ 54          46 LOAD_GLOBAL              5 (NULL + validate_breakdown)
+             58 LOAD_FAST                0 (po)
+             60 LOAD_FAST                1 (recipe)
+             62 PRECALL                  2
+             66 CALL                     2
+             76 GET_ITER
+        >>   78 FOR_ITER                59 (to 198)
+             80 STORE_FAST               4 (bp)
+
+ 55          82 LOAD_FAST                3 (rep)
+             84 LOAD_ATTR                3 (blocks)
+             94 LOAD_METHOD              4 (append)
+            116 LOAD_FAST                4 (bp)
+            118 LOAD_ATTR                5 (message)
+            128 PRECALL                  1
+            132 CALL                     1
+            142 POP_TOP
+
+ 56         144 LOAD_FAST                3 (rep)
+            146 LOAD_ATTR                6 (breakdown)
+            156 LOAD_METHOD              4 (append)
+            178 LOAD_FAST                4 (bp)
+            180 PRECALL                  1
+            184 CALL                     1
+            194 POP_TOP
+            196 JUMP_BACKWARD           60 (to 78)
+
+ 59     >>  198 LOAD_GLOBAL             15 (NULL + validate_totals)
+            210 LOAD_FAST                0 (po)
+            212 PRECALL                  1
+            216 CALL                     1
+            226 GET_ITER
+        >>  228 FOR_ITER                28 (to 286)
+            230 STORE_FAST               5 (msg)
+
+ 60         232 LOAD_FAST                3 (rep)
+            234 LOAD_ATTR                3 (blocks)
+            244 LOAD_METHOD              4 (append)
+            266 LOAD_FAST                5 (msg)
+            268 PRECALL                  1
+            272 CALL                     1
+            282 POP_TOP
+            284 JUMP_BACKWARD           29 (to 228)
+
+ 63     >>  286 LOAD_FAST                0 (po)
+            288 LOAD_ATTR                8 (total_qty)
+            298 LOAD_CONST               2 (0)
+            300 COMPARE_OP               1 (<=)
+            306 POP_JUMP_FORWARD_IF_FALSE    26 (to 360)
+
+ 64         308 LOAD_FAST                3 (rep)
+            310 LOAD_ATTR                3 (blocks)
+            320 LOAD_METHOD              4 (append)
+            342 LOAD_CONST               3 ('解析总数量为 0，无有效数量可导出')
+            344 PRECALL                  1
+            348 CALL                     1
+            358 POP_TOP
+
+ 65     >>  360 LOAD_GLOBAL             19 (NULL + sum)
+            372 LOAD_CONST               4 (<code object <genexpr> at 0x000002BF94A65680, file "core\export_gate.py", line 65>)
+            374 MAKE_FUNCTION            0
+            376 LOAD_FAST                0 (po)
+            378 LOAD_ATTR               10 (entities)
+            388 GET_ITER
+            390 PRECALL                  0
+            394 CALL                     0
+            404 PRECALL                  1
+            408 CALL                     1
+            418 STORE_FAST               6 (neg)
+
+ 67         420 LOAD_FAST                6 (neg)
+            422 POP_JUMP_FORWARD_IF_FALSE    30 (to 484)
+
+ 68         424 LOAD_FAST                3 (rep)
+            426 LOAD_ATTR                3 (blocks)
+            436 LOAD_METHOD              4 (append)
+            458 LOAD_CONST               5 ('存在 ')
+            460 LOAD_FAST                6 (neg)
+            462 FORMAT_VALUE             0
+            464 LOAD_CONST               6 (' 个负数量，疑似解析异常')
+            466 BUILD_STRING             3
+            468 PRECALL                  1
+            472 CALL                     1
+            482 POP_TOP
+
+ 71     >>  484 LOAD_FAST                3 (rep)
+            486 LOAD_ATTR               11 (warnings)
+            496 LOAD_METHOD             12 (extend)
+            518 LOAD_GLOBAL             27 (NULL + reconcile)
+            530 LOAD_FAST                0 (po)
+            532 LOAD_FAST                1 (recipe)
+            534 LOAD_CONST               7 ('')
+            536 PRECALL                  3
+            540 CALL                     3
+            550 PRECALL                  1
+            554 CALL                     1
+            564 POP_TOP
+
+ 73         566 LOAD_FAST                3 (rep)
+            568 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile_quantities.<genexpr>  (args=1, locals=4)
+# varnames: .0, e, ln, s
+ 65           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                37 (to 84)
+             10 STORE_FAST               1 (e)
+             12 LOAD_FAST                1 (e)
+             14 LOAD_ATTR                0 (lines)
+             24 GET_ITER
+        >>   26 FOR_ITER                27 (to 82)
+             28 STORE_FAST               2 (ln)
+
+ 66          30 LOAD_FAST                2 (ln)
+             32 LOAD_ATTR                1 (sizes)
+
+ 65          42 GET_ITER
+        >>   44 FOR_ITER                17 (to 80)
+
+ 66          46 STORE_FAST               3 (s)
+             48 LOAD_FAST                3 (s)
+             50 LOAD_ATTR                2 (qty)
+             60 LOAD_CONST               0 (0)
+             62 COMPARE_OP               0 (<)
+             68 POP_JUMP_BACKWARD_IF_FALSE    13 (to 44)
+
+ 65          70 LOAD_CONST               1 (1)
+
+ 66          72 YIELD_VALUE
+             74 RESUME                   1
+             76 POP_TOP
+             78 JUMP_BACKWARD           18 (to 44)
+        >>   80 JUMP_BACKWARD           28 (to 26)
+        >>   82 JUMP_BACKWARD           38 (to 8)
+
+ 65     >>   84 LOAD_CONST               2 (None)
+             86 RETURN_VALUE
+
+==============================================================================
+## <module>.scan_batch  (args=1, locals=9)
+# varnames: results, Path, ok, blocked, r, po, recipe, src, rep
+ 76           0 RESUME                   0
+
+ 87           2 LOAD_CONST               1 (0)
+              4 LOAD_CONST               2 (('Path',))
+              6 IMPORT_NAME              0 (pathlib)
+              8 IMPORT_FROM              1 (Path)
+             10 STORE_FAST               1 (Path)
+             12 POP_TOP
+
+ 89          14 BUILD_LIST               0
+             16 BUILD_LIST               0
+             18 STORE_FAST               3 (blocked)
+             20 STORE_FAST               2 (ok)
+
+ 90          22 LOAD_FAST                0 (results)
+             24 GET_ITER
+        >>   26 FOR_ITER               187 (to 402)
+             28 STORE_FAST               4 (r)
+
+ 91          30 LOAD_FAST                4 (r)
+             32 LOAD_METHOD              2 (get)
+             54 LOAD_CONST               3 ('po')
+             56 PRECALL                  1
+             60 CALL                     1
+             70 STORE_FAST               5 (po)
+
+ 92          72 LOAD_FAST                4 (r)
+             74 LOAD_METHOD              2 (get)
+             96 LOAD_CONST               4 ('recipe')
+             98 PRECALL                  1
+            102 CALL                     1
+            112 STORE_FAST               6 (recipe)
+
+ 93         114 LOAD_FAST                5 (po)
+            116 POP_JUMP_FORWARD_IF_NONE     2 (to 122)
+            118 LOAD_FAST                6 (recipe)
+            120 POP_JUMP_FORWARD_IF_NOT_NONE    22 (to 166)
+
+ 94     >>  122 LOAD_FAST                2 (ok)
+            124 LOAD_METHOD              3 (append)
+            146 LOAD_FAST                4 (r)
+            148 PRECALL                  1
+            152 CALL                     1
+            162 POP_TOP
+
+ 95         164 JUMP_BACKWARD           70 (to 26)
+
+ 96     >>  166 LOAD_GLOBAL              9 (NULL + str)
+            178 PUSH_NULL
+            180 LOAD_FAST                1 (Path)
+            182 LOAD_FAST                4 (r)
+            184 LOAD_METHOD              2 (get)
+            206 LOAD_CONST               6 ('path')
+            208 LOAD_CONST               7 ('')
+            210 PRECALL                  2
+            214 CALL                     2
+            224 PRECALL                  1
+            228 CALL                     1
+            238 LOAD_ATTR                5 (name)
+            248 PRECALL                  1
+            252 CALL                     1
+            262 STORE_FAST               7 (src)
+
+ 97         264 LOAD_GLOBAL             13 (NULL + reconcile_quantities)
+            276 LOAD_FAST                5 (po)
+            278 LOAD_FAST                6 (recipe)
+            280 LOAD_FAST                7 (src)
+            282 KW_NAMES                 8
+            284 PRECALL                  3
+            288 CALL                     3
+            298 STORE_FAST               8 (rep)
+
+ 98         300 LOAD_FAST                8 (rep)
+            302 LOAD_ATTR                7 (ok)
+            312 POP_JUMP_FORWARD_IF_FALSE    22 (to 358)
+
+ 99         314 LOAD_FAST                2 (ok)
+            316 LOAD_METHOD              3 (append)
+            338 LOAD_FAST                4 (r)
+            340 PRECALL                  1
+            344 CALL                     1
+            354 POP_TOP
+            356 JUMP_BACKWARD          166 (to 26)
+
+101     >>  358 LOAD_FAST                3 (blocked)
+            360 LOAD_METHOD              3 (append)
+            382 LOAD_FAST                8 (rep)
+            384 PRECALL                  1
+            388 CALL                     1
+            398 POP_TOP
+            400 JUMP_BACKWARD          188 (to 26)
+
+102     >>  402 LOAD_FAST                2 (ok)
+            404 LOAD_FAST                3 (blocked)
+            406 BUILD_TUPLE              2
+            408 RETURN_VALUE

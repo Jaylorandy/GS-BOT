@@ -1,0 +1,222 @@
+.license-shell {
+  position: relative;
+  z-index: 2;
+  width: min(760px, calc(100vw - 48px));
+  margin: 48px auto;
+}
+
+.license-shell.blocking {
+  margin: auto;
+}
+
+.license-shell.modal {
+  position: fixed;
+  inset: 24px;
+  display: grid;
+  place-items: center;
+  width: auto;
+  margin: 0;
+  background: rgba(6, 10, 16, 0.42);
+  backdrop-filter: var(--glass-refraction, blur(40px) saturate(180%));
+  -webkit-backdrop-filter: var(--glass-refraction, blur(40px) saturate(180%));
+  /* The main window's draggable header swallows clicks over overlapping
+     elements on macOS regardless of z-index; mark the overlay no-drag. */
+  -webkit-app-region: no-drag;
+}
+
+.license-card {
+  width: min(760px, 100%);
+  padding: 28px;
+  border-radius: 28px;
+  border: 1px solid var(--surface-border-strong);
+  background:
+    var(--glass-sheen, linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent 40%)),
+    linear-gradient(180deg, var(--surface-1), var(--surface-2));
+  box-shadow: var(--surface-shadow), var(--glass-edge-highlight), var(--glass-edge-shadow);
+}
+
+.license-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: flex-start;
+}
+
+.license-kicker {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.license-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(28px, 4vw, 38px);
+}
+
+.license-header p {
+  margin: 10px 0 0;
+  color: var(--text-secondary);
+  max-width: 500px;
+}
+
+.license-state {
+  flex-shrink: 0;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.license-valid {
+  background: rgba(144, 213, 173, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(144, 213, 173, 0.25);
+}
+
+.license-invalid {
+  background: rgba(239, 154, 154, 0.12);
+  color: var(--error);
+  border: 1px solid rgba(239, 154, 154, 0.22);
+}
+
+.license-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.license-summary-card {
+  display: grid;
+  gap: 6px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  border: 1px solid var(--surface-border);
+  background: var(--glass-bg);
+}
+
+.license-summary-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.license-summary-card strong,
+.license-summary-card code {
+  font-size: 15px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.license-summary-card code {
+  font-family: var(--font-mono);
+}
+
+.license-summary-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.license-inline-button,
+.license-secondary-button,
+.license-primary-button {
+  border: 1px solid var(--soft-button-border);
+  border-radius: 999px;
+  padding: 10px 16px;
+  background: var(--soft-button-bg);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+  transition: transform var(--motion-fast) ease, background var(--motion-fast) ease;
+}
+
+.license-inline-button {
+  justify-self: flex-start;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+
+.license-primary-button {
+  background: rgba(var(--accent-rgb), 0.22);
+  border-color: rgba(var(--accent-rgb), 0.3);
+}
+
+.license-primary-button:hover,
+.license-secondary-button:hover,
+.license-inline-button:hover {
+  transform: translateY(-1px);
+}
+
+.license-primary-button:disabled,
+.license-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.license-note {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: rgba(var(--accent-rgb), 0.08);
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.license-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.license-form label {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.license-form textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 128px;
+  border-radius: 20px;
+  border: 1px solid var(--field-border);
+  background: var(--field-bg);
+  color: var(--text-primary);
+  padding: 16px;
+  font: 500 13px/1.55 var(--font-mono);
+}
+
+.license-feedback {
+  margin-top: 14px;
+  color: var(--text-secondary);
+}
+
+.license-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+@media (max-width: 780px) {
+  .license-card {
+    padding: 22px;
+  }
+
+  .license-header {
+    flex-direction: column;
+  }
+
+  .license-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}

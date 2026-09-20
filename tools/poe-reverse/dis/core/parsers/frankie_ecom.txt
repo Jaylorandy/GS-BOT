@@ -1,0 +1,1327 @@
+# module: core.parsers.frankie_ecom
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\frankie_ecom.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/frankie_ecom.py - FRANKIE ECOM colour x size grid.\n\nWELL WORN / COSTCO TAIWAN ECOM variant (e.g. PO# DW20250807E-S26 - FRANKIE #1399):\n\n    XS S M L XL XXL Total Units Cartons            <- size header\n    BLEACH (LIGHT BLUE) 40 40 40 40 160 4 $8.35 $1,336.00   <- colour row\n    OASIS (MEDIUM BLUE)  40 40 40 40 160 4 $8.35 $1,336.00\n    Total Per Size       80 80 80 80 320 8 $2,672.00         <- sum row\n\nKey differences from matrix_percarton (FRANKIE JAPAN/KOREA/TAIWAN INLINE):\n\n  * the size columns ALREADY carry TOTAL UNITS (40 each, not per-carton);\n  * "Total Units" is the real per-colour row total (160) - used for cross-check;\n  * "Cartons" (4) is packaging only and is IGNORED;\n  * unit is forced to PCS - our base unit is PCS, never Carton.\n\nThe grid is located structurally, so the recipe only pins ``layout_type`` and the\nparser needs no anchors - making the layout fully cacheable (zero AI on re-runs,\nno confirm dialog).\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 21           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 23          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 24          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 26          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (LayoutType)
+             42 STORE_NAME               6 (LayoutType)
+             44 IMPORT_FROM              7 (OrderEntity)
+             46 STORE_NAME               7 (OrderEntity)
+             48 IMPORT_FROM              8 (OrderLine)
+             50 STORE_NAME               8 (OrderLine)
+             52 IMPORT_FROM              9 (PurchaseOrder)
+             54 STORE_NAME               9 (PurchaseOrder)
+             56 IMPORT_FROM             10 (SizeQty)
+             58 STORE_NAME              10 (SizeQty)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 POP_TOP
+
+ 28          66 LOAD_CONST               6 (1)
+             68 LOAD_CONST               7 (('BaseParser', 'SIZE_TOKEN', '_nearest', '_to_int', '_to_float', 'doc_text'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (SIZE_TOKEN)
+             78 STORE_NAME              14 (SIZE_TOKEN)
+             80 IMPORT_FROM             15 (_nearest)
+             82 STORE_NAME              15 (_nearest)
+             84 IMPORT_FROM             16 (_to_int)
+             86 STORE_NAME              16 (_to_int)
+             88 IMPORT_FROM             17 (_to_float)
+             90 STORE_NAME              17 (_to_float)
+             92 IMPORT_FROM             18 (doc_text)
+             94 STORE_NAME              18 (doc_text)
+             96 POP_TOP
+
+ 32          98 LOAD_CONST               6 (1)
+            100 LOAD_CONST               4 (2)
+            102 LOAD_CONST               8 (3)
+            104 LOAD_CONST               9 (4)
+            106 LOAD_CONST              10 (5)
+            108 LOAD_CONST              11 (6)
+
+ 33         110 LOAD_CONST              12 (7)
+            112 LOAD_CONST              13 (8)
+            114 LOAD_CONST              14 (9)
+            116 LOAD_CONST              15 (10)
+            118 LOAD_CONST              16 (11)
+            120 LOAD_CONST              17 (12)
+
+ 31         122 LOAD_CONST              18 (('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'))
+            124 BUILD_CONST_KEY_MAP     12
+            126 STORE_NAME              19 (_FRANKIE_MONTHS)
+
+ 37         128 LOAD_CONST              28 (('s', 'str', 'return', 'str'))
+            130 LOAD_CONST              22 (<code object _frankie_date at 0x000002BF9444CAA0, file "core\parsers\frankie_ecom.py", line 37>)
+            132 MAKE_FUNCTION            4 (annotations)
+            134 STORE_NAME              20 (_frankie_date)
+
+ 53         136 LOAD_CONST              29 (('text', 'str', 'return', 'dict'))
+            138 LOAD_CONST              25 (<code object _extract_frankie_ecom_header at 0x000002BF940C7870, file "core\parsers\frankie_ecom.py", line 53>)
+            140 MAKE_FUNCTION            4 (annotations)
+            142 STORE_NAME              21 (_extract_frankie_ecom_header)
+
+ 93         144 PUSH_NULL
+            146 LOAD_BUILD_CLASS
+            148 LOAD_CONST              26 (<code object FrankieEcomParser at 0x000002BF94AA95C0, file "core\parsers\frankie_ecom.py", line 93>)
+            150 MAKE_FUNCTION            0
+            152 LOAD_CONST              27 ('FrankieEcomParser')
+            154 LOAD_NAME               13 (BaseParser)
+            156 PRECALL                  3
+            160 CALL                     3
+            170 STORE_NAME              22 (FrankieEcomParser)
+            172 LOAD_CONST               3 (None)
+            174 RETURN_VALUE
+
+==============================================================================
+## <module>._frankie_date  (args=1, locals=4)
+# varnames: s, m, mo, y
+ 37           0 RESUME                   0
+
+ 39           2 LOAD_FAST                0 (s)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+ 40           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+ 41     >>   10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (match)
+             32 LOAD_CONST               2 ('(\\d{1,2})-([A-Za-z]{3})-(\\d{2,4})$')
+             34 LOAD_FAST                0 (s)
+             36 JUMP_IF_TRUE_OR_POP      1 (to 40)
+             38 LOAD_CONST               1 ('')
+        >>   40 LOAD_METHOD              2 (strip)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 PRECALL                  2
+             80 CALL                     2
+             90 STORE_FAST               1 (m)
+
+ 42          92 LOAD_FAST                1 (m)
+             94 POP_JUMP_FORWARD_IF_TRUE     2 (to 100)
+
+ 43          96 LOAD_CONST               1 ('')
+             98 RETURN_VALUE
+
+ 44     >>  100 LOAD_GLOBAL              6 (_FRANKIE_MONTHS)
+            112 LOAD_METHOD              4 (get)
+            134 LOAD_FAST                1 (m)
+            136 LOAD_METHOD              5 (group)
+            158 LOAD_CONST               3 (2)
+            160 PRECALL                  1
+            164 CALL                     1
+            174 LOAD_METHOD              6 (lower)
+            196 PRECALL                  0
+            200 CALL                     0
+            210 PRECALL                  1
+            214 CALL                     1
+            224 STORE_FAST               2 (mo)
+
+ 45         226 LOAD_FAST                1 (m)
+            228 LOAD_METHOD              5 (group)
+            250 LOAD_CONST               4 (3)
+            252 PRECALL                  1
+            256 CALL                     1
+            266 STORE_FAST               3 (y)
+
+ 46         268 LOAD_GLOBAL             15 (NULL + len)
+            280 LOAD_FAST                3 (y)
+            282 PRECALL                  1
+            286 CALL                     1
+            296 LOAD_CONST               3 (2)
+            298 COMPARE_OP               2 (==)
+            304 POP_JUMP_FORWARD_IF_FALSE     5 (to 316)
+
+ 47         306 LOAD_CONST               5 ('20')
+            308 LOAD_FAST                3 (y)
+            310 BINARY_OP                0 (+)
+            314 STORE_FAST               3 (y)
+
+ 48     >>  316 LOAD_FAST                2 (mo)
+            318 POP_JUMP_FORWARD_IF_TRUE     2 (to 324)
+
+ 49         320 LOAD_CONST               1 ('')
+            322 RETURN_VALUE
+
+ 50     >>  324 LOAD_GLOBAL             17 (NULL + int)
+            336 LOAD_FAST                3 (y)
+            338 PRECALL                  1
+            342 CALL                     1
+            352 LOAD_CONST               6 ('04d')
+            354 FORMAT_VALUE             4 (with format)
+            356 LOAD_CONST               7 ('-')
+            358 LOAD_FAST                2 (mo)
+            360 LOAD_CONST               8 ('02d')
+            362 FORMAT_VALUE             4 (with format)
+            364 LOAD_CONST               7 ('-')
+            366 LOAD_GLOBAL             17 (NULL + int)
+            378 LOAD_FAST                1 (m)
+            380 LOAD_METHOD              5 (group)
+            402 LOAD_CONST               9 (1)
+            404 PRECALL                  1
+            408 CALL                     1
+            418 PRECALL                  1
+            422 CALL                     1
+            432 LOAD_CONST               8 ('02d')
+            434 FORMAT_VALUE             4 (with format)
+            436 BUILD_STRING             5
+            438 RETURN_VALUE
+
+==============================================================================
+## <module>._extract_frankie_ecom_header  (args=1, locals=3)
+# varnames: text, h, m
+ 53           0 RESUME                   0
+
+ 60           2 BUILD_MAP                0
+              4 STORE_FAST               1 (h)
+
+ 62           6 LOAD_GLOBAL              1 (NULL + re)
+             18 LOAD_ATTR                1 (search)
+             28 LOAD_CONST               1 ('PO\\s*Number\\s+(\\S+)')
+             30 LOAD_FAST                0 (text)
+             32 PRECALL                  2
+             36 CALL                     2
+             46 STORE_FAST               2 (m)
+
+ 63          48 LOAD_FAST                2 (m)
+             50 POP_JUMP_FORWARD_IF_FALSE    21 (to 94)
+             52 LOAD_FAST                2 (m)
+             54 LOAD_METHOD              2 (group)
+             76 LOAD_CONST               2 (1)
+             78 PRECALL                  1
+             82 CALL                     1
+             92 JUMP_FORWARD             1 (to 96)
+        >>   94 LOAD_CONST               3 ('')
+        >>   96 LOAD_FAST                1 (h)
+             98 LOAD_CONST               4 ('po_no')
+            100 STORE_SUBSCR
+
+ 66         104 LOAD_GLOBAL              1 (NULL + re)
+            116 LOAD_ATTR                1 (search)
+            126 LOAD_CONST               5 ("\\b([A-Z][A-Z0-9&'., \\-]{4,60}?\\bINC\\.)")
+            128 LOAD_FAST                0 (text)
+            130 PRECALL                  2
+            134 CALL                     2
+            144 STORE_FAST               2 (m)
+
+ 67         146 LOAD_FAST                2 (m)
+            148 POP_JUMP_FORWARD_IF_FALSE    39 (to 228)
+            150 LOAD_FAST                2 (m)
+            152 LOAD_METHOD              2 (group)
+            174 LOAD_CONST               2 (1)
+            176 PRECALL                  1
+            180 CALL                     1
+            190 LOAD_METHOD              3 (strip)
+            212 PRECALL                  0
+            216 CALL                     0
+            226 JUMP_FORWARD             1 (to 230)
+        >>  228 LOAD_CONST               3 ('')
+        >>  230 LOAD_FAST                1 (h)
+            232 LOAD_CONST               6 ('customer')
+            234 STORE_SUBSCR
+
+ 69         238 LOAD_GLOBAL              1 (NULL + re)
+            250 LOAD_ATTR                1 (search)
+            260 LOAD_CONST               7 ('(FRANKIE\\s*#\\s*\\d+)')
+            262 LOAD_FAST                0 (text)
+            264 LOAD_GLOBAL              0 (re)
+            276 LOAD_ATTR                4 (I)
+            286 PRECALL                  3
+            290 CALL                     3
+            300 STORE_FAST               2 (m)
+
+ 70         302 LOAD_FAST                2 (m)
+            304 POP_JUMP_FORWARD_IF_FALSE    21 (to 348)
+            306 LOAD_FAST                2 (m)
+            308 LOAD_METHOD              2 (group)
+            330 LOAD_CONST               2 (1)
+            332 PRECALL                  1
+            336 CALL                     1
+            346 JUMP_FORWARD             1 (to 350)
+        >>  348 LOAD_CONST               3 ('')
+        >>  350 LOAD_FAST                1 (h)
+            352 LOAD_CONST               8 ('style_no')
+            354 STORE_SUBSCR
+
+ 73         358 LOAD_GLOBAL              1 (NULL + re)
+            370 LOAD_ATTR                1 (search)
+            380 LOAD_CONST               9 ('Unit\\s*Cost\\s*\\(?\\s*FOB\\s*\\)?\\s*\\$?([\\d,]+\\.\\d+)')
+            382 LOAD_FAST                0 (text)
+            384 LOAD_GLOBAL              0 (re)
+            396 LOAD_ATTR                4 (I)
+            406 PRECALL                  3
+            410 CALL                     3
+            420 STORE_FAST               2 (m)
+
+ 74         422 LOAD_FAST                2 (m)
+            424 POP_JUMP_FORWARD_IF_FALSE    41 (to 508)
+            426 LOAD_FAST                2 (m)
+            428 LOAD_METHOD              2 (group)
+            450 LOAD_CONST               2 (1)
+            452 PRECALL                  1
+            456 CALL                     1
+            466 LOAD_METHOD              5 (replace)
+            488 LOAD_CONST              10 (',')
+            490 LOAD_CONST               3 ('')
+            492 PRECALL                  2
+            496 CALL                     2
+            506 JUMP_FORWARD             1 (to 510)
+        >>  508 LOAD_CONST               3 ('')
+        >>  510 LOAD_FAST                1 (h)
+            512 LOAD_CONST              11 ('unit_price')
+            514 STORE_SUBSCR
+
+ 76         518 LOAD_GLOBAL              1 (NULL + re)
+            530 LOAD_ATTR                1 (search)
+            540 LOAD_CONST              12 ('\\bUSD\\b')
+            542 LOAD_FAST                0 (text)
+            544 PRECALL                  2
+            548 CALL                     2
+            558 POP_JUMP_FORWARD_IF_FALSE     2 (to 564)
+            560 LOAD_CONST              13 ('USD')
+            562 JUMP_FORWARD             1 (to 566)
+        >>  564 LOAD_CONST               3 ('')
+        >>  566 LOAD_FAST                1 (h)
+            568 LOAD_CONST              14 ('currency')
+            570 STORE_SUBSCR
+
+ 79         574 LOAD_GLOBAL              1 (NULL + re)
+            586 LOAD_ATTR                1 (search)
+            596 LOAD_CONST              15 ('At\\s+Port\\s+Date\\s+(\\d{1,2}-[A-Za-z]{3}-\\d{2,4})')
+            598 LOAD_FAST                0 (text)
+            600 LOAD_GLOBAL              0 (re)
+            612 LOAD_ATTR                4 (I)
+            622 PRECALL                  3
+            626 CALL                     3
+            636 STORE_FAST               2 (m)
+
+ 80         638 LOAD_FAST                2 (m)
+            640 POP_JUMP_FORWARD_IF_FALSE    34 (to 710)
+            642 LOAD_GLOBAL             13 (NULL + _frankie_date)
+            654 LOAD_FAST                2 (m)
+            656 LOAD_METHOD              2 (group)
+            678 LOAD_CONST               2 (1)
+            680 PRECALL                  1
+            684 CALL                     1
+            694 PRECALL                  1
+            698 CALL                     1
+            708 JUMP_FORWARD             1 (to 712)
+        >>  710 LOAD_CONST               3 ('')
+        >>  712 LOAD_FAST                1 (h)
+            714 LOAD_CONST              16 ('ship_date')
+            716 STORE_SUBSCR
+
+ 82         720 LOAD_GLOBAL              1 (NULL + re)
+            732 LOAD_ATTR                1 (search)
+            742 LOAD_CONST              17 ('\\bFOB\\b')
+            744 LOAD_FAST                0 (text)
+            746 LOAD_GLOBAL              0 (re)
+            758 LOAD_ATTR                4 (I)
+            768 PRECALL                  3
+            772 CALL                     3
+            782 POP_JUMP_FORWARD_IF_FALSE     2 (to 788)
+            784 LOAD_CONST              18 ('FOB')
+            786 JUMP_FORWARD             1 (to 790)
+        >>  788 LOAD_CONST               3 ('')
+        >>  790 LOAD_FAST                1 (h)
+            792 LOAD_CONST              19 ('price_term')
+            794 STORE_SUBSCR
+
+ 83         798 LOAD_GLOBAL              1 (NULL + re)
+            810 LOAD_ATTR                1 (search)
+            820 LOAD_CONST              20 ('Ship\\s+Via\\s+(SEA|AIR|OCEAN|VESSEL)')
+            822 LOAD_FAST                0 (text)
+            824 LOAD_GLOBAL              0 (re)
+            836 LOAD_ATTR                4 (I)
+            846 PRECALL                  3
+            850 CALL                     3
+            860 STORE_FAST               2 (m)
+
+ 84         862 LOAD_FAST                2 (m)
+            864 POP_JUMP_FORWARD_IF_FALSE    21 (to 908)
+            866 LOAD_FAST                2 (m)
+            868 LOAD_METHOD              2 (group)
+            890 LOAD_CONST               2 (1)
+            892 PRECALL                  1
+            896 CALL                     1
+            906 JUMP_FORWARD             1 (to 910)
+        >>  908 LOAD_CONST               3 ('')
+        >>  910 LOAD_FAST                1 (h)
+            912 LOAD_CONST              21 ('ship_mode')
+            914 STORE_SUBSCR
+
+ 88         918 LOAD_GLOBAL              1 (NULL + re)
+            930 LOAD_ATTR                1 (search)
+            940 LOAD_CONST              22 ('Season\\s+(\\S+\\s+\\d{4})')
+            942 LOAD_FAST                0 (text)
+            944 LOAD_GLOBAL              0 (re)
+            956 LOAD_ATTR                4 (I)
+            966 PRECALL                  3
+            970 CALL                     3
+            980 STORE_FAST               2 (m)
+
+ 89         982 LOAD_FAST                2 (m)
+            984 POP_JUMP_FORWARD_IF_FALSE    39 (to 1064)
+            986 LOAD_FAST                2 (m)
+            988 LOAD_METHOD              2 (group)
+           1010 LOAD_CONST               2 (1)
+           1012 PRECALL                  1
+           1016 CALL                     1
+           1026 LOAD_METHOD              3 (strip)
+           1048 PRECALL                  0
+           1052 CALL                     0
+           1062 JUMP_FORWARD             1 (to 1066)
+        >> 1064 LOAD_CONST               3 ('')
+        >> 1066 LOAD_FAST                1 (h)
+           1068 LOAD_CONST              23 ('season')
+           1070 STORE_SUBSCR
+
+ 90        1074 LOAD_FAST                1 (h)
+           1076 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser  (args=0, locals=0)
+ 93           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('FrankieEcomParser')
+              8 STORE_NAME               2 (__qualname__)
+
+ 94          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (FRANKIE_ECOM)
+             22 STORE_NAME               5 (layout_type)
+
+ 96          24 LOAD_CONST               1 ('')
+             26 LOAD_CONST               2 (('source_file',))
+             28 BUILD_CONST_KEY_MAP      1
+             30 LOAD_CONST              11 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             32 LOAD_CONST               9 (<code object parse at 0x000002BF9445B460, file "core\parsers\frankie_ecom.py", line 96>)
+             34 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             36 STORE_NAME               6 (parse)
+             38 LOAD_CONST              10 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse  (args=3, locals=30)
+# varnames: self, pages, recipe, source_file, po, ent, size_cols, total_xc, cartons_xc, size_totals, printed_qty, hdr, unit_price, page, line, toks, low, ti, j, end, start, t, nums, col, num_toks, sizes, row_total, desc_parts, idx, desc
+ 96           0 RESUME                   0
+
+ 97           2 LOAD_GLOBAL              1 (NULL + PurchaseOrder)
+
+ 98          14 LOAD_FAST                2 (recipe)
+             16 LOAD_ATTR                1 (customer)
+
+ 99          26 LOAD_FAST                3 (source_file)
+             28 POP_JUMP_FORWARD_IF_FALSE    31 (to 92)
+             30 LOAD_GLOBAL              4 (os)
+             42 LOAD_ATTR                3 (path)
+             52 LOAD_METHOD              4 (basename)
+             74 LOAD_FAST                3 (source_file)
+             76 PRECALL                  1
+             80 CALL                     1
+             90 JUMP_FORWARD             1 (to 94)
+        >>   92 LOAD_CONST               1 ('')
+
+100     >>   94 LOAD_FAST                3 (source_file)
+
+ 97          96 KW_NAMES                 2
+             98 PRECALL                  3
+            102 CALL                     3
+            112 STORE_FAST               4 (po)
+
+102         114 LOAD_GLOBAL             11 (NULL + OrderEntity)
+            126 PRECALL                  0
+            130 CALL                     0
+            140 STORE_FAST               5 (ent)
+
+103         142 BUILD_LIST               0
+            144 STORE_FAST               6 (size_cols)
+
+104         146 LOAD_CONST               0 (None)
+            148 STORE_FAST               7 (total_xc)
+
+105         150 LOAD_CONST               0 (None)
+            152 STORE_FAST               8 (cartons_xc)
+
+106         154 BUILD_MAP                0
+            156 STORE_FAST               9 (size_totals)
+
+107         158 LOAD_CONST               0 (None)
+            160 STORE_FAST              10 (printed_qty)
+
+111         162 LOAD_GLOBAL             13 (NULL + _extract_frankie_ecom_header)
+            174 LOAD_GLOBAL             15 (NULL + doc_text)
+            186 LOAD_FAST                1 (pages)
+            188 PRECALL                  1
+            192 CALL                     1
+            202 PRECALL                  1
+            206 CALL                     1
+            216 STORE_FAST              11 (hdr)
+
+112         218 LOAD_FAST               11 (hdr)
+            220 LOAD_CONST               3 ('customer')
+            222 BINARY_SUBSCR
+            232 JUMP_IF_TRUE_OR_POP      6 (to 246)
+            234 LOAD_FAST                2 (recipe)
+            236 LOAD_ATTR                1 (customer)
+        >>  246 LOAD_FAST                4 (po)
+            248 STORE_ATTR               1 (customer)
+
+113         258 LOAD_FAST               11 (hdr)
+            260 LOAD_CONST               4 ('po_no')
+            262 BINARY_SUBSCR
+            272 LOAD_FAST                5 (ent)
+            274 STORE_ATTR               8 (po_no)
+
+114         284 LOAD_FAST               11 (hdr)
+            286 LOAD_CONST               5 ('style_no')
+            288 BINARY_SUBSCR
+            298 LOAD_FAST                5 (ent)
+            300 STORE_ATTR               9 (style_no)
+
+115         310 LOAD_FAST               11 (hdr)
+            312 LOAD_CONST               6 ('price_term')
+            314 BINARY_SUBSCR
+            324 LOAD_FAST                5 (ent)
+            326 STORE_ATTR              10 (price_term)
+
+116         336 LOAD_FAST               11 (hdr)
+            338 LOAD_CONST               7 ('currency')
+            340 BINARY_SUBSCR
+            350 LOAD_FAST                5 (ent)
+            352 STORE_ATTR              11 (currency)
+
+117         362 LOAD_FAST               11 (hdr)
+            364 LOAD_CONST               8 ('ship_date')
+            366 BINARY_SUBSCR
+            376 LOAD_FAST                5 (ent)
+            378 STORE_ATTR              12 (delivery_date)
+
+118         388 LOAD_FAST               11 (hdr)
+            390 LOAD_CONST               9 ('ship_mode')
+            392 BINARY_SUBSCR
+            402 LOAD_FAST                5 (ent)
+            404 STORE_ATTR              13 (ship_mode)
+
+119         414 LOAD_FAST               11 (hdr)
+            416 LOAD_CONST              10 ('season')
+            418 BINARY_SUBSCR
+            428 LOAD_FAST                5 (ent)
+            430 STORE_ATTR              14 (season)
+
+120         440 LOAD_GLOBAL             31 (NULL + _to_float)
+            452 LOAD_FAST               11 (hdr)
+            454 LOAD_CONST              11 ('unit_price')
+            456 BINARY_SUBSCR
+            466 PRECALL                  1
+            470 CALL                     1
+            480 STORE_FAST              12 (unit_price)
+
+122         482 LOAD_FAST                1 (pages)
+            484 GET_ITER
+        >>  486 EXTENDED_ARG             4
+            488 FOR_ITER              1245 (to 2980)
+            490 STORE_FAST              13 (page)
+
+123         492 LOAD_FAST               13 (page)
+            494 LOAD_METHOD             16 (lines)
+            516 PRECALL                  0
+            520 CALL                     0
+            530 GET_ITER
+        >>  532 EXTENDED_ARG             4
+            534 FOR_ITER              1220 (to 2976)
+            536 STORE_FAST              14 (line)
+
+124         538 LOAD_FAST               14 (line)
+            540 POP_JUMP_FORWARD_IF_TRUE     1 (to 544)
+
+125         542 JUMP_BACKWARD            6 (to 532)
+
+126     >>  544 LOAD_CONST              12 (<code object <listcomp> at 0x000002BF94A2F630, file "core\parsers\frankie_ecom.py", line 126>)
+            546 MAKE_FUNCTION            0
+            548 LOAD_FAST               14 (line)
+            550 GET_ITER
+            552 PRECALL                  0
+            556 CALL                     0
+            566 STORE_FAST              15 (toks)
+
+127         568 LOAD_FAST               15 (toks)
+            570 POP_JUMP_FORWARD_IF_TRUE     1 (to 574)
+
+128         572 JUMP_BACKWARD           21 (to 532)
+
+131     >>  574 LOAD_FAST                7 (total_xc)
+            576 EXTENDED_ARG             1
+            578 POP_JUMP_FORWARD_IF_NOT_NONE   359 (to 1298)
+
+132         580 LOAD_CONST              13 (<code object <listcomp> at 0x000002BF94A2F030, file "core\parsers\frankie_ecom.py", line 132>)
+            582 MAKE_FUNCTION            0
+            584 LOAD_FAST               15 (toks)
+            586 GET_ITER
+            588 PRECALL                  0
+            592 CALL                     0
+            602 STORE_FAST              16 (low)
+
+133         604 LOAD_CONST              14 ('TOTAL')
+            606 LOAD_FAST               16 (low)
+            608 CONTAINS_OP              0
+            610 EXTENDED_ARG             1
+            612 POP_JUMP_FORWARD_IF_FALSE   342 (to 1298)
+            614 LOAD_CONST              15 ('UNITS')
+            616 LOAD_FAST               16 (low)
+            618 CONTAINS_OP              0
+            620 EXTENDED_ARG             1
+            622 POP_JUMP_FORWARD_IF_FALSE   337 (to 1298)
+            624 LOAD_CONST              16 ('CARTONS')
+            626 LOAD_FAST               16 (low)
+            628 CONTAINS_OP              0
+            630 EXTENDED_ARG             1
+            632 POP_JUMP_FORWARD_IF_FALSE   332 (to 1298)
+
+134         634 LOAD_GLOBAL             35 (NULL + any)
+            646 LOAD_CONST              17 (<code object <genexpr> at 0x000002BF94A2F530, file "core\parsers\frankie_ecom.py", line 134>)
+            648 MAKE_FUNCTION            0
+            650 LOAD_FAST               15 (toks)
+            652 GET_ITER
+            654 PRECALL                  0
+            658 CALL                     0
+            668 PRECALL                  1
+            672 CALL                     1
+
+133         682 EXTENDED_ARG             1
+            684 POP_JUMP_FORWARD_IF_FALSE   306 (to 1298)
+
+135         686 LOAD_GLOBAL             37 (NULL + next)
+            698 LOAD_CONST              18 (<code object <genexpr> at 0x000002BF94A6AD30, file "core\parsers\frankie_ecom.py", line 135>)
+            700 MAKE_FUNCTION            0
+            702 LOAD_GLOBAL             39 (NULL + enumerate)
+            714 LOAD_FAST               15 (toks)
+            716 PRECALL                  1
+            720 CALL                     1
+            730 GET_ITER
+            732 PRECALL                  0
+            736 CALL                     0
+            746 PRECALL                  1
+            750 CALL                     1
+            760 STORE_FAST              17 (ti)
+
+138         762 LOAD_FAST               17 (ti)
+            764 LOAD_CONST              19 (1)
+            766 BINARY_OP               10 (-)
+            770 STORE_FAST              18 (j)
+
+139         772 LOAD_FAST               18 (j)
+            774 LOAD_CONST              20 (0)
+            776 COMPARE_OP               5 (>=)
+            782 POP_JUMP_FORWARD_IF_FALSE    73 (to 930)
+            784 LOAD_GLOBAL             41 (NULL + SIZE_TOKEN)
+            796 LOAD_ATTR               21 (match)
+            806 LOAD_FAST               15 (toks)
+            808 LOAD_FAST               18 (j)
+            810 BINARY_SUBSCR
+            820 LOAD_ATTR               22 (text)
+            830 PRECALL                  1
+            834 CALL                     1
+            844 POP_JUMP_FORWARD_IF_TRUE    42 (to 930)
+
+140     >>  846 LOAD_FAST               18 (j)
+            848 LOAD_CONST              19 (1)
+            850 BINARY_OP               23 (-=)
+            854 STORE_FAST              18 (j)
+
+139         856 LOAD_FAST               18 (j)
+            858 LOAD_CONST              20 (0)
+            860 COMPARE_OP               5 (>=)
+            866 POP_JUMP_FORWARD_IF_FALSE    31 (to 930)
+            868 LOAD_GLOBAL             41 (NULL + SIZE_TOKEN)
+            880 LOAD_ATTR               21 (match)
+            890 LOAD_FAST               15 (toks)
+            892 LOAD_FAST               18 (j)
+            894 BINARY_SUBSCR
+            904 LOAD_ATTR               22 (text)
+            914 PRECALL                  1
+            918 CALL                     1
+            928 POP_JUMP_BACKWARD_IF_FALSE    42 (to 846)
+
+141     >>  930 LOAD_FAST               18 (j)
+            932 LOAD_CONST              19 (1)
+            934 BINARY_OP                0 (+)
+            938 STORE_FAST              19 (end)
+
+142         940 LOAD_FAST               18 (j)
+            942 LOAD_CONST              20 (0)
+            944 COMPARE_OP               5 (>=)
+            950 POP_JUMP_FORWARD_IF_FALSE    73 (to 1098)
+            952 LOAD_GLOBAL             41 (NULL + SIZE_TOKEN)
+            964 LOAD_ATTR               21 (match)
+            974 LOAD_FAST               15 (toks)
+            976 LOAD_FAST               18 (j)
+            978 BINARY_SUBSCR
+            988 LOAD_ATTR               22 (text)
+            998 PRECALL                  1
+           1002 CALL                     1
+           1012 POP_JUMP_FORWARD_IF_FALSE    42 (to 1098)
+
+143     >> 1014 LOAD_FAST               18 (j)
+           1016 LOAD_CONST              19 (1)
+           1018 BINARY_OP               23 (-=)
+           1022 STORE_FAST              18 (j)
+
+142        1024 LOAD_FAST               18 (j)
+           1026 LOAD_CONST              20 (0)
+           1028 COMPARE_OP               5 (>=)
+           1034 POP_JUMP_FORWARD_IF_FALSE    31 (to 1098)
+           1036 LOAD_GLOBAL             41 (NULL + SIZE_TOKEN)
+           1048 LOAD_ATTR               21 (match)
+           1058 LOAD_FAST               15 (toks)
+           1060 LOAD_FAST               18 (j)
+           1062 BINARY_SUBSCR
+           1072 LOAD_ATTR               22 (text)
+           1082 PRECALL                  1
+           1086 CALL                     1
+           1096 POP_JUMP_BACKWARD_IF_TRUE    42 (to 1014)
+
+144     >> 1098 LOAD_FAST               18 (j)
+           1100 LOAD_CONST              19 (1)
+           1102 BINARY_OP                0 (+)
+           1106 STORE_FAST              20 (start)
+
+145        1108 LOAD_FAST               19 (end)
+           1110 LOAD_FAST               20 (start)
+           1112 BINARY_OP               10 (-)
+           1116 LOAD_CONST              21 (2)
+           1118 COMPARE_OP               5 (>=)
+           1124 POP_JUMP_FORWARD_IF_FALSE    84 (to 1294)
+
+146        1126 LOAD_CONST              22 (<code object <listcomp> at 0x000002BF94AA85D0, file "core\parsers\frankie_ecom.py", line 146>)
+           1128 MAKE_FUNCTION            0
+           1130 LOAD_FAST               15 (toks)
+           1132 LOAD_FAST               20 (start)
+           1134 LOAD_FAST               19 (end)
+           1136 BUILD_SLICE              2
+           1138 BINARY_SUBSCR
+           1148 GET_ITER
+           1150 PRECALL                  0
+           1154 CALL                     0
+           1164 STORE_FAST               6 (size_cols)
+
+147        1166 LOAD_FAST               15 (toks)
+           1168 LOAD_FAST               17 (ti)
+           1170 BINARY_SUBSCR
+           1180 LOAD_ATTR               23 (xc)
+           1190 STORE_FAST               7 (total_xc)
+
+148        1192 LOAD_FAST               15 (toks)
+           1194 LOAD_FAST               17 (ti)
+           1196 LOAD_CONST               0 (None)
+           1198 BUILD_SLICE              2
+           1200 BINARY_SUBSCR
+           1210 GET_ITER
+        >> 1212 FOR_ITER                40 (to 1294)
+           1214 STORE_FAST              21 (t)
+
+149        1216 LOAD_FAST               21 (t)
+           1218 LOAD_ATTR               22 (text)
+           1228 LOAD_METHOD             24 (upper)
+           1250 PRECALL                  0
+           1254 CALL                     0
+           1264 LOAD_CONST              16 ('CARTONS')
+           1266 COMPARE_OP               2 (==)
+           1272 POP_JUMP_FORWARD_IF_FALSE     9 (to 1292)
+
+150        1274 LOAD_FAST               21 (t)
+           1276 LOAD_ATTR               23 (xc)
+           1286 STORE_FAST               8 (cartons_xc)
+
+151        1288 POP_TOP
+           1290 JUMP_FORWARD             1 (to 1294)
+
+149     >> 1292 JUMP_BACKWARD           41 (to 1212)
+
+152     >> 1294 EXTENDED_ARG             1
+           1296 JUMP_BACKWARD          383 (to 532)
+
+155     >> 1298 LOAD_FAST               15 (toks)
+           1300 LOAD_CONST              20 (0)
+           1302 BINARY_SUBSCR
+           1312 LOAD_ATTR               22 (text)
+           1322 LOAD_METHOD             24 (upper)
+           1344 PRECALL                  0
+           1348 CALL                     0
+           1358 LOAD_METHOD             25 (startswith)
+           1380 LOAD_CONST              14 ('TOTAL')
+           1382 PRECALL                  1
+           1386 CALL                     1
+           1396 POP_JUMP_FORWARD_IF_FALSE   173 (to 1744)
+
+156        1398 LOAD_FAST                6 (size_cols)
+           1400 POP_JUMP_FORWARD_IF_FALSE   169 (to 1740)
+
+157        1402 LOAD_CONST              23 (<code object <listcomp> at 0x000002BF94A2F730, file "core\parsers\frankie_ecom.py", line 157>)
+           1404 MAKE_FUNCTION            0
+           1406 LOAD_FAST               15 (toks)
+           1408 GET_ITER
+           1410 PRECALL                  0
+           1414 CALL                     0
+           1424 STORE_FAST              22 (nums)
+
+158        1426 LOAD_FAST               22 (nums)
+           1428 GET_ITER
+        >> 1430 FOR_ITER               154 (to 1740)
+           1432 STORE_FAST              21 (t)
+
+159        1434 LOAD_FAST                8 (cartons_xc)
+           1436 POP_JUMP_FORWARD_IF_NONE    15 (to 1468)
+           1438 LOAD_FAST               21 (t)
+           1440 LOAD_ATTR               23 (xc)
+           1450 LOAD_FAST                8 (cartons_xc)
+           1452 LOAD_CONST              24 (5)
+           1454 BINARY_OP               10 (-)
+           1458 COMPARE_OP               5 (>=)
+           1464 POP_JUMP_FORWARD_IF_FALSE     1 (to 1468)
+
+160        1466 JUMP_BACKWARD           19 (to 1430)
+
+161     >> 1468 LOAD_FAST                7 (total_xc)
+           1470 POP_JUMP_FORWARD_IF_NONE    48 (to 1568)
+           1472 LOAD_GLOBAL             53 (NULL + abs)
+           1484 LOAD_FAST               21 (t)
+           1486 LOAD_ATTR               23 (xc)
+           1496 LOAD_FAST                7 (total_xc)
+           1498 BINARY_OP               10 (-)
+           1502 PRECALL                  1
+           1506 CALL                     1
+           1516 LOAD_CONST              25 (30)
+           1518 COMPARE_OP               0 (<)
+           1524 POP_JUMP_FORWARD_IF_FALSE    21 (to 1568)
+
+162        1526 LOAD_GLOBAL             55 (NULL + _to_int)
+           1538 LOAD_FAST               21 (t)
+           1540 LOAD_ATTR               22 (text)
+           1550 PRECALL                  1
+           1554 CALL                     1
+           1564 STORE_FAST              10 (printed_qty)
+
+163        1566 JUMP_BACKWARD           69 (to 1430)
+
+164     >> 1568 LOAD_GLOBAL             57 (NULL + _nearest)
+           1580 LOAD_FAST                6 (size_cols)
+           1582 LOAD_FAST               21 (t)
+           1584 LOAD_ATTR               23 (xc)
+           1594 PRECALL                  2
+           1598 CALL                     2
+           1608 STORE_FAST              23 (col)
+
+165        1610 LOAD_FAST               23 (col)
+           1612 POP_JUMP_FORWARD_IF_NONE    62 (to 1738)
+           1614 LOAD_GLOBAL             53 (NULL + abs)
+           1626 LOAD_FAST               23 (col)
+           1628 LOAD_CONST              19 (1)
+           1630 BINARY_SUBSCR
+           1640 LOAD_FAST               21 (t)
+           1642 LOAD_ATTR               23 (xc)
+           1652 BINARY_OP               10 (-)
+           1656 PRECALL                  1
+           1660 CALL                     1
+           1670 LOAD_CONST              25 (30)
+           1672 COMPARE_OP               0 (<)
+           1678 POP_JUMP_FORWARD_IF_FALSE    29 (to 1738)
+
+166        1680 LOAD_GLOBAL             55 (NULL + _to_int)
+           1692 LOAD_FAST               21 (t)
+           1694 LOAD_ATTR               22 (text)
+           1704 PRECALL                  1
+           1708 CALL                     1
+           1718 LOAD_FAST                9 (size_totals)
+           1720 LOAD_FAST               23 (col)
+           1722 LOAD_CONST              20 (0)
+           1724 BINARY_SUBSCR
+           1734 STORE_SUBSCR
+        >> 1738 JUMP_BACKWARD          155 (to 1430)
+
+167     >> 1740 EXTENDED_ARG             2
+           1742 JUMP_BACKWARD          606 (to 532)
+
+170     >> 1744 LOAD_FAST               15 (toks)
+           1746 LOAD_CONST              20 (0)
+           1748 BINARY_SUBSCR
+           1758 LOAD_ATTR               22 (text)
+           1768 LOAD_METHOD             29 (isalpha)
+           1790 PRECALL                  0
+           1794 CALL                     0
+           1804 POP_JUMP_FORWARD_IF_FALSE    31 (to 1868)
+           1806 LOAD_FAST               15 (toks)
+           1808 LOAD_CONST              20 (0)
+           1810 BINARY_SUBSCR
+           1820 LOAD_ATTR               22 (text)
+           1830 LOAD_METHOD             30 (isupper)
+           1852 PRECALL                  0
+           1856 CALL                     0
+           1866 POP_JUMP_FORWARD_IF_TRUE     2 (to 1872)
+
+171     >> 1868 EXTENDED_ARG             2
+           1870 JUMP_BACKWARD          670 (to 532)
+
+172     >> 1872 LOAD_GLOBAL             35 (NULL + any)
+           1884 LOAD_CONST              26 (<code object <genexpr> at 0x000002BF94A66AB0, file "core\parsers\frankie_ecom.py", line 172>)
+           1886 MAKE_FUNCTION            0
+           1888 LOAD_FAST               15 (toks)
+           1890 GET_ITER
+           1892 PRECALL                  0
+           1896 CALL                     0
+           1906 PRECALL                  1
+           1910 CALL                     1
+           1920 POP_JUMP_FORWARD_IF_TRUE     2 (to 1926)
+
+173        1922 EXTENDED_ARG             2
+           1924 JUMP_BACKWARD          697 (to 532)
+
+174     >> 1926 LOAD_FAST                6 (size_cols)
+           1928 POP_JUMP_FORWARD_IF_FALSE     2 (to 1934)
+           1930 LOAD_FAST                7 (total_xc)
+           1932 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 1938)
+
+175     >> 1934 EXTENDED_ARG             2
+           1936 JUMP_BACKWARD          703 (to 532)
+
+176     >> 1938 LOAD_CONST              27 (<code object <listcomp> at 0x000002BF94A2F130, file "core\parsers\frankie_ecom.py", line 176>)
+           1940 MAKE_FUNCTION            0
+           1942 LOAD_FAST               15 (toks)
+           1944 GET_ITER
+           1946 PRECALL                  0
+           1950 CALL                     0
+           1960 STORE_FAST              24 (num_toks)
+
+177        1962 LOAD_GLOBAL             63 (NULL + len)
+           1974 LOAD_FAST               24 (num_toks)
+           1976 PRECALL                  1
+           1980 CALL                     1
+           1990 LOAD_CONST              28 (3)
+           1992 COMPARE_OP               0 (<)
+           1998 POP_JUMP_FORWARD_IF_FALSE     2 (to 2004)
+
+178        2000 EXTENDED_ARG             2
+           2002 JUMP_BACKWARD          736 (to 532)
+
+180     >> 2004 BUILD_LIST               0
+           2006 STORE_FAST              25 (sizes)
+
+181        2008 LOAD_CONST               0 (None)
+           2010 STORE_FAST              26 (row_total)
+
+182        2012 LOAD_FAST               24 (num_toks)
+           2014 GET_ITER
+        >> 2016 FOR_ITER               196 (to 2410)
+           2018 STORE_FAST              21 (t)
+
+183        2020 LOAD_FAST                8 (cartons_xc)
+           2022 POP_JUMP_FORWARD_IF_NONE    28 (to 2080)
+           2024 LOAD_GLOBAL             53 (NULL + abs)
+           2036 LOAD_FAST               21 (t)
+           2038 LOAD_ATTR               23 (xc)
+           2048 LOAD_FAST                8 (cartons_xc)
+           2050 BINARY_OP               10 (-)
+           2054 PRECALL                  1
+           2058 CALL                     1
+           2068 LOAD_CONST              25 (30)
+           2070 COMPARE_OP               0 (<)
+           2076 POP_JUMP_FORWARD_IF_FALSE     1 (to 2080)
+
+184        2078 JUMP_BACKWARD           32 (to 2016)
+
+185     >> 2080 LOAD_GLOBAL             53 (NULL + abs)
+           2092 LOAD_FAST               21 (t)
+           2094 LOAD_ATTR               23 (xc)
+           2104 LOAD_FAST                7 (total_xc)
+           2106 BINARY_OP               10 (-)
+           2110 PRECALL                  1
+           2114 CALL                     1
+           2124 LOAD_CONST              25 (30)
+           2126 COMPARE_OP               0 (<)
+           2132 POP_JUMP_FORWARD_IF_FALSE    21 (to 2176)
+
+186        2134 LOAD_GLOBAL             55 (NULL + _to_int)
+           2146 LOAD_FAST               21 (t)
+           2148 LOAD_ATTR               22 (text)
+           2158 PRECALL                  1
+           2162 CALL                     1
+           2172 STORE_FAST              26 (row_total)
+
+187        2174 JUMP_BACKWARD           80 (to 2016)
+
+188     >> 2176 LOAD_GLOBAL             57 (NULL + _nearest)
+           2188 LOAD_FAST                6 (size_cols)
+           2190 LOAD_FAST               21 (t)
+           2192 LOAD_ATTR               23 (xc)
+           2202 PRECALL                  2
+           2206 CALL                     2
+           2216 STORE_FAST              23 (col)
+
+189        2218 LOAD_FAST               23 (col)
+           2220 POP_JUMP_FORWARD_IF_NONE    93 (to 2408)
+           2222 LOAD_GLOBAL             53 (NULL + abs)
+           2234 LOAD_FAST               23 (col)
+           2236 LOAD_CONST              19 (1)
+           2238 BINARY_SUBSCR
+           2248 LOAD_FAST               21 (t)
+           2250 LOAD_ATTR               23 (xc)
+           2260 BINARY_OP               10 (-)
+           2264 PRECALL                  1
+           2268 CALL                     1
+           2278 LOAD_CONST              25 (30)
+           2280 COMPARE_OP               0 (<)
+           2286 POP_JUMP_FORWARD_IF_FALSE    60 (to 2408)
+
+190        2288 LOAD_FAST               25 (sizes)
+           2290 LOAD_METHOD             32 (append)
+           2312 LOAD_GLOBAL             67 (NULL + SizeQty)
+           2324 LOAD_FAST               23 (col)
+           2326 LOAD_CONST              20 (0)
+           2328 BINARY_SUBSCR
+           2338 LOAD_GLOBAL             55 (NULL + _to_int)
+           2350 LOAD_FAST               21 (t)
+           2352 LOAD_ATTR               22 (text)
+           2362 PRECALL                  1
+           2366 CALL                     1
+           2376 KW_NAMES                29
+           2378 PRECALL                  2
+           2382 CALL                     2
+           2392 PRECALL                  1
+           2396 CALL                     1
+           2406 POP_TOP
+        >> 2408 JUMP_BACKWARD          197 (to 2016)
+
+191     >> 2410 LOAD_FAST               25 (sizes)
+           2412 POP_JUMP_FORWARD_IF_TRUE     2 (to 2418)
+
+192        2414 EXTENDED_ARG             3
+           2416 JUMP_BACKWARD          943 (to 532)
+
+195     >> 2418 BUILD_LIST               0
+           2420 STORE_FAST              27 (desc_parts)
+
+196        2422 LOAD_CONST              19 (1)
+           2424 STORE_FAST              28 (idx)
+
+197        2426 LOAD_FAST               28 (idx)
+           2428 LOAD_GLOBAL             63 (NULL + len)
+           2440 LOAD_FAST               15 (toks)
+           2442 PRECALL                  1
+           2446 CALL                     1
+           2456 COMPARE_OP               0 (<)
+           2462 POP_JUMP_FORWARD_IF_FALSE   108 (to 2680)
+           2464 LOAD_FAST               15 (toks)
+           2466 LOAD_FAST               28 (idx)
+           2468 BINARY_SUBSCR
+           2478 LOAD_METHOD             34 (is_number)
+           2500 PRECALL                  0
+           2504 CALL                     0
+           2514 POP_JUMP_FORWARD_IF_TRUE    82 (to 2680)
+
+198     >> 2516 LOAD_FAST               27 (desc_parts)
+           2518 LOAD_METHOD             32 (append)
+           2540 LOAD_FAST               15 (toks)
+           2542 LOAD_FAST               28 (idx)
+           2544 BINARY_SUBSCR
+           2554 LOAD_ATTR               22 (text)
+           2564 PRECALL                  1
+           2568 CALL                     1
+           2578 POP_TOP
+
+199        2580 LOAD_FAST               28 (idx)
+           2582 LOAD_CONST              19 (1)
+           2584 BINARY_OP               13 (+=)
+           2588 STORE_FAST              28 (idx)
+
+197        2590 LOAD_FAST               28 (idx)
+           2592 LOAD_GLOBAL             63 (NULL + len)
+           2604 LOAD_FAST               15 (toks)
+           2606 PRECALL                  1
+           2610 CALL                     1
+           2620 COMPARE_OP               0 (<)
+           2626 POP_JUMP_FORWARD_IF_FALSE    26 (to 2680)
+           2628 LOAD_FAST               15 (toks)
+           2630 LOAD_FAST               28 (idx)
+           2632 BINARY_SUBSCR
+           2642 LOAD_METHOD             34 (is_number)
+           2664 PRECALL                  0
+           2668 CALL                     0
+           2678 POP_JUMP_BACKWARD_IF_FALSE    82 (to 2516)
+
+200     >> 2680 LOAD_CONST              30 (' ')
+           2682 LOAD_METHOD             35 (join)
+           2704 LOAD_FAST               27 (desc_parts)
+           2706 PRECALL                  1
+           2710 CALL                     1
+           2720 LOAD_METHOD             36 (strip)
+           2742 PRECALL                  0
+           2746 CALL                     0
+           2756 STORE_FAST              29 (desc)
+
+201        2758 LOAD_GLOBAL             75 (NULL + re)
+           2770 LOAD_ATTR               38 (sub)
+           2780 LOAD_CONST              31 ('\\(\\s+')
+           2782 LOAD_CONST              32 ('(')
+           2784 LOAD_FAST               29 (desc)
+           2786 PRECALL                  3
+           2790 CALL                     3
+           2800 STORE_FAST              29 (desc)
+
+202        2802 LOAD_GLOBAL             75 (NULL + re)
+           2814 LOAD_ATTR               38 (sub)
+           2824 LOAD_CONST              33 ('\\s+\\)')
+           2826 LOAD_CONST              34 (')')
+           2828 LOAD_FAST               29 (desc)
+           2830 PRECALL                  3
+           2834 CALL                     3
+           2844 STORE_FAST              29 (desc)
+
+204        2846 LOAD_FAST                5 (ent)
+           2848 LOAD_ATTR               16 (lines)
+           2858 LOAD_METHOD             32 (append)
+           2880 LOAD_GLOBAL             79 (NULL + OrderLine)
+
+205        2892 LOAD_FAST               11 (hdr)
+           2894 LOAD_CONST               5 ('style_no')
+           2896 BINARY_SUBSCR
+
+206        2906 LOAD_FAST               15 (toks)
+           2908 LOAD_CONST              20 (0)
+           2910 BINARY_SUBSCR
+           2920 LOAD_ATTR               22 (text)
+
+207        2930 LOAD_FAST               29 (desc)
+
+208        2932 LOAD_FAST               12 (unit_price)
+
+209        2934 LOAD_CONST              35 ('PCS')
+
+210        2936 LOAD_FAST               25 (sizes)
+
+211        2938 LOAD_FAST               26 (row_total)
+
+204        2940 KW_NAMES                36
+           2942 PRECALL                  7
+           2946 CALL                     7
+           2956 PRECALL                  1
+           2960 CALL                     1
+           2970 POP_TOP
+           2972 EXTENDED_ARG             4
+           2974 JUMP_BACKWARD         1222 (to 532)
+
+123     >> 2976 EXTENDED_ARG             4
+           2978 JUMP_BACKWARD         1247 (to 486)
+
+213     >> 2980 LOAD_FAST                5 (ent)
+           2982 LOAD_ATTR               16 (lines)
+           2992 POP_JUMP_FORWARD_IF_FALSE    40 (to 3074)
+
+214        2994 LOAD_FAST                9 (size_totals)
+           2996 LOAD_FAST                5 (ent)
+           2998 STORE_ATTR              40 (printed_size_totals)
+
+215        3008 LOAD_FAST               10 (printed_qty)
+           3010 LOAD_FAST                5 (ent)
+           3012 STORE_ATTR              41 (printed_total_qty)
+
+216        3022 LOAD_FAST                4 (po)
+           3024 LOAD_ATTR               42 (entities)
+           3034 LOAD_METHOD             32 (append)
+           3056 LOAD_FAST                5 (ent)
+           3058 PRECALL                  1
+           3062 CALL                     1
+           3072 POP_TOP
+
+217     >> 3074 LOAD_FAST                4 (po)
+           3076 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+126           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                29 (to 66)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_ATTR                0 (text)
+             22 LOAD_METHOD              1 (strip)
+             44 PRECALL                  0
+             48 CALL                     0
+             58 POP_JUMP_BACKWARD_IF_FALSE    27 (to 6)
+             60 LOAD_FAST                1 (t)
+             62 LIST_APPEND              2
+             64 JUMP_BACKWARD           30 (to 6)
+        >>   66 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+132           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                27 (to 62)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_ATTR                0 (text)
+             22 LOAD_METHOD              1 (upper)
+             44 PRECALL                  0
+             48 CALL                     0
+             58 LIST_APPEND              2
+             60 JUMP_BACKWARD           28 (to 6)
+        >>   62 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+134           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                29 (to 68)
+             10 STORE_FAST               1 (t)
+             12 LOAD_GLOBAL              1 (NULL + SIZE_TOKEN)
+             24 LOAD_ATTR                1 (match)
+             34 LOAD_FAST                1 (t)
+             36 LOAD_ATTR                2 (text)
+             46 PRECALL                  1
+             50 CALL                     1
+             60 YIELD_VALUE
+             62 RESUME                   1
+             64 POP_TOP
+             66 JUMP_BACKWARD           30 (to 8)
+        >>   68 LOAD_CONST               0 (None)
+             70 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<genexpr>  (args=1, locals=3)
+# varnames: .0, i, t
+135           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                38 (to 86)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (i)
+             16 STORE_FAST               2 (t)
+
+136          18 LOAD_FAST                2 (t)
+             20 LOAD_ATTR                0 (text)
+             30 LOAD_METHOD              1 (upper)
+             52 PRECALL                  0
+             56 CALL                     0
+             66 LOAD_CONST               0 ('TOTAL')
+             68 COMPARE_OP               2 (==)
+             74 POP_JUMP_BACKWARD_IF_FALSE    34 (to 8)
+
+135          76 LOAD_FAST                1 (i)
+
+136          78 YIELD_VALUE
+             80 RESUME                   1
+             82 POP_TOP
+             84 JUMP_BACKWARD           39 (to 8)
+
+135     >>   86 LOAD_CONST               1 (None)
+             88 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+146           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                16 (to 40)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_ATTR                0 (text)
+             22 LOAD_FAST                1 (t)
+             24 LOAD_ATTR                1 (xc)
+             34 BUILD_TUPLE              2
+             36 LIST_APPEND              2
+             38 JUMP_BACKWARD           17 (to 6)
+        >>   40 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+157           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                24 (to 56)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_METHOD              0 (is_number)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_BACKWARD_IF_FALSE    22 (to 6)
+             50 LOAD_FAST                1 (t)
+             52 LIST_APPEND              2
+             54 JUMP_BACKWARD           25 (to 6)
+        >>   56 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+172           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                30 (to 70)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 LOAD_METHOD              1 (startswith)
+             46 LOAD_CONST               0 ('$')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 YIELD_VALUE
+             64 RESUME                   1
+             66 POP_TOP
+             68 JUMP_BACKWARD           31 (to 8)
+        >>   70 LOAD_CONST               1 (None)
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>.FrankieEcomParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+176           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                24 (to 56)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_METHOD              0 (is_number)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_BACKWARD_IF_FALSE    22 (to 6)
+             50 LOAD_FAST                1 (t)
+             52 LIST_APPEND              2
+             54 JUMP_BACKWARD           25 (to 6)
+        >>   56 RETURN_VALUE

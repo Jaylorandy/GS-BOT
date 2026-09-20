@@ -1,0 +1,981 @@
+# module: core.validate
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\validate.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/validate.py - post-parse reconciliation.\n\nThe zero-data guard in the UI only catches ``entities == 0``. A recipe can also\nmatch the WRONG rows and produce a plausible-but-wrong result, which is more\ndangerous than a blank export because nothing looks broken. Example seen on a real\nLPP PO (PO_637JO_2627182):\n\n    correct  -> 24 detail rows  "…MEN`S TROUSERS 80X BEIGE PCS 744 10.20 7,588.80"  total 9000\n    wrong #1 -> 16 pack rows    "637JO-80X-T01 PACK 2 186 372"                       total   32\n    wrong #2 -> 10 bare rows    "637JO-80X-S PCS 372"                                total 4230\n\nBoth wrong variants share a tell-tale signature: no unit price was captured, and/or\nonly a small fraction of the unit-bearing lines got matched. ``reconcile`` turns\nthose signals into human-readable warnings. Per product decision the caller WARNS\nbut still exports -- the operator makes the final call.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 17           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 19          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (re)
+             24 STORE_NAME               3 (re)
+
+ 20          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               4 (('dataclass',))
+             30 IMPORT_NAME              4 (dataclasses)
+             32 IMPORT_FROM              5 (dataclass)
+             34 STORE_NAME               5 (dataclass)
+             36 POP_TOP
+
+ 21          38 LOAD_CONST               1 (0)
+             40 LOAD_CONST               5 (('Dict', 'List'))
+             42 IMPORT_NAME              6 (typing)
+             44 IMPORT_FROM              7 (Dict)
+             46 STORE_NAME               7 (Dict)
+             48 IMPORT_FROM              8 (List)
+             50 STORE_NAME               8 (List)
+             52 POP_TOP
+
+ 23          54 LOAD_CONST               6 (1)
+             56 LOAD_CONST               7 (('OrderLine', 'PoRecipe', 'PurchaseOrder'))
+             58 IMPORT_NAME              9 (models)
+             60 IMPORT_FROM             10 (OrderLine)
+             62 STORE_NAME              10 (OrderLine)
+             64 IMPORT_FROM             11 (PoRecipe)
+             66 STORE_NAME              11 (PoRecipe)
+             68 IMPORT_FROM             12 (PurchaseOrder)
+             70 STORE_NAME              12 (PurchaseOrder)
+             72 POP_TOP
+
+ 24          74 LOAD_CONST               6 (1)
+             76 LOAD_CONST               8 (('thousands_match',))
+             78 IMPORT_NAME             13 (numutil)
+             80 IMPORT_FROM             14 (thousands_match)
+             82 STORE_NAME              14 (thousands_match)
+             84 POP_TOP
+
+ 27          86 LOAD_NAME                5 (dataclass)
+
+ 28          88 PUSH_NULL
+             90 LOAD_BUILD_CLASS
+             92 LOAD_CONST               9 (<code object BreakdownProblem at 0x000002BF94A658A0, file "core\validate.py", line 27>)
+             94 MAKE_FUNCTION            0
+             96 LOAD_CONST              10 ('BreakdownProblem')
+             98 PRECALL                  2
+            102 CALL                     2
+
+ 27         112 PRECALL                  0
+            116 CALL                     0
+
+ 28         126 STORE_NAME              15 (BreakdownProblem)
+
+ 38         128 LOAD_CONST              23 (('po', 'PurchaseOrder', 'recipe', 'PoRecipe', 'return', 'List[BreakdownProblem]'))
+            130 LOAD_CONST              17 (<code object validate_breakdown at 0x000002BF94461590, file "core\validate.py", line 38>)
+            132 MAKE_FUNCTION            4 (annotations)
+            134 STORE_NAME              16 (validate_breakdown)
+
+104         136 LOAD_CONST              24 (('po', 'PurchaseOrder', 'return', 'List[str]'))
+            138 LOAD_CONST              19 (<code object validate_totals at 0x000002BF94464650, file "core\validate.py", line 104>)
+            140 MAKE_FUNCTION            4 (annotations)
+            142 STORE_NAME              17 (validate_totals)
+
+135         144 LOAD_CONST              25 (('po', 'PurchaseOrder', 'recipe', 'PoRecipe', 'doc', 'str', 'return', 'List[str]'))
+            146 LOAD_CONST              22 (<code object reconcile at 0x000002BF940D3110, file "core\validate.py", line 135>)
+            148 MAKE_FUNCTION            4 (annotations)
+            150 STORE_NAME              18 (reconcile)
+            152 LOAD_CONST               3 (None)
+            154 RETURN_VALUE
+
+==============================================================================
+## <module>.BreakdownProblem  (args=0, locals=0)
+ 27           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('BreakdownProblem')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 29          12 LOAD_CONST               1 ("One colour/size quantity that disagrees with the PDF's printed subtotal.")
+             14 STORE_NAME               3 (__doc__)
+
+ 30          16 LOAD_CONST               2 ('str')
+             18 LOAD_NAME                4 (__annotations__)
+             20 LOAD_CONST               3 ('axis')
+             22 STORE_SUBSCR
+
+ 31          26 LOAD_CONST               2 ('str')
+             28 LOAD_NAME                4 (__annotations__)
+             30 LOAD_CONST               4 ('entity')
+             32 STORE_SUBSCR
+
+ 32          36 LOAD_CONST               2 ('str')
+             38 LOAD_NAME                4 (__annotations__)
+             40 LOAD_CONST               5 ('key')
+             42 STORE_SUBSCR
+
+ 33          46 LOAD_CONST               6 ('int')
+             48 LOAD_NAME                4 (__annotations__)
+             50 LOAD_CONST               7 ('parsed')
+             52 STORE_SUBSCR
+
+ 34          56 LOAD_CONST               6 ('int')
+             58 LOAD_NAME                4 (__annotations__)
+             60 LOAD_CONST               8 ('printed')
+             62 STORE_SUBSCR
+
+ 35          66 LOAD_CONST               2 ('str')
+             68 LOAD_NAME                4 (__annotations__)
+             70 LOAD_CONST               9 ('message')
+             72 STORE_SUBSCR
+             76 LOAD_CONST              10 (None)
+             78 RETURN_VALUE
+
+==============================================================================
+## <module>.validate_breakdown  (args=2, locals=13)
+# varnames: po, recipe, problems, ent, ent_label, by_color, ln, code, lns, parsed, printed, printed_sum, band
+              0 MAKE_CELL               13 (size)
+
+ 38           2 RESUME                   0
+
+ 58           4 BUILD_LIST               0
+              6 STORE_FAST               2 (problems)
+
+ 59           8 LOAD_FAST                0 (po)
+             10 LOAD_ATTR                0 (entities)
+             20 GET_ITER
+        >>   22 EXTENDED_ARG             1
+             24 FOR_ITER               495 (to 1016)
+             26 STORE_FAST               3 (ent)
+
+ 60          28 LOAD_FAST                3 (ent)
+             30 LOAD_ATTR                1 (po_no)
+             40 JUMP_IF_TRUE_OR_POP      8 (to 58)
+             42 LOAD_FAST                3 (ent)
+             44 LOAD_ATTR                2 (destination_code)
+             54 JUMP_IF_TRUE_OR_POP      1 (to 58)
+             56 LOAD_CONST               1 ('?')
+        >>   58 STORE_FAST               4 (ent_label)
+
+ 63          60 LOAD_FAST                1 (recipe)
+             62 LOAD_ATTR                3 (has_color_total)
+             72 POP_JUMP_FORWARD_IF_FALSE   205 (to 484)
+
+ 64          74 BUILD_MAP                0
+             76 STORE_FAST               5 (by_color)
+
+ 65          78 LOAD_FAST                3 (ent)
+             80 LOAD_ATTR                4 (lines)
+             90 GET_ITER
+        >>   92 FOR_ITER                48 (to 190)
+             94 STORE_FAST               6 (ln)
+
+ 66          96 LOAD_FAST                5 (by_color)
+             98 LOAD_METHOD              5 (setdefault)
+            120 LOAD_FAST                6 (ln)
+            122 LOAD_ATTR                6 (color_code)
+            132 BUILD_LIST               0
+            134 PRECALL                  2
+            138 CALL                     2
+            148 LOAD_METHOD              7 (append)
+            170 LOAD_FAST                6 (ln)
+            172 PRECALL                  1
+            176 CALL                     1
+            186 POP_TOP
+            188 JUMP_BACKWARD           49 (to 92)
+
+ 67     >>  190 LOAD_FAST                5 (by_color)
+            192 LOAD_METHOD              8 (items)
+            214 PRECALL                  0
+            218 CALL                     0
+            228 GET_ITER
+        >>  230 FOR_ITER               126 (to 484)
+            232 UNPACK_SEQUENCE          2
+            236 STORE_FAST               7 (code)
+            238 STORE_FAST               8 (lns)
+
+ 68         240 LOAD_GLOBAL             19 (NULL + sum)
+            252 LOAD_CONST               2 (<code object <genexpr> at 0x000002BF94A6EE90, file "core\validate.py", line 68>)
+            254 MAKE_FUNCTION            0
+            256 LOAD_FAST                8 (lns)
+            258 GET_ITER
+            260 PRECALL                  0
+            264 CALL                     0
+            274 PRECALL                  1
+            278 CALL                     1
+            288 STORE_FAST               9 (parsed)
+
+ 69         290 LOAD_GLOBAL             19 (NULL + sum)
+            302 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A2BF00, file "core\validate.py", line 69>)
+            304 MAKE_FUNCTION            0
+            306 LOAD_FAST                8 (lns)
+            308 GET_ITER
+            310 PRECALL                  0
+            314 CALL                     0
+            324 PRECALL                  1
+            328 CALL                     1
+            338 STORE_FAST              10 (printed)
+
+ 71         340 LOAD_FAST               10 (printed)
+            342 POP_JUMP_FORWARD_IF_FALSE    69 (to 482)
+            344 LOAD_GLOBAL             21 (NULL + thousands_match)
+            356 LOAD_FAST                9 (parsed)
+            358 LOAD_FAST               10 (printed)
+            360 PRECALL                  2
+            364 CALL                     2
+            374 POP_JUMP_FORWARD_IF_TRUE    53 (to 482)
+
+ 72         376 LOAD_FAST                2 (problems)
+            378 LOAD_METHOD              7 (append)
+            400 LOAD_GLOBAL             23 (NULL + BreakdownProblem)
+
+ 73         412 LOAD_CONST               4 ('color')
+            414 LOAD_FAST                4 (ent_label)
+            416 LOAD_FAST                7 (code)
+
+ 74         418 LOAD_FAST                9 (parsed)
+            420 LOAD_FAST               10 (printed)
+
+ 75         422 LOAD_CONST               5 ('颜色 ')
+            424 LOAD_FAST                7 (code)
+            426 FORMAT_VALUE             2 (repr)
+            428 LOAD_CONST               6 (' 合计：解析 ')
+            430 LOAD_FAST                9 (parsed)
+            432 FORMAT_VALUE             0
+            434 LOAD_CONST               7 (' 件 与 PDF 行小计 ')
+
+ 76         436 LOAD_FAST               10 (printed)
+
+ 75         438 FORMAT_VALUE             0
+            440 LOAD_CONST               8 (' 件不符（订单 ')
+
+ 76         442 LOAD_FAST                4 (ent_label)
+
+ 75         444 FORMAT_VALUE             0
+            446 LOAD_CONST               9 ('）')
+            448 BUILD_STRING             9
+
+ 72         450 KW_NAMES                10
+            452 PRECALL                  6
+            456 CALL                     6
+            466 PRECALL                  1
+            470 CALL                     1
+            480 POP_TOP
+        >>  482 JUMP_BACKWARD          127 (to 230)
+
+ 79     >>  484 LOAD_FAST                1 (recipe)
+            486 LOAD_ATTR               12 (has_size_total)
+            496 EXTENDED_ARG             1
+            498 POP_JUMP_FORWARD_IF_FALSE   256 (to 1012)
+            500 LOAD_FAST                3 (ent)
+            502 LOAD_ATTR               13 (printed_size_totals)
+            512 POP_JUMP_FORWARD_IF_FALSE   249 (to 1012)
+
+ 87         514 LOAD_GLOBAL             19 (NULL + sum)
+            526 LOAD_FAST                3 (ent)
+            528 LOAD_ATTR               13 (printed_size_totals)
+            538 LOAD_METHOD             14 (values)
+            560 PRECALL                  0
+            564 CALL                     0
+            574 PRECALL                  1
+            578 CALL                     1
+            588 STORE_FAST              11 (printed_sum)
+
+ 88         590 LOAD_GLOBAL             31 (NULL + max)
+            602 LOAD_CONST              11 (2)
+            604 LOAD_GLOBAL             33 (NULL + int)
+            616 LOAD_GLOBAL             35 (NULL + abs)
+            628 LOAD_FAST                3 (ent)
+            630 LOAD_ATTR               18 (total_qty)
+            640 PRECALL                  1
+            644 CALL                     1
+            654 LOAD_CONST              12 (0.05)
+            656 BINARY_OP                5 (*)
+            660 PRECALL                  1
+            664 CALL                     1
+            674 PRECALL                  2
+            678 CALL                     2
+            688 STORE_FAST              12 (band)
+
+ 89         690 LOAD_GLOBAL             35 (NULL + abs)
+            702 LOAD_FAST               11 (printed_sum)
+            704 LOAD_FAST                3 (ent)
+            706 LOAD_ATTR               18 (total_qty)
+            716 BINARY_OP               10 (-)
+            720 PRECALL                  1
+            724 CALL                     1
+            734 LOAD_FAST               12 (band)
+            736 COMPARE_OP               4 (>)
+            742 POP_JUMP_FORWARD_IF_FALSE     2 (to 748)
+
+ 90         744 EXTENDED_ARG             1
+            746 JUMP_BACKWARD          363 (to 22)
+
+ 91     >>  748 LOAD_FAST                3 (ent)
+            750 LOAD_ATTR               13 (printed_size_totals)
+            760 LOAD_METHOD              8 (items)
+            782 PRECALL                  0
+            786 CALL                     0
+            796 GET_ITER
+        >>  798 FOR_ITER               106 (to 1012)
+            800 UNPACK_SEQUENCE          2
+            804 STORE_DEREF             13 (size)
+            806 STORE_FAST              10 (printed)
+
+ 92         808 LOAD_GLOBAL             19 (NULL + sum)
+            820 LOAD_CLOSURE            13 (size)
+            822 BUILD_TUPLE              1
+            824 LOAD_CONST              13 (<code object <genexpr> at 0x000002BF94A65AC0, file "core\validate.py", line 92>)
+            826 MAKE_FUNCTION            8 (closure)
+            828 LOAD_FAST                3 (ent)
+            830 LOAD_ATTR                4 (lines)
+            840 GET_ITER
+            842 PRECALL                  0
+            846 CALL                     0
+            856 PRECALL                  1
+            860 CALL                     1
+            870 STORE_FAST               9 (parsed)
+
+ 94         872 LOAD_GLOBAL             21 (NULL + thousands_match)
+            884 LOAD_FAST                9 (parsed)
+            886 LOAD_FAST               10 (printed)
+            888 PRECALL                  2
+            892 CALL                     2
+            902 POP_JUMP_FORWARD_IF_TRUE    53 (to 1010)
+
+ 95         904 LOAD_FAST                2 (problems)
+            906 LOAD_METHOD              7 (append)
+            928 LOAD_GLOBAL             23 (NULL + BreakdownProblem)
+
+ 96         940 LOAD_CONST              14 ('size')
+            942 LOAD_FAST                4 (ent_label)
+            944 LOAD_DEREF              13 (size)
+
+ 97         946 LOAD_FAST                9 (parsed)
+            948 LOAD_FAST               10 (printed)
+
+ 98         950 LOAD_CONST              15 ('尺码 ')
+            952 LOAD_DEREF              13 (size)
+            954 FORMAT_VALUE             2 (repr)
+            956 LOAD_CONST               6 (' 合计：解析 ')
+            958 LOAD_FAST                9 (parsed)
+            960 FORMAT_VALUE             0
+            962 LOAD_CONST              16 (' 件 与 PDF 小计 ')
+
+ 99         964 LOAD_FAST               10 (printed)
+
+ 98         966 FORMAT_VALUE             0
+            968 LOAD_CONST               8 (' 件不符（订单 ')
+
+ 99         970 LOAD_FAST                4 (ent_label)
+
+ 98         972 FORMAT_VALUE             0
+            974 LOAD_CONST               9 ('）')
+            976 BUILD_STRING             9
+
+ 95         978 KW_NAMES                10
+            980 PRECALL                  6
+            984 CALL                     6
+            994 PRECALL                  1
+            998 CALL                     1
+           1008 POP_TOP
+        >> 1010 JUMP_BACKWARD          107 (to 798)
+        >> 1012 EXTENDED_ARG             1
+           1014 JUMP_BACKWARD          497 (to 22)
+
+101     >> 1016 LOAD_FAST                2 (problems)
+           1018 RETURN_VALUE
+
+==============================================================================
+## <module>.validate_breakdown.<genexpr>  (args=1, locals=2)
+# varnames: .0, l
+ 68           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (l)
+             12 LOAD_FAST                1 (l)
+             14 LOAD_ATTR                0 (total_qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.validate_breakdown.<genexpr>  (args=1, locals=2)
+# varnames: .0, l
+ 69           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                18 (to 46)
+             10 STORE_FAST               1 (l)
+
+ 70          12 LOAD_FAST                1 (l)
+             14 LOAD_ATTR                0 (printed_row_total)
+             24 POP_JUMP_BACKWARD_IF_NONE     9 (to 8)
+
+ 69          26 LOAD_FAST                1 (l)
+             28 LOAD_ATTR                0 (printed_row_total)
+
+ 70          38 YIELD_VALUE
+             40 RESUME                   1
+             42 POP_TOP
+             44 JUMP_BACKWARD           19 (to 8)
+
+ 69     >>   46 LOAD_CONST               0 (None)
+             48 RETURN_VALUE
+
+==============================================================================
+## <module>.validate_breakdown.<genexpr>  (args=1, locals=3)
+# varnames: .0, l, s
+              0 COPY_FREE_VARS           1
+
+ 92           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                32 (to 76)
+             12 STORE_FAST               1 (l)
+             14 LOAD_FAST                1 (l)
+             16 LOAD_ATTR                0 (sizes)
+             26 GET_ITER
+        >>   28 FOR_ITER                22 (to 74)
+             30 STORE_FAST               2 (s)
+
+ 93          32 LOAD_FAST                2 (s)
+             34 LOAD_ATTR                1 (size)
+             44 LOAD_DEREF               3 (size)
+             46 COMPARE_OP               2 (==)
+             52 POP_JUMP_BACKWARD_IF_FALSE    13 (to 28)
+
+ 92          54 LOAD_FAST                2 (s)
+             56 LOAD_ATTR                2 (qty)
+
+ 93          66 YIELD_VALUE
+             68 RESUME                   1
+             70 POP_TOP
+             72 JUMP_BACKWARD           23 (to 28)
+        >>   74 JUMP_BACKWARD           33 (to 10)
+
+ 92     >>   76 LOAD_CONST               0 (None)
+             78 RETURN_VALUE
+
+==============================================================================
+## <module>.validate_totals  (args=1, locals=7)
+# varnames: po, problems, ent, label, computed, ln, band
+104           0 RESUME                   0
+
+115           2 BUILD_LIST               0
+              4 STORE_FAST               1 (problems)
+
+116           6 LOAD_FAST                0 (po)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 FOR_ITER               239 (to 500)
+             22 STORE_FAST               2 (ent)
+
+117          24 LOAD_FAST                2 (ent)
+             26 LOAD_ATTR                1 (po_no)
+             36 JUMP_IF_TRUE_OR_POP      8 (to 54)
+             38 LOAD_FAST                2 (ent)
+             40 LOAD_ATTR                2 (destination_code)
+             50 JUMP_IF_TRUE_OR_POP      1 (to 54)
+             52 LOAD_CONST               1 ('?')
+        >>   54 STORE_FAST               3 (label)
+
+118          56 LOAD_FAST                2 (ent)
+             58 LOAD_ATTR                3 (printed_total_qty)
+             68 POP_JUMP_FORWARD_IF_NONE    67 (to 204)
+             70 LOAD_GLOBAL              9 (NULL + thousands_match)
+
+119          82 LOAD_FAST                2 (ent)
+             84 LOAD_ATTR                5 (total_qty)
+             94 LOAD_FAST                2 (ent)
+             96 LOAD_ATTR                3 (printed_total_qty)
+
+118         106 PRECALL                  2
+            110 CALL                     2
+            120 POP_JUMP_FORWARD_IF_TRUE    41 (to 204)
+
+120         122 LOAD_FAST                1 (problems)
+            124 LOAD_METHOD              6 (append)
+
+121         146 LOAD_CONST               3 ('总件数：解析 ')
+            148 LOAD_FAST                2 (ent)
+            150 LOAD_ATTR                5 (total_qty)
+            160 FORMAT_VALUE             0
+            162 LOAD_CONST               4 (' 件 与 PDF ')
+            164 LOAD_FAST                2 (ent)
+            166 LOAD_ATTR                3 (printed_total_qty)
+            176 FORMAT_VALUE             0
+            178 LOAD_CONST               5 (' 件不符（订单 ')
+            180 LOAD_FAST                3 (label)
+            182 FORMAT_VALUE             0
+            184 LOAD_CONST               6 ('）')
+            186 BUILD_STRING             7
+
+120         188 PRECALL                  1
+            192 CALL                     1
+            202 POP_TOP
+
+122     >>  204 LOAD_FAST                2 (ent)
+            206 LOAD_ATTR                7 (printed_total_amount)
+            216 POP_JUMP_FORWARD_IF_NONE   140 (to 498)
+
+123         218 LOAD_CONST               7 (0.0)
+            220 STORE_FAST               4 (computed)
+
+124         222 LOAD_FAST                2 (ent)
+            224 LOAD_ATTR                8 (lines)
+            234 GET_ITER
+        >>  236 FOR_ITER                28 (to 294)
+            238 STORE_FAST               5 (ln)
+
+125         240 LOAD_FAST                5 (ln)
+            242 LOAD_ATTR                9 (unit_price)
+            252 POP_JUMP_FORWARD_IF_NOT_NONE     1 (to 256)
+
+126         254 JUMP_BACKWARD           10 (to 236)
+
+127     >>  256 LOAD_FAST                4 (computed)
+            258 LOAD_FAST                5 (ln)
+            260 LOAD_ATTR                9 (unit_price)
+            270 LOAD_FAST                5 (ln)
+            272 LOAD_ATTR                5 (total_qty)
+            282 BINARY_OP                5 (*)
+            286 BINARY_OP               13 (+=)
+            290 STORE_FAST               4 (computed)
+            292 JUMP_BACKWARD           29 (to 236)
+
+128     >>  294 LOAD_GLOBAL             21 (NULL + max)
+            306 LOAD_CONST               8 (1.0)
+            308 LOAD_GLOBAL             23 (NULL + abs)
+            320 LOAD_FAST                2 (ent)
+            322 LOAD_ATTR                7 (printed_total_amount)
+            332 PRECALL                  1
+            336 CALL                     1
+            346 LOAD_CONST               9 (0.01)
+            348 BINARY_OP                5 (*)
+            352 PRECALL                  2
+            356 CALL                     2
+            366 STORE_FAST               6 (band)
+
+129         368 LOAD_GLOBAL             23 (NULL + abs)
+            380 LOAD_FAST                4 (computed)
+            382 LOAD_FAST                2 (ent)
+            384 LOAD_ATTR                7 (printed_total_amount)
+            394 BINARY_OP               10 (-)
+            398 PRECALL                  1
+            402 CALL                     1
+            412 LOAD_FAST                6 (band)
+            414 COMPARE_OP               4 (>)
+            420 POP_JUMP_FORWARD_IF_FALSE    38 (to 498)
+
+130         422 LOAD_FAST                1 (problems)
+            424 LOAD_METHOD              6 (append)
+
+131         446 LOAD_CONST              10 ('总金额：解析 ')
+            448 LOAD_FAST                4 (computed)
+            450 LOAD_CONST              11 (',.2f')
+            452 FORMAT_VALUE             4 (with format)
+            454 LOAD_CONST              12 (' 与 PDF ')
+            456 LOAD_FAST                2 (ent)
+            458 LOAD_ATTR                7 (printed_total_amount)
+            468 LOAD_CONST              11 (',.2f')
+            470 FORMAT_VALUE             4 (with format)
+            472 LOAD_CONST              13 (' 不符（订单 ')
+            474 LOAD_FAST                3 (label)
+            476 FORMAT_VALUE             0
+            478 LOAD_CONST               6 ('）')
+            480 BUILD_STRING             7
+
+130         482 PRECALL                  1
+            486 CALL                     1
+            496 POP_TOP
+        >>  498 JUMP_BACKWARD          240 (to 20)
+
+132     >>  500 LOAD_FAST                1 (problems)
+            502 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile  (args=3, locals=10)
+# varnames: po, recipe, doc, warns, lines, no_price, unit, cand, e, neg
+              0 MAKE_CELL               10 (pat)
+
+135           2 RESUME                   0
+
+137           4 BUILD_LIST               0
+              6 STORE_FAST               3 (warns)
+
+138           8 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6EB10, file "core\validate.py", line 138>)
+             10 MAKE_FUNCTION            0
+             12 LOAD_FAST                0 (po)
+             14 LOAD_ATTR                0 (entities)
+             24 GET_ITER
+             26 PRECALL                  0
+             30 CALL                     0
+             40 STORE_FAST               4 (lines)
+
+139          42 LOAD_FAST                4 (lines)
+             44 POP_JUMP_FORWARD_IF_TRUE     3 (to 52)
+
+140          46 LOAD_CONST               2 ('解析结果为空（无任何订单行）')
+             48 BUILD_LIST               1
+             50 RETURN_VALUE
+
+143     >>   52 LOAD_GLOBAL              3 (NULL + sum)
+             64 LOAD_CONST               3 (<code object <genexpr> at 0x000002BF94A6E410, file "core\validate.py", line 143>)
+             66 MAKE_FUNCTION            0
+             68 LOAD_FAST                4 (lines)
+             70 GET_ITER
+             72 PRECALL                  0
+             76 CALL                     0
+             86 PRECALL                  1
+             90 CALL                     1
+            100 STORE_FAST               5 (no_price)
+
+144         102 LOAD_FAST                5 (no_price)
+            104 LOAD_GLOBAL              5 (NULL + len)
+            116 LOAD_FAST                4 (lines)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 COMPARE_OP               2 (==)
+            138 POP_JUMP_FORWARD_IF_FALSE    47 (to 234)
+
+145         140 LOAD_FAST                3 (warns)
+            142 LOAD_METHOD              3 (append)
+
+146         164 LOAD_CONST               4 ('全部 ')
+            166 LOAD_GLOBAL              5 (NULL + len)
+            178 LOAD_FAST                4 (lines)
+            180 PRECALL                  1
+            184 CALL                     1
+            194 FORMAT_VALUE             0
+            196 LOAD_CONST               5 (' 行均未捕获单价 —— 很可能匹配到了装箱/汇总行而非真实订单行，请核对数量（当前合计 ')
+
+147         198 LOAD_FAST                0 (po)
+            200 LOAD_ATTR                4 (total_qty)
+
+146         210 FORMAT_VALUE             0
+            212 LOAD_CONST               6 ('）')
+            214 BUILD_STRING             5
+
+145         216 PRECALL                  1
+            220 CALL                     1
+            230 POP_TOP
+            232 JUMP_FORWARD            62 (to 358)
+
+149     >>  234 LOAD_FAST                5 (no_price)
+            236 LOAD_GLOBAL              5 (NULL + len)
+            248 LOAD_FAST                4 (lines)
+            250 PRECALL                  1
+            254 CALL                     1
+            264 LOAD_CONST               7 (0.5)
+            266 BINARY_OP                5 (*)
+            270 COMPARE_OP               4 (>)
+            276 POP_JUMP_FORWARD_IF_FALSE    40 (to 358)
+
+150         278 LOAD_FAST                3 (warns)
+            280 LOAD_METHOD              3 (append)
+            302 LOAD_FAST                5 (no_price)
+            304 FORMAT_VALUE             0
+            306 LOAD_CONST               8 ('/')
+            308 LOAD_GLOBAL              5 (NULL + len)
+            320 LOAD_FAST                4 (lines)
+            322 PRECALL                  1
+            326 CALL                     1
+            336 FORMAT_VALUE             0
+            338 LOAD_CONST               9 (' 行缺单价，模板 A/B 的单价列会留空')
+            340 BUILD_STRING             4
+            342 PRECALL                  1
+            346 CALL                     1
+            356 POP_TOP
+
+153     >>  358 LOAD_FAST                1 (recipe)
+            360 LOAD_ATTR                5 (order_unit)
+            370 JUMP_IF_TRUE_OR_POP      1 (to 374)
+            372 LOAD_CONST              10 ('')
+        >>  374 LOAD_METHOD              6 (strip)
+            396 PRECALL                  0
+            400 CALL                     0
+            410 STORE_FAST               6 (unit)
+
+154         412 LOAD_FAST                6 (unit)
+            414 POP_JUMP_FORWARD_IF_FALSE   155 (to 726)
+
+155         416 LOAD_GLOBAL             15 (NULL + re)
+            428 LOAD_ATTR                8 (compile)
+            438 LOAD_CONST              11 ('(?<![A-Za-z])')
+            440 LOAD_GLOBAL             15 (NULL + re)
+            452 LOAD_ATTR                9 (escape)
+            462 LOAD_FAST                6 (unit)
+            464 PRECALL                  1
+            468 CALL                     1
+            478 FORMAT_VALUE             0
+            480 LOAD_CONST              12 ('(?![A-Za-z])')
+            482 BUILD_STRING             3
+            484 PRECALL                  1
+            488 CALL                     1
+            498 STORE_DEREF             10 (pat)
+
+156         500 LOAD_GLOBAL              3 (NULL + sum)
+            512 LOAD_CLOSURE            10 (pat)
+            514 BUILD_TUPLE              1
+            516 LOAD_CONST              13 (<code object <genexpr> at 0x000002BF9472B470, file "core\validate.py", line 156>)
+            518 MAKE_FUNCTION            8 (closure)
+            520 LOAD_FAST                2 (doc)
+            522 LOAD_METHOD             10 (splitlines)
+            544 PRECALL                  0
+            548 CALL                     0
+            558 GET_ITER
+            560 PRECALL                  0
+            564 CALL                     0
+            574 PRECALL                  1
+            578 CALL                     1
+            588 STORE_FAST               7 (cand)
+
+157         590 LOAD_FAST                7 (cand)
+            592 POP_JUMP_FORWARD_IF_FALSE    66 (to 726)
+            594 LOAD_GLOBAL              5 (NULL + len)
+            606 LOAD_FAST                4 (lines)
+            608 PRECALL                  1
+            612 CALL                     1
+            622 LOAD_FAST                7 (cand)
+            624 LOAD_CONST              14 (0.4)
+            626 BINARY_OP                5 (*)
+            630 COMPARE_OP               0 (<)
+            636 POP_JUMP_FORWARD_IF_FALSE    44 (to 726)
+
+158         638 LOAD_FAST                3 (warns)
+            640 LOAD_METHOD              3 (append)
+
+159         662 LOAD_CONST              15 ('仅解析出 ')
+            664 LOAD_GLOBAL              5 (NULL + len)
+            676 LOAD_FAST                4 (lines)
+            678 PRECALL                  1
+            682 CALL                     1
+            692 FORMAT_VALUE             0
+            694 LOAD_CONST              16 (' 行，但文中有 ')
+            696 LOAD_FAST                7 (cand)
+            698 FORMAT_VALUE             0
+            700 LOAD_CONST              17 (' 行含单位「')
+            702 LOAD_FAST                6 (unit)
+            704 FORMAT_VALUE             0
+            706 LOAD_CONST              18 ('」—— 疑似大量漏行')
+            708 BUILD_STRING             7
+
+158         710 PRECALL                  1
+            714 CALL                     1
+            724 POP_TOP
+
+163     >>  726 LOAD_FAST                0 (po)
+            728 LOAD_ATTR                0 (entities)
+            738 GET_ITER
+        >>  740 FOR_ITER               155 (to 1052)
+            742 STORE_FAST               8 (e)
+
+164         744 LOAD_FAST                8 (e)
+            746 LOAD_ATTR               11 (lines)
+            756 POP_JUMP_FORWARD_IF_TRUE    32 (to 822)
+
+165         758 LOAD_FAST                3 (warns)
+            760 LOAD_METHOD              3 (append)
+            782 LOAD_CONST              19 ('订单 ')
+            784 LOAD_FAST                8 (e)
+            786 LOAD_ATTR               12 (po_no)
+            796 JUMP_IF_TRUE_OR_POP      1 (to 800)
+            798 LOAD_CONST              20 ('(无单号)')
+        >>  800 FORMAT_VALUE             0
+            802 LOAD_CONST              21 (' 未解析到任何订单行')
+            804 BUILD_STRING             3
+            806 PRECALL                  1
+            810 CALL                     1
+            820 POP_TOP
+
+166     >>  822 LOAD_FAST                8 (e)
+            824 LOAD_ATTR               12 (po_no)
+            834 POP_JUMP_FORWARD_IF_FALSE    79 (to 994)
+            836 LOAD_FAST                8 (e)
+            838 LOAD_ATTR               12 (po_no)
+            848 LOAD_METHOD             13 (isdigit)
+            870 PRECALL                  0
+            874 CALL                     0
+            884 POP_JUMP_FORWARD_IF_FALSE    54 (to 994)
+            886 LOAD_GLOBAL              5 (NULL + len)
+            898 LOAD_FAST                8 (e)
+            900 LOAD_ATTR               12 (po_no)
+            910 PRECALL                  1
+            914 CALL                     1
+            924 LOAD_CONST              22 (2)
+            926 COMPARE_OP               1 (<=)
+            932 POP_JUMP_FORWARD_IF_FALSE    30 (to 994)
+
+167         934 LOAD_FAST                3 (warns)
+            936 LOAD_METHOD              3 (append)
+
+168         958 LOAD_CONST              23 ('订单号「')
+            960 LOAD_FAST                8 (e)
+            962 LOAD_ATTR               12 (po_no)
+            972 FORMAT_VALUE             0
+            974 LOAD_CONST              24 ('」过短，疑似把区块序号当成了单号（请检查 entity_anchor 的捕获组）')
+            976 BUILD_STRING             3
+
+167         978 PRECALL                  1
+            982 CALL                     1
+            992 POP_TOP
+
+170     >>  994 LOAD_FAST                8 (e)
+            996 LOAD_ATTR               12 (po_no)
+           1006 POP_JUMP_FORWARD_IF_TRUE    21 (to 1050)
+
+171        1008 LOAD_FAST                3 (warns)
+           1010 LOAD_METHOD              3 (append)
+           1032 LOAD_CONST              25 ('存在无单号的订单块（po_no_anchor / entity_anchor 未命中）')
+           1034 PRECALL                  1
+           1038 CALL                     1
+           1048 POP_TOP
+        >> 1050 JUMP_BACKWARD          156 (to 740)
+
+174     >> 1052 LOAD_FAST                0 (po)
+           1054 LOAD_ATTR                4 (total_qty)
+           1064 LOAD_CONST              26 (0)
+           1066 COMPARE_OP               1 (<=)
+           1072 POP_JUMP_FORWARD_IF_FALSE    21 (to 1116)
+
+175        1074 LOAD_FAST                3 (warns)
+           1076 LOAD_METHOD              3 (append)
+           1098 LOAD_CONST              27 ('解析总数量为 0')
+           1100 PRECALL                  1
+           1104 CALL                     1
+           1114 POP_TOP
+
+176     >> 1116 LOAD_GLOBAL              3 (NULL + sum)
+           1128 LOAD_CONST              28 (<code object <genexpr> at 0x000002BF94A2FE30, file "core\validate.py", line 176>)
+           1130 MAKE_FUNCTION            0
+           1132 LOAD_FAST                4 (lines)
+           1134 GET_ITER
+           1136 PRECALL                  0
+           1140 CALL                     0
+           1150 PRECALL                  1
+           1154 CALL                     1
+           1164 STORE_FAST               9 (neg)
+
+177        1166 LOAD_FAST                9 (neg)
+           1168 POP_JUMP_FORWARD_IF_FALSE    25 (to 1220)
+
+178        1170 LOAD_FAST                3 (warns)
+           1172 LOAD_METHOD              3 (append)
+           1194 LOAD_CONST              29 ('存在 ')
+           1196 LOAD_FAST                9 (neg)
+           1198 FORMAT_VALUE             0
+           1200 LOAD_CONST              30 (' 个负数量')
+           1202 BUILD_STRING             3
+           1204 PRECALL                  1
+           1208 CALL                     1
+           1218 POP_TOP
+
+180     >> 1220 LOAD_FAST                3 (warns)
+           1222 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile.<listcomp>  (args=1, locals=3)
+# varnames: .0, e, ln
+138           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                14 (to 36)
+              8 STORE_FAST               1 (e)
+             10 LOAD_FAST                1 (e)
+             12 LOAD_ATTR                0 (lines)
+             22 GET_ITER
+        >>   24 FOR_ITER                 4 (to 34)
+             26 STORE_FAST               2 (ln)
+             28 LOAD_FAST                2 (ln)
+             30 LIST_APPEND              3
+             32 JUMP_BACKWARD            5 (to 24)
+        >>   34 JUMP_BACKWARD           15 (to 6)
+        >>   36 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile.<genexpr>  (args=1, locals=2)
+# varnames: .0, ln
+143           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                13 (to 36)
+             10 STORE_FAST               1 (ln)
+             12 LOAD_FAST                1 (ln)
+             14 LOAD_ATTR                0 (unit_price)
+             24 POP_JUMP_BACKWARD_IF_TRUE     9 (to 8)
+             26 LOAD_CONST               0 (1)
+             28 YIELD_VALUE
+             30 RESUME                   1
+             32 POP_TOP
+             34 JUMP_BACKWARD           14 (to 8)
+        >>   36 LOAD_CONST               1 (None)
+             38 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile.<genexpr>  (args=1, locals=2)
+# varnames: .0, l
+              0 COPY_FREE_VARS           1
+
+156           2 RETURN_GENERATOR
+              4 POP_TOP
+              6 RESUME                   0
+              8 LOAD_FAST                0 (.0)
+        >>   10 FOR_ITER                48 (to 108)
+             12 STORE_FAST               1 (l)
+             14 LOAD_DEREF               2 (pat)
+             16 LOAD_METHOD              0 (search)
+             38 LOAD_FAST                1 (l)
+             40 PRECALL                  1
+             44 CALL                     1
+             54 POP_JUMP_BACKWARD_IF_FALSE    23 (to 10)
+             56 LOAD_GLOBAL              3 (NULL + re)
+             68 LOAD_ATTR                0 (search)
+             78 LOAD_CONST               0 ('\\d')
+             80 LOAD_FAST                1 (l)
+             82 PRECALL                  2
+             86 CALL                     2
+             96 POP_JUMP_BACKWARD_IF_FALSE    44 (to 10)
+             98 LOAD_CONST               1 (1)
+            100 YIELD_VALUE
+            102 RESUME                   1
+            104 POP_TOP
+            106 JUMP_BACKWARD           49 (to 10)
+        >>  108 LOAD_CONST               2 (None)
+            110 RETURN_VALUE
+
+==============================================================================
+## <module>.reconcile.<genexpr>  (args=1, locals=3)
+# varnames: .0, ln, s
+176           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                27 (to 64)
+             10 STORE_FAST               1 (ln)
+             12 LOAD_FAST                1 (ln)
+             14 LOAD_ATTR                0 (sizes)
+             24 GET_ITER
+        >>   26 FOR_ITER                17 (to 62)
+             28 STORE_FAST               2 (s)
+             30 LOAD_FAST                2 (s)
+             32 LOAD_ATTR                1 (qty)
+             42 LOAD_CONST               0 (0)
+             44 COMPARE_OP               0 (<)
+             50 POP_JUMP_BACKWARD_IF_FALSE    13 (to 26)
+             52 LOAD_CONST               1 (1)
+             54 YIELD_VALUE
+             56 RESUME                   1
+             58 POP_TOP
+             60 JUMP_BACKWARD           18 (to 26)
+        >>   62 JUMP_BACKWARD           28 (to 8)
+        >>   64 LOAD_CONST               2 (None)
+             66 RETURN_VALUE

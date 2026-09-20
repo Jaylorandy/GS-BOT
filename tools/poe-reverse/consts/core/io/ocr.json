@@ -1,0 +1,851 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "base64",
+   "re",
+   "typing",
+   "List",
+   "Optional",
+   "Sequence",
+   "Tuple",
+   "parsers.base",
+   "PageWords",
+   "Token",
+   "pdf",
+   "normalize_text",
+   "SPARSE_WORDS_PER_PAGE",
+   "DEFAULT_DPI",
+   "DEFAULT_VISION_MODEL",
+   "_VISION_PROMPT",
+   "text_layer_is_sparse",
+   "_rasterize_pypdfium2",
+   "_rasterize_pymupdf",
+   "rasterize_pdf",
+   "_split_line_to_words",
+   "_snap_rows",
+   "_local_assets_missing",
+   "local_engine_available",
+   "_make_local_engine",
+   "_ocr_local_page",
+   "_text_to_pagewords",
+   "_ocr_cloud_page",
+   "ocr_pdf_pages"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/io/ocr.py - scanned-PDF -> PageWords bridge (local RapidOCR + cloud vision).\n\nWhy this module exists\n----------------------\n``pdf_to_pages`` reads a PDF's *text layer*. A scanned / photographed PO has no\ntext layer at all, so pdfplumber returns ~zero words and the whole recipe engine\nstarves. This module rebuilds an equivalent token stream from the page IMAGE, so\nevery downstream stage (fingerprint -> recipe -> parser -> xlsx) runs unchanged.\n\nTwo engines, in priority order (user's choice: local-first, cloud fallback):\n\n1. **Local — RapidOCR (onnxruntime)**. Fully offline, no API cost, returns real\n   pixel bounding boxes. This is the primary path.\n2. **Cloud — a vision LLM (default ``glm-4.6v``)**. Used only when RapidOCR is\n   unavailable (not installed / not bundled) or yields nothing. A vision model\n   returns *text*, not boxes, so we ask for a fixed-width transcription and\n   rebuild pseudo-coordinates from character columns.\n\nCoordinate contract (critical)\n------------------------------\npdfplumber emits ``x0/top/x1/bottom`` in PDF **points** with a top-left origin.\nEvery token produced here is converted into that SAME space (pixels are scaled\nby ``page_width_pt / pixmap_width_px``). That is what lets the matrix parsers —\nwhich align quantities to size columns purely by X position — work identically\non scanned and digital POs.\n\nAll heavy dependencies (pymupdf / rapidocr / onnxruntime / cv2) are imported\nlazily inside functions, so importing this module stays free and application\nstartup is unaffected when no scan is ever processed.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "List",
+    "Optional",
+    "Sequence",
+    "Tuple"
+   ],
+   2,
+   [
+    "PageWords",
+    "Token"
+   ],
+   1,
+   [
+    "normalize_text"
+   ],
+   15,
+   200,
+   "glm-4.6v",
+   "Transcribe this purchase-order page as PLAIN TEXT.\nRules:\n1. Preserve the original table layout using spaces so that columns stay vertically aligned (fixed-width / monospace style).\n2. Keep every number, code and label exactly as printed. Do not translate, reformat, round or reorder anything.\n3. One physical line of the page = one line of output.\n4. Output ONLY the transcription. No markdown, no code fences, no comments.",
+   "pages",
+   "Sequence[PageWords]",
+   "return",
+   "bool",
+   "path",
+   "str",
+   "dpi",
+   "int",
+   "List[Tuple[int, bytes, float, float, float]]",
+   "text",
+   "x0",
+   "float",
+   "y0",
+   "x1",
+   "y1",
+   "page",
+   "List[Token]",
+   "tokens",
+   "tol",
+   "list",
+   "png",
+   "bytes",
+   "width_pt",
+   "height_pt",
+   "scale",
+   "PageWords",
+   "cfg",
+   "dict",
+   [
+    "cfg",
+    "log",
+    "dpi"
+   ],
+   "Optional[dict]",
+   "List[PageWords]",
+   [
+    "pages",
+    "Sequence[PageWords]",
+    "return",
+    "bool"
+   ],
+   [
+    "path",
+    "str",
+    "dpi",
+    "int",
+    "return",
+    "List[Tuple[int, bytes, float, float, float]]"
+   ],
+   [
+    "text",
+    "str",
+    "x0",
+    "float",
+    "y0",
+    "float",
+    "x1",
+    "float",
+    "y1",
+    "float",
+    "page",
+    "int",
+    "return",
+    "List[Token]"
+   ],
+   [
+    "tokens",
+    "List[Token]",
+    "tol",
+    "float",
+    "return",
+    "List[Token]"
+   ],
+   [
+    "return",
+    "list"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "png",
+    "bytes",
+    "page",
+    "int",
+    "width_pt",
+    "float",
+    "height_pt",
+    "float",
+    "scale",
+    "float",
+    "return",
+    "PageWords"
+   ],
+   [
+    "text",
+    "str",
+    "page",
+    "int",
+    "width_pt",
+    "float",
+    "height_pt",
+    "float",
+    "return",
+    "PageWords"
+   ],
+   [
+    "png",
+    "bytes",
+    "page",
+    "int",
+    "width_pt",
+    "float",
+    "height_pt",
+    "float",
+    "cfg",
+    "dict",
+    "return",
+    "PageWords"
+   ],
+   [
+    "path",
+    "str",
+    "cfg",
+    "Optional[dict]",
+    "dpi",
+    "int",
+    "return",
+    "List[PageWords]"
+   ]
+  ],
+  "n_instructions": 111
+ },
+ "<module>.text_layer_is_sparse": {
+  "names": [
+   "sum",
+   "len",
+   "SPARSE_WORDS_PER_PAGE"
+  ],
+  "varnames": [
+   "pages",
+   "total"
+  ],
+  "consts": [
+   "True when ``pages`` look like a scan (no usable text layer).\n\n    Conservative by design: returns True only when the average word count per\n    page falls under :data:`SPARSE_WORDS_PER_PAGE`, so a normal digital PO is\n    never diverted into the (slower, lossier) OCR path.\n    ",
+   true
+  ],
+  "n_instructions": 24
+ },
+ "<module>.text_layer_is_sparse.<genexpr>": {
+  "names": [
+   "len",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>._rasterize_pypdfium2": {
+  "names": [
+   "io",
+   "pypdfium2",
+   "PdfDocument",
+   "range",
+   "len",
+   "float",
+   "get_width",
+   "get_height",
+   "render",
+   "to_pil",
+   "BytesIO",
+   "save",
+   "size",
+   "append",
+   "getvalue",
+   "close",
+   "Exception"
+  ],
+  "varnames": [
+   "path",
+   "dpi",
+   "io",
+   "pdfium",
+   "out",
+   "doc",
+   "scale_req",
+   "i",
+   "page",
+   "w_pt",
+   "h_pt",
+   "pil",
+   "buf",
+   "px_w",
+   "scale"
+  ],
+  "consts": [
+   "Render pages with pdfium.\n\n    Chosen over PyMuPDF because ``pypdfium2`` (6.9MB) is ALREADY bundled -\n    pdfplumber depends on it for ``Page.to_image()`` - whereas PyMuPDF adds a\n    further 37.7MB (mupdfcpp64.dll + _mupdf.pyd) to the installer for exactly\n    the same \"PDF page -> bitmap\" job.\n    ",
+   0,
+   null,
+   72.0,
+   [
+    "scale"
+   ],
+   "PNG",
+   [
+    "format"
+   ]
+  ],
+  "n_instructions": 151
+ },
+ "<module>._rasterize_pymupdf": {
+  "names": [
+   "pymupdf",
+   "ImportError",
+   "fitz",
+   "open",
+   "enumerate",
+   "rect",
+   "get_pixmap",
+   "width",
+   "append",
+   "tobytes",
+   "float",
+   "height",
+   "close"
+  ],
+  "varnames": [
+   "path",
+   "dpi",
+   "pymupdf",
+   "out",
+   "doc",
+   "i",
+   "page",
+   "rect",
+   "pix",
+   "scale"
+  ],
+  "consts": [
+   "Legacy renderer - only used when pypdfium2 is somehow unavailable.",
+   0,
+   null,
+   [
+    "dpi"
+   ],
+   72.0,
+   "png"
+  ],
+  "n_instructions": 109
+ },
+ "<module>.rasterize_pdf": {
+  "names": [
+   "_rasterize_pypdfium2",
+   "ImportError",
+   "_rasterize_pymupdf",
+   "RuntimeError"
+  ],
+  "varnames": [
+   "path",
+   "dpi",
+   "e"
+  ],
+  "consts": [
+   "Render every page to PNG bytes.\n\n    Returns a list of ``(page_index, png_bytes, width_pt, height_pt, scale)``\n    where ``scale`` converts pixels -> PDF points.\n    ",
+   "OCR 需要 pypdfium2（随 pdfplumber 安装）或 PyMuPDF 来渲染页面。",
+   null
+  ],
+  "n_instructions": 45
+ },
+ "<module>._split_line_to_words": {
+  "names": [
+   "strip",
+   "Token",
+   "normalize_text",
+   "len",
+   "split",
+   "index",
+   "append"
+  ],
+  "varnames": [
+   "text",
+   "x0",
+   "y0",
+   "x1",
+   "y1",
+   "page",
+   "per_char",
+   "toks",
+   "cursor",
+   "word",
+   "idx"
+  ],
+  "consts": [
+   "Split one OCR *line* box into word tokens with interpolated X spans.\n\n    OCR engines return a box per text line, but the parsers need word-level\n    tokens (a matrix row's quantities must each carry their own X). We therefore\n    distribute the line's width across its characters and slice each word out at\n    its character offset — accurate enough to keep tabular columns aligned.\n    ",
+   "",
+   [
+    "text",
+    "x0",
+    "y0",
+    "x1",
+    "y1",
+    "page"
+   ],
+   0
+  ],
+  "n_instructions": 94
+ },
+ "<module>._snap_rows": {
+  "names": [
+   "sorted",
+   "abs",
+   "yc",
+   "append",
+   "sum",
+   "len",
+   "max",
+   "y0",
+   "y1"
+  ],
+  "varnames": [
+   "tokens",
+   "tol",
+   "ordered",
+   "clusters",
+   "t",
+   "cl",
+   "yc",
+   "half"
+  ],
+  "consts": [
+   "Force tokens on the same visual row to share one Y.\n\n    ``PageWords.lines()`` groups by a fixed 3pt y-tolerance. Raw OCR boxes for\n    the same printed row can drift several points apart (different columns are\n    detected as separate boxes), which would shatter one row into several lines\n    and break every grid parser. Clustering here and rewriting each cluster to\n    its mean Y makes the downstream grouping deterministic.\n    ",
+   [
+    "key"
+   ],
+   0,
+   1,
+   null,
+   -1,
+   2.0,
+   1.0
+  ],
+  "n_instructions": 111
+ },
+ "<module>._snap_rows.<lambda>": {
+  "names": [
+   "yc"
+  ],
+  "varnames": [
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 4
+ },
+ "<module>._snap_rows.<genexpr>": {
+  "names": [
+   "y1",
+   "y0"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ },
+ "<module>._local_assets_missing": {
+  "names": [
+   "pathlib",
+   "Path",
+   "rapidocr_onnxruntime.main",
+   "main",
+   "root_dir",
+   "exists",
+   "append",
+   "str",
+   "OSError"
+  ],
+  "varnames": [
+   "_P",
+   "_m",
+   "root",
+   "need",
+   "missing",
+   "p"
+  ],
+  "consts": [
+   "Return the RapidOCR asset paths that are absent, or [] when all present.\n\n    RapidOCR resolves ``config.yaml`` and ``models/*.onnx`` purely from\n    ``Path(__file__).parent`` of its own package, so in a frozen build the\n    files MUST be collected into ``_internal/rapidocr_onnxruntime/``. If the\n    spec ever loses that ``collect_data_files`` entry the constructor blows up\n    deep inside onnxruntime with an opaque error -- we check up front instead.\n\n    NOTE: passing ``det_model_path=...`` kwargs is NOT a workaround: RapidOCR\n    1.4.4's ``UpdateParameters.__call__`` builds ``new_config`` from the kwargs\n    and then immediately overwrites it with ``update_global_to_module(config)``,\n    so every path kwarg is silently discarded. Bundling is the only route.\n    ",
+   0,
+   [
+    "Path"
+   ],
+   null,
+   "config.yaml",
+   "models",
+   "ch_PP-OCRv4_det_infer.onnx",
+   "ch_PP-OCRv4_rec_infer.onnx",
+   "ch_ppocr_mobile_v2.0_cls_infer.onnx"
+  ],
+  "n_instructions": 84
+ },
+ "<module>.local_engine_available": {
+  "names": [
+   "rapidocr_onnxruntime",
+   "Exception",
+   "_local_assets_missing"
+  ],
+  "varnames": [
+   "rapidocr_onnxruntime"
+  ],
+  "consts": [
+   "True when RapidOCR + onnxruntime import AND its model files are present.",
+   0,
+   null,
+   false
+  ],
+  "n_instructions": 24
+ },
+ "<module>._make_local_engine": {
+  "names": [
+   "rapidocr_onnxruntime",
+   "RapidOCR",
+   "_local_assets_missing",
+   "FileNotFoundError",
+   "join"
+  ],
+  "varnames": [
+   "RapidOCR",
+   "missing"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "RapidOCR"
+   ],
+   "RapidOCR 模型文件缺失（打包遗漏）: ",
+   "; "
+  ],
+  "n_instructions": 29
+ },
+ "<module>._ocr_local_page": {
+  "names": [
+   "isinstance",
+   "tuple",
+   "extend",
+   "_split_line_to_words",
+   "min",
+   "max",
+   "_snap_rows",
+   "PageWords"
+  ],
+  "varnames": [
+   "engine",
+   "png",
+   "page",
+   "width_pt",
+   "height_pt",
+   "scale",
+   "result",
+   "_elapsed",
+   "dets",
+   "toks",
+   "det",
+   "box",
+   "txt",
+   "xs",
+   "ys"
+  ],
+  "consts": [
+   "Run RapidOCR on one rendered page; return points-space PageWords.",
+   null,
+   0,
+   1,
+   3.0,
+   [
+    "tol"
+   ],
+   [
+    "page",
+    "width",
+    "height",
+    "tokens"
+   ]
+  ],
+  "n_instructions": 102
+ },
+ "<module>._ocr_local_page.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   1
+  ],
+  "n_instructions": 11
+ },
+ "<module>._text_to_pagewords": {
+  "names": [
+   "splitlines",
+   "PageWords",
+   "max",
+   "len",
+   "enumerate",
+   "re",
+   "finditer",
+   "append",
+   "Token",
+   "normalize_text",
+   "group",
+   "start",
+   "end"
+  ],
+  "varnames": [
+   "text",
+   "page",
+   "width_pt",
+   "height_pt",
+   "lines",
+   "max_cols",
+   "char_w",
+   "line_h",
+   "toks",
+   "r",
+   "ln",
+   "y0",
+   "y1",
+   "m"
+  ],
+  "consts": [
+   "Rebuild pseudo-coordinates from a fixed-width transcription.\n\n    A vision model gives us characters, not boxes. Assuming the transcription\n    keeps columns space-aligned (which the prompt demands), a word's character\n    offset is a faithful proxy for its X position, and its line index for Y.\n    ",
+   "",
+   [
+    "page",
+    "width",
+    "height",
+    "tokens"
+   ],
+   1,
+   0.8,
+   "\\S+",
+   [
+    "text",
+    "x0",
+    "y0",
+    "x1",
+    "y1",
+    "page"
+   ]
+  ],
+  "n_instructions": 132
+ },
+ "<module>._text_to_pagewords.<listcomp>": {
+  "names": [
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [],
+  "n_instructions": 14
+ },
+ "<module>._text_to_pagewords.<genexpr>": {
+  "names": [
+   "len"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ },
+ "<module>._ocr_cloud_page": {
+  "names": [
+   "ai.http_util",
+   "post_json",
+   "DEFAULT_BUDGET",
+   "ai.data_extract",
+   "_thinking_off",
+   "str",
+   "get",
+   "rstrip",
+   "RuntimeError",
+   "DEFAULT_VISION_MODEL",
+   "strip",
+   "base64",
+   "b64encode",
+   "decode",
+   "_VISION_PROMPT",
+   "update",
+   "_text_to_pagewords"
+  ],
+  "varnames": [
+   "png",
+   "page",
+   "width_pt",
+   "height_pt",
+   "cfg",
+   "post_json",
+   "DEFAULT_BUDGET",
+   "_thinking_off",
+   "base_url",
+   "api_key",
+   "model",
+   "b64",
+   "body",
+   "data",
+   "text"
+  ],
+  "consts": [
+   "Transcribe one page with a vision LLM and rebuild PageWords.",
+   2,
+   [
+    "post_json",
+    "DEFAULT_BUDGET"
+   ],
+   [
+    "_thinking_off"
+   ],
+   "base_url",
+   "",
+   "/",
+   "api_key",
+   "云端 OCR 需要在线模型配置（base_url / api_key）",
+   "vision_model",
+   "未配置 vision_model，无法使用云端 OCR 兜底",
+   "ascii",
+   "user",
+   "image_url",
+   "url",
+   "data:image/png;base64,",
+   [
+    "type",
+    "image_url"
+   ],
+   "text",
+   [
+    "type",
+    "text"
+   ],
+   [
+    "role",
+    "content"
+   ],
+   0.0,
+   4096,
+   [
+    "model",
+    "messages",
+    "temperature",
+    "max_tokens"
+   ],
+   [
+    "model",
+    "base_url"
+   ],
+   "/chat/completions",
+   "data_timeout",
+   "http_retries",
+   [
+    "timeout",
+    "retries",
+    "budget"
+   ],
+   "choices",
+   0,
+   "message",
+   "content"
+  ],
+  "n_instructions": 158
+ },
+ "<module>.ocr_pdf_pages": {
+  "names": [
+   "rasterize_pdf",
+   "local_engine_available",
+   "_make_local_engine",
+   "len",
+   "Exception",
+   "bool",
+   "get",
+   "_ocr_local_page",
+   "tokens",
+   "_ocr_cloud_page",
+   "PageWords",
+   "append",
+   "sum"
+  ],
+  "varnames": [
+   "path",
+   "cfg",
+   "log",
+   "dpi",
+   "_say",
+   "rasters",
+   "engine",
+   "e",
+   "cloud_ready",
+   "pages",
+   "i",
+   "png",
+   "w_pt",
+   "h_pt",
+   "scale",
+   "pw",
+   "got"
+  ],
+  "consts": [
+   "OCR every page of ``path`` -> PageWords in pdfplumber's coordinate space.\n\n    Tries RapidOCR locally first; falls back to the configured cloud vision\n    model per page when the local engine is missing or returns nothing. Pages\n    that both engines fail on come back empty rather than raising, so one bad\n    page cannot abort a multi-page document.\n    ",
+   "msg",
+   "str",
+   "return",
+   "None",
+   [
+    "dpi"
+   ],
+   null,
+   "  OCR：本地 RapidOCR 就绪，",
+   " 页 @",
+   "dpi",
+   "  OCR：本地引擎初始化失败（",
+   "），尝试云端视觉模型",
+   "  OCR：本地 RapidOCR 不可用，尝试云端视觉模型",
+   "api_key",
+   "base_url",
+   "  OCR：第 ",
+   1,
+   " 页本地识别失败：",
+   " 页改用云端视觉模型，识别 ",
+   " 个词",
+   " 页云端识别失败：",
+   [
+    "page",
+    "width",
+    "height",
+    "tokens"
+   ],
+   "  OCR 完成：",
+   " 页，共 ",
+   [
+    "msg",
+    "str",
+    "return",
+    "None"
+   ]
+  ],
+  "n_instructions": 274
+ },
+ "<module>.ocr_pdf_pages._say": {
+  "names": [
+   "Exception"
+  ],
+  "varnames": [
+   "msg"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 27
+ },
+ "<module>.ocr_pdf_pages.<genexpr>": {
+  "names": [
+   "len",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 17
+ }
+}

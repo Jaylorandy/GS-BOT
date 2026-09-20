@@ -1,0 +1,572 @@
+# module: core.io.pdf
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\io\pdf.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ("core/io/pdf.py - load a PDF into source-agnostic PageWords.\n\nPrimary path is pdfplumber's text layer. When a document turns out to be a SCAN\n(no usable text layer) the loader transparently falls back to ``core.io.ocr``,\nwhich rebuilds an equivalent token stream from the page images. Everything\ndownstream (fingerprint / recipe / parsers / xlsx) is identical either way.\n")
+              4 STORE_NAME               0 (__doc__)
+
+  8           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 10          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (('List', 'Optional'))
+             22 IMPORT_NAME              3 (typing)
+             24 IMPORT_FROM              4 (List)
+             26 STORE_NAME               4 (List)
+             28 IMPORT_FROM              5 (Optional)
+             30 STORE_NAME               5 (Optional)
+             32 POP_TOP
+
+ 12          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('PageWords', 'Token'))
+             38 IMPORT_NAME              6 (parsers.base)
+             40 IMPORT_FROM              7 (PageWords)
+             42 STORE_NAME               7 (PageWords)
+             44 IMPORT_FROM              8 (Token)
+             46 STORE_NAME               8 (Token)
+             48 POP_TOP
+
+ 22          50 BUILD_MAP                0
+
+ 23          52 LOAD_CONST               6 (173)
+             54 LOAD_CONST               7 ('-')
+
+ 22          56 MAP_ADD                  1
+
+ 23          58 LOAD_CONST               8 (8208)
+             60 LOAD_CONST               7 ('-')
+
+ 22          62 MAP_ADD                  1
+
+ 23          64 LOAD_CONST               9 (8209)
+             66 LOAD_CONST               7 ('-')
+
+ 22          68 MAP_ADD                  1
+
+ 23          70 LOAD_CONST              10 (8722)
+             72 LOAD_CONST               7 ('-')
+
+ 22          74 MAP_ADD                  1
+
+ 24          76 LOAD_CONST              11 (160)
+             78 LOAD_CONST              12 (' ')
+
+ 22          80 MAP_ADD                  1
+
+ 24          82 LOAD_CONST              13 (8199)
+             84 LOAD_CONST              12 (' ')
+
+ 22          86 MAP_ADD                  1
+
+ 24          88 LOAD_CONST              14 (8239)
+             90 LOAD_CONST              12 (' ')
+
+ 22          92 MAP_ADD                  1
+
+ 24          94 LOAD_CONST              15 (8201)
+             96 LOAD_CONST              12 (' ')
+
+ 22          98 MAP_ADD                  1
+
+ 25         100 LOAD_CONST              16 (8203)
+            102 LOAD_CONST              17 (None)
+
+ 22         104 MAP_ADD                  1
+
+ 25         106 LOAD_CONST              18 (8204)
+            108 LOAD_CONST              17 (None)
+
+ 22         110 MAP_ADD                  1
+
+ 25         112 LOAD_CONST              19 (8205)
+            114 LOAD_CONST              17 (None)
+
+ 22         116 MAP_ADD                  1
+
+ 25         118 LOAD_CONST              20 (65279)
+            120 LOAD_CONST              17 (None)
+
+ 22         122 MAP_ADD                  1
+
+ 26         124 LOAD_CONST              21 (8216)
+            126 LOAD_CONST              22 ("'")
+
+ 22         128 MAP_ADD                  1
+
+ 26         130 LOAD_CONST              23 (8217)
+            132 LOAD_CONST              22 ("'")
+
+ 22         134 MAP_ADD                  1
+
+ 26         136 LOAD_CONST              24 (8220)
+            138 LOAD_CONST              25 ('"')
+
+ 22         140 MAP_ADD                  1
+
+ 26         142 LOAD_CONST              26 (8221)
+            144 LOAD_CONST              25 ('"')
+
+ 22         146 MAP_ADD                  1
+            148 STORE_NAME               9 (_CHAR_MAP)
+
+ 30         150 LOAD_CONST              41 (('s', 'str', 'return', 'str'))
+            152 LOAD_CONST              30 (<code object normalize_text at 0x000002BF9472B800, file "core\io\pdf.py", line 30>)
+            154 MAKE_FUNCTION            4 (annotations)
+            156 STORE_NAME              10 (normalize_text)
+
+ 37         158 LOAD_CONST              42 (('path', 'str', 'return', 'List[PageWords]'))
+            160 LOAD_CONST              33 (<code object text_layer_pages at 0x000002BF943828D0, file "core\io\pdf.py", line 37>)
+            162 MAKE_FUNCTION            4 (annotations)
+            164 STORE_NAME              11 (text_layer_pages)
+
+ 57         166 LOAD_CONST              17 (None)
+            168 LOAD_CONST              17 (None)
+
+ 58         170 LOAD_CONST              34 (True)
+
+ 57         172 LOAD_CONST              35 (('cfg', 'log', 'allow_ocr'))
+            174 BUILD_CONST_KEY_MAP      3
+            176 LOAD_CONST              43 (('path', 'str', 'cfg', 'Optional[dict]', 'allow_ocr', 'bool', 'return', 'List[PageWords]'))
+            178 LOAD_CONST              40 (<code object pdf_to_pages at 0x000002BF9444CAA0, file "core\io\pdf.py", line 57>)
+            180 MAKE_FUNCTION            6 (kwdefaults, annotations)
+            182 STORE_NAME              12 (pdf_to_pages)
+            184 LOAD_CONST              17 (None)
+            186 RETURN_VALUE
+
+==============================================================================
+## <module>.normalize_text  (args=1, locals=1)
+# varnames: s
+ 30           0 RESUME                   0
+
+ 32           2 LOAD_FAST                0 (s)
+              4 POP_JUMP_FORWARD_IF_FALSE    51 (to 108)
+              6 LOAD_GLOBAL              1 (NULL + any)
+             18 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A2F730, file "core\io\pdf.py", line 32>)
+             20 MAKE_FUNCTION            0
+             22 LOAD_FAST                0 (s)
+             24 GET_ITER
+             26 PRECALL                  0
+             30 CALL                     0
+             40 PRECALL                  1
+             44 CALL                     1
+             54 POP_JUMP_FORWARD_IF_FALSE    26 (to 108)
+
+ 33          56 LOAD_FAST                0 (s)
+             58 LOAD_METHOD              1 (translate)
+             80 LOAD_GLOBAL              4 (_CHAR_MAP)
+             92 PRECALL                  1
+             96 CALL                     1
+            106 STORE_FAST               0 (s)
+
+ 34     >>  108 LOAD_FAST                0 (s)
+            110 RETURN_VALUE
+
+==============================================================================
+## <module>.normalize_text.<genexpr>  (args=1, locals=2)
+# varnames: .0, ch
+ 32           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                23 (to 56)
+             10 STORE_FAST               1 (ch)
+             12 LOAD_GLOBAL              1 (NULL + ord)
+             24 LOAD_FAST                1 (ch)
+             26 PRECALL                  1
+             30 CALL                     1
+             40 LOAD_CONST               0 (127)
+             42 COMPARE_OP               4 (>)
+             48 YIELD_VALUE
+             50 RESUME                   1
+             52 POP_TOP
+             54 JUMP_BACKWARD           24 (to 8)
+        >>   56 LOAD_CONST               1 (None)
+             58 RETURN_VALUE
+
+==============================================================================
+## <module>.text_layer_pages  (args=1, locals=7)
+# varnames: path, pdfplumber, pages, pdf, pg, words, toks
+              0 MAKE_CELL                7 (i)
+
+ 37           2 RESUME                   0
+
+ 39           4 LOAD_CONST               1 (0)
+              6 LOAD_CONST               2 (None)
+              8 IMPORT_NAME              0 (pdfplumber)
+             10 STORE_FAST               1 (pdfplumber)
+
+ 40          12 BUILD_LIST               0
+             14 STORE_FAST               2 (pages)
+
+ 41          16 LOAD_FAST                1 (pdfplumber)
+             18 LOAD_METHOD              1 (open)
+             40 LOAD_FAST                0 (path)
+             42 PRECALL                  1
+             46 CALL                     1
+             56 BEFORE_WITH
+             58 STORE_FAST               3 (pdf)
+
+ 42          60 LOAD_GLOBAL              5 (NULL + enumerate)
+             72 LOAD_FAST                3 (pdf)
+             74 LOAD_ATTR                3 (pages)
+             84 PRECALL                  1
+             88 CALL                     1
+             98 GET_ITER
+        >>  100 FOR_ITER                90 (to 282)
+            102 UNPACK_SEQUENCE          2
+            106 STORE_DEREF              7 (i)
+            108 STORE_FAST               4 (pg)
+
+ 43         110 LOAD_FAST                4 (pg)
+            112 LOAD_METHOD              4 (extract_words)
+            134 LOAD_CONST               3 (False)
+            136 LOAD_CONST               3 (False)
+            138 KW_NAMES                 4
+            140 PRECALL                  2
+            144 CALL                     2
+            154 STORE_FAST               5 (words)
+
+ 44         156 LOAD_CLOSURE             7 (i)
+            158 BUILD_TUPLE              1
+            160 LOAD_CONST               5 (<code object <listcomp> at 0x000002BF9474A3A0, file "core\io\pdf.py", line 44>)
+            162 MAKE_FUNCTION            8 (closure)
+
+ 51         164 LOAD_FAST                5 (words)
+
+ 44         166 GET_ITER
+            168 PRECALL                  0
+            172 CALL                     0
+            182 STORE_FAST               6 (toks)
+
+ 53         184 LOAD_FAST                2 (pages)
+            186 LOAD_METHOD              5 (append)
+            208 LOAD_GLOBAL             13 (NULL + PageWords)
+            220 LOAD_DEREF               7 (i)
+            222 LOAD_FAST                4 (pg)
+            224 LOAD_ATTR                7 (width)
+            234 LOAD_FAST                4 (pg)
+            236 LOAD_ATTR                8 (height)
+            246 LOAD_FAST                6 (toks)
+            248 KW_NAMES                 6
+            250 PRECALL                  4
+            254 CALL                     4
+            264 PRECALL                  1
+            268 CALL                     1
+            278 POP_TOP
+            280 JUMP_BACKWARD           91 (to 100)
+
+ 42     >>  282 NOP
+
+ 41         284 LOAD_CONST               2 (None)
+            286 LOAD_CONST               2 (None)
+            288 LOAD_CONST               2 (None)
+            290 PRECALL                  2
+            294 CALL                     2
+            304 POP_TOP
+            306 JUMP_FORWARD            11 (to 330)
+        >>  308 PUSH_EXC_INFO
+            310 WITH_EXCEPT_START
+            312 POP_JUMP_FORWARD_IF_TRUE     4 (to 322)
+            314 RERAISE                  2
+        >>  316 COPY                     3
+            318 POP_EXCEPT
+            320 RERAISE                  1
+        >>  322 POP_TOP
+            324 POP_EXCEPT
+            326 POP_TOP
+            328 POP_TOP
+
+ 54     >>  330 LOAD_FAST                2 (pages)
+            332 RETURN_VALUE
+ExceptionTable:
+  58 to 280 -> 308 [1] lasti
+  308 to 314 -> 316 [3] lasti
+  322 to 322 -> 316 [3] lasti
+
+==============================================================================
+## <module>.text_layer_pages.<listcomp>  (args=1, locals=2)
+# varnames: .0, w
+              0 COPY_FREE_VARS           1
+
+ 44           2 RESUME                   0
+              4 BUILD_LIST               0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                66 (to 142)
+
+ 51          10 STORE_FAST               1 (w)
+
+ 45          12 LOAD_GLOBAL              1 (NULL + Token)
+
+ 46          24 LOAD_GLOBAL              3 (NULL + normalize_text)
+             36 LOAD_FAST                1 (w)
+             38 LOAD_CONST               0 ('text')
+             40 BINARY_SUBSCR
+             50 PRECALL                  1
+             54 CALL                     1
+
+ 47          64 LOAD_FAST                1 (w)
+             66 LOAD_CONST               1 ('x0')
+             68 BINARY_SUBSCR
+             78 LOAD_FAST                1 (w)
+             80 LOAD_CONST               2 ('top')
+             82 BINARY_SUBSCR
+
+ 48          92 LOAD_FAST                1 (w)
+             94 LOAD_CONST               3 ('x1')
+             96 BINARY_SUBSCR
+            106 LOAD_FAST                1 (w)
+            108 LOAD_CONST               4 ('bottom')
+            110 BINARY_SUBSCR
+
+ 49         120 LOAD_DEREF               2 (i)
+
+ 45         122 KW_NAMES                 5
+            124 PRECALL                  6
+            128 CALL                     6
+
+ 44         138 LIST_APPEND              2
+            140 JUMP_BACKWARD           67 (to 8)
+        >>  142 RETURN_VALUE
+
+==============================================================================
+## <module>.pdf_to_pages  (args=1, locals=9)
+# varnames: path, cfg, log, allow_ocr, pages, text_layer_is_sparse, ocr_pdf_pages, ocr_pages, e
+ 57           0 RESUME                   0
+
+ 71           2 LOAD_GLOBAL              1 (NULL + text_layer_pages)
+             14 LOAD_FAST                0 (path)
+             16 PRECALL                  1
+             20 CALL                     1
+             30 STORE_FAST               4 (pages)
+
+ 72          32 LOAD_FAST                3 (allow_ocr)
+             34 POP_JUMP_FORWARD_IF_TRUE     2 (to 40)
+
+ 73          36 LOAD_FAST                4 (pages)
+             38 RETURN_VALUE
+
+ 77     >>   40 NOP
+
+ 78          42 LOAD_CONST               1 (1)
+             44 LOAD_CONST               2 (('text_layer_is_sparse', 'ocr_pdf_pages'))
+             46 IMPORT_NAME              1 (ocr)
+             48 IMPORT_FROM              2 (text_layer_is_sparse)
+             50 STORE_FAST               5 (text_layer_is_sparse)
+             52 IMPORT_FROM              3 (ocr_pdf_pages)
+             54 STORE_FAST               6 (ocr_pdf_pages)
+             56 POP_TOP
+             58 JUMP_FORWARD            18 (to 96)
+        >>   60 PUSH_EXC_INFO
+
+ 79          62 LOAD_GLOBAL              8 (Exception)
+             74 CHECK_EXC_MATCH
+             76 POP_JUMP_FORWARD_IF_FALSE     5 (to 88)
+             78 POP_TOP
+
+ 80          80 LOAD_FAST                4 (pages)
+             82 SWAP                     2
+             84 POP_EXCEPT
+             86 RETURN_VALUE
+
+ 79     >>   88 RERAISE                  0
+        >>   90 COPY                     3
+             92 POP_EXCEPT
+             94 RERAISE                  1
+
+ 82     >>   96 PUSH_NULL
+             98 LOAD_FAST                5 (text_layer_is_sparse)
+            100 LOAD_FAST                4 (pages)
+            102 PRECALL                  1
+            106 CALL                     1
+            116 POP_JUMP_FORWARD_IF_TRUE     2 (to 122)
+
+ 83         118 LOAD_FAST                4 (pages)
+            120 RETURN_VALUE
+
+ 85     >>  122 LOAD_FAST                2 (log)
+            124 POP_JUMP_FORWARD_IF_FALSE    29 (to 184)
+
+ 86         126 NOP
+
+ 87         128 PUSH_NULL
+            130 LOAD_FAST                2 (log)
+            132 LOAD_CONST               3 ('  文本层为空/极稀疏（疑似扫描件），启用图像识别（OCR）…')
+            134 PRECALL                  1
+            138 CALL                     1
+            148 POP_TOP
+            150 JUMP_FORWARD            16 (to 184)
+        >>  152 PUSH_EXC_INFO
+
+ 88         154 LOAD_GLOBAL              8 (Exception)
+            166 CHECK_EXC_MATCH
+            168 POP_JUMP_FORWARD_IF_FALSE     3 (to 176)
+            170 POP_TOP
+
+ 89         172 POP_EXCEPT
+            174 JUMP_FORWARD             4 (to 184)
+
+ 88     >>  176 RERAISE                  0
+        >>  178 COPY                     3
+            180 POP_EXCEPT
+            182 RERAISE                  1
+
+ 90     >>  184 NOP
+
+ 91         186 PUSH_NULL
+            188 LOAD_FAST                6 (ocr_pdf_pages)
+            190 LOAD_FAST                0 (path)
+            192 LOAD_FAST                1 (cfg)
+            194 LOAD_FAST                2 (log)
+            196 KW_NAMES                 4
+            198 PRECALL                  3
+            202 CALL                     3
+            212 STORE_FAST               7 (ocr_pages)
+            214 JUMP_FORWARD            59 (to 334)
+        >>  216 PUSH_EXC_INFO
+
+ 92         218 LOAD_GLOBAL              8 (Exception)
+            230 CHECK_EXC_MATCH
+            232 POP_JUMP_FORWARD_IF_FALSE    46 (to 326)
+            234 STORE_FAST               8 (e)
+
+ 93         236 LOAD_FAST                2 (log)
+            238 POP_JUMP_FORWARD_IF_FALSE    32 (to 304)
+
+ 94         240 NOP
+
+ 95         242 PUSH_NULL
+            244 LOAD_FAST                2 (log)
+            246 LOAD_CONST               5 ('  OCR 失败，沿用文本层结果：')
+            248 LOAD_FAST                8 (e)
+            250 FORMAT_VALUE             0
+            252 BUILD_STRING             2
+            254 PRECALL                  1
+            258 CALL                     1
+            268 POP_TOP
+            270 JUMP_FORWARD            16 (to 304)
+        >>  272 PUSH_EXC_INFO
+
+ 96         274 LOAD_GLOBAL              8 (Exception)
+            286 CHECK_EXC_MATCH
+            288 POP_JUMP_FORWARD_IF_FALSE     3 (to 296)
+            290 POP_TOP
+
+ 97         292 POP_EXCEPT
+            294 JUMP_FORWARD             4 (to 304)
+
+ 96     >>  296 RERAISE                  0
+        >>  298 COPY                     3
+            300 POP_EXCEPT
+            302 RERAISE                  1
+
+ 98     >>  304 LOAD_FAST                4 (pages)
+            306 SWAP                     2
+            308 POP_EXCEPT
+            310 LOAD_CONST               6 (None)
+            312 STORE_FAST               8 (e)
+            314 DELETE_FAST              8 (e)
+            316 RETURN_VALUE
+        >>  318 LOAD_CONST               6 (None)
+            320 STORE_FAST               8 (e)
+            322 DELETE_FAST              8 (e)
+            324 RERAISE                  1
+
+ 92     >>  326 RERAISE                  0
+        >>  328 COPY                     3
+            330 POP_EXCEPT
+            332 RERAISE                  1
+
+100     >>  334 LOAD_GLOBAL             11 (NULL + sum)
+            346 LOAD_CONST               7 (<code object <genexpr> at 0x000002BF94A2F030, file "core\io\pdf.py", line 100>)
+            348 MAKE_FUNCTION            0
+            350 LOAD_FAST                7 (ocr_pages)
+            352 GET_ITER
+            354 PRECALL                  0
+            358 CALL                     0
+            368 PRECALL                  1
+            372 CALL                     1
+            382 LOAD_GLOBAL             11 (NULL + sum)
+            394 LOAD_CONST               8 (<code object <genexpr> at 0x000002BF94A2F330, file "core\io\pdf.py", line 100>)
+            396 MAKE_FUNCTION            0
+            398 LOAD_FAST                4 (pages)
+            400 GET_ITER
+            402 PRECALL                  0
+            406 CALL                     0
+            416 PRECALL                  1
+            420 CALL                     1
+            430 COMPARE_OP               4 (>)
+            436 POP_JUMP_FORWARD_IF_FALSE     2 (to 442)
+
+101         438 LOAD_FAST                7 (ocr_pages)
+            440 RETURN_VALUE
+
+102     >>  442 LOAD_FAST                4 (pages)
+            444 RETURN_VALUE
+ExceptionTable:
+  42 to 56 -> 60 [0]
+  60 to 82 -> 90 [1] lasti
+  88 to 88 -> 90 [1] lasti
+  128 to 148 -> 152 [0]
+  152 to 170 -> 178 [1] lasti
+  176 to 176 -> 178 [1] lasti
+  186 to 212 -> 216 [0]
+  216 to 234 -> 328 [1] lasti
+  236 to 238 -> 318 [1] lasti
+  242 to 268 -> 272 [1]
+  270 to 270 -> 318 [1] lasti
+  272 to 290 -> 298 [2] lasti
+  292 to 294 -> 318 [1] lasti
+  296 to 296 -> 298 [2] lasti
+  298 to 304 -> 318 [1] lasti
+  306 to 306 -> 328 [1] lasti
+  318 to 326 -> 328 [1] lasti
+
+==============================================================================
+## <module>.pdf_to_pages.<genexpr>  (args=1, locals=2)
+# varnames: .0, p
+100           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (p)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (p)
+             26 LOAD_ATTR                1 (tokens)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.pdf_to_pages.<genexpr>  (args=1, locals=2)
+# varnames: .0, p
+100           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                24 (to 58)
+             10 STORE_FAST               1 (p)
+             12 LOAD_GLOBAL              1 (NULL + len)
+             24 LOAD_FAST                1 (p)
+             26 LOAD_ATTR                1 (tokens)
+             36 PRECALL                  1
+             40 CALL                     1
+             50 YIELD_VALUE
+             52 RESUME                   1
+             54 POP_TOP
+             56 JUMP_BACKWARD           25 (to 8)
+        >>   58 LOAD_CONST               0 (None)
+             60 RETURN_VALUE

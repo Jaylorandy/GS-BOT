@@ -1,0 +1,173 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "compile",
+   "_CMT_NO_RE",
+   "_KI_RE",
+   "_TP_RE",
+   "I",
+   "_MILL_RE",
+   "_FABRIC_RE",
+   "_VENDOR_RE",
+   "_FACTORY_RE",
+   "_SHIP_VIA_RE",
+   "_SHIP_DATE_RE",
+   "_CARTON_RE",
+   "AnfCommitmentParser"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/anf_commitment.py - Abercrombie & Fitch Commitment sheet (structural).\n\nOne file = one Commitment. The PO PDFs reference a ``Commitment:`` number but do\nNOT carry the Key Item (KI) / Mill / Fabric - this sheet supplies them. The ANF\nfolder flow parses every Commitment PDF into a ``CommitmentStore`` record keyed by\n``Commitment #``; later POs look the number up to backfill KI / mill / fabric.\n\nSource fields observed (one per file):\n    Commitment # 1190449\n    Key Item 26051\n    Tech Pack # 339260253\n    Mill Name Abercrombie & Fitch ... / Wuxi Goldsmile ...\n    Fabric Ref Code KNT000194\n    Vendor 401052   Factory 15126\n    Ship Via ...   Ship Date 08/28/26   Carton Standard 6\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   "Commitment\\s*#\\s*(\\d+)",
+   "Key\\s+Item\\s+(\\d+)",
+   "Tech\\s+Pack\\s*#\\s*(\\d+)",
+   "Mill\\s+Name\\s+(.+)",
+   "Fabric\\s+Ref\\s+Code\\s+(\\S+)",
+   "Vendor\\s+(\\d+)",
+   "Factory\\s+(\\d+)",
+   "Ship\\s+Via\\s+(.+)",
+   "Ship\\s+Date\\s+(\\S+)",
+   "Carton\\s+Standard\\s+(\\d+)",
+   "AnfCommitmentParser"
+  ],
+  "n_instructions": 126
+ },
+ "<module>.AnfCommitmentParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "ANF_COMMITMENT",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "AnfCommitmentParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.AnfCommitmentParser.parse": {
+  "names": [
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "doc_text",
+   "_CMT_NO_RE",
+   "search",
+   "_KI_RE",
+   "_TP_RE",
+   "_MILL_RE",
+   "_FABRIC_RE",
+   "_VENDOR_RE",
+   "_FACTORY_RE",
+   "_SHIP_VIA_RE",
+   "_SHIP_DATE_RE",
+   "_CARTON_RE",
+   "OrderEntity",
+   "group",
+   "po_no",
+   "extra",
+   "strip",
+   "entities",
+   "append"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "po",
+   "full",
+   "cmt",
+   "ki",
+   "tp",
+   "mill",
+   "fabric",
+   "vendor",
+   "factory",
+   "ship_via",
+   "ship_date",
+   "carton",
+   "ent"
+  ],
+  "consts": [
+   null,
+   "Abercrombie & Fitch",
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   1,
+   "commitment_no",
+   "ki_no",
+   "tech_pack_no",
+   "mill_name",
+   "fabric_ref",
+   "vendor_code",
+   "factory_code",
+   "ship_via",
+   "ship_date",
+   "carton_std"
+  ],
+  "n_instructions": 246
+ }
+}

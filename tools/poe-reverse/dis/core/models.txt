@@ -1,0 +1,3821 @@
+# module: core.models
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\models.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/models.py - Unified data contract for Purchase Order Extractor V2.\n\nDesign rule (hard requirement): NO customer name is ever hardcoded in code.\nAll sources (PDF / image, any customer or layout) are parsed into the same\n``PurchaseOrder`` contract. Customer-specific differences live entirely in\n``PoRecipe`` (JSON, cached per layout fingerprint) - never in an ``if customer``.\n\nData hierarchy\n--------------\n    PurchaseOrder                # one source document\n      └─ OrderEntity[]           # one delivery entity inside a PO (a PO may have several)\n           └─ OrderLine[]        # one color/style line, with a size breakdown\n                └─ SizeQty[]     # a single size label + ordered quantity\n\nTemplate B is a LONG table (28 columns A..AB, labels 照搬 V1.6.4): every\n``SizeQty`` becomes its own row. The 7-segment ``_Row Key``\n(Customer|PO|Style|ColorCode|Size|Inseam|Destination) is computed as a plain\nstring so openpyxl (which does not evaluate formulas) can dedupe idempotently.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 20           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 22          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (json)
+             24 STORE_NAME               3 (json)
+
+ 23          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (os)
+             32 STORE_NAME               4 (os)
+
+ 24          34 LOAD_CONST               1 (0)
+             36 LOAD_CONST               3 (None)
+             38 IMPORT_NAME              5 (re)
+             40 STORE_NAME               5 (re)
+
+ 25          42 LOAD_CONST               1 (0)
+             44 LOAD_CONST               4 (('dataclass', 'field', 'asdict', 'fields'))
+             46 IMPORT_NAME              6 (dataclasses)
+             48 IMPORT_FROM              7 (dataclass)
+             50 STORE_NAME               7 (dataclass)
+             52 IMPORT_FROM              8 (field)
+             54 STORE_NAME               8 (field)
+             56 IMPORT_FROM              9 (asdict)
+             58 STORE_NAME               9 (asdict)
+             60 IMPORT_FROM             10 (fields)
+             62 STORE_NAME              10 (fields)
+             64 POP_TOP
+
+ 26          66 LOAD_CONST               1 (0)
+             68 LOAD_CONST               5 (('Enum',))
+             70 IMPORT_NAME             11 (enum)
+             72 IMPORT_FROM             12 (Enum)
+             74 STORE_NAME              12 (Enum)
+             76 POP_TOP
+
+ 27          78 LOAD_CONST               1 (0)
+             80 LOAD_CONST               6 (('Dict', 'List', 'Optional'))
+             82 IMPORT_NAME             13 (typing)
+             84 IMPORT_FROM             14 (Dict)
+             86 STORE_NAME              14 (Dict)
+             88 IMPORT_FROM             15 (List)
+             90 STORE_NAME              15 (List)
+             92 IMPORT_FROM             16 (Optional)
+             94 STORE_NAME              16 (Optional)
+             96 POP_TOP
+
+ 29          98 LOAD_CONST               1 (0)
+            100 LOAD_CONST               7 (('excel_hyperlink_formula',))
+            102 IMPORT_NAME             17 (core.winpath)
+            104 IMPORT_FROM             18 (excel_hyperlink_formula)
+            106 STORE_NAME              18 (excel_hyperlink_formula)
+            108 POP_TOP
+
+ 32         110 PUSH_NULL
+            112 LOAD_BUILD_CLASS
+            114 LOAD_CONST               8 (<code object LayoutType at 0x000002BF94A658A0, file "core\models.py", line 32>)
+            116 MAKE_FUNCTION            0
+            118 LOAD_CONST               9 ('LayoutType')
+            120 LOAD_NAME               19 (str)
+            122 LOAD_NAME               12 (Enum)
+            124 PRECALL                  4
+            128 CALL                     4
+            138 STORE_NAME              20 (LayoutType)
+
+ 53         140 LOAD_NAME                7 (dataclass)
+
+ 54         142 PUSH_NULL
+            144 LOAD_BUILD_CLASS
+            146 LOAD_CONST              10 (<code object SizeQty at 0x000002BF94A2F730, file "core\models.py", line 53>)
+            148 MAKE_FUNCTION            0
+            150 LOAD_CONST              11 ('SizeQty')
+            152 PRECALL                  2
+            156 CALL                     2
+
+ 53         166 PRECALL                  0
+            170 CALL                     0
+
+ 54         180 STORE_NAME              21 (SizeQty)
+
+ 67         182 LOAD_NAME                7 (dataclass)
+
+ 68         184 PUSH_NULL
+            186 LOAD_BUILD_CLASS
+            188 LOAD_CONST              12 (<code object OrderLine at 0x000002BF949EC510, file "core\models.py", line 67>)
+            190 MAKE_FUNCTION            0
+            192 LOAD_CONST              13 ('OrderLine')
+            194 PRECALL                  2
+            198 CALL                     2
+
+ 67         208 PRECALL                  0
+            212 CALL                     0
+
+ 68         222 STORE_NAME              22 (OrderLine)
+
+ 97         224 LOAD_NAME                7 (dataclass)
+
+ 98         226 PUSH_NULL
+            228 LOAD_BUILD_CLASS
+            230 LOAD_CONST              14 (<code object OrderEntity at 0x000002BF944624D0, file "core\models.py", line 97>)
+            232 MAKE_FUNCTION            0
+            234 LOAD_CONST              15 ('OrderEntity')
+            236 PRECALL                  2
+            240 CALL                     2
+
+ 97         250 PRECALL                  0
+            254 CALL                     0
+
+ 98         264 STORE_NAME              23 (OrderEntity)
+
+153         266 LOAD_NAME                7 (dataclass)
+
+154         268 PUSH_NULL
+            270 LOAD_BUILD_CLASS
+            272 LOAD_CONST              16 (<code object PurchaseOrder at 0x000002BF94A01B50, file "core\models.py", line 153>)
+            274 MAKE_FUNCTION            0
+            276 LOAD_CONST              17 ('PurchaseOrder')
+            278 PRECALL                  2
+            282 CALL                     2
+
+153         292 PRECALL                  0
+            296 CALL                     0
+
+154         306 STORE_NAME              24 (PurchaseOrder)
+
+555         308 LOAD_CONST              93 (('customer', 'str', 'po_no', 'str', 'style', 'str', 'color_code', 'str', 'size', 'str', 'inseam', 'str', 'destination', 'str', 'return', 'str'))
+            310 LOAD_CONST              27 (<code object build_row_key at 0x000002BF94A659B0, file "core\models.py", line 555>)
+            312 MAKE_FUNCTION            4 (annotations)
+            314 STORE_NAME              25 (build_row_key)
+
+579         316 LOAD_NAME                7 (dataclass)
+
+580         318 PUSH_NULL
+            320 LOAD_BUILD_CLASS
+            322 LOAD_CONST              28 (<code object PoRecipe at 0x000002BF940DC1C0, file "core\models.py", line 579>)
+            324 MAKE_FUNCTION            0
+            326 LOAD_CONST              29 ('PoRecipe')
+            328 PRECALL                  2
+            332 CALL                     2
+
+579         342 PRECALL                  0
+            346 CALL                     0
+
+580         356 STORE_NAME              26 (PoRecipe)
+
+784         358 LOAD_NAME               27 (__name__)
+            360 LOAD_CONST              30 ('__main__')
+            362 COMPARE_OP               2 (==)
+            368 EXTENDED_ARG             1
+            370 POP_JUMP_FORWARD_IF_FALSE   456 (to 1284)
+
+787         372 PUSH_NULL
+            374 LOAD_NAME               24 (PurchaseOrder)
+
+788         376 LOAD_CONST              31 ('LPP SA')
+
+789         378 LOAD_CONST              32 ('PO_637JO_2627182_2026-01-15.pdf')
+
+790         380 PUSH_NULL
+            382 LOAD_NAME               23 (OrderEntity)
+            384 LOAD_CONST              94 (())
+            386 BUILD_MAP                0
+            388 LOAD_CONST              33 ('entity_index')
+
+791         390 LOAD_CONST               1 (0)
+            392 MAP_ADD                  1
+
+790         394 LOAD_CONST              20 ('po_no')
+
+792         396 LOAD_CONST              34 ('11321589')
+            398 MAP_ADD                  1
+
+790         400 LOAD_CONST              35 ('channel')
+
+793         402 LOAD_CONST              36 ('STANDARD')
+            404 MAP_ADD                  1
+
+790         406 LOAD_CONST              37 ('season')
+
+794         408 LOAD_CONST              38 ('SS26')
+            410 MAP_ADD                  1
+
+790         412 LOAD_CONST              39 ('delivery_date')
+
+795         414 LOAD_CONST              40 ('2026-03-02')
+            416 MAP_ADD                  1
+
+790         418 LOAD_CONST              41 ('destination_code')
+
+796         420 LOAD_CONST              42 ('')
+            422 MAP_ADD                  1
+
+790         424 LOAD_CONST              43 ('packing_method')
+
+797         426 LOAD_CONST              44 ('MULTIPACK')
+            428 MAP_ADD                  1
+
+790         430 LOAD_CONST              45 ('price_term')
+
+798         432 LOAD_CONST              46 ('FOB')
+            434 MAP_ADD                  1
+
+790         436 LOAD_CONST              47 ('currency')
+
+799         438 LOAD_CONST              48 ('USD')
+            440 MAP_ADD                  1
+
+790         442 LOAD_CONST              49 ('size_scale')
+
+800         444 LOAD_CONST              50 ('ALPHA')
+            446 MAP_ADD                  1
+
+790         448 LOAD_CONST              51 ('product_group')
+
+801         450 LOAD_CONST              52 ('C_trousers')
+            452 MAP_ADD                  1
+
+790         454 LOAD_CONST              53 ('age_sex_desc')
+
+802         456 LOAD_CONST              54 ('MENS')
+            458 MAP_ADD                  1
+
+790         460 LOAD_CONST              55 ('product_desc')
+
+803         462 LOAD_CONST              56 ("MEN'S TROUSERS")
+            464 MAP_ADD                  1
+
+790         466 LOAD_CONST              57 ('port_loading')
+
+804         468 LOAD_CONST              58 ('Sihanoukville')
+            470 MAP_ADD                  1
+
+790         472 LOAD_CONST              59 ('port_discharge')
+
+805         474 LOAD_CONST              60 ('Gdynia')
+            476 MAP_ADD                  1
+
+790         478 LOAD_CONST              61 ('ship_mode')
+
+806         480 LOAD_CONST              62 ('Sea')
+            482 MAP_ADD                  1
+
+790         484 LOAD_CONST              63 ('vendor_name')
+
+807         486 LOAD_CONST              64 ('Gs Global Sourcing Co.,Ltd')
+            488 MAP_ADD                  1
+
+790         490 LOAD_CONST              65 ('payment_terms')
+
+808         492 LOAD_CONST              66 ('TT HSBC 180 Days')
+            494 MAP_ADD                  1
+
+790         496 LOAD_CONST              67 ('lines')
+
+809         498 PUSH_NULL
+            500 LOAD_NAME               22 (OrderLine)
+
+810         502 LOAD_CONST              68 ('637JO')
+
+811         504 LOAD_CONST              69 ('80X')
+
+812         506 LOAD_CONST              70 ('BEIGE')
+
+813         508 LOAD_CONST              42 ('')
+
+814         510 LOAD_CONST              71 ('PCS')
+
+815         512 LOAD_CONST              72 (10.2)
+
+816         514 PUSH_NULL
+            516 LOAD_NAME               21 (SizeQty)
+            518 LOAD_CONST              73 ('S')
+            520 LOAD_CONST              74 (744)
+            522 PRECALL                  2
+            526 CALL                     2
+            536 BUILD_LIST               1
+
+809         538 KW_NAMES                75
+            540 PRECALL                  7
+            544 CALL                     7
+            554 BUILD_LIST               1
+            556 MAP_ADD                  1
+
+790         558 CALL_FUNCTION_EX         1
+            560 BUILD_LIST               1
+
+787         562 KW_NAMES                76
+            564 PRECALL                  3
+            568 CALL                     3
+            578 STORE_NAME              28 (po)
+
+820         580 LOAD_NAME               28 (po)
+            582 LOAD_METHOD             29 (template_b_rows)
+            604 PRECALL                  0
+            608 CALL                     0
+            618 STORE_NAME              30 (rows)
+
+821         620 PUSH_NULL
+            622 LOAD_NAME               31 (len)
+            624 LOAD_NAME               30 (rows)
+            626 PRECALL                  1
+            630 CALL                     1
+            640 LOAD_CONST              77 (1)
+            642 COMPARE_OP               2 (==)
+            648 POP_JUMP_FORWARD_IF_TRUE    10 (to 670)
+            650 LOAD_ASSERTION_ERROR
+            652 LOAD_NAME               30 (rows)
+            654 PRECALL                  0
+            658 CALL                     0
+            668 RAISE_VARARGS            1
+
+822     >>  670 LOAD_NAME               30 (rows)
+            672 LOAD_CONST               1 (0)
+            674 BINARY_SUBSCR
+            684 STORE_NAME              32 (r)
+
+823         686 LOAD_NAME               32 (r)
+            688 LOAD_CONST              78 ('A')
+            690 BINARY_SUBSCR
+            700 LOAD_CONST              31 ('LPP SA')
+            702 COMPARE_OP               2 (==)
+            708 POP_JUMP_FORWARD_IF_TRUE     2 (to 714)
+            710 LOAD_ASSERTION_ERROR
+            712 RAISE_VARARGS            1
+
+824     >>  714 LOAD_NAME               32 (r)
+            716 LOAD_CONST              79 ('E')
+            718 BINARY_SUBSCR
+            728 LOAD_CONST              69 ('80X')
+            730 COMPARE_OP               2 (==)
+            736 POP_JUMP_FORWARD_IF_TRUE     2 (to 742)
+            738 LOAD_ASSERTION_ERROR
+            740 RAISE_VARARGS            1
+
+825     >>  742 LOAD_NAME               32 (r)
+            744 LOAD_CONST              80 ('C')
+            746 BINARY_SUBSCR
+            756 LOAD_CONST              34 ('11321589')
+            758 COMPARE_OP               2 (==)
+            764 POP_JUMP_FORWARD_IF_TRUE     2 (to 770)
+            766 LOAD_ASSERTION_ERROR
+            768 RAISE_VARARGS            1
+
+826     >>  770 LOAD_CONST              81 ('LPP SA|11321589|637JO|80X|S||')
+            772 STORE_NAME              33 (expected_key)
+
+827         774 LOAD_NAME               32 (r)
+            776 LOAD_CONST              82 ('AA')
+            778 BINARY_SUBSCR
+            788 LOAD_NAME               33 (expected_key)
+            790 COMPARE_OP               2 (==)
+            796 POP_JUMP_FORWARD_IF_TRUE    16 (to 830)
+            798 LOAD_ASSERTION_ERROR
+            800 LOAD_NAME               32 (r)
+            802 LOAD_CONST              82 ('AA')
+            804 BINARY_SUBSCR
+            814 PRECALL                  0
+            818 CALL                     0
+            828 RAISE_VARARGS            1
+
+828     >>  830 PUSH_NULL
+            832 LOAD_NAME               34 (print)
+            834 LOAD_CONST              83 ('OK rows:')
+            836 PUSH_NULL
+            838 LOAD_NAME               31 (len)
+            840 LOAD_NAME               30 (rows)
+            842 PRECALL                  1
+            846 CALL                     1
+            856 PRECALL                  2
+            860 CALL                     2
+            870 POP_TOP
+
+829         872 PUSH_NULL
+            874 LOAD_NAME               34 (print)
+            876 LOAD_CONST              84 ('Row Key:')
+            878 LOAD_NAME               32 (r)
+            880 LOAD_CONST              82 ('AA')
+            882 BINARY_SUBSCR
+            892 PRECALL                  2
+            896 CALL                     2
+            906 POP_TOP
+
+830         908 PUSH_NULL
+            910 LOAD_NAME               34 (print)
+            912 LOAD_CONST              85 ('Color Code:')
+            914 LOAD_NAME               32 (r)
+            916 LOAD_CONST              79 ('E')
+            918 BINARY_SUBSCR
+            928 LOAD_CONST              86 ('| Price Term:')
+            930 LOAD_NAME               32 (r)
+            932 LOAD_CONST              87 ('M')
+            934 BINARY_SUBSCR
+
+831         944 LOAD_CONST              88 ('| Net Amt formula at L (writer fills =I*K):')
+            946 LOAD_NAME               32 (r)
+            948 LOAD_CONST              89 ('L')
+            950 BINARY_SUBSCR
+
+830         960 PRECALL                  6
+            964 CALL                     6
+            974 POP_TOP
+
+833         976 PUSH_NULL
+            978 LOAD_NAME               26 (PoRecipe)
+            980 LOAD_CONST              31 ('LPP SA')
+            982 LOAD_NAME               20 (LayoutType)
+            984 LOAD_ATTR               35 (MATRIX_2AXIS)
+            994 LOAD_ATTR               36 (value)
+
+834        1004 LOAD_CONST              90 ('deadbeef')
+           1006 LOAD_CONST              36 ('STANDARD')
+
+833        1008 KW_NAMES                91
+           1010 PRECALL                  4
+           1014 CALL                     4
+           1024 STORE_NAME              37 (rec)
+
+835        1026 LOAD_NAME               26 (PoRecipe)
+           1028 LOAD_METHOD             38 (from_json)
+           1050 LOAD_NAME               37 (rec)
+           1052 LOAD_METHOD             39 (to_json)
+           1074 PRECALL                  0
+           1078 CALL                     0
+           1088 PRECALL                  1
+           1092 CALL                     1
+           1102 STORE_NAME              40 (rec2)
+
+836        1104 LOAD_NAME               40 (rec2)
+           1106 LOAD_ATTR               41 (customer)
+           1116 LOAD_NAME               37 (rec)
+           1118 LOAD_ATTR               41 (customer)
+           1128 COMPARE_OP               2 (==)
+           1134 POP_JUMP_FORWARD_IF_FALSE    16 (to 1168)
+           1136 LOAD_NAME               40 (rec2)
+           1138 LOAD_ATTR               42 (layout_type)
+           1148 LOAD_NAME               37 (rec)
+           1150 LOAD_ATTR               42 (layout_type)
+           1160 COMPARE_OP               2 (==)
+           1166 POP_JUMP_FORWARD_IF_TRUE     2 (to 1172)
+        >> 1168 LOAD_ASSERTION_ERROR
+           1170 RAISE_VARARGS            1
+
+837     >> 1172 PUSH_NULL
+           1174 LOAD_NAME               34 (print)
+           1176 LOAD_CONST              92 ('Recipe round-trip OK ->')
+           1178 LOAD_NAME               40 (rec2)
+           1180 LOAD_METHOD             39 (to_json)
+           1202 PRECALL                  0
+           1206 CALL                     0
+           1216 LOAD_METHOD             43 (splitlines)
+           1238 PRECALL                  0
+           1242 CALL                     0
+           1252 LOAD_CONST               1 (0)
+           1254 BINARY_SUBSCR
+           1264 PRECALL                  2
+           1268 CALL                     2
+           1278 POP_TOP
+           1280 LOAD_CONST               3 (None)
+           1282 RETURN_VALUE
+
+784     >> 1284 LOAD_CONST               3 (None)
+           1286 RETURN_VALUE
+
+==============================================================================
+## <module>.LayoutType  (args=0, locals=0)
+ 32           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('LayoutType')
+              8 STORE_NAME               2 (__qualname__)
+
+ 33          10 LOAD_CONST               1 ('The PO layouts the recipe engine supports.')
+             12 STORE_NAME               3 (__doc__)
+
+ 34          14 LOAD_CONST               2 ('matrix_2axis')
+             16 STORE_NAME               4 (MATRIX_2AXIS)
+
+ 35          18 LOAD_CONST               3 ('matrix_1axis')
+             20 STORE_NAME               5 (MATRIX_1AXIS)
+
+ 36          22 LOAD_CONST               4 ('line_items')
+             24 STORE_NAME               6 (LINE_ITEMS)
+
+ 37          26 LOAD_CONST               5 ('control_sheet')
+             28 STORE_NAME               7 (CONTROL_SHEET)
+
+ 38          30 LOAD_CONST               6 ('matrix_percarton')
+             32 STORE_NAME               8 (MATRIX_PERCARTON)
+
+ 39          34 LOAD_CONST               7 ('line_items_eu')
+             36 STORE_NAME               9 (LINE_ITEMS_EU)
+
+ 40          38 LOAD_CONST               8 ('costco_hybrid')
+             40 STORE_NAME              10 (COSTCO_HYBRID)
+
+ 41          42 LOAD_CONST               9 ('costco_ecom')
+             44 STORE_NAME              11 (COSTCO_ECOM)
+
+ 42          46 LOAD_CONST              10 ('celio')
+             48 STORE_NAME              12 (CELIO)
+
+ 43          50 LOAD_CONST              11 ('frankie_ecom')
+             52 STORE_NAME              13 (FRANKIE_ECOM)
+
+ 44          54 LOAD_CONST              12 ('bass_pro_ack')
+             56 STORE_NAME              14 (BASS_PRO_ACK)
+
+ 45          58 LOAD_CONST              13 ('import_po')
+             60 STORE_NAME              15 (IMPORT_PO)
+
+ 46          62 LOAD_CONST              14 ('anf_po')
+             64 STORE_NAME              16 (ANF_PO)
+
+ 47          66 LOAD_CONST              15 ('anf_commitment')
+             68 STORE_NAME              17 (ANF_COMMITMENT)
+             70 LOAD_CONST              16 (None)
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>.SizeQty  (args=0, locals=0)
+ 53           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('SizeQty')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 55          12 LOAD_CONST               1 ('A single size label and its ordered quantity.')
+             14 STORE_NAME               3 (__doc__)
+
+ 56          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (size)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('size')
+             26 STORE_SUBSCR
+
+ 57          30 LOAD_CONST               5 (0)
+             32 STORE_NAME               6 (qty)
+             34 LOAD_CONST               6 ('int')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               7 ('qty')
+             40 STORE_SUBSCR
+
+ 59          44 LOAD_NAME                7 (property)
+
+ 60          46 LOAD_CONST              11 (('return', 'int'))
+             48 LOAD_CONST               9 (<code object qty_safe at 0x000002BF94A698F0, file "core\models.py", line 59>)
+             50 MAKE_FUNCTION            4 (annotations)
+
+ 59          52 PRECALL                  0
+             56 CALL                     0
+
+ 60          66 STORE_NAME               8 (qty_safe)
+             68 LOAD_CONST              10 (None)
+             70 RETURN_VALUE
+
+==============================================================================
+## <module>.SizeQty.qty_safe  (args=1, locals=1)
+# varnames: self
+ 59           0 RESUME                   0
+
+ 61           2 NOP
+
+ 62           4 LOAD_GLOBAL              1 (NULL + int)
+             16 LOAD_FAST                0 (self)
+             18 LOAD_ATTR                1 (qty)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 RETURN_VALUE
+        >>   44 PUSH_EXC_INFO
+
+ 63          46 LOAD_GLOBAL              4 (TypeError)
+             58 LOAD_GLOBAL              6 (ValueError)
+             70 BUILD_TUPLE              2
+             72 CHECK_EXC_MATCH
+             74 POP_JUMP_FORWARD_IF_FALSE     4 (to 84)
+             76 POP_TOP
+
+ 64          78 POP_EXCEPT
+             80 LOAD_CONST               1 (0)
+             82 RETURN_VALUE
+
+ 63     >>   84 RERAISE                  0
+        >>   86 COPY                     3
+             88 POP_EXCEPT
+             90 RERAISE                  1
+ExceptionTable:
+  4 to 40 -> 44 [0]
+  44 to 76 -> 86 [1] lasti
+  84 to 84 -> 86 [1] lasti
+
+==============================================================================
+## <module>.OrderLine  (args=0, locals=0)
+ 67           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('OrderLine')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 69          12 LOAD_CONST               1 ('One color (and style) line within an entity, with a size breakdown.')
+             14 STORE_NAME               3 (__doc__)
+
+ 70          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (style_no)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('style_no')
+             26 STORE_SUBSCR
+
+ 71          30 LOAD_CONST               2 ('')
+             32 STORE_NAME               6 (color_code)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               5 ('color_code')
+             40 STORE_SUBSCR
+
+ 72          44 LOAD_CONST               2 ('')
+             46 STORE_NAME               7 (color_desc)
+             48 LOAD_CONST               3 ('str')
+             50 LOAD_NAME                5 (__annotations__)
+             52 LOAD_CONST               6 ('color_desc')
+             54 STORE_SUBSCR
+
+ 73          58 LOAD_CONST               2 ('')
+             60 STORE_NAME               8 (inseam)
+             62 LOAD_CONST               3 ('str')
+             64 LOAD_NAME                5 (__annotations__)
+             66 LOAD_CONST               7 ('inseam')
+             68 STORE_SUBSCR
+
+ 74          72 PUSH_NULL
+             74 LOAD_NAME                9 (field)
+             76 LOAD_NAME               10 (list)
+             78 KW_NAMES                 8
+             80 PRECALL                  1
+             84 CALL                     1
+             94 STORE_NAME              11 (sizes)
+             96 LOAD_CONST               9 ('List[SizeQty]')
+             98 LOAD_NAME                5 (__annotations__)
+            100 LOAD_CONST              10 ('sizes')
+            102 STORE_SUBSCR
+
+ 75         106 LOAD_CONST              11 (None)
+            108 STORE_NAME              12 (unit_price)
+            110 LOAD_CONST              12 ('Optional[float]')
+            112 LOAD_NAME                5 (__annotations__)
+            114 LOAD_CONST              13 ('unit_price')
+            116 STORE_SUBSCR
+
+ 76         120 LOAD_CONST               2 ('')
+            122 STORE_NAME              13 (su)
+            124 LOAD_CONST               3 ('str')
+            126 LOAD_NAME                5 (__annotations__)
+            128 LOAD_CONST              14 ('su')
+            130 STORE_SUBSCR
+
+ 80         134 LOAD_CONST              11 (None)
+            136 STORE_NAME              14 (printed_row_total)
+            138 LOAD_CONST              15 ('Optional[int]')
+            140 LOAD_NAME                5 (__annotations__)
+            142 LOAD_CONST              16 ('printed_row_total')
+            144 STORE_SUBSCR
+
+ 84         148 LOAD_CONST              11 (None)
+            150 STORE_NAME              15 (net_amount)
+            152 LOAD_CONST              12 ('Optional[float]')
+            154 LOAD_NAME                5 (__annotations__)
+            156 LOAD_CONST              17 ('net_amount')
+            158 STORE_SUBSCR
+
+ 87         162 PUSH_NULL
+            164 LOAD_NAME                9 (field)
+            166 LOAD_NAME               16 (dict)
+            168 KW_NAMES                 8
+            170 PRECALL                  1
+            174 CALL                     1
+            184 STORE_NAME              17 (extra)
+            186 LOAD_CONST              18 ('Dict[str, str]')
+            188 LOAD_NAME                5 (__annotations__)
+            190 LOAD_CONST              19 ('extra')
+            192 STORE_SUBSCR
+
+ 89         196 LOAD_NAME               18 (property)
+
+ 90         198 LOAD_CONST              25 (('return', 'int'))
+            200 LOAD_CONST              22 (<code object total_qty at 0x000002BF94A2EB30, file "core\models.py", line 89>)
+            202 MAKE_FUNCTION            4 (annotations)
+
+ 89         204 PRECALL                  0
+            208 CALL                     0
+
+ 90         218 STORE_NAME              19 (total_qty)
+
+ 93         220 LOAD_CONST              26 (('return', 'List[str]'))
+            222 LOAD_CONST              24 (<code object size_labels at 0x000002BF94A6DED0, file "core\models.py", line 93>)
+            224 MAKE_FUNCTION            4 (annotations)
+            226 STORE_NAME              20 (size_labels)
+            228 LOAD_CONST              11 (None)
+            230 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderLine.total_qty  (args=1, locals=1)
+# varnames: self
+ 89           0 RESUME                   0
+
+ 91           2 LOAD_GLOBAL              1 (NULL + sum)
+             14 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6E5D0, file "core\models.py", line 91>)
+             16 MAKE_FUNCTION            0
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (sizes)
+             30 GET_ITER
+             32 PRECALL                  0
+             36 CALL                     0
+             46 PRECALL                  1
+             50 CALL                     1
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderLine.total_qty.<genexpr>  (args=1, locals=2)
+# varnames: .0, s
+ 91           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (s)
+             12 LOAD_FAST                1 (s)
+             14 LOAD_ATTR                0 (qty_safe)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderLine.size_labels  (args=1, locals=1)
+# varnames: self
+ 93           0 RESUME                   0
+
+ 94           2 LOAD_CONST               1 (<code object <listcomp> at 0x000002BF94A6E6B0, file "core\models.py", line 94>)
+              4 MAKE_FUNCTION            0
+              6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (sizes)
+             18 GET_ITER
+             20 PRECALL                  0
+             24 CALL                     0
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderLine.size_labels.<listcomp>  (args=1, locals=2)
+# varnames: .0, s
+ 94           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 9 (to 26)
+              8 STORE_FAST               1 (s)
+             10 LOAD_FAST                1 (s)
+             12 LOAD_ATTR                0 (size)
+             22 LIST_APPEND              2
+             24 JUMP_BACKWARD           10 (to 6)
+        >>   26 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderEntity  (args=0, locals=0)
+ 97           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('OrderEntity')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+ 99          12 LOAD_CONST               1 ('One delivery entity inside a PO. A single PO may contain several entities\n    (each with its own price / delivery date / destination / channel).')
+             14 STORE_NAME               3 (__doc__)
+
+101          16 LOAD_CONST               2 (0)
+             18 STORE_NAME               4 (entity_index)
+             20 LOAD_CONST               3 ('int')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('entity_index')
+             26 STORE_SUBSCR
+
+102          30 LOAD_CONST               5 ('')
+             32 STORE_NAME               6 (style_no)
+             34 LOAD_CONST               6 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               7 ('style_no')
+             40 STORE_SUBSCR
+
+106          44 LOAD_CONST               5 ('')
+             46 STORE_NAME               7 (po_no)
+             48 LOAD_CONST               6 ('str')
+             50 LOAD_NAME                5 (__annotations__)
+             52 LOAD_CONST               8 ('po_no')
+             54 STORE_SUBSCR
+
+107          58 LOAD_CONST               5 ('')
+             60 STORE_NAME               8 (channel)
+             62 LOAD_CONST               6 ('str')
+             64 LOAD_NAME                5 (__annotations__)
+             66 LOAD_CONST               9 ('channel')
+             68 STORE_SUBSCR
+
+108          72 LOAD_CONST               5 ('')
+             74 STORE_NAME               9 (delivery_date)
+             76 LOAD_CONST               6 ('str')
+             78 LOAD_NAME                5 (__annotations__)
+             80 LOAD_CONST              10 ('delivery_date')
+             82 STORE_SUBSCR
+
+109          86 LOAD_CONST               5 ('')
+             88 STORE_NAME              10 (destination_code)
+             90 LOAD_CONST               6 ('str')
+             92 LOAD_NAME                5 (__annotations__)
+             94 LOAD_CONST              11 ('destination_code')
+             96 STORE_SUBSCR
+
+110         100 LOAD_CONST               5 ('')
+            102 STORE_NAME              11 (packing_method)
+            104 LOAD_CONST               6 ('str')
+            106 LOAD_NAME                5 (__annotations__)
+            108 LOAD_CONST              12 ('packing_method')
+            110 STORE_SUBSCR
+
+111         114 LOAD_CONST               5 ('')
+            116 STORE_NAME              12 (wash_method)
+            118 LOAD_CONST               6 ('str')
+            120 LOAD_NAME                5 (__annotations__)
+            122 LOAD_CONST              13 ('wash_method')
+            124 STORE_SUBSCR
+
+112         128 LOAD_CONST               5 ('')
+            130 STORE_NAME              13 (washing_color)
+            132 LOAD_CONST               6 ('str')
+            134 LOAD_NAME                5 (__annotations__)
+            136 LOAD_CONST              14 ('washing_color')
+            138 STORE_SUBSCR
+
+113         142 LOAD_CONST               5 ('')
+            144 STORE_NAME              14 (payment_terms)
+            146 LOAD_CONST               6 ('str')
+            148 LOAD_NAME                5 (__annotations__)
+            150 LOAD_CONST              15 ('payment_terms')
+            152 STORE_SUBSCR
+
+114         156 LOAD_CONST               5 ('')
+            158 STORE_NAME              15 (price_term)
+            160 LOAD_CONST               6 ('str')
+            162 LOAD_NAME                5 (__annotations__)
+            164 LOAD_CONST              16 ('price_term')
+            166 STORE_SUBSCR
+
+115         170 LOAD_CONST               5 ('')
+            172 STORE_NAME              16 (currency)
+            174 LOAD_CONST               6 ('str')
+            176 LOAD_NAME                5 (__annotations__)
+            178 LOAD_CONST              17 ('currency')
+            180 STORE_SUBSCR
+
+116         184 LOAD_CONST               5 ('')
+            186 STORE_NAME              17 (size_scale)
+            188 LOAD_CONST               6 ('str')
+            190 LOAD_NAME                5 (__annotations__)
+            192 LOAD_CONST              18 ('size_scale')
+            194 STORE_SUBSCR
+
+117         198 LOAD_CONST               5 ('')
+            200 STORE_NAME              18 (product_group)
+            202 LOAD_CONST               6 ('str')
+            204 LOAD_NAME                5 (__annotations__)
+            206 LOAD_CONST              19 ('product_group')
+            208 STORE_SUBSCR
+
+118         212 LOAD_CONST               5 ('')
+            214 STORE_NAME              19 (age_sex_desc)
+            216 LOAD_CONST               6 ('str')
+            218 LOAD_NAME                5 (__annotations__)
+            220 LOAD_CONST              20 ('age_sex_desc')
+            222 STORE_SUBSCR
+
+119         226 LOAD_CONST               5 ('')
+            228 STORE_NAME              20 (product_desc)
+            230 LOAD_CONST               6 ('str')
+            232 LOAD_NAME                5 (__annotations__)
+            234 LOAD_CONST              21 ('product_desc')
+            236 STORE_SUBSCR
+
+120         240 LOAD_CONST               5 ('')
+            242 STORE_NAME              21 (season)
+            244 LOAD_CONST               6 ('str')
+            246 LOAD_NAME                5 (__annotations__)
+            248 LOAD_CONST              22 ('season')
+            250 STORE_SUBSCR
+
+121         254 LOAD_CONST               5 ('')
+            256 STORE_NAME              22 (port_loading)
+            258 LOAD_CONST               6 ('str')
+            260 LOAD_NAME                5 (__annotations__)
+            262 LOAD_CONST              23 ('port_loading')
+            264 STORE_SUBSCR
+
+122         268 LOAD_CONST               5 ('')
+            270 STORE_NAME              23 (port_discharge)
+            272 LOAD_CONST               6 ('str')
+            274 LOAD_NAME                5 (__annotations__)
+            276 LOAD_CONST              24 ('port_discharge')
+            278 STORE_SUBSCR
+
+123         282 LOAD_CONST               5 ('')
+            284 STORE_NAME              24 (ship_mode)
+            286 LOAD_CONST               6 ('str')
+            288 LOAD_NAME                5 (__annotations__)
+            290 LOAD_CONST              25 ('ship_mode')
+            292 STORE_SUBSCR
+
+124         296 LOAD_CONST               5 ('')
+            298 STORE_NAME              25 (vendor_name)
+            300 LOAD_CONST               6 ('str')
+            302 LOAD_NAME                5 (__annotations__)
+            304 LOAD_CONST              26 ('vendor_name')
+            306 STORE_SUBSCR
+
+125         310 LOAD_CONST               5 ('')
+            312 STORE_NAME              26 (agent_name)
+            314 LOAD_CONST               6 ('str')
+            316 LOAD_NAME                5 (__annotations__)
+            318 LOAD_CONST              27 ('agent_name')
+            320 STORE_SUBSCR
+
+127         324 LOAD_CONST               5 ('')
+            326 STORE_NAME              27 (import_po_no)
+            328 LOAD_CONST               6 ('str')
+            330 LOAD_NAME                5 (__annotations__)
+            332 LOAD_CONST              28 ('import_po_no')
+            334 STORE_SUBSCR
+
+128         338 LOAD_CONST               5 ('')
+            340 STORE_NAME              28 (reference_no)
+            342 LOAD_CONST               6 ('str')
+            344 LOAD_NAME                5 (__annotations__)
+            346 LOAD_CONST              29 ('reference_no')
+            348 STORE_SUBSCR
+
+129         352 LOAD_CONST               5 ('')
+            354 STORE_NAME              29 (cir_no)
+            356 LOAD_CONST               6 ('str')
+            358 LOAD_NAME                5 (__annotations__)
+            360 LOAD_CONST              30 ('cir_no')
+            362 STORE_SUBSCR
+
+130         366 LOAD_CONST               5 ('')
+            368 STORE_NAME              30 (freight_terms)
+            370 LOAD_CONST               6 ('str')
+            372 LOAD_NAME                5 (__annotations__)
+            374 LOAD_CONST              31 ('freight_terms')
+            376 STORE_SUBSCR
+
+131         380 LOAD_CONST               5 ('')
+            382 STORE_NAME              31 (country_of_origin)
+            384 LOAD_CONST               6 ('str')
+            386 LOAD_NAME                5 (__annotations__)
+            388 LOAD_CONST              32 ('country_of_origin')
+            390 STORE_SUBSCR
+
+132         394 LOAD_CONST               5 ('')
+            396 STORE_NAME              32 (dc_address)
+            398 LOAD_CONST               6 ('str')
+            400 LOAD_NAME                5 (__annotations__)
+            402 LOAD_CONST              33 ('dc_address')
+            404 STORE_SUBSCR
+
+133         408 PUSH_NULL
+            410 LOAD_NAME               33 (field)
+            412 LOAD_NAME               34 (list)
+            414 KW_NAMES                34
+            416 PRECALL                  1
+            420 CALL                     1
+            430 STORE_NAME              35 (lines)
+            432 LOAD_CONST              35 ('List[OrderLine]')
+            434 LOAD_NAME                5 (__annotations__)
+            436 LOAD_CONST              36 ('lines')
+            438 STORE_SUBSCR
+
+137         442 PUSH_NULL
+            444 LOAD_NAME               33 (field)
+            446 LOAD_NAME               36 (dict)
+            448 KW_NAMES                34
+            450 PRECALL                  1
+            454 CALL                     1
+            464 STORE_NAME              37 (printed_size_totals)
+            466 LOAD_CONST              37 ('Dict[str, int]')
+            468 LOAD_NAME                5 (__annotations__)
+            470 LOAD_CONST              38 ('printed_size_totals')
+            472 STORE_SUBSCR
+
+141         476 LOAD_CONST              39 (None)
+            478 STORE_NAME              38 (printed_total_qty)
+            480 LOAD_CONST              40 ('Optional[int]')
+            482 LOAD_NAME                5 (__annotations__)
+            484 LOAD_CONST              41 ('printed_total_qty')
+            486 STORE_SUBSCR
+
+142         490 LOAD_CONST              39 (None)
+            492 STORE_NAME              39 (printed_total_amount)
+            494 LOAD_CONST              42 ('Optional[float]')
+            496 LOAD_NAME                5 (__annotations__)
+            498 LOAD_CONST              43 ('printed_total_amount')
+            500 STORE_SUBSCR
+
+146         504 PUSH_NULL
+            506 LOAD_NAME               33 (field)
+            508 LOAD_NAME               36 (dict)
+            510 KW_NAMES                34
+            512 PRECALL                  1
+            516 CALL                     1
+            526 STORE_NAME              40 (extra)
+            528 LOAD_CONST              44 ('Dict[str, str]')
+            530 LOAD_NAME                5 (__annotations__)
+            532 LOAD_CONST              45 ('extra')
+            534 STORE_SUBSCR
+
+148         538 LOAD_NAME               41 (property)
+
+149         540 LOAD_CONST              48 (('return', 'int'))
+            542 LOAD_CONST              47 (<code object total_qty at 0x000002BF94A2ED30, file "core\models.py", line 148>)
+            544 MAKE_FUNCTION            4 (annotations)
+
+148         546 PRECALL                  0
+            550 CALL                     0
+
+149         560 STORE_NAME              42 (total_qty)
+            562 LOAD_CONST              39 (None)
+            564 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderEntity.total_qty  (args=1, locals=1)
+# varnames: self
+148           0 RESUME                   0
+
+150           2 LOAD_GLOBAL              1 (NULL + sum)
+             14 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6E090, file "core\models.py", line 150>)
+             16 MAKE_FUNCTION            0
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (lines)
+             30 GET_ITER
+             32 PRECALL                  0
+             36 CALL                     0
+             46 PRECALL                  1
+             50 CALL                     1
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.OrderEntity.total_qty.<genexpr>  (args=1, locals=2)
+# varnames: .0, ln
+150           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (ln)
+             12 LOAD_FAST                1 (ln)
+             14 LOAD_ATTR                0 (total_qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder  (args=0, locals=0)
+153           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('PurchaseOrder')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+155          12 LOAD_CONST               1 ('Top-level document result. Source-agnostic; all 4 PDF types map here.')
+             14 STORE_NAME               3 (__doc__)
+
+156          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (customer)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('customer')
+             26 STORE_SUBSCR
+
+157          30 LOAD_CONST               2 ('')
+             32 STORE_NAME               6 (source_file)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               5 ('source_file')
+             40 STORE_SUBSCR
+
+158          44 LOAD_CONST               2 ('')
+             46 STORE_NAME               7 (source_file_path)
+             48 LOAD_CONST               3 ('str')
+             50 LOAD_NAME                5 (__annotations__)
+             52 LOAD_CONST               6 ('source_file_path')
+             54 STORE_SUBSCR
+
+159          58 LOAD_CONST               2 ('')
+             60 STORE_NAME               8 (order_date)
+             62 LOAD_CONST               3 ('str')
+             64 LOAD_NAME                5 (__annotations__)
+             66 LOAD_CONST               7 ('order_date')
+             68 STORE_SUBSCR
+
+160          72 LOAD_CONST               8 (False)
+             74 STORE_NAME               9 (per_destination)
+             76 LOAD_CONST               9 ('bool')
+             78 LOAD_NAME                5 (__annotations__)
+             80 LOAD_CONST              10 ('per_destination')
+             82 STORE_SUBSCR
+
+164          86 PUSH_NULL
+             88 LOAD_NAME               10 (field)
+             90 LOAD_NAME               11 (list)
+             92 KW_NAMES                11
+             94 PRECALL                  1
+             98 CALL                     1
+            108 STORE_NAME              12 (entities)
+            110 LOAD_CONST              12 ('List[OrderEntity]')
+            112 LOAD_NAME                5 (__annotations__)
+            114 LOAD_CONST              13 ('entities')
+            116 STORE_SUBSCR
+
+168         120 PUSH_NULL
+            122 LOAD_NAME               10 (field)
+            124 LOAD_NAME               11 (list)
+            126 KW_NAMES                11
+            128 PRECALL                  1
+            132 CALL                     1
+            142 STORE_NAME              13 (validation_warnings)
+            144 LOAD_CONST              14 ('List[dict]')
+            146 LOAD_NAME                5 (__annotations__)
+            148 LOAD_CONST              15 ('validation_warnings')
+            150 STORE_SUBSCR
+
+173         154 LOAD_CONST               2 ('')
+            156 STORE_NAME              14 (fingerprint)
+            158 LOAD_CONST               3 ('str')
+            160 LOAD_NAME                5 (__annotations__)
+            162 LOAD_CONST              16 ('fingerprint')
+            164 STORE_SUBSCR
+
+178         168 NOP
+
+179         170 NOP
+
+178         172 LOAD_CONST              49 ((1, 'Y', ''))
+            174 LOAD_CONST              50 (('po_version', 'int', 'is_current', 'str', 'import_batch', 'str', 'return', 'List[Dict[str, object]]'))
+            176 LOAD_CONST              25 (<code object template_b_rows at 0x000002BF943B8C50, file "core\models.py", line 178>)
+            178 MAKE_FUNCTION            5 (defaults, annotations)
+            180 STORE_NAME              15 (template_b_rows)
+
+241         182 LOAD_NAME               16 (property)
+
+242         184 LOAD_CONST              51 (('return', 'int'))
+            186 LOAD_CONST              26 (<code object total_qty at 0x000002BF94A2EE30, file "core\models.py", line 241>)
+            188 MAKE_FUNCTION            4 (annotations)
+
+241         190 PRECALL                  0
+            194 CALL                     0
+
+242         204 STORE_NAME              17 (total_qty)
+
+245         206 LOAD_CONST              52 (('return', 'Dict[str, int]'))
+            208 LOAD_CONST              28 (<code object size_totals at 0x000002BF94999D10, file "core\models.py", line 245>)
+            210 MAKE_FUNCTION            4 (annotations)
+            212 STORE_NAME              18 (size_totals)
+
+255         214 LOAD_CONST              52 (('return', 'Dict[str, int]'))
+            216 LOAD_CONST              29 (<code object color_totals at 0x000002BF9473D7F0, file "core\models.py", line 255>)
+            218 MAKE_FUNCTION            4 (annotations)
+            220 STORE_NAME              19 (color_totals)
+
+264         222 LOAD_CONST              53 (('overrides', 'Dict[str, str]', 'return', 'None'))
+            224 LOAD_CONST              33 (<code object apply_recipe_overrides at 0x000002BF940D80B0, file "core\models.py", line 264>)
+            226 MAKE_FUNCTION            4 (annotations)
+            228 STORE_NAME              20 (apply_recipe_overrides)
+
+406         230 LOAD_CONST              54 (('recipe', "'PoRecipe'", 'return', 'list'))
+            232 LOAD_CONST              37 (<code object apply_field_defaults at 0x000002BF94391A10, file "core\models.py", line 406>)
+            234 MAKE_FUNCTION            4 (annotations)
+            236 STORE_NAME              21 (apply_field_defaults)
+
+436         238 LOAD_CONST              54 (('recipe', "'PoRecipe'", 'return', 'list'))
+            240 LOAD_CONST              38 (<code object apply_value_clean at 0x000002BF94442E60, file "core\models.py", line 436>)
+            242 MAKE_FUNCTION            4 (annotations)
+            244 STORE_NAME              22 (apply_value_clean)
+
+479         246 LOAD_CONST              55 (('return', 'list'))
+            248 LOAD_CONST              39 (<code object _cleanable_pairs at 0x000002BF944627D0, file "core\models.py", line 479>)
+            250 MAKE_FUNCTION            4 (annotations)
+            252 STORE_NAME              23 (_cleanable_pairs)
+
+502         254 LOAD_NAME               24 (staticmethod)
+
+503         256 LOAD_CONST              56 (('code', 'str', 'desc', 'str', 'return', 'str'))
+            258 LOAD_CONST              42 (<code object _color_combined at 0x000002BF94A65790, file "core\models.py", line 502>)
+            260 MAKE_FUNCTION            4 (annotations)
+
+502         262 PRECALL                  0
+            266 CALL                     0
+
+503         276 STORE_NAME              25 (_color_combined)
+
+506         278 LOAD_CONST              57 (('field_name', 'str', 'pat', 'str', 'repl', 'str', 'return', 'None'))
+            280 LOAD_CONST              46 (<code object _clean_field at 0x000002BF94080820, file "core\models.py", line 506>)
+            282 MAKE_FUNCTION            4 (annotations)
+            284 STORE_NAME              26 (_clean_field)
+
+530         286 LOAD_CONST              58 (('pat', 'str', 'repl', 'str', 'return', 'None'))
+            288 LOAD_CONST              47 (<code object _clean_color at 0x000002BF94447050, file "core\models.py", line 530>)
+            290 MAKE_FUNCTION            4 (annotations)
+            292 STORE_NAME              27 (_clean_color)
+            294 LOAD_CONST              48 (None)
+            296 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.template_b_rows  (args=4, locals=9)
+# varnames: self, po_version, is_current, import_batch, out, ent, ln, sq, rk
+178           0 RESUME                   0
+
+192           2 BUILD_LIST               0
+              4 STORE_FAST               4 (out)
+
+193           6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 EXTENDED_ARG             1
+             22 FOR_ITER               404 (to 832)
+             24 STORE_FAST               5 (ent)
+
+194          26 LOAD_FAST                5 (ent)
+             28 LOAD_ATTR                1 (lines)
+             38 GET_ITER
+        >>   40 EXTENDED_ARG             1
+             42 FOR_ITER               392 (to 828)
+             44 STORE_FAST               6 (ln)
+
+195          46 LOAD_FAST                6 (ln)
+             48 LOAD_ATTR                2 (sizes)
+             58 GET_ITER
+        >>   60 EXTENDED_ARG             1
+             62 FOR_ITER               380 (to 824)
+             64 STORE_FAST               7 (sq)
+
+196          66 LOAD_GLOBAL              7 (NULL + build_row_key)
+
+197          78 LOAD_FAST                0 (self)
+             80 LOAD_ATTR                4 (customer)
+
+198          90 LOAD_FAST                5 (ent)
+             92 LOAD_ATTR                5 (po_no)
+
+199         102 LOAD_FAST                6 (ln)
+            104 LOAD_ATTR                6 (style_no)
+
+200         114 LOAD_FAST                6 (ln)
+            116 LOAD_ATTR                7 (color_code)
+
+201         126 LOAD_FAST                7 (sq)
+            128 LOAD_ATTR                8 (size)
+
+202         138 LOAD_FAST                6 (ln)
+            140 LOAD_ATTR                9 (inseam)
+
+203         150 LOAD_FAST                5 (ent)
+            152 LOAD_ATTR               10 (destination_code)
+
+196         162 KW_NAMES                 1
+            164 PRECALL                  7
+            168 CALL                     7
+            178 STORE_FAST               8 (rk)
+
+205         180 LOAD_FAST                4 (out)
+            182 LOAD_METHOD             11 (append)
+            204 BUILD_MAP                0
+
+206         206 LOAD_CONST               2 ('A')
+            208 LOAD_FAST                0 (self)
+            210 LOAD_ATTR                4 (customer)
+
+205         220 MAP_ADD                  1
+
+207         222 LOAD_CONST               3 ('B')
+            224 LOAD_FAST                6 (ln)
+            226 LOAD_ATTR                6 (style_no)
+
+205         236 MAP_ADD                  1
+
+208         238 LOAD_CONST               4 ('C')
+            240 LOAD_FAST                5 (ent)
+            242 LOAD_ATTR                5 (po_no)
+
+205         252 MAP_ADD                  1
+
+209         254 LOAD_CONST               5 ('D')
+            256 LOAD_FAST                5 (ent)
+            258 LOAD_ATTR               12 (season)
+
+205         268 MAP_ADD                  1
+
+210         270 LOAD_CONST               6 ('E')
+            272 LOAD_FAST                6 (ln)
+            274 LOAD_ATTR                7 (color_code)
+
+205         284 MAP_ADD                  1
+
+211         286 LOAD_CONST               7 ('F')
+            288 LOAD_FAST                6 (ln)
+            290 LOAD_ATTR               13 (color_desc)
+
+205         300 MAP_ADD                  1
+
+212         302 LOAD_CONST               8 ('G')
+            304 LOAD_FAST                7 (sq)
+            306 LOAD_ATTR                8 (size)
+
+205         316 MAP_ADD                  1
+
+213         318 LOAD_CONST               9 ('H')
+            320 LOAD_FAST                6 (ln)
+            322 LOAD_ATTR                9 (inseam)
+
+205         332 MAP_ADD                  1
+
+214         334 LOAD_CONST              10 ('I')
+            336 LOAD_FAST                7 (sq)
+            338 LOAD_ATTR               14 (qty_safe)
+
+205         348 MAP_ADD                  1
+
+215         350 LOAD_CONST              11 ('J')
+            352 LOAD_FAST                6 (ln)
+            354 LOAD_ATTR               15 (su)
+
+205         364 MAP_ADD                  1
+
+216         366 LOAD_CONST              12 ('K')
+            368 LOAD_FAST                6 (ln)
+            370 LOAD_ATTR               16 (unit_price)
+            380 POP_JUMP_FORWARD_IF_NONE     7 (to 396)
+            382 LOAD_FAST                6 (ln)
+            384 LOAD_ATTR               16 (unit_price)
+            394 JUMP_FORWARD             1 (to 398)
+        >>  396 LOAD_CONST              14 ('')
+
+205     >>  398 MAP_ADD                  1
+
+217         400 LOAD_CONST              15 ('L')
+            402 LOAD_CONST              13 (None)
+
+205         404 MAP_ADD                  1
+
+218         406 LOAD_CONST              16 ('M')
+            408 LOAD_FAST                5 (ent)
+            410 LOAD_ATTR               17 (price_term)
+
+205         420 MAP_ADD                  1
+
+219         422 LOAD_CONST              17 ('N')
+            424 LOAD_FAST                5 (ent)
+            426 LOAD_ATTR               18 (currency)
+
+205         436 MAP_ADD                  1
+
+220         438 LOAD_CONST              18 ('O')
+            440 LOAD_FAST                5 (ent)
+            442 LOAD_ATTR               19 (delivery_date)
+
+205         452 MAP_ADD                  1
+
+221         454 LOAD_CONST              19 ('P')
+            456 LOAD_FAST                5 (ent)
+            458 LOAD_ATTR               20 (port_loading)
+
+205         468 MAP_ADD                  1
+
+222         470 LOAD_CONST              20 ('Q')
+            472 LOAD_FAST                5 (ent)
+            474 LOAD_ATTR               21 (port_discharge)
+
+205         484 MAP_ADD                  1
+
+223         486 LOAD_FAST                5 (ent)
+            488 LOAD_ATTR               22 (ship_mode)
+
+224         498 LOAD_FAST                5 (ent)
+            500 LOAD_ATTR               10 (destination_code)
+
+225         510 LOAD_FAST                5 (ent)
+            512 LOAD_ATTR               23 (payment_terms)
+
+226         522 LOAD_FAST                5 (ent)
+            524 LOAD_ATTR               24 (country_of_origin)
+
+227         534 LOAD_FAST                8 (rk)
+
+228         536 LOAD_FAST                1 (po_version)
+
+229         538 LOAD_FAST                2 (is_current)
+
+235         540 LOAD_FAST                0 (self)
+            542 LOAD_ATTR               25 (source_file_path)
+
+231         552 POP_JUMP_FORWARD_IF_TRUE     7 (to 568)
+
+235         554 LOAD_FAST                0 (self)
+            556 LOAD_ATTR               26 (source_file)
+
+231         566 POP_JUMP_FORWARD_IF_FALSE   105 (to 778)
+        >>  568 LOAD_GLOBAL             55 (NULL + excel_hyperlink_formula)
+
+232         580 LOAD_FAST                0 (self)
+            582 LOAD_ATTR               25 (source_file_path)
+            592 JUMP_IF_TRUE_OR_POP      6 (to 606)
+            594 LOAD_FAST                0 (self)
+            596 LOAD_ATTR               26 (source_file)
+
+233     >>  606 LOAD_FAST                0 (self)
+            608 LOAD_ATTR               26 (source_file)
+            618 POP_JUMP_FORWARD_IF_FALSE    36 (to 692)
+            620 LOAD_GLOBAL             56 (os)
+            632 LOAD_ATTR               29 (path)
+            642 LOAD_METHOD             30 (basename)
+            664 LOAD_FAST                0 (self)
+            666 LOAD_ATTR               26 (source_file)
+            676 PRECALL                  1
+            680 CALL                     1
+            690 JUMP_FORWARD            35 (to 762)
+
+234     >>  692 LOAD_GLOBAL             56 (os)
+            704 LOAD_ATTR               29 (path)
+            714 LOAD_METHOD             30 (basename)
+            736 LOAD_FAST                0 (self)
+            738 LOAD_ATTR               25 (source_file_path)
+            748 PRECALL                  1
+            752 CALL                     1
+
+231     >>  762 PRECALL                  2
+            766 CALL                     2
+            776 JUMP_FORWARD             1 (to 780)
+
+235     >>  778 LOAD_CONST              14 ('')
+
+236     >>  780 LOAD_FAST                3 (import_batch)
+
+237         782 LOAD_FAST                0 (self)
+            784 LOAD_ATTR               31 (fingerprint)
+            794 JUMP_IF_TRUE_OR_POP      1 (to 798)
+            796 LOAD_CONST              14 ('')
+
+205     >>  798 LOAD_CONST              21 (('R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'AA'))
+            800 BUILD_CONST_KEY_MAP     10
+            802 DICT_UPDATE              1
+            804 PRECALL                  1
+            808 CALL                     1
+            818 POP_TOP
+            820 EXTENDED_ARG             1
+            822 JUMP_BACKWARD          382 (to 60)
+
+195     >>  824 EXTENDED_ARG             1
+            826 JUMP_BACKWARD          394 (to 40)
+
+194     >>  828 EXTENDED_ARG             1
+            830 JUMP_BACKWARD          406 (to 20)
+
+239     >>  832 LOAD_FAST                4 (out)
+            834 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.total_qty  (args=1, locals=1)
+# varnames: self
+241           0 RESUME                   0
+
+243           2 LOAD_GLOBAL              1 (NULL + sum)
+             14 LOAD_CONST               1 (<code object <genexpr> at 0x000002BF94A6E250, file "core\models.py", line 243>)
+             16 MAKE_FUNCTION            0
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (entities)
+             30 GET_ITER
+             32 PRECALL                  0
+             36 CALL                     0
+             46 PRECALL                  1
+             50 CALL                     1
+             60 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.total_qty.<genexpr>  (args=1, locals=2)
+# varnames: .0, ent
+243           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (ent)
+             12 LOAD_FAST                1 (ent)
+             14 LOAD_ATTR                0 (total_qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.size_totals  (args=1, locals=5)
+# varnames: self, out, ent, ln, sq
+245           0 RESUME                   0
+
+248           2 BUILD_MAP                0
+              4 STORE_FAST               1 (out)
+
+249           6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 FOR_ITER                65 (to 152)
+             22 STORE_FAST               2 (ent)
+
+250          24 LOAD_FAST                2 (ent)
+             26 LOAD_ATTR                1 (lines)
+             36 GET_ITER
+        >>   38 FOR_ITER                55 (to 150)
+             40 STORE_FAST               3 (ln)
+
+251          42 LOAD_FAST                3 (ln)
+             44 LOAD_ATTR                2 (sizes)
+             54 GET_ITER
+        >>   56 FOR_ITER                45 (to 148)
+             58 STORE_FAST               4 (sq)
+
+252          60 LOAD_FAST                1 (out)
+             62 LOAD_METHOD              3 (get)
+             84 LOAD_FAST                4 (sq)
+             86 LOAD_ATTR                4 (size)
+             96 LOAD_CONST               1 (0)
+             98 PRECALL                  2
+            102 CALL                     2
+            112 LOAD_FAST                4 (sq)
+            114 LOAD_ATTR                5 (qty_safe)
+            124 BINARY_OP                0 (+)
+            128 LOAD_FAST                1 (out)
+            130 LOAD_FAST                4 (sq)
+            132 LOAD_ATTR                4 (size)
+            142 STORE_SUBSCR
+            146 JUMP_BACKWARD           46 (to 56)
+
+251     >>  148 JUMP_BACKWARD           56 (to 38)
+
+250     >>  150 JUMP_BACKWARD           66 (to 20)
+
+253     >>  152 LOAD_FAST                1 (out)
+            154 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.color_totals  (args=1, locals=4)
+# varnames: self, out, ent, ln
+255           0 RESUME                   0
+
+258           2 BUILD_MAP                0
+              4 STORE_FAST               1 (out)
+
+259           6 LOAD_FAST                0 (self)
+              8 LOAD_ATTR                0 (entities)
+             18 GET_ITER
+        >>   20 FOR_ITER                55 (to 132)
+             22 STORE_FAST               2 (ent)
+
+260          24 LOAD_FAST                2 (ent)
+             26 LOAD_ATTR                1 (lines)
+             36 GET_ITER
+        >>   38 FOR_ITER                45 (to 130)
+             40 STORE_FAST               3 (ln)
+
+261          42 LOAD_FAST                1 (out)
+             44 LOAD_METHOD              2 (get)
+             66 LOAD_FAST                3 (ln)
+             68 LOAD_ATTR                3 (color_code)
+             78 LOAD_CONST               1 (0)
+             80 PRECALL                  2
+             84 CALL                     2
+             94 LOAD_FAST                3 (ln)
+             96 LOAD_ATTR                4 (total_qty)
+            106 BINARY_OP                0 (+)
+            110 LOAD_FAST                1 (out)
+            112 LOAD_FAST                3 (ln)
+            114 LOAD_ATTR                3 (color_code)
+            124 STORE_SUBSCR
+            128 JUMP_BACKWARD           46 (to 38)
+
+260     >>  130 JUMP_BACKWARD           56 (to 20)
+
+262     >>  132 LOAD_FAST                1 (out)
+            134 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.apply_recipe_overrides  (args=2, locals=30)
+# varnames: self, overrides, color_edits, color_map, ent, ln, combined, new, c, dd, entity_fields, ent_overrides, line_overrides, k, v, _style_no_reach_needle, price, idx_str, fields, idx, e, fk, fv, old, key, ins, cands, ov, sizes, sq
+264           0 RESUME                   0
+
+275           2 LOAD_FAST                1 (overrides)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+276           6 LOAD_CONST               1 (None)
+              8 RETURN_VALUE
+
+278     >>   10 LOAD_FAST                1 (overrides)
+             12 LOAD_METHOD              0 (get)
+             34 LOAD_CONST               2 ('color_edits')
+             36 PRECALL                  1
+             40 CALL                     1
+             50 STORE_FAST               2 (color_edits)
+
+279          52 LOAD_GLOBAL              3 (NULL + isinstance)
+             64 LOAD_FAST                2 (color_edits)
+             66 LOAD_GLOBAL              4 (str)
+             78 PRECALL                  2
+             82 CALL                     2
+             92 POP_JUMP_FORWARD_IF_FALSE   251 (to 596)
+             94 LOAD_FAST                2 (color_edits)
+             96 POP_JUMP_FORWARD_IF_FALSE   249 (to 596)
+
+280          98 NOP
+
+281         100 LOAD_GLOBAL              7 (NULL + json)
+            112 LOAD_ATTR                4 (loads)
+            122 LOAD_FAST                2 (color_edits)
+            124 PRECALL                  1
+            128 CALL                     1
+            138 STORE_FAST               3 (color_map)
+            140 JUMP_FORWARD            18 (to 178)
+        >>  142 PUSH_EXC_INFO
+
+282         144 LOAD_GLOBAL             10 (Exception)
+            156 CHECK_EXC_MATCH
+            158 POP_JUMP_FORWARD_IF_FALSE     5 (to 170)
+            160 POP_TOP
+
+283         162 LOAD_CONST               1 (None)
+            164 STORE_FAST               3 (color_map)
+            166 POP_EXCEPT
+            168 JUMP_FORWARD             4 (to 178)
+
+282     >>  170 RERAISE                  0
+        >>  172 COPY                     3
+            174 POP_EXCEPT
+            176 RERAISE                  1
+
+284     >>  178 LOAD_GLOBAL              3 (NULL + isinstance)
+            190 LOAD_FAST                3 (color_map)
+            192 LOAD_GLOBAL             12 (dict)
+            204 PRECALL                  2
+            208 CALL                     2
+            218 POP_JUMP_FORWARD_IF_FALSE   188 (to 596)
+
+285         220 LOAD_FAST                0 (self)
+            222 LOAD_ATTR                7 (entities)
+            232 GET_ITER
+        >>  234 FOR_ITER               180 (to 596)
+            236 STORE_FAST               4 (ent)
+
+286         238 LOAD_FAST                4 (ent)
+            240 LOAD_ATTR                8 (lines)
+            250 GET_ITER
+        >>  252 FOR_ITER               170 (to 594)
+            254 STORE_FAST               5 (ln)
+
+287         256 LOAD_FAST                0 (self)
+            258 LOAD_METHOD              9 (_color_combined)
+            280 LOAD_FAST                5 (ln)
+            282 LOAD_ATTR               10 (color_code)
+            292 LOAD_FAST                5 (ln)
+            294 LOAD_ATTR               11 (color_desc)
+            304 PRECALL                  2
+            308 CALL                     2
+            318 STORE_FAST               6 (combined)
+
+288         320 LOAD_FAST                3 (color_map)
+            322 LOAD_METHOD              0 (get)
+            344 LOAD_FAST                6 (combined)
+            346 PRECALL                  1
+            350 CALL                     1
+            360 STORE_FAST               7 (new)
+
+289         362 LOAD_FAST                7 (new)
+            364 POP_JUMP_FORWARD_IF_FALSE   113 (to 592)
+
+290         366 LOAD_CONST               3 (' / ')
+            368 LOAD_FAST                7 (new)
+            370 CONTAINS_OP              0
+            372 POP_JUMP_FORWARD_IF_FALSE    77 (to 528)
+
+291         374 LOAD_FAST                7 (new)
+            376 LOAD_METHOD             12 (split)
+            398 LOAD_CONST               3 (' / ')
+            400 LOAD_CONST               4 (1)
+            402 PRECALL                  2
+            406 CALL                     2
+            416 UNPACK_SEQUENCE          2
+            420 STORE_FAST               8 (c)
+            422 STORE_FAST               9 (dd)
+
+292         424 LOAD_FAST                8 (c)
+            426 LOAD_METHOD             13 (strip)
+            448 PRECALL                  0
+            452 CALL                     0
+            462 LOAD_FAST                9 (dd)
+            464 LOAD_METHOD             13 (strip)
+            486 PRECALL                  0
+            490 CALL                     0
+            500 SWAP                     2
+            502 LOAD_FAST                5 (ln)
+            504 STORE_ATTR              10 (color_code)
+            514 LOAD_FAST                5 (ln)
+            516 STORE_ATTR              11 (color_desc)
+            526 JUMP_BACKWARD          138 (to 252)
+
+294     >>  528 LOAD_FAST                7 (new)
+            530 LOAD_METHOD             13 (strip)
+            552 PRECALL                  0
+            556 CALL                     0
+            566 LOAD_FAST                5 (ln)
+            568 STORE_ATTR              11 (color_desc)
+
+295         578 LOAD_CONST               5 ('')
+            580 LOAD_FAST                5 (ln)
+            582 STORE_ATTR              10 (color_code)
+        >>  592 JUMP_BACKWARD          171 (to 252)
+
+286     >>  594 JUMP_BACKWARD          181 (to 234)
+
+296     >>  596 BUILD_SET                0
+            598 LOAD_CONST               6 (frozenset({'channel', 'cir_no', 'price_term', 'vendor_name', 'port_discharge', 'currency', 'size_scale', 'product_group', 'season', 'country_of_origin', 'reference_no', 'import_po_no', 'age_sex_desc', 'port_loading', 'packing_method', 'agent_name', 'payment_terms', 'freight_terms', 'style_no', 'destination_code', 'delivery_date', 'ship_mode', 'dc_address', 'wash_method', 'washing_color', 'product_desc', 'po_no'}))
+            600 SET_UPDATE               1
+            602 STORE_FAST              10 (entity_fields)
+
+309         604 LOAD_FAST                1 (overrides)
+            606 LOAD_METHOD              0 (get)
+            628 LOAD_CONST               7 ('__ent_overrides__')
+            630 PRECALL                  1
+            634 CALL                     1
+            644 JUMP_IF_TRUE_OR_POP      1 (to 648)
+            646 BUILD_MAP                0
+        >>  648 STORE_FAST              11 (ent_overrides)
+
+310         650 LOAD_FAST                1 (overrides)
+            652 LOAD_METHOD              0 (get)
+            674 LOAD_CONST               8 ('__line_overrides__')
+            676 PRECALL                  1
+            680 CALL                     1
+            690 JUMP_IF_TRUE_OR_POP      1 (to 694)
+            692 BUILD_MAP                0
+        >>  694 STORE_FAST              12 (line_overrides)
+
+311         696 LOAD_FAST                0 (self)
+            698 LOAD_ATTR                7 (entities)
+            708 GET_ITER
+        >>  710 FOR_ITER               220 (to 1152)
+            712 STORE_FAST               4 (ent)
+
+312         714 LOAD_FAST                1 (overrides)
+            716 LOAD_METHOD             14 (items)
+            738 PRECALL                  0
+            742 CALL                     0
+            752 GET_ITER
+        >>  754 FOR_ITER               197 (to 1150)
+            756 UNPACK_SEQUENCE          2
+            760 STORE_FAST              13 (k)
+            762 STORE_FAST              14 (v)
+
+313         764 LOAD_FAST               13 (k)
+            766 LOAD_METHOD             15 (startswith)
+            788 LOAD_CONST               9 ('__')
+            790 PRECALL                  1
+            794 CALL                     1
+            804 POP_JUMP_FORWARD_IF_FALSE     1 (to 808)
+
+315         806 JUMP_BACKWARD           27 (to 754)
+
+316     >>  808 LOAD_FAST               13 (k)
+            810 LOAD_CONST              10 ('customer')
+            812 COMPARE_OP               2 (==)
+            818 POP_JUMP_FORWARD_IF_FALSE     8 (to 836)
+
+318         820 LOAD_FAST               14 (v)
+            822 LOAD_FAST                0 (self)
+            824 STORE_ATTR              16 (customer)
+            834 JUMP_BACKWARD           41 (to 754)
+
+319     >>  836 LOAD_FAST               13 (k)
+            838 LOAD_FAST               10 (entity_fields)
+            840 CONTAINS_OP              0
+            842 POP_JUMP_FORWARD_IF_FALSE    43 (to 930)
+
+320         844 LOAD_GLOBAL             35 (NULL + setattr)
+            856 LOAD_FAST                4 (ent)
+            858 LOAD_FAST               13 (k)
+            860 LOAD_FAST               14 (v)
+            862 PRECALL                  3
+            866 CALL                     3
+            876 POP_TOP
+
+326         878 LOAD_FAST               13 (k)
+            880 LOAD_CONST              11 ('style_no')
+            882 COMPARE_OP               2 (==)
+            888 POP_JUMP_FORWARD_IF_FALSE    19 (to 928)
+
+329         890 LOAD_CONST              12 ('style_no_default_reaches_every_OrderLine')
+            892 STORE_FAST              15 (_style_no_reach_needle)
+
+330         894 LOAD_FAST                4 (ent)
+            896 LOAD_ATTR                8 (lines)
+            906 GET_ITER
+        >>  908 FOR_ITER                 9 (to 928)
+            910 STORE_FAST               5 (ln)
+
+331         912 LOAD_FAST               14 (v)
+            914 LOAD_FAST                5 (ln)
+            916 STORE_ATTR              18 (style_no)
+            926 JUMP_BACKWARD           10 (to 908)
+        >>  928 JUMP_BACKWARD           88 (to 754)
+
+332     >>  930 LOAD_FAST               13 (k)
+            932 LOAD_CONST              13 ('unit_price')
+            934 COMPARE_OP               2 (==)
+            940 POP_JUMP_FORWARD_IF_FALSE    80 (to 1102)
+
+333         942 LOAD_CONST               1 (None)
+            944 STORE_FAST              16 (price)
+
+334         946 NOP
+
+335         948 LOAD_GLOBAL             39 (NULL + float)
+            960 LOAD_FAST               14 (v)
+            962 LOAD_METHOD             20 (replace)
+            984 LOAD_CONST              14 (',')
+            986 LOAD_CONST               5 ('')
+            988 PRECALL                  2
+            992 CALL                     2
+           1002 PRECALL                  1
+           1006 CALL                     1
+           1016 STORE_FAST              16 (price)
+           1018 JUMP_FORWARD            23 (to 1066)
+        >> 1020 PUSH_EXC_INFO
+
+336        1022 LOAD_GLOBAL             42 (TypeError)
+           1034 LOAD_GLOBAL             44 (ValueError)
+           1046 BUILD_TUPLE              2
+           1048 CHECK_EXC_MATCH
+           1050 POP_JUMP_FORWARD_IF_FALSE     3 (to 1058)
+           1052 POP_TOP
+
+337        1054 POP_EXCEPT
+           1056 JUMP_FORWARD             4 (to 1066)
+
+336     >> 1058 RERAISE                  0
+        >> 1060 COPY                     3
+           1062 POP_EXCEPT
+           1064 RERAISE                  1
+
+338     >> 1066 LOAD_FAST                4 (ent)
+           1068 LOAD_ATTR                8 (lines)
+           1078 GET_ITER
+        >> 1080 FOR_ITER                 9 (to 1100)
+           1082 STORE_FAST               5 (ln)
+
+339        1084 LOAD_FAST               16 (price)
+           1086 LOAD_FAST                5 (ln)
+           1088 STORE_ATTR              23 (unit_price)
+           1098 JUMP_BACKWARD           10 (to 1080)
+
+338     >> 1100 JUMP_BACKWARD          174 (to 754)
+
+340     >> 1102 LOAD_FAST               13 (k)
+           1104 LOAD_CONST              15 ('su')
+           1106 COMPARE_OP               2 (==)
+           1112 POP_JUMP_FORWARD_IF_FALSE    17 (to 1148)
+
+343        1114 LOAD_FAST                4 (ent)
+           1116 LOAD_ATTR                8 (lines)
+           1126 GET_ITER
+        >> 1128 FOR_ITER                 9 (to 1148)
+           1130 STORE_FAST               5 (ln)
+
+344        1132 LOAD_FAST               14 (v)
+           1134 LOAD_FAST                5 (ln)
+           1136 STORE_ATTR              24 (su)
+           1146 JUMP_BACKWARD           10 (to 1128)
+        >> 1148 JUMP_BACKWARD          198 (to 754)
+
+312     >> 1150 JUMP_BACKWARD          221 (to 710)
+
+346     >> 1152 LOAD_FAST               11 (ent_overrides)
+           1154 POP_JUMP_FORWARD_IF_FALSE   244 (to 1644)
+
+347        1156 LOAD_FAST               11 (ent_overrides)
+           1158 LOAD_METHOD             14 (items)
+           1180 PRECALL                  0
+           1184 CALL                     0
+           1194 GET_ITER
+        >> 1196 FOR_ITER               223 (to 1644)
+           1198 UNPACK_SEQUENCE          2
+           1202 STORE_FAST              17 (idx_str)
+           1204 STORE_FAST              18 (fields)
+
+348        1206 NOP
+
+349        1208 LOAD_GLOBAL             51 (NULL + int)
+           1220 LOAD_FAST               17 (idx_str)
+           1222 PRECALL                  1
+           1226 CALL                     1
+           1236 STORE_FAST              19 (idx)
+           1238 JUMP_FORWARD            23 (to 1286)
+        >> 1240 PUSH_EXC_INFO
+
+350        1242 LOAD_GLOBAL             42 (TypeError)
+           1254 LOAD_GLOBAL             44 (ValueError)
+           1266 BUILD_TUPLE              2
+           1268 CHECK_EXC_MATCH
+           1270 POP_JUMP_FORWARD_IF_FALSE     3 (to 1278)
+           1272 POP_TOP
+
+351        1274 POP_EXCEPT
+           1276 JUMP_BACKWARD           41 (to 1196)
+
+350     >> 1278 RERAISE                  0
+        >> 1280 COPY                     3
+           1282 POP_EXCEPT
+           1284 RERAISE                  1
+
+352     >> 1286 LOAD_CONST              16 (0)
+           1288 LOAD_FAST               19 (idx)
+           1290 SWAP                     2
+           1292 COPY                     2
+           1294 COMPARE_OP               1 (<=)
+           1300 POP_JUMP_FORWARD_IF_FALSE    24 (to 1350)
+           1302 LOAD_GLOBAL             53 (NULL + len)
+           1314 LOAD_FAST                0 (self)
+           1316 LOAD_ATTR                7 (entities)
+           1326 PRECALL                  1
+           1330 CALL                     1
+           1340 COMPARE_OP               0 (<)
+           1346 POP_JUMP_FORWARD_IF_FALSE   147 (to 1642)
+           1348 JUMP_FORWARD             2 (to 1354)
+        >> 1350 POP_TOP
+           1352 JUMP_BACKWARD           79 (to 1196)
+
+353     >> 1354 LOAD_FAST                0 (self)
+           1356 LOAD_ATTR                7 (entities)
+           1366 LOAD_FAST               19 (idx)
+           1368 BINARY_SUBSCR
+           1378 STORE_FAST              20 (e)
+
+354        1380 LOAD_FAST               18 (fields)
+           1382 JUMP_IF_TRUE_OR_POP      1 (to 1386)
+           1384 BUILD_MAP                0
+        >> 1386 LOAD_METHOD             14 (items)
+           1408 PRECALL                  0
+           1412 CALL                     0
+           1422 GET_ITER
+        >> 1424 FOR_ITER               108 (to 1642)
+           1426 UNPACK_SEQUENCE          2
+           1430 STORE_FAST              21 (fk)
+           1432 STORE_FAST              22 (fv)
+
+355        1434 LOAD_FAST               21 (fk)
+           1436 LOAD_FAST               10 (entity_fields)
+           1438 CONTAINS_OP              0
+           1440 POP_JUMP_FORWARD_IF_TRUE     6 (to 1454)
+           1442 LOAD_FAST               21 (fk)
+           1444 LOAD_CONST              17 ('po_no')
+           1446 COMPARE_OP               2 (==)
+           1452 POP_JUMP_FORWARD_IF_FALSE    70 (to 1594)
+
+356     >> 1454 LOAD_GLOBAL             55 (NULL + getattr)
+           1466 LOAD_FAST               20 (e)
+           1468 LOAD_FAST               21 (fk)
+           1470 LOAD_CONST               5 ('')
+           1472 PRECALL                  3
+           1476 CALL                     3
+           1486 STORE_FAST              23 (old)
+
+357        1488 LOAD_GLOBAL             35 (NULL + setattr)
+           1500 LOAD_FAST               20 (e)
+           1502 LOAD_FAST               21 (fk)
+           1504 LOAD_FAST               22 (fv)
+           1506 PRECALL                  3
+           1510 CALL                     3
+           1520 POP_TOP
+
+359        1522 LOAD_FAST               21 (fk)
+           1524 LOAD_CONST              11 ('style_no')
+           1526 COMPARE_OP               2 (==)
+           1532 POP_JUMP_FORWARD_IF_FALSE    30 (to 1594)
+           1534 LOAD_FAST               23 (old)
+           1536 LOAD_FAST               22 (fv)
+           1538 COMPARE_OP               3 (!=)
+           1544 POP_JUMP_FORWARD_IF_FALSE    24 (to 1594)
+
+360        1546 LOAD_GLOBAL             57 (NULL + print)
+           1558 LOAD_CONST              18 ('[override] entity ')
+           1560 LOAD_FAST               19 (idx)
+           1562 FORMAT_VALUE             0
+           1564 LOAD_CONST              19 (' style_no: ')
+           1566 LOAD_FAST               23 (old)
+           1568 FORMAT_VALUE             2 (repr)
+           1570 LOAD_CONST              20 (' -> ')
+           1572 LOAD_FAST               22 (fv)
+           1574 FORMAT_VALUE             2 (repr)
+           1576 BUILD_STRING             6
+           1578 PRECALL                  1
+           1582 CALL                     1
+           1592 POP_TOP
+
+363     >> 1594 LOAD_FAST               21 (fk)
+           1596 LOAD_CONST              11 ('style_no')
+           1598 COMPARE_OP               2 (==)
+           1604 POP_JUMP_FORWARD_IF_FALSE    17 (to 1640)
+
+364        1606 LOAD_FAST               20 (e)
+           1608 LOAD_ATTR                8 (lines)
+           1618 GET_ITER
+        >> 1620 FOR_ITER                 9 (to 1640)
+           1622 STORE_FAST               5 (ln)
+
+365        1624 LOAD_FAST               22 (fv)
+           1626 LOAD_FAST                5 (ln)
+           1628 STORE_ATTR              18 (style_no)
+           1638 JUMP_BACKWARD           10 (to 1620)
+        >> 1640 JUMP_BACKWARD          109 (to 1424)
+        >> 1642 JUMP_BACKWARD          224 (to 1196)
+
+367     >> 1644 LOAD_FAST               12 (line_overrides)
+           1646 EXTENDED_ARG             2
+           1648 POP_JUMP_FORWARD_IF_FALSE   577 (to 2804)
+
+368        1650 LOAD_FAST                0 (self)
+           1652 LOAD_ATTR                7 (entities)
+           1662 GET_ITER
+        >> 1664 EXTENDED_ARG             2
+           1666 FOR_ITER               570 (to 2808)
+           1668 STORE_FAST               4 (ent)
+
+369        1670 LOAD_FAST                4 (ent)
+           1672 LOAD_ATTR                8 (lines)
+           1682 GET_ITER
+        >> 1684 EXTENDED_ARG             2
+           1686 FOR_ITER               556 (to 2800)
+           1688 STORE_FAST               5 (ln)
+
+370        1690 LOAD_FAST                0 (self)
+           1692 LOAD_METHOD              9 (_color_combined)
+           1714 LOAD_FAST                5 (ln)
+           1716 LOAD_ATTR               10 (color_code)
+           1726 LOAD_FAST                5 (ln)
+           1728 LOAD_ATTR               11 (color_desc)
+           1738 PRECALL                  2
+           1742 CALL                     2
+           1752 STORE_FAST              24 (key)
+
+371        1754 LOAD_FAST                5 (ln)
+           1756 LOAD_ATTR               29 (inseam)
+           1766 JUMP_IF_TRUE_OR_POP      1 (to 1770)
+           1768 LOAD_CONST               5 ('')
+        >> 1770 LOAD_METHOD             13 (strip)
+           1792 PRECALL                  0
+           1796 CALL                     0
+           1806 STORE_FAST              25 (ins)
+
+374        1808 LOAD_FAST               24 (key)
+           1810 LOAD_FAST                5 (ln)
+           1812 LOAD_ATTR               10 (color_code)
+           1822 BUILD_LIST               2
+           1824 STORE_FAST              26 (cands)
+
+375        1826 LOAD_FAST               25 (ins)
+           1828 POP_JUMP_FORWARD_IF_FALSE    26 (to 1882)
+
+376        1830 LOAD_FAST               26 (cands)
+           1832 LOAD_METHOD             30 (append)
+           1854 LOAD_FAST               24 (key)
+           1856 FORMAT_VALUE             0
+           1858 LOAD_CONST              21 ('␟')
+           1860 LOAD_FAST               25 (ins)
+           1862 FORMAT_VALUE             0
+           1864 BUILD_STRING             3
+           1866 PRECALL                  1
+           1870 CALL                     1
+           1880 POP_TOP
+
+377     >> 1882 LOAD_CONST               1 (None)
+           1884 STORE_FAST              27 (ov)
+
+378        1886 LOAD_FAST               26 (cands)
+           1888 GET_ITER
+        >> 1890 FOR_ITER                46 (to 1984)
+           1892 STORE_FAST               8 (c)
+
+379        1894 LOAD_FAST               12 (line_overrides)
+           1896 LOAD_METHOD              0 (get)
+           1918 LOAD_FAST                8 (c)
+           1920 PRECALL                  1
+           1924 CALL                     1
+           1934 STORE_FAST              27 (ov)
+
+380        1936 LOAD_GLOBAL              3 (NULL + isinstance)
+           1948 LOAD_FAST               27 (ov)
+           1950 LOAD_GLOBAL             12 (dict)
+           1962 PRECALL                  2
+           1966 CALL                     2
+           1976 POP_JUMP_FORWARD_IF_FALSE     2 (to 1982)
+
+381        1978 POP_TOP
+           1980 JUMP_FORWARD             1 (to 1984)
+
+380     >> 1982 JUMP_BACKWARD           47 (to 1890)
+
+382     >> 1984 LOAD_GLOBAL              3 (NULL + isinstance)
+           1996 LOAD_FAST               27 (ov)
+           1998 LOAD_GLOBAL             12 (dict)
+           2010 PRECALL                  2
+           2014 CALL                     2
+           2024 POP_JUMP_FORWARD_IF_TRUE     1 (to 2028)
+
+383        2026 JUMP_BACKWARD          172 (to 1684)
+
+384     >> 2028 LOAD_FAST               27 (ov)
+           2030 LOAD_METHOD              0 (get)
+           2052 LOAD_CONST              13 ('unit_price')
+           2054 PRECALL                  1
+           2058 CALL                     1
+           2068 STORE_FAST              16 (price)
+
+385        2070 LOAD_FAST               16 (price)
+           2072 LOAD_CONST              22 ((None, ''))
+           2074 CONTAINS_OP              1
+           2076 POP_JUMP_FORWARD_IF_FALSE    78 (to 2234)
+
+386        2078 NOP
+
+387        2080 LOAD_GLOBAL             39 (NULL + float)
+           2092 LOAD_GLOBAL              5 (NULL + str)
+           2104 LOAD_FAST               16 (price)
+           2106 PRECALL                  1
+           2110 CALL                     1
+           2120 LOAD_METHOD             20 (replace)
+           2142 LOAD_CONST              14 (',')
+           2144 LOAD_CONST               5 ('')
+           2146 PRECALL                  2
+           2150 CALL                     2
+           2160 PRECALL                  1
+           2164 CALL                     1
+           2174 LOAD_FAST                5 (ln)
+           2176 STORE_ATTR              23 (unit_price)
+           2186 JUMP_FORWARD            23 (to 2234)
+        >> 2188 PUSH_EXC_INFO
+
+388        2190 LOAD_GLOBAL             42 (TypeError)
+           2202 LOAD_GLOBAL             44 (ValueError)
+           2214 BUILD_TUPLE              2
+           2216 CHECK_EXC_MATCH
+           2218 POP_JUMP_FORWARD_IF_FALSE     3 (to 2226)
+           2220 POP_TOP
+
+389        2222 POP_EXCEPT
+           2224 JUMP_FORWARD             4 (to 2234)
+
+388     >> 2226 RERAISE                  0
+        >> 2228 COPY                     3
+           2230 POP_EXCEPT
+           2232 RERAISE                  1
+
+390     >> 2234 LOAD_FAST               27 (ov)
+           2236 LOAD_METHOD              0 (get)
+           2258 LOAD_CONST              23 ('inseam')
+           2260 PRECALL                  1
+           2264 CALL                     1
+           2274 POP_JUMP_FORWARD_IF_NONE    13 (to 2302)
+
+391        2276 LOAD_FAST               27 (ov)
+           2278 LOAD_CONST              23 ('inseam')
+           2280 BINARY_SUBSCR
+           2290 LOAD_FAST                5 (ln)
+           2292 STORE_ATTR              29 (inseam)
+
+392     >> 2302 LOAD_FAST               27 (ov)
+           2304 LOAD_METHOD              0 (get)
+           2326 LOAD_CONST              15 ('su')
+           2328 PRECALL                  1
+           2332 CALL                     1
+           2342 POP_JUMP_FORWARD_IF_NONE    13 (to 2370)
+
+393        2344 LOAD_FAST               27 (ov)
+           2346 LOAD_CONST              15 ('su')
+           2348 BINARY_SUBSCR
+           2358 LOAD_FAST                5 (ln)
+           2360 STORE_ATTR              24 (su)
+
+394     >> 2370 LOAD_FAST               27 (ov)
+           2372 LOAD_METHOD              0 (get)
+           2394 LOAD_CONST              24 ('sizes')
+           2396 PRECALL                  1
+           2400 CALL                     1
+           2410 STORE_FAST              28 (sizes)
+
+395        2412 LOAD_GLOBAL              3 (NULL + isinstance)
+           2424 LOAD_FAST               28 (sizes)
+           2426 LOAD_GLOBAL             12 (dict)
+           2438 PRECALL                  2
+           2442 CALL                     2
+           2452 POP_JUMP_FORWARD_IF_FALSE   135 (to 2724)
+
+396        2454 LOAD_FAST                5 (ln)
+           2456 LOAD_ATTR               31 (sizes)
+           2466 GET_ITER
+        >> 2468 FOR_ITER               127 (to 2724)
+           2470 STORE_FAST              29 (sq)
+
+397        2472 LOAD_FAST               29 (sq)
+           2474 LOAD_ATTR               32 (size)
+           2484 LOAD_FAST               28 (sizes)
+           2486 CONTAINS_OP              0
+           2488 POP_JUMP_FORWARD_IF_FALSE   116 (to 2722)
+
+398        2490 NOP
+
+399        2492 LOAD_GLOBAL             67 (NULL + max)
+           2504 LOAD_CONST              16 (0)
+           2506 LOAD_GLOBAL             51 (NULL + int)
+           2518 LOAD_GLOBAL             39 (NULL + float)
+           2530 LOAD_GLOBAL              5 (NULL + str)
+           2542 LOAD_FAST               28 (sizes)
+           2544 LOAD_FAST               29 (sq)
+           2546 LOAD_ATTR               32 (size)
+           2556 BINARY_SUBSCR
+           2566 PRECALL                  1
+           2570 CALL                     1
+           2580 LOAD_METHOD             20 (replace)
+           2602 LOAD_CONST              14 (',')
+           2604 LOAD_CONST               5 ('')
+           2606 PRECALL                  2
+           2610 CALL                     2
+           2620 PRECALL                  1
+           2624 CALL                     1
+           2634 PRECALL                  1
+           2638 CALL                     1
+           2648 PRECALL                  2
+           2652 CALL                     2
+           2662 LOAD_FAST               29 (sq)
+           2664 STORE_ATTR              34 (qty)
+           2674 JUMP_BACKWARD          104 (to 2468)
+        >> 2676 PUSH_EXC_INFO
+
+400        2678 LOAD_GLOBAL             42 (TypeError)
+           2690 LOAD_GLOBAL             44 (ValueError)
+           2702 BUILD_TUPLE              2
+           2704 CHECK_EXC_MATCH
+           2706 POP_JUMP_FORWARD_IF_FALSE     3 (to 2714)
+           2708 POP_TOP
+
+401        2710 POP_EXCEPT
+           2712 JUMP_BACKWARD          123 (to 2468)
+
+400     >> 2714 RERAISE                  0
+        >> 2716 COPY                     3
+           2718 POP_EXCEPT
+           2720 RERAISE                  1
+
+397     >> 2722 JUMP_BACKWARD          128 (to 2468)
+
+403     >> 2724 LOAD_FAST               27 (ov)
+           2726 LOAD_METHOD              0 (get)
+           2748 LOAD_CONST              11 ('style_no')
+           2750 PRECALL                  1
+           2754 CALL                     1
+           2764 LOAD_CONST              22 ((None, ''))
+           2766 CONTAINS_OP              1
+           2768 POP_JUMP_FORWARD_IF_FALSE    13 (to 2796)
+
+404        2770 LOAD_FAST               27 (ov)
+           2772 LOAD_CONST              11 ('style_no')
+           2774 BINARY_SUBSCR
+           2784 LOAD_FAST                5 (ln)
+           2786 STORE_ATTR              18 (style_no)
+        >> 2796 EXTENDED_ARG             2
+           2798 JUMP_BACKWARD          558 (to 1684)
+
+369     >> 2800 EXTENDED_ARG             2
+           2802 JUMP_BACKWARD          570 (to 1664)
+
+367     >> 2804 LOAD_CONST               1 (None)
+           2806 RETURN_VALUE
+
+368     >> 2808 LOAD_CONST               1 (None)
+           2810 RETURN_VALUE
+ExceptionTable:
+  100 to 138 -> 142 [0]
+  142 to 164 -> 172 [1] lasti
+  170 to 170 -> 172 [1] lasti
+  948 to 1016 -> 1020 [2]
+  1020 to 1052 -> 1060 [3] lasti
+  1058 to 1058 -> 1060 [3] lasti
+  1208 to 1236 -> 1240 [1]
+  1240 to 1272 -> 1280 [2] lasti
+  1278 to 1278 -> 1280 [2] lasti
+  2080 to 2184 -> 2188 [2]
+  2188 to 2220 -> 2228 [3] lasti
+  2226 to 2226 -> 2228 [3] lasti
+  2492 to 2672 -> 2676 [3]
+  2676 to 2708 -> 2716 [4] lasti
+  2714 to 2714 -> 2716 [4] lasti
+
+==============================================================================
+## <module>.PurchaseOrder.apply_field_defaults  (args=2, locals=12)
+# varnames: self, recipe, before, defaults, after, bmap, changes, label, new, old, o, n
+406           0 RESUME                   0
+
+419           2 LOAD_FAST                1 (recipe)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+420           6 BUILD_LIST               0
+              8 RETURN_VALUE
+
+421     >>   10 LOAD_FAST                0 (self)
+             12 LOAD_METHOD              0 (_cleanable_pairs)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 STORE_FAST               2 (before)
+
+422          50 LOAD_GLOBAL              3 (NULL + getattr)
+             62 LOAD_FAST                1 (recipe)
+             64 LOAD_CONST               1 ('field_defaults')
+             66 LOAD_CONST               2 (None)
+             68 PRECALL                  3
+             72 CALL                     3
+             82 JUMP_IF_TRUE_OR_POP      1 (to 86)
+             84 BUILD_MAP                0
+        >>   86 STORE_FAST               3 (defaults)
+
+423          88 LOAD_FAST                3 (defaults)
+             90 POP_JUMP_FORWARD_IF_FALSE    21 (to 134)
+
+424          92 LOAD_FAST                0 (self)
+             94 LOAD_METHOD              2 (apply_recipe_overrides)
+            116 LOAD_FAST                3 (defaults)
+            118 PRECALL                  1
+            122 CALL                     1
+            132 POP_TOP
+
+425     >>  134 LOAD_FAST                0 (self)
+            136 LOAD_METHOD              0 (_cleanable_pairs)
+            158 PRECALL                  0
+            162 CALL                     0
+            172 STORE_FAST               4 (after)
+
+426         174 LOAD_GLOBAL              7 (NULL + dict)
+            186 LOAD_FAST                2 (before)
+            188 PRECALL                  1
+            192 CALL                     1
+            202 STORE_FAST               5 (bmap)
+
+427         204 BUILD_LIST               0
+            206 STORE_FAST               6 (changes)
+
+428         208 LOAD_FAST                4 (after)
+            210 GET_ITER
+        >>  212 FOR_ITER               131 (to 476)
+            214 UNPACK_SEQUENCE          2
+            218 STORE_FAST               7 (label)
+            220 STORE_FAST               8 (new)
+
+429         222 LOAD_FAST                5 (bmap)
+            224 LOAD_METHOD              4 (get)
+            246 LOAD_FAST                7 (label)
+            248 LOAD_CONST               3 ('')
+            250 PRECALL                  2
+            254 CALL                     2
+            264 STORE_FAST               9 (old)
+
+430         266 LOAD_FAST                9 (old)
+            268 LOAD_FAST                8 (new)
+            270 COMPARE_OP               3 (!=)
+            276 POP_JUMP_FORWARD_IF_FALSE    98 (to 474)
+
+431         278 LOAD_GLOBAL             11 (NULL + len)
+            290 LOAD_FAST                9 (old)
+            292 PRECALL                  1
+            296 CALL                     1
+            306 LOAD_CONST               4 (28)
+            308 COMPARE_OP               1 (<=)
+            314 POP_JUMP_FORWARD_IF_FALSE     2 (to 320)
+            316 LOAD_FAST                9 (old)
+            318 JUMP_FORWARD            12 (to 344)
+        >>  320 LOAD_FAST                9 (old)
+            322 LOAD_CONST               2 (None)
+            324 LOAD_CONST               5 (25)
+            326 BUILD_SLICE              2
+            328 BINARY_SUBSCR
+            338 LOAD_CONST               6 ('…')
+            340 BINARY_OP                0 (+)
+        >>  344 STORE_FAST              10 (o)
+
+432         346 LOAD_GLOBAL             11 (NULL + len)
+            358 LOAD_FAST                8 (new)
+            360 PRECALL                  1
+            364 CALL                     1
+            374 LOAD_CONST               4 (28)
+            376 COMPARE_OP               1 (<=)
+            382 POP_JUMP_FORWARD_IF_FALSE     2 (to 388)
+            384 LOAD_FAST                8 (new)
+            386 JUMP_FORWARD            12 (to 412)
+        >>  388 LOAD_FAST                8 (new)
+            390 LOAD_CONST               2 (None)
+            392 LOAD_CONST               5 (25)
+            394 BUILD_SLICE              2
+            396 BINARY_SUBSCR
+            406 LOAD_CONST               6 ('…')
+            408 BINARY_OP                0 (+)
+        >>  412 STORE_FAST              11 (n)
+
+433         414 LOAD_FAST                6 (changes)
+            416 LOAD_METHOD              6 (append)
+            438 LOAD_FAST                7 (label)
+            440 FORMAT_VALUE             0
+            442 LOAD_CONST               7 (': ')
+            444 LOAD_FAST               10 (o)
+            446 FORMAT_VALUE             2 (repr)
+            448 LOAD_CONST               8 (' → ')
+            450 LOAD_FAST               11 (n)
+            452 FORMAT_VALUE             2 (repr)
+            454 LOAD_CONST               9 (' (默认)')
+            456 BUILD_STRING             6
+            458 PRECALL                  1
+            462 CALL                     1
+            472 POP_TOP
+        >>  474 JUMP_BACKWARD          132 (to 212)
+
+434     >>  476 LOAD_FAST                6 (changes)
+            478 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder.apply_value_clean  (args=2, locals=17)
+# varnames: self, recipe, before, cleans, field_name, rules, spec, pat, repl, after, bmap, changes, label, new, old, o, n
+436           0 RESUME                   0
+
+450           2 LOAD_FAST                1 (recipe)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+451           6 BUILD_LIST               0
+              8 RETURN_VALUE
+
+452     >>   10 LOAD_FAST                0 (self)
+             12 LOAD_METHOD              0 (_cleanable_pairs)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 STORE_FAST               2 (before)
+
+453          50 LOAD_GLOBAL              3 (NULL + getattr)
+             62 LOAD_FAST                1 (recipe)
+             64 LOAD_CONST               1 ('cleans')
+             66 LOAD_CONST               2 (None)
+             68 PRECALL                  3
+             72 CALL                     3
+             82 JUMP_IF_TRUE_OR_POP      1 (to 86)
+             84 BUILD_MAP                0
+        >>   86 STORE_FAST               3 (cleans)
+
+454          88 LOAD_FAST                3 (cleans)
+             90 LOAD_METHOD              2 (items)
+            112 PRECALL                  0
+            116 CALL                     0
+            126 GET_ITER
+        >>  128 FOR_ITER               154 (to 438)
+            130 UNPACK_SEQUENCE          2
+            134 STORE_FAST               4 (field_name)
+            136 STORE_FAST               5 (rules)
+
+455         138 LOAD_GLOBAL              7 (NULL + isinstance)
+            150 LOAD_FAST                5 (rules)
+            152 LOAD_GLOBAL              8 (list)
+            164 PRECALL                  2
+            168 CALL                     2
+            178 POP_JUMP_FORWARD_IF_TRUE     1 (to 182)
+
+456         180 JUMP_BACKWARD           27 (to 128)
+
+457     >>  182 LOAD_FAST                5 (rules)
+            184 GET_ITER
+        >>  186 FOR_ITER               124 (to 436)
+            188 STORE_FAST               6 (spec)
+
+458         190 LOAD_GLOBAL              7 (NULL + isinstance)
+            202 LOAD_FAST                6 (spec)
+            204 LOAD_GLOBAL             10 (dict)
+            216 PRECALL                  2
+            220 CALL                     2
+            230 POP_JUMP_FORWARD_IF_TRUE     1 (to 234)
+
+459         232 JUMP_BACKWARD           24 (to 186)
+
+460     >>  234 LOAD_FAST                6 (spec)
+            236 LOAD_METHOD              6 (get)
+            258 LOAD_CONST               3 ('pat')
+            260 PRECALL                  1
+            264 CALL                     1
+            274 JUMP_IF_TRUE_OR_POP      1 (to 278)
+            276 LOAD_CONST               4 ('')
+        >>  278 STORE_FAST               7 (pat)
+
+461         280 LOAD_FAST                6 (spec)
+            282 LOAD_METHOD              6 (get)
+            304 LOAD_CONST               5 ('repl')
+            306 LOAD_CONST               4 ('')
+            308 PRECALL                  2
+            312 CALL                     2
+            322 STORE_FAST               8 (repl)
+
+462         324 LOAD_FAST                7 (pat)
+            326 POP_JUMP_FORWARD_IF_TRUE     1 (to 330)
+
+463         328 JUMP_BACKWARD           72 (to 186)
+
+464     >>  330 LOAD_FAST                4 (field_name)
+            332 LOAD_CONST               6 ('color')
+            334 COMPARE_OP               2 (==)
+            340 POP_JUMP_FORWARD_IF_FALSE    23 (to 388)
+
+465         342 LOAD_FAST                0 (self)
+            344 LOAD_METHOD              7 (_clean_color)
+            366 LOAD_FAST                7 (pat)
+            368 LOAD_FAST                8 (repl)
+            370 PRECALL                  2
+            374 CALL                     2
+            384 POP_TOP
+            386 JUMP_BACKWARD          101 (to 186)
+
+467     >>  388 LOAD_FAST                0 (self)
+            390 LOAD_METHOD              8 (_clean_field)
+            412 LOAD_FAST                4 (field_name)
+            414 LOAD_FAST                7 (pat)
+            416 LOAD_FAST                8 (repl)
+            418 PRECALL                  3
+            422 CALL                     3
+            432 POP_TOP
+            434 JUMP_BACKWARD          125 (to 186)
+
+457     >>  436 JUMP_BACKWARD          155 (to 128)
+
+468     >>  438 LOAD_FAST                0 (self)
+            440 LOAD_METHOD              0 (_cleanable_pairs)
+            462 PRECALL                  0
+            466 CALL                     0
+            476 STORE_FAST               9 (after)
+
+469         478 LOAD_GLOBAL             11 (NULL + dict)
+            490 LOAD_FAST                2 (before)
+            492 PRECALL                  1
+            496 CALL                     1
+            506 STORE_FAST              10 (bmap)
+
+470         508 BUILD_LIST               0
+            510 STORE_FAST              11 (changes)
+
+471         512 LOAD_FAST                9 (after)
+            514 GET_ITER
+        >>  516 FOR_ITER               130 (to 778)
+            518 UNPACK_SEQUENCE          2
+            522 STORE_FAST              12 (label)
+            524 STORE_FAST              13 (new)
+
+472         526 LOAD_FAST               10 (bmap)
+            528 LOAD_METHOD              6 (get)
+            550 LOAD_FAST               12 (label)
+            552 LOAD_CONST               4 ('')
+            554 PRECALL                  2
+            558 CALL                     2
+            568 STORE_FAST              14 (old)
+
+473         570 LOAD_FAST               14 (old)
+            572 LOAD_FAST               13 (new)
+            574 COMPARE_OP               3 (!=)
+            580 POP_JUMP_FORWARD_IF_FALSE    97 (to 776)
+
+474         582 LOAD_GLOBAL             19 (NULL + len)
+            594 LOAD_FAST               14 (old)
+            596 PRECALL                  1
+            600 CALL                     1
+            610 LOAD_CONST               7 (28)
+            612 COMPARE_OP               1 (<=)
+            618 POP_JUMP_FORWARD_IF_FALSE     2 (to 624)
+            620 LOAD_FAST               14 (old)
+            622 JUMP_FORWARD            12 (to 648)
+        >>  624 LOAD_FAST               14 (old)
+            626 LOAD_CONST               2 (None)
+            628 LOAD_CONST               8 (25)
+            630 BUILD_SLICE              2
+            632 BINARY_SUBSCR
+            642 LOAD_CONST               9 ('…')
+            644 BINARY_OP                0 (+)
+        >>  648 STORE_FAST              15 (o)
+
+475         650 LOAD_GLOBAL             19 (NULL + len)
+            662 LOAD_FAST               13 (new)
+            664 PRECALL                  1
+            668 CALL                     1
+            678 LOAD_CONST               7 (28)
+            680 COMPARE_OP               1 (<=)
+            686 POP_JUMP_FORWARD_IF_FALSE     2 (to 692)
+            688 LOAD_FAST               13 (new)
+            690 JUMP_FORWARD            12 (to 716)
+        >>  692 LOAD_FAST               13 (new)
+            694 LOAD_CONST               2 (None)
+            696 LOAD_CONST               8 (25)
+            698 BUILD_SLICE              2
+            700 BINARY_SUBSCR
+            710 LOAD_CONST               9 ('…')
+            712 BINARY_OP                0 (+)
+        >>  716 STORE_FAST              16 (n)
+
+476         718 LOAD_FAST               11 (changes)
+            720 LOAD_METHOD             10 (append)
+            742 LOAD_FAST               12 (label)
+            744 FORMAT_VALUE             0
+            746 LOAD_CONST              10 (': ')
+            748 LOAD_FAST               15 (o)
+            750 FORMAT_VALUE             2 (repr)
+            752 LOAD_CONST              11 (' → ')
+            754 LOAD_FAST               16 (n)
+            756 FORMAT_VALUE             2 (repr)
+            758 BUILD_STRING             5
+            760 PRECALL                  1
+            764 CALL                     1
+            774 POP_TOP
+        >>  776 JUMP_BACKWARD          131 (to 516)
+
+477     >>  778 LOAD_FAST               11 (changes)
+            780 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder._cleanable_pairs  (args=1, locals=7)
+# varnames: self, pairs, ei, ent, k, li, ln
+479           0 RESUME                   0
+
+485           2 BUILD_LIST               0
+              4 STORE_FAST               1 (pairs)
+
+486           6 LOAD_GLOBAL              1 (NULL + enumerate)
+             18 LOAD_FAST                0 (self)
+             20 LOAD_ATTR                1 (entities)
+             30 PRECALL                  1
+             34 CALL                     1
+             44 GET_ITER
+        >>   46 FOR_ITER               230 (to 508)
+             48 UNPACK_SEQUENCE          2
+             52 STORE_FAST               2 (ei)
+             54 STORE_FAST               3 (ent)
+
+487          56 LOAD_CONST               1 (('po_no', 'season', 'currency', 'price_term', 'payment_terms', 'port_loading', 'port_discharge', 'ship_mode', 'vendor_name', 'agent_name', 'channel', 'size_scale', 'product_group', 'age_sex_desc', 'product_desc', 'destination_code', 'wash_method', 'washing_color', 'packing_method', 'delivery_date', 'import_po_no', 'reference_no', 'cir_no', 'freight_terms', 'country_of_origin', 'dc_address'))
+             58 GET_ITER
+        >>   60 FOR_ITER                50 (to 162)
+             62 STORE_FAST               4 (k)
+
+494          64 LOAD_FAST                1 (pairs)
+             66 LOAD_METHOD              2 (append)
+             88 LOAD_CONST               2 ('H')
+             90 LOAD_FAST                2 (ei)
+             92 LOAD_CONST               3 (1)
+             94 BINARY_OP                0 (+)
+             98 FORMAT_VALUE             0
+            100 LOAD_CONST               4 ('·')
+            102 LOAD_FAST                4 (k)
+            104 FORMAT_VALUE             0
+            106 BUILD_STRING             4
+            108 LOAD_GLOBAL              7 (NULL + getattr)
+            120 LOAD_FAST                3 (ent)
+            122 LOAD_FAST                4 (k)
+            124 PRECALL                  2
+            128 CALL                     2
+            138 JUMP_IF_TRUE_OR_POP      1 (to 142)
+            140 LOAD_CONST               5 ('')
+        >>  142 BUILD_TUPLE              2
+            144 PRECALL                  1
+            148 CALL                     1
+            158 POP_TOP
+            160 JUMP_BACKWARD           51 (to 60)
+
+495     >>  162 LOAD_FAST                1 (pairs)
+            164 LOAD_METHOD              2 (append)
+            186 LOAD_CONST               2 ('H')
+            188 LOAD_FAST                2 (ei)
+            190 LOAD_CONST               3 (1)
+            192 BINARY_OP                0 (+)
+            196 FORMAT_VALUE             0
+            198 LOAD_CONST               6 ('·customer')
+            200 BUILD_STRING             3
+            202 LOAD_FAST                0 (self)
+            204 LOAD_ATTR                4 (customer)
+            214 JUMP_IF_TRUE_OR_POP      1 (to 218)
+            216 LOAD_CONST               5 ('')
+        >>  218 BUILD_TUPLE              2
+            220 PRECALL                  1
+            224 CALL                     1
+            234 POP_TOP
+
+496         236 LOAD_GLOBAL              1 (NULL + enumerate)
+            248 LOAD_FAST                3 (ent)
+            250 LOAD_ATTR                5 (lines)
+            260 PRECALL                  1
+            264 CALL                     1
+            274 GET_ITER
+        >>  276 FOR_ITER               114 (to 506)
+            278 UNPACK_SEQUENCE          2
+            282 STORE_FAST               5 (li)
+            284 STORE_FAST               6 (ln)
+
+497         286 LOAD_FAST                1 (pairs)
+            288 LOAD_METHOD              2 (append)
+            310 LOAD_CONST               7 ('L')
+            312 LOAD_FAST                2 (ei)
+            314 LOAD_CONST               3 (1)
+            316 BINARY_OP                0 (+)
+            320 FORMAT_VALUE             0
+            322 LOAD_CONST               8 ('-')
+            324 LOAD_FAST                5 (li)
+            326 LOAD_CONST               3 (1)
+            328 BINARY_OP                0 (+)
+            332 FORMAT_VALUE             0
+            334 LOAD_CONST               9 ('·款式')
+            336 BUILD_STRING             5
+            338 LOAD_FAST                6 (ln)
+            340 LOAD_ATTR                6 (style_no)
+            350 JUMP_IF_TRUE_OR_POP      1 (to 354)
+            352 LOAD_CONST               5 ('')
+        >>  354 BUILD_TUPLE              2
+            356 PRECALL                  1
+            360 CALL                     1
+            370 POP_TOP
+
+498         372 LOAD_FAST                1 (pairs)
+            374 LOAD_METHOD              2 (append)
+            396 LOAD_CONST               7 ('L')
+            398 LOAD_FAST                2 (ei)
+            400 LOAD_CONST               3 (1)
+            402 BINARY_OP                0 (+)
+            406 FORMAT_VALUE             0
+            408 LOAD_CONST               8 ('-')
+            410 LOAD_FAST                5 (li)
+            412 LOAD_CONST               3 (1)
+            414 BINARY_OP                0 (+)
+            418 FORMAT_VALUE             0
+            420 LOAD_CONST              10 ('·颜色')
+            422 BUILD_STRING             5
+
+499         424 LOAD_FAST                0 (self)
+            426 LOAD_METHOD              7 (_color_combined)
+            448 LOAD_FAST                6 (ln)
+            450 LOAD_ATTR                8 (color_code)
+            460 LOAD_FAST                6 (ln)
+            462 LOAD_ATTR                9 (color_desc)
+            472 PRECALL                  2
+            476 CALL                     2
+
+498         486 BUILD_TUPLE              2
+            488 PRECALL                  1
+            492 CALL                     1
+            502 POP_TOP
+            504 JUMP_BACKWARD          115 (to 276)
+
+496     >>  506 JUMP_BACKWARD          231 (to 46)
+
+500     >>  508 LOAD_FAST                1 (pairs)
+            510 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder._color_combined  (args=2, locals=2)
+# varnames: code, desc
+502           0 RESUME                   0
+
+504           2 LOAD_CONST               1 (' / ')
+              4 LOAD_METHOD              0 (join)
+             26 LOAD_GLOBAL              3 (NULL + filter)
+             38 LOAD_CONST               0 (None)
+             40 LOAD_FAST                0 (code)
+             42 JUMP_IF_TRUE_OR_POP      1 (to 46)
+             44 LOAD_CONST               2 ('')
+        >>   46 LOAD_FAST                1 (desc)
+             48 JUMP_IF_TRUE_OR_POP      1 (to 52)
+             50 LOAD_CONST               2 ('')
+        >>   52 BUILD_LIST               2
+             54 PRECALL                  2
+             58 CALL                     2
+             68 PRECALL                  1
+             72 CALL                     1
+             82 RETURN_VALUE
+
+==============================================================================
+## <module>.PurchaseOrder._clean_field  (args=4, locals=8)
+# varnames: self, field_name, pat, repl, rx, entity_fields, ent, ln
+506           0 RESUME                   0
+
+507           2 NOP
+
+508           4 LOAD_GLOBAL              1 (NULL + re)
+             16 LOAD_ATTR                1 (compile)
+             26 LOAD_FAST                2 (pat)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               4 (rx)
+             44 JUMP_FORWARD            22 (to 90)
+        >>   46 PUSH_EXC_INFO
+
+509          48 LOAD_GLOBAL              0 (re)
+             60 LOAD_ATTR                2 (error)
+             70 CHECK_EXC_MATCH
+             72 POP_JUMP_FORWARD_IF_FALSE     4 (to 82)
+             74 POP_TOP
+
+510          76 POP_EXCEPT
+             78 LOAD_CONST               0 (None)
+             80 RETURN_VALUE
+
+509     >>   82 RERAISE                  0
+        >>   84 COPY                     3
+             86 POP_EXCEPT
+             88 RERAISE                  1
+
+511     >>   90 BUILD_SET                0
+             92 LOAD_CONST               1 (frozenset({'channel', 'cir_no', 'price_term', 'vendor_name', 'port_discharge', 'currency', 'size_scale', 'product_group', 'season', 'country_of_origin', 'reference_no', 'import_po_no', 'age_sex_desc', 'port_loading', 'packing_method', 'agent_name', 'payment_terms', 'freight_terms', 'style_no', 'destination_code', 'delivery_date', 'ship_mode', 'dc_address', 'wash_method', 'washing_color', 'product_desc', 'po_no'}))
+             94 SET_UPDATE               1
+             96 STORE_FAST               5 (entity_fields)
+
+520          98 LOAD_FAST                0 (self)
+            100 LOAD_ATTR                3 (entities)
+            110 GET_ITER
+        >>  112 FOR_ITER               151 (to 416)
+            114 STORE_FAST               6 (ent)
+
+521         116 LOAD_FAST                1 (field_name)
+            118 LOAD_CONST               2 ('customer')
+            120 COMPARE_OP               2 (==)
+            126 POP_JUMP_FORWARD_IF_FALSE    35 (to 198)
+
+522         128 LOAD_FAST                4 (rx)
+            130 LOAD_METHOD              4 (sub)
+            152 LOAD_FAST                3 (repl)
+            154 LOAD_FAST                0 (self)
+            156 LOAD_ATTR                5 (customer)
+            166 JUMP_IF_TRUE_OR_POP      1 (to 170)
+            168 LOAD_CONST               3 ('')
+        >>  170 PRECALL                  2
+            174 CALL                     2
+            184 LOAD_FAST                0 (self)
+            186 STORE_ATTR               5 (customer)
+            196 JUMP_BACKWARD           43 (to 112)
+
+523     >>  198 LOAD_FAST                1 (field_name)
+            200 LOAD_FAST                5 (entity_fields)
+            202 CONTAINS_OP              0
+            204 POP_JUMP_FORWARD_IF_FALSE    54 (to 314)
+
+524         206 LOAD_GLOBAL             13 (NULL + setattr)
+            218 LOAD_FAST                6 (ent)
+            220 LOAD_FAST                1 (field_name)
+            222 LOAD_FAST                4 (rx)
+            224 LOAD_METHOD              4 (sub)
+            246 LOAD_FAST                3 (repl)
+            248 LOAD_GLOBAL             15 (NULL + getattr)
+            260 LOAD_FAST                6 (ent)
+            262 LOAD_FAST                1 (field_name)
+            264 PRECALL                  2
+            268 CALL                     2
+            278 JUMP_IF_TRUE_OR_POP      1 (to 282)
+            280 LOAD_CONST               3 ('')
+        >>  282 PRECALL                  2
+            286 CALL                     2
+            296 PRECALL                  3
+            300 CALL                     3
+            310 POP_TOP
+            312 JUMP_BACKWARD          101 (to 112)
+
+525     >>  314 LOAD_FAST                1 (field_name)
+            316 LOAD_CONST               4 ('style_no')
+            318 COMPARE_OP               2 (==)
+            324 POP_JUMP_FORWARD_IF_FALSE    44 (to 414)
+
+526         326 LOAD_FAST                6 (ent)
+            328 LOAD_ATTR                8 (lines)
+            338 GET_ITER
+        >>  340 FOR_ITER                36 (to 414)
+            342 STORE_FAST               7 (ln)
+
+527         344 LOAD_FAST                4 (rx)
+            346 LOAD_METHOD              4 (sub)
+            368 LOAD_FAST                3 (repl)
+            370 LOAD_FAST                7 (ln)
+            372 LOAD_ATTR                9 (style_no)
+            382 JUMP_IF_TRUE_OR_POP      1 (to 386)
+            384 LOAD_CONST               3 ('')
+        >>  386 PRECALL                  2
+            390 CALL                     2
+            400 LOAD_FAST                7 (ln)
+            402 STORE_ATTR               9 (style_no)
+            412 JUMP_BACKWARD           37 (to 340)
+        >>  414 JUMP_BACKWARD          152 (to 112)
+
+520     >>  416 LOAD_CONST               0 (None)
+            418 RETURN_VALUE
+ExceptionTable:
+  4 to 42 -> 46 [0]
+  46 to 74 -> 84 [1] lasti
+  82 to 82 -> 84 [1] lasti
+
+==============================================================================
+## <module>.PurchaseOrder._clean_color  (args=3, locals=10)
+# varnames: self, pat, repl, rx, ent, ln, combined, new, c, d
+530           0 RESUME                   0
+
+531           2 NOP
+
+532           4 LOAD_GLOBAL              1 (NULL + re)
+             16 LOAD_ATTR                1 (compile)
+             26 LOAD_FAST                1 (pat)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               3 (rx)
+             44 JUMP_FORWARD            22 (to 90)
+        >>   46 PUSH_EXC_INFO
+
+533          48 LOAD_GLOBAL              0 (re)
+             60 LOAD_ATTR                2 (error)
+             70 CHECK_EXC_MATCH
+             72 POP_JUMP_FORWARD_IF_FALSE     4 (to 82)
+             74 POP_TOP
+
+534          76 POP_EXCEPT
+             78 LOAD_CONST               0 (None)
+             80 RETURN_VALUE
+
+533     >>   82 RERAISE                  0
+        >>   84 COPY                     3
+             86 POP_EXCEPT
+             88 RERAISE                  1
+
+535     >>   90 LOAD_FAST                0 (self)
+             92 LOAD_ATTR                3 (entities)
+            102 GET_ITER
+        >>  104 FOR_ITER               239 (to 584)
+            106 STORE_FAST               4 (ent)
+
+536         108 LOAD_FAST                4 (ent)
+            110 LOAD_ATTR                4 (lines)
+            120 GET_ITER
+        >>  122 FOR_ITER               229 (to 582)
+            124 STORE_FAST               5 (ln)
+
+537         126 LOAD_FAST                0 (self)
+            128 LOAD_METHOD              5 (_color_combined)
+            150 LOAD_FAST                5 (ln)
+            152 LOAD_ATTR                6 (color_code)
+            162 LOAD_FAST                5 (ln)
+            164 LOAD_ATTR                7 (color_desc)
+            174 PRECALL                  2
+            178 CALL                     2
+            188 STORE_FAST               6 (combined)
+
+538         190 LOAD_FAST                3 (rx)
+            192 LOAD_METHOD              8 (sub)
+            214 LOAD_FAST                2 (repl)
+            216 LOAD_FAST                6 (combined)
+            218 PRECALL                  2
+            222 CALL                     2
+            232 STORE_FAST               7 (new)
+
+539         234 LOAD_CONST               1 (' / ')
+            236 LOAD_FAST                7 (new)
+            238 CONTAINS_OP              0
+            240 POP_JUMP_FORWARD_IF_FALSE    77 (to 396)
+
+540         242 LOAD_FAST                7 (new)
+            244 LOAD_METHOD              9 (split)
+            266 LOAD_CONST               1 (' / ')
+            268 LOAD_CONST               2 (1)
+            270 PRECALL                  2
+            274 CALL                     2
+            284 UNPACK_SEQUENCE          2
+            288 STORE_FAST               8 (c)
+            290 STORE_FAST               9 (d)
+
+541         292 LOAD_FAST                8 (c)
+            294 LOAD_METHOD             10 (strip)
+            316 PRECALL                  0
+            320 CALL                     0
+            330 LOAD_FAST                9 (d)
+            332 LOAD_METHOD             10 (strip)
+            354 PRECALL                  0
+            358 CALL                     0
+            368 SWAP                     2
+            370 LOAD_FAST                5 (ln)
+            372 STORE_ATTR               6 (color_code)
+            382 LOAD_FAST                5 (ln)
+            384 STORE_ATTR               7 (color_desc)
+            394 JUMP_BACKWARD          137 (to 122)
+
+547     >>  396 LOAD_FAST                5 (ln)
+            398 LOAD_ATTR                7 (color_desc)
+            408 JUMP_IF_TRUE_OR_POP      1 (to 412)
+            410 LOAD_CONST               3 ('')
+        >>  412 LOAD_METHOD             10 (strip)
+            434 PRECALL                  0
+            438 CALL                     0
+            448 POP_JUMP_FORWARD_IF_FALSE    33 (to 516)
+
+548         450 LOAD_FAST                7 (new)
+            452 LOAD_METHOD             10 (strip)
+            474 PRECALL                  0
+            478 CALL                     0
+            488 LOAD_FAST                5 (ln)
+            490 STORE_ATTR               7 (color_desc)
+
+549         500 LOAD_CONST               3 ('')
+            502 LOAD_FAST                5 (ln)
+            504 STORE_ATTR               6 (color_code)
+            514 JUMP_BACKWARD          197 (to 122)
+
+551     >>  516 LOAD_FAST                7 (new)
+            518 LOAD_METHOD             10 (strip)
+            540 PRECALL                  0
+            544 CALL                     0
+            554 LOAD_FAST                5 (ln)
+            556 STORE_ATTR               6 (color_code)
+
+552         566 LOAD_CONST               3 ('')
+            568 LOAD_FAST                5 (ln)
+            570 STORE_ATTR               7 (color_desc)
+            580 JUMP_BACKWARD          230 (to 122)
+
+536     >>  582 JUMP_BACKWARD          240 (to 104)
+
+535     >>  584 LOAD_CONST               0 (None)
+            586 RETURN_VALUE
+ExceptionTable:
+  4 to 42 -> 46 [0]
+  46 to 74 -> 84 [1] lasti
+  82 to 82 -> 84 [1] lasti
+
+==============================================================================
+## <module>.build_row_key  (args=7, locals=7)
+# varnames: customer, po_no, style, color_code, size, inseam, destination
+555           0 RESUME                   0
+
+565           2 LOAD_CONST               1 ('|')
+              4 LOAD_METHOD              0 (join)
+
+566          26 LOAD_FAST                0 (customer)
+             28 JUMP_IF_TRUE_OR_POP      1 (to 32)
+             30 LOAD_CONST               2 ('')
+
+567     >>   32 LOAD_FAST                1 (po_no)
+             34 JUMP_IF_TRUE_OR_POP      1 (to 38)
+             36 LOAD_CONST               2 ('')
+
+568     >>   38 LOAD_FAST                2 (style)
+             40 JUMP_IF_TRUE_OR_POP      1 (to 44)
+             42 LOAD_CONST               2 ('')
+
+569     >>   44 LOAD_FAST                3 (color_code)
+             46 JUMP_IF_TRUE_OR_POP      1 (to 50)
+             48 LOAD_CONST               2 ('')
+
+570     >>   50 LOAD_FAST                4 (size)
+             52 JUMP_IF_TRUE_OR_POP      1 (to 56)
+             54 LOAD_CONST               2 ('')
+
+571     >>   56 LOAD_FAST                5 (inseam)
+             58 JUMP_IF_TRUE_OR_POP      1 (to 62)
+             60 LOAD_CONST               2 ('')
+
+572     >>   62 LOAD_FAST                6 (destination)
+             64 JUMP_IF_TRUE_OR_POP      1 (to 68)
+             66 LOAD_CONST               2 ('')
+
+565     >>   68 BUILD_LIST               7
+             70 PRECALL                  1
+             74 CALL                     1
+             84 RETURN_VALUE
+
+==============================================================================
+## <module>.PoRecipe  (args=0, locals=0)
+579           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('PoRecipe')
+              8 STORE_NAME               2 (__qualname__)
+             10 SETUP_ANNOTATIONS
+
+581          12 LOAD_CONST               1 ("The extraction recipe. Every customer- or layout-specific difference lives\n    here as data, never as ``if COLIN'S:`` in code. JSON-serializable; cached per\n    layout fingerprint so the FIRST PO of a customer uses AI + manual confirm, and\n    every later PO of the same layout is extracted zero-AI.\n\n    layout_type drives which parser consumes the recipe:\n        matrix_2axis / matrix_1axis -> grid parsers\n        line_items                  -> row parser\n    ")
+             14 STORE_NAME               3 (__doc__)
+
+590          16 LOAD_CONST               2 ('')
+             18 STORE_NAME               4 (fingerprint)
+             20 LOAD_CONST               3 ('str')
+             22 LOAD_NAME                5 (__annotations__)
+             24 LOAD_CONST               4 ('fingerprint')
+             26 STORE_SUBSCR
+
+591          30 LOAD_CONST               2 ('')
+             32 STORE_NAME               6 (customer)
+             34 LOAD_CONST               3 ('str')
+             36 LOAD_NAME                5 (__annotations__)
+             38 LOAD_CONST               5 ('customer')
+             40 STORE_SUBSCR
+
+592          44 LOAD_NAME                7 (LayoutType)
+             46 LOAD_ATTR                8 (MATRIX_2AXIS)
+             56 LOAD_ATTR                9 (value)
+             66 STORE_NAME              10 (layout_type)
+             68 LOAD_CONST               3 ('str')
+             70 LOAD_NAME                5 (__annotations__)
+             72 LOAD_CONST               6 ('layout_type')
+             74 STORE_SUBSCR
+
+593          78 LOAD_CONST               7 ('1')
+             80 STORE_NAME              11 (version)
+             82 LOAD_CONST               3 ('str')
+             84 LOAD_NAME                5 (__annotations__)
+             86 LOAD_CONST               8 ('version')
+             88 STORE_SUBSCR
+
+594          92 LOAD_CONST               2 ('')
+             94 STORE_NAME              12 (note)
+             96 LOAD_CONST               3 ('str')
+             98 LOAD_NAME                5 (__annotations__)
+            100 LOAD_CONST               9 ('note')
+            102 STORE_SUBSCR
+
+598         106 LOAD_CONST              10 ('ORDER NO[.\\s:]+(\\S+)')
+            108 STORE_NAME              13 (po_no_anchor)
+            110 LOAD_CONST               3 ('str')
+            112 LOAD_NAME                5 (__annotations__)
+            114 LOAD_CONST              11 ('po_no_anchor')
+            116 STORE_SUBSCR
+
+599         120 LOAD_CONST              12 ('^(.*?)\\s+Purchase Order')
+            122 STORE_NAME              14 (customer_anchor)
+            124 LOAD_CONST               3 ('str')
+            126 LOAD_NAME                5 (__annotations__)
+            128 LOAD_CONST              13 ('customer_anchor')
+            130 STORE_SUBSCR
+
+600         134 LOAD_CONST              14 ('Season:\\s*(\\S+)')
+            136 STORE_NAME              15 (season_anchor)
+            138 LOAD_CONST               3 ('str')
+            140 LOAD_NAME                5 (__annotations__)
+            142 LOAD_CONST              15 ('season_anchor')
+            144 STORE_SUBSCR
+
+601         148 LOAD_CONST              16 ('Shipment date:\\s*(\\S+)')
+            150 STORE_NAME              16 (delivery_anchor)
+            152 LOAD_CONST               3 ('str')
+            154 LOAD_NAME                5 (__annotations__)
+            156 LOAD_CONST              17 ('delivery_anchor')
+            158 STORE_SUBSCR
+
+602         162 LOAD_CONST              18 ('Currency:\\s*(\\S+)')
+            164 STORE_NAME              17 (currency_anchor)
+            166 LOAD_CONST               3 ('str')
+            168 LOAD_NAME                5 (__annotations__)
+            170 LOAD_CONST              19 ('currency_anchor')
+            172 STORE_SUBSCR
+
+603         176 LOAD_CONST              20 ('Terms of payment:\\s*(.+)')
+            178 STORE_NAME              18 (price_term_anchor)
+            180 LOAD_CONST               3 ('str')
+            182 LOAD_NAME                5 (__annotations__)
+            184 LOAD_CONST              21 ('price_term_anchor')
+            186 STORE_SUBSCR
+
+604         190 LOAD_CONST              22 ('(?:Model\\s+No\\.|STYLE\\s+NO)[\\s.]*[:.]?\\s*(\\S+)')
+            192 STORE_NAME              19 (style_anchor)
+            194 LOAD_CONST               3 ('str')
+            196 LOAD_NAME                5 (__annotations__)
+            198 LOAD_CONST              23 ('style_anchor')
+            200 STORE_SUBSCR
+
+605         204 LOAD_CONST              24 ('UNIT PR[İI]CE\\S*:\\s*([\\d.,]+)')
+            206 STORE_NAME              20 (price_anchor)
+            208 LOAD_CONST               3 ('str')
+            210 LOAD_NAME                5 (__annotations__)
+            212 LOAD_CONST              25 ('price_anchor')
+            214 STORE_SUBSCR
+
+606         218 LOAD_CONST              26 ('MULTIPACK')
+            220 STORE_NAME              21 (packing_anchor)
+            222 LOAD_CONST               3 ('str')
+            224 LOAD_NAME                5 (__annotations__)
+            226 LOAD_CONST              27 ('packing_anchor')
+            228 STORE_SUBSCR
+
+609         232 LOAD_CONST               2 ('')
+            234 STORE_NAME              22 (packing_method)
+            236 LOAD_CONST               3 ('str')
+            238 LOAD_NAME                5 (__annotations__)
+            240 LOAD_CONST              28 ('packing_method')
+            242 STORE_SUBSCR
+
+610         246 LOAD_CONST              29 ('Port of discharge:\\s*(\\S+)')
+            248 STORE_NAME              23 (port_discharge_anchor)
+            250 LOAD_CONST               3 ('str')
+            252 LOAD_NAME                5 (__annotations__)
+            254 LOAD_CONST              30 ('port_discharge_anchor')
+            256 STORE_SUBSCR
+
+616         260 LOAD_CONST              31 ('(?:Port of loading|Loading port|Place of receipt)[.\\s:]+(\\S+(?:\\s+\\S+)?)')
+            262 STORE_NAME              24 (port_loading_anchor)
+            264 LOAD_CONST               3 ('str')
+            266 LOAD_NAME                5 (__annotations__)
+            268 LOAD_CONST              32 ('port_loading_anchor')
+            270 STORE_SUBSCR
+
+617         274 LOAD_CONST              33 ('Transport Type:\\s*(\\S+)')
+            276 STORE_NAME              25 (ship_mode_anchor)
+            278 LOAD_CONST               3 ('str')
+            280 LOAD_NAME                5 (__annotations__)
+            282 LOAD_CONST              34 ('ship_mode_anchor')
+            284 STORE_SUBSCR
+
+618         288 LOAD_CONST              35 ('Agent:\\s*(.+)')
+            290 STORE_NAME              26 (agent_anchor)
+            292 LOAD_CONST               3 ('str')
+            294 LOAD_NAME                5 (__annotations__)
+            296 LOAD_CONST              36 ('agent_anchor')
+            298 STORE_SUBSCR
+
+619         302 LOAD_CONST              37 ('Supplier:\\s*(.+)')
+            304 STORE_NAME              27 (vendor_anchor)
+            306 LOAD_CONST               3 ('str')
+            308 LOAD_NAME                5 (__annotations__)
+            310 LOAD_CONST              38 ('vendor_anchor')
+            312 STORE_SUBSCR
+
+623         316 LOAD_CONST               2 ('')
+            318 STORE_NAME              28 (payment_terms_anchor)
+            320 LOAD_CONST               3 ('str')
+            322 LOAD_NAME                5 (__annotations__)
+            324 LOAD_CONST              39 ('payment_terms_anchor')
+            326 STORE_SUBSCR
+
+625         330 LOAD_CONST              40 ('Import\\s*PO\\s*(?:#|No|Number)?[.\\s:]+(\\S+)')
+            332 STORE_NAME              29 (import_po_no_anchor)
+            334 LOAD_CONST               3 ('str')
+            336 LOAD_NAME                5 (__annotations__)
+            338 LOAD_CONST              41 ('import_po_no_anchor')
+            340 STORE_SUBSCR
+
+626         344 LOAD_CONST              42 ('Reference\\s*(?:#|No)?[.\\s:]+(\\S+)')
+            346 STORE_NAME              30 (reference_no_anchor)
+            348 LOAD_CONST               3 ('str')
+            350 LOAD_NAME                5 (__annotations__)
+            352 LOAD_CONST              43 ('reference_no_anchor')
+            354 STORE_SUBSCR
+
+627         358 LOAD_CONST              44 ('CIR\\s*(?:#|No)?[.\\s:]+(\\S+)')
+            360 STORE_NAME              31 (cir_no_anchor)
+            362 LOAD_CONST               3 ('str')
+            364 LOAD_NAME                5 (__annotations__)
+            366 LOAD_CONST              45 ('cir_no_anchor')
+            368 STORE_SUBSCR
+
+628         372 LOAD_CONST              46 ('Freight\\s*Terms?[.\\s:]+(\\S+(?:\\s+\\S+)?)')
+            374 STORE_NAME              32 (freight_terms_anchor)
+            376 LOAD_CONST               3 ('str')
+            378 LOAD_NAME                5 (__annotations__)
+            380 LOAD_CONST              47 ('freight_terms_anchor')
+            382 STORE_SUBSCR
+
+629         386 LOAD_CONST              48 ('(?:Country\\s*of\\s*Origin|Origin\\s*Country|Exiting\\s*Country)[.\\s:]+(\\S+)')
+            388 STORE_NAME              33 (country_of_origin_anchor)
+            390 LOAD_CONST               3 ('str')
+            392 LOAD_NAME                5 (__annotations__)
+            394 LOAD_CONST              49 ('country_of_origin_anchor')
+            396 STORE_SUBSCR
+
+630         400 LOAD_CONST              50 ('(?:DC\\s*Address|Distribution\\s*Center|Deliver\\s*to)[.\\s:]+(\\S.+)')
+            402 STORE_NAME              34 (dc_address_anchor)
+            404 LOAD_CONST               3 ('str')
+            406 LOAD_NAME                5 (__annotations__)
+            408 LOAD_CONST              51 ('dc_address_anchor')
+            410 STORE_SUBSCR
+
+631         414 LOAD_CONST              52 ('E-COMM')
+            416 STORE_NAME              35 (channel_anchor)
+            418 LOAD_CONST               3 ('str')
+            420 LOAD_NAME                5 (__annotations__)
+            422 LOAD_CONST              53 ('channel_anchor')
+            424 STORE_SUBSCR
+
+632         428 LOAD_CONST               2 ('')
+            430 STORE_NAME              36 (channel_value)
+            432 LOAD_CONST               3 ('str')
+            434 LOAD_NAME                5 (__annotations__)
+            436 LOAD_CONST              54 ('channel_value')
+            438 STORE_SUBSCR
+
+636         442 LOAD_CONST              55 ('Entity\\s+\\d+\\s+Order No:\\s*(\\S+)(?:\\s+(E-COMM))?')
+            444 STORE_NAME              37 (entity_anchor)
+            446 LOAD_CONST               3 ('str')
+            448 LOAD_NAME                5 (__annotations__)
+            450 LOAD_CONST              56 ('entity_anchor')
+            452 STORE_SUBSCR
+
+638         456 LOAD_CONST              57 ('Destination Code:(\\S+)')
+            458 STORE_NAME              38 (destination_anchor)
+            460 LOAD_CONST               3 ('str')
+            462 LOAD_NAME                5 (__annotations__)
+            464 LOAD_CONST              58 ('destination_anchor')
+            466 STORE_SUBSCR
+
+641         470 LOAD_CONST               2 ('')
+            472 STORE_NAME              39 (section_anchor)
+            474 LOAD_CONST               3 ('str')
+            476 LOAD_NAME                5 (__annotations__)
+            478 LOAD_CONST              59 ('section_anchor')
+            480 STORE_SUBSCR
+
+646         484 LOAD_CONST              60 ('^(DESTINATION|PACKAGING|COLOR) DETAILS$')
+            486 STORE_NAME              40 (section_delim_pattern)
+            488 LOAD_CONST               3 ('str')
+            490 LOAD_NAME                5 (__annotations__)
+            492 LOAD_CONST              61 ('section_delim_pattern')
+            494 STORE_SUBSCR
+
+650         498 LOAD_CONST               2 ('')
+            500 STORE_NAME              41 (line_pattern)
+            502 LOAD_CONST               3 ('str')
+            504 LOAD_NAME                5 (__annotations__)
+            506 LOAD_CONST              62 ('line_pattern')
+            508 STORE_SUBSCR
+
+651         512 LOAD_CONST              63 ('PCS')
+            514 STORE_NAME              42 (order_unit)
+            516 LOAD_CONST               3 ('str')
+            518 LOAD_NAME                5 (__annotations__)
+            520 LOAD_CONST              64 ('order_unit')
+            522 STORE_SUBSCR
+
+654         526 LOAD_CONST              65 ('COLOR NO\\s*:\\s*(\\S+)\\s+(.+)')
+            528 STORE_NAME              43 (color_anchor)
+            530 LOAD_CONST               3 ('str')
+            532 LOAD_NAME                5 (__annotations__)
+            534 LOAD_CONST              66 ('color_anchor')
+            536 STORE_SUBSCR
+
+655         540 LOAD_CONST              67 (False)
+            542 STORE_NAME              44 (has_inseam)
+            544 LOAD_CONST              68 ('bool')
+            546 LOAD_NAME                5 (__annotations__)
+            548 LOAD_CONST              69 ('has_inseam')
+            550 STORE_SUBSCR
+
+656         554 LOAD_CONST              70 ('COLOR NO')
+            556 STORE_NAME              45 (size_header_token)
+            558 LOAD_CONST               3 ('str')
+            560 LOAD_NAME                5 (__annotations__)
+            562 LOAD_CONST              71 ('size_header_token')
+            564 STORE_SUBSCR
+
+657         568 LOAD_CONST              72 ('TOTAL')
+            570 STORE_NAME              46 (total_token)
+            572 LOAD_CONST               3 ('str')
+            574 LOAD_NAME                5 (__annotations__)
+            576 LOAD_CONST              73 ('total_token')
+            578 STORE_SUBSCR
+
+658         582 LOAD_CONST              74 ('rows')
+            584 STORE_NAME              47 (grid_orientation)
+            586 LOAD_CONST               3 ('str')
+            588 LOAD_NAME                5 (__annotations__)
+            590 LOAD_CONST              75 ('grid_orientation')
+            592 STORE_SUBSCR
+
+665         596 LOAD_CONST               2 ('')
+            598 STORE_NAME              48 (size_header_anchor)
+            600 LOAD_CONST               3 ('str')
+            602 LOAD_NAME                5 (__annotations__)
+            604 LOAD_CONST              76 ('size_header_anchor')
+            606 STORE_SUBSCR
+
+668         610 LOAD_CONST               2 ('')
+            612 STORE_NAME              49 (color_code_pattern)
+            614 LOAD_CONST               3 ('str')
+            616 LOAD_NAME                5 (__annotations__)
+            618 LOAD_CONST              77 ('color_code_pattern')
+            620 STORE_SUBSCR
+
+673         624 LOAD_CONST              67 (False)
+            626 STORE_NAME              50 (require_row_total)
+            628 LOAD_CONST              68 ('bool')
+            630 LOAD_NAME                5 (__annotations__)
+            632 LOAD_CONST              78 ('require_row_total')
+            634 STORE_SUBSCR
+
+677         638 LOAD_CONST               2 ('')
+            640 STORE_NAME              51 (breakdown_anchor)
+            642 LOAD_CONST               3 ('str')
+            644 LOAD_NAME                5 (__annotations__)
+            646 LOAD_CONST              79 ('breakdown_anchor')
+            648 STORE_SUBSCR
+
+682         652 LOAD_CONST               2 ('')
+            654 STORE_NAME              52 (summary_anchor)
+            656 LOAD_CONST               3 ('str')
+            658 LOAD_NAME                5 (__annotations__)
+            660 LOAD_CONST              80 ('summary_anchor')
+            662 STORE_SUBSCR
+
+685         666 PUSH_NULL
+            668 LOAD_NAME               53 (field)
+            670 LOAD_NAME               54 (dict)
+            672 KW_NAMES                81
+            674 PRECALL                  1
+            678 CALL                     1
+            688 STORE_NAME              55 (line_field_map)
+            690 LOAD_CONST              82 ('Dict[str, str]')
+            692 LOAD_NAME                5 (__annotations__)
+            694 LOAD_CONST              83 ('line_field_map')
+            696 STORE_SUBSCR
+
+688         700 PUSH_NULL
+            702 LOAD_NAME               53 (field)
+            704 LOAD_NAME               54 (dict)
+            706 KW_NAMES                81
+            708 PRECALL                  1
+            712 CALL                     1
+            722 STORE_NAME              56 (field_map)
+            724 LOAD_CONST              82 ('Dict[str, str]')
+            726 LOAD_NAME                5 (__annotations__)
+            728 LOAD_CONST              84 ('field_map')
+            730 STORE_SUBSCR
+
+693         734 LOAD_CONST              67 (False)
+            736 STORE_NAME              57 (has_color_total)
+            738 LOAD_CONST              68 ('bool')
+            740 LOAD_NAME                5 (__annotations__)
+            742 LOAD_CONST              85 ('has_color_total')
+            744 STORE_SUBSCR
+
+697         748 LOAD_CONST              67 (False)
+            750 STORE_NAME              58 (has_size_total)
+            752 LOAD_CONST              68 ('bool')
+            754 LOAD_NAME                5 (__annotations__)
+            756 LOAD_CONST              86 ('has_size_total')
+            758 STORE_SUBSCR
+
+704         762 LOAD_CONST               2 ('')
+            764 STORE_NAME              59 (size_encoding)
+            766 LOAD_CONST               3 ('str')
+            768 LOAD_NAME                5 (__annotations__)
+            770 LOAD_CONST              87 ('size_encoding')
+            772 STORE_SUBSCR
+
+712         776 LOAD_CONST              67 (False)
+            778 STORE_NAME              60 (dedup_style_size)
+            780 LOAD_CONST              68 ('bool')
+            782 LOAD_NAME                5 (__annotations__)
+            784 LOAD_CONST              88 ('dedup_style_size')
+            786 STORE_SUBSCR
+
+717         790 PUSH_NULL
+            792 LOAD_NAME               53 (field)
+            794 LOAD_NAME               54 (dict)
+            796 KW_NAMES                81
+            798 PRECALL                  1
+            802 CALL                     1
+            812 STORE_NAME              61 (field_overrides)
+            814 LOAD_CONST              82 ('Dict[str, str]')
+            816 LOAD_NAME                5 (__annotations__)
+            818 LOAD_CONST              89 ('field_overrides')
+            820 STORE_SUBSCR
+
+725         824 PUSH_NULL
+            826 LOAD_NAME               53 (field)
+            828 LOAD_NAME               54 (dict)
+            830 KW_NAMES                81
+            832 PRECALL                  1
+            836 CALL                     1
+            846 STORE_NAME              62 (field_defaults)
+            848 LOAD_CONST              82 ('Dict[str, str]')
+            850 LOAD_NAME                5 (__annotations__)
+            852 LOAD_CONST              90 ('field_defaults')
+            854 STORE_SUBSCR
+
+734         858 PUSH_NULL
+            860 LOAD_NAME               53 (field)
+            862 LOAD_NAME               54 (dict)
+            864 KW_NAMES                81
+            866 PRECALL                  1
+            870 CALL                     1
+            880 STORE_NAME              63 (cleans)
+            882 LOAD_CONST              91 ('Dict[str, List[Dict[str, str]]]')
+            884 LOAD_NAME                5 (__annotations__)
+            886 LOAD_CONST              92 ('cleans')
+            888 STORE_SUBSCR
+
+737         892 PUSH_NULL
+            894 LOAD_NAME               53 (field)
+            896 LOAD_NAME               54 (dict)
+            898 KW_NAMES                81
+            900 PRECALL                  1
+            904 CALL                     1
+            914 STORE_NAME              64 (color_vocab)
+            916 LOAD_CONST              82 ('Dict[str, str]')
+            918 LOAD_NAME                5 (__annotations__)
+            920 LOAD_CONST              93 ('color_vocab')
+            922 STORE_SUBSCR
+
+742         926 PUSH_NULL
+            928 LOAD_NAME               53 (field)
+            930 LOAD_NAME               54 (dict)
+            932 KW_NAMES                81
+            934 PRECALL                  1
+            938 CALL                     1
+            948 STORE_NAME              65 (validators)
+            950 LOAD_CONST              91 ('Dict[str, List[Dict[str, str]]]')
+            952 LOAD_NAME                5 (__annotations__)
+            954 LOAD_CONST              94 ('validators')
+            956 STORE_SUBSCR
+
+750         960 LOAD_CONST               2 ('')
+            962 STORE_NAME              66 (date_format)
+            964 LOAD_CONST               3 ('str')
+            966 LOAD_NAME                5 (__annotations__)
+            968 LOAD_CONST              95 ('date_format')
+            970 STORE_SUBSCR
+
+755         974 LOAD_CONST              67 (False)
+            976 STORE_NAME              67 (date_dayfirst)
+            978 LOAD_CONST              68 ('bool')
+            980 LOAD_NAME                5 (__annotations__)
+            982 LOAD_CONST              96 ('date_dayfirst')
+            984 STORE_SUBSCR
+
+757         988 LOAD_CONST             103 (('return', 'str'))
+            990 LOAD_CONST              98 (<code object to_json at 0x000002BF94A65BD0, file "core\models.py", line 757>)
+            992 MAKE_FUNCTION            4 (annotations)
+            994 STORE_NAME              68 (to_json)
+
+760         996 LOAD_NAME               69 (classmethod)
+
+761         998 LOAD_CONST             104 (('s', 'str', 'return', "'PoRecipe'"))
+           1000 LOAD_CONST             101 (<code object from_json at 0x000002BF940DB830, file "core\models.py", line 760>)
+           1002 MAKE_FUNCTION            4 (annotations)
+
+760        1004 PRECALL                  0
+           1008 CALL                     0
+
+761        1018 STORE_NAME              70 (from_json)
+           1020 LOAD_CONST             102 (None)
+           1022 RETURN_VALUE
+
+==============================================================================
+## <module>.PoRecipe.to_json  (args=1, locals=1)
+# varnames: self
+757           0 RESUME                   0
+
+758           2 LOAD_GLOBAL              1 (NULL + json)
+             14 LOAD_ATTR                1 (dumps)
+             24 LOAD_GLOBAL              5 (NULL + asdict)
+             36 LOAD_FAST                0 (self)
+             38 PRECALL                  1
+             42 CALL                     1
+             52 LOAD_CONST               1 (False)
+             54 LOAD_CONST               2 (2)
+             56 KW_NAMES                 3
+             58 PRECALL                  3
+             62 CALL                     3
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>.PoRecipe.from_json  (args=2, locals=9)
+# varnames: cls, s, d, cleans, vc, f_name, spec, cc, kwargs
+              0 MAKE_CELL                9 (known)
+
+760           2 RESUME                   0
+
+762           4 LOAD_GLOBAL              1 (NULL + json)
+             16 LOAD_ATTR                1 (loads)
+             26 LOAD_FAST                1 (s)
+             28 PRECALL                  1
+             32 CALL                     1
+             42 STORE_FAST               2 (d)
+
+763          44 LOAD_CONST               1 (<code object <setcomp> at 0x000002BF94A6E410, file "core\models.py", line 763>)
+             46 MAKE_FUNCTION            0
+             48 LOAD_GLOBAL              5 (NULL + fields)
+             60 LOAD_FAST                0 (cls)
+             62 PRECALL                  1
+             66 CALL                     1
+             76 GET_ITER
+             78 PRECALL                  0
+             82 CALL                     0
+             92 STORE_DEREF              9 (known)
+
+766          94 LOAD_GLOBAL              7 (NULL + dict)
+            106 LOAD_FAST                2 (d)
+            108 LOAD_METHOD              4 (get)
+            130 LOAD_CONST               2 ('cleans')
+            132 PRECALL                  1
+            136 CALL                     1
+            146 JUMP_IF_TRUE_OR_POP      1 (to 150)
+            148 BUILD_MAP                0
+        >>  150 PRECALL                  1
+            154 CALL                     1
+            164 STORE_FAST               3 (cleans)
+
+767         166 LOAD_FAST                2 (d)
+            168 LOAD_METHOD              4 (get)
+            190 LOAD_CONST               3 ('value_clean')
+            192 PRECALL                  1
+            196 CALL                     1
+            206 STORE_FAST               4 (vc)
+
+768         208 LOAD_GLOBAL             11 (NULL + isinstance)
+            220 LOAD_FAST                4 (vc)
+            222 LOAD_GLOBAL              6 (dict)
+            234 PRECALL                  2
+            238 CALL                     2
+            248 POP_JUMP_FORWARD_IF_FALSE   152 (to 554)
+
+769         250 LOAD_FAST                4 (vc)
+            252 LOAD_METHOD              6 (items)
+            274 PRECALL                  0
+            278 CALL                     0
+            288 GET_ITER
+        >>  290 FOR_ITER               131 (to 554)
+            292 UNPACK_SEQUENCE          2
+            296 STORE_FAST               5 (f_name)
+            298 STORE_FAST               6 (spec)
+
+770         300 LOAD_GLOBAL             11 (NULL + isinstance)
+            312 LOAD_FAST                6 (spec)
+            314 LOAD_GLOBAL              6 (dict)
+            326 PRECALL                  2
+            330 CALL                     2
+            340 POP_JUMP_FORWARD_IF_FALSE   105 (to 552)
+            342 LOAD_FAST                6 (spec)
+            344 LOAD_METHOD              4 (get)
+            366 LOAD_CONST               4 ('pat')
+            368 PRECALL                  1
+            372 CALL                     1
+            382 POP_JUMP_FORWARD_IF_FALSE    84 (to 552)
+
+771         384 LOAD_FAST                3 (cleans)
+            386 LOAD_METHOD              7 (setdefault)
+            408 LOAD_FAST                5 (f_name)
+            410 BUILD_LIST               0
+            412 PRECALL                  2
+            416 CALL                     2
+            426 LOAD_METHOD              8 (append)
+
+772         448 LOAD_FAST                6 (spec)
+            450 LOAD_METHOD              4 (get)
+            472 LOAD_CONST               4 ('pat')
+            474 LOAD_CONST               5 ('')
+            476 PRECALL                  2
+            480 CALL                     2
+            490 LOAD_FAST                6 (spec)
+            492 LOAD_METHOD              4 (get)
+            514 LOAD_CONST               6 ('repl')
+            516 LOAD_CONST               5 ('')
+            518 PRECALL                  2
+            522 CALL                     2
+            532 LOAD_CONST               7 (('pat', 'repl'))
+            534 BUILD_CONST_KEY_MAP      2
+
+771         536 PRECALL                  1
+            540 CALL                     1
+            550 POP_TOP
+        >>  552 JUMP_BACKWARD          132 (to 290)
+
+773     >>  554 LOAD_FAST                2 (d)
+            556 LOAD_METHOD              4 (get)
+            578 LOAD_CONST               8 ('color_clean')
+            580 PRECALL                  1
+            584 CALL                     1
+            594 STORE_FAST               7 (cc)
+
+774         596 LOAD_GLOBAL             11 (NULL + isinstance)
+            608 LOAD_FAST                7 (cc)
+            610 LOAD_GLOBAL              6 (dict)
+            622 PRECALL                  2
+            626 CALL                     2
+            636 POP_JUMP_FORWARD_IF_FALSE   105 (to 848)
+            638 LOAD_FAST                7 (cc)
+            640 LOAD_METHOD              4 (get)
+            662 LOAD_CONST               4 ('pat')
+            664 PRECALL                  1
+            668 CALL                     1
+            678 POP_JUMP_FORWARD_IF_FALSE    84 (to 848)
+
+775         680 LOAD_FAST                3 (cleans)
+            682 LOAD_METHOD              7 (setdefault)
+            704 LOAD_CONST               9 ('color')
+            706 BUILD_LIST               0
+            708 PRECALL                  2
+            712 CALL                     2
+            722 LOAD_METHOD              8 (append)
+
+776         744 LOAD_FAST                7 (cc)
+            746 LOAD_METHOD              4 (get)
+            768 LOAD_CONST               4 ('pat')
+            770 LOAD_CONST               5 ('')
+            772 PRECALL                  2
+            776 CALL                     2
+            786 LOAD_FAST                7 (cc)
+            788 LOAD_METHOD              4 (get)
+            810 LOAD_CONST               6 ('repl')
+            812 LOAD_CONST               5 ('')
+            814 PRECALL                  2
+            818 CALL                     2
+            828 LOAD_CONST               7 (('pat', 'repl'))
+            830 BUILD_CONST_KEY_MAP      2
+
+775         832 PRECALL                  1
+            836 CALL                     1
+            846 POP_TOP
+
+777     >>  848 LOAD_CLOSURE             9 (known)
+            850 BUILD_TUPLE              1
+            852 LOAD_CONST              10 (<code object <dictcomp> at 0x000002BF94A6E4F0, file "core\models.py", line 777>)
+            854 MAKE_FUNCTION            8 (closure)
+            856 LOAD_FAST                2 (d)
+            858 LOAD_METHOD              6 (items)
+            880 PRECALL                  0
+            884 CALL                     0
+            894 GET_ITER
+            896 PRECALL                  0
+            900 CALL                     0
+            910 STORE_FAST               8 (kwargs)
+
+778         912 LOAD_FAST                3 (cleans)
+            914 LOAD_FAST                8 (kwargs)
+            916 LOAD_CONST               2 ('cleans')
+            918 STORE_SUBSCR
+
+779         922 LOAD_CONST              11 ('field_defaults')
+            924 LOAD_FAST                8 (kwargs)
+            926 CONTAINS_OP              1
+            928 POP_JUMP_FORWARD_IF_FALSE     5 (to 940)
+
+780         930 BUILD_MAP                0
+            932 LOAD_FAST                8 (kwargs)
+            934 LOAD_CONST              11 ('field_defaults')
+            936 STORE_SUBSCR
+
+781     >>  940 PUSH_NULL
+            942 LOAD_FAST                0 (cls)
+            944 LOAD_CONST              12 (())
+            946 BUILD_MAP                0
+            948 LOAD_FAST                8 (kwargs)
+            950 DICT_MERGE               1
+            952 CALL_FUNCTION_EX         1
+            954 RETURN_VALUE
+
+==============================================================================
+## <module>.PoRecipe.from_json.<setcomp>  (args=1, locals=2)
+# varnames: .0, f
+763           0 RESUME                   0
+              2 BUILD_SET                0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                 9 (to 26)
+              8 STORE_FAST               1 (f)
+             10 LOAD_FAST                1 (f)
+             12 LOAD_ATTR                0 (name)
+             22 SET_ADD                  2
+             24 JUMP_BACKWARD           10 (to 6)
+        >>   26 RETURN_VALUE
+
+==============================================================================
+## <module>.PoRecipe.from_json.<dictcomp>  (args=1, locals=3)
+# varnames: .0, k, v
+              0 COPY_FREE_VARS           1
+
+777           2 RESUME                   0
+              4 BUILD_MAP                0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                12 (to 34)
+             10 UNPACK_SEQUENCE          2
+             14 STORE_FAST               1 (k)
+             16 STORE_FAST               2 (v)
+             18 LOAD_FAST                1 (k)
+             20 LOAD_DEREF               3 (known)
+             22 CONTAINS_OP              0
+             24 POP_JUMP_BACKWARD_IF_FALSE     9 (to 8)
+             26 LOAD_FAST                1 (k)
+             28 LOAD_FAST                2 (v)
+             30 MAP_ADD                  2
+             32 JUMP_BACKWARD           13 (to 8)
+        >>   34 RETURN_VALUE

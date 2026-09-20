@@ -1,0 +1,455 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "os",
+   "re",
+   "models",
+   "LayoutType",
+   "OrderEntity",
+   "OrderLine",
+   "PurchaseOrder",
+   "SizeQty",
+   "PoRecipe",
+   "base",
+   "BaseParser",
+   "doc_text",
+   "_num",
+   "_us_date",
+   "compile",
+   "_SIZE_TOKEN",
+   "_COST_TYPE_MAP",
+   "_parse_pack_ratio",
+   "ControlSheetParser",
+   "_page_text",
+   "is_multi_po_control_sheet",
+   "split_control_sheet_pages"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/parsers/control_sheet.py - A&F-style \"Control Sheet\" layout (ISOLATED).\n\nA \"Control Sheet\" PO is a 2-page block: a \"Control Sheet\" page carrying header\nfields as ``Label: value`` pairs (PO#, Style, Color, Fashion Color, Quantity,\nCost, PO Total$, ...) plus a \"Pack Ratio\" table, followed by a \"Fabrics\" detail\npage. Every PO is ONE style + ONE colour + ONE total quantity.\n\nThis parser is deliberately SELF-CONTAINED: it reads only ``recipe.field_map``\nanchors (populated at synthesis time with generic ``Label: value`` patterns) and\nthe shared ``BaseParser``. It never touches matrix_1axis / matrix_2axis /\nline_items or the shared ``size_columns`` / ``split_row_total`` helpers, so the\nexisting architectures are unaffected.\n\n``field_map`` keys used (all optional): entity, po_no, style, product_desc,\ncolor_code, color_desc, quantity, unit_price, total_amount, ship_date, season,\nsize_rng.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   2,
+   [
+    "LayoutType",
+    "OrderEntity",
+    "OrderLine",
+    "PurchaseOrder",
+    "SizeQty",
+    "PoRecipe"
+   ],
+   1,
+   [
+    "BaseParser",
+    "doc_text"
+   ],
+   "s",
+   "str",
+   "return",
+   "\\b(?:\\d{1,2}[MTY]\\b|\\d+/\\d+)\\b",
+   "F",
+   "FOB",
+   "seg",
+   "ControlSheetParser",
+   "bool",
+   [
+    "s",
+    "str"
+   ],
+   [
+    "s",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "seg",
+    "str"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "bool"
+   ]
+  ],
+  "n_instructions": 86
+ },
+ "<module>._num": {
+  "names": [
+   "strip",
+   "rfind",
+   "replace",
+   "float",
+   "TypeError",
+   "ValueError",
+   "int"
+  ],
+  "varnames": [
+   "s",
+   "f"
+  ],
+  "consts": [
+   "Parse a number token (accepts US 1,002.00 / European 1.002,00).",
+   "",
+   null,
+   ",",
+   "."
+  ],
+  "n_instructions": 99
+ },
+ "<module>._us_date": {
+  "names": [
+   "re",
+   "match",
+   "strip",
+   "int",
+   "group",
+   "len"
+  ],
+  "varnames": [
+   "s",
+   "m",
+   "mo",
+   "dd",
+   "y"
+  ],
+  "consts": [
+   "Normalize a US MM/DD/YY date to YYYY-MM-DD (Control Sheet uses this).",
+   "(\\d{1,2})/(\\d{1,2})/(\\d{2,4})$",
+   "",
+   1,
+   2,
+   3,
+   "20",
+   "04d",
+   "-",
+   "02d"
+  ],
+  "n_instructions": 68
+ },
+ "<module>._parse_pack_ratio": {
+  "names": [
+   "re",
+   "search",
+   "S",
+   "group",
+   "_SIZE_TOKEN",
+   "findall",
+   "len",
+   "list",
+   "zip"
+  ],
+  "varnames": [
+   "seg",
+   "m",
+   "body",
+   "sizes",
+   "ints",
+   "n",
+   "ratios"
+  ],
+  "consts": [
+   "Return ``[(size_label, per_carton_qty), ...]`` from the Pack Ratio block.\n\n    The Pack Ratio is a 2-row table: a header row of size labels (``12M 18M 24M``)\n    and a data row of per-carton quantities. The ``Col Lb Total`` marker sits\n    between the column headers and the size labels; the data row prints the total\n    then one integer per size. Handles the wrapped variant (size labels split\n    around ``Col Lb Total``) and the single-size \"Number Of Bundles\" variant.\n    Returns ``[]`` when absent / unparseable (caller keeps the single-blank-size\n    fallback).\n    ",
+   "Pack\\s+Ratio\\s*:\\s*(.+?)(?=Required\\s+Hanger\\s+Vendors|Comments:|Account:|Fabrics:)",
+   1,
+   "(?<![A-Za-z0-9/])\\d+(?![A-Za-z0-9/])",
+   null
+  ],
+  "n_instructions": 72
+ },
+ "<module>._parse_pack_ratio.<listcomp>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "x"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>.ControlSheetParser": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "LayoutType",
+   "CONTROL_SHEET",
+   "layout_type",
+   "parse"
+  ],
+  "varnames": [],
+  "consts": [
+   "ControlSheetParser",
+   "",
+   [
+    "source_file"
+   ],
+   "recipe",
+   "PoRecipe",
+   "source_file",
+   "str",
+   "return",
+   "PurchaseOrder",
+   null,
+   [
+    "recipe",
+    "PoRecipe",
+    "source_file",
+    "str",
+    "return",
+    "PurchaseOrder"
+   ]
+  ],
+  "n_instructions": 17
+ },
+ "<module>.ControlSheetParser.parse": {
+  "names": [
+   "doc_text",
+   "PurchaseOrder",
+   "customer",
+   "os",
+   "path",
+   "basename",
+   "field_map",
+   "get",
+   "entity_anchor",
+   "list",
+   "re",
+   "finditer",
+   "error",
+   "enumerate",
+   "len",
+   "start",
+   "append",
+   "groups",
+   "group",
+   "strip",
+   "int",
+   "_num",
+   "_us_date",
+   "_COST_TYPE_MAP",
+   "OrderEntity",
+   "_parse_pack_ratio",
+   "sum",
+   "round",
+   "SizeQty",
+   "size",
+   "qty",
+   "lines",
+   "OrderLine",
+   "entities"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "recipe",
+   "source_file",
+   "text",
+   "po",
+   "grab",
+   "ent_anchor",
+   "ms",
+   "blocks",
+   "i",
+   "m",
+   "end",
+   "seg",
+   "po_no",
+   "style",
+   "product_desc",
+   "color_code",
+   "color_desc",
+   "qty",
+   "unit_price",
+   "season",
+   "delivery",
+   "price_term",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "pay_type",
+   "pay_days",
+   "payment_terms",
+   "ent",
+   "sizes",
+   "pack",
+   "carton_sum",
+   "size_label",
+   "ratio",
+   "sq",
+   "diff"
+  ],
+  "consts": [
+   null,
+   "",
+   [
+    "customer",
+    "source_file",
+    "source_file_path"
+   ],
+   "entity",
+   "PO#\\s*:\\s*(\\S+)",
+   1,
+   "style",
+   "product_desc",
+   "color_code",
+   "color_desc",
+   "quantity",
+   0,
+   "unit_price",
+   "season",
+   "ship_date",
+   "price_term",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "payment_type",
+   "payment_days",
+   " ",
+   " DAYS",
+   "country",
+   [
+    "po_no",
+    "style_no",
+    "season",
+    "delivery_date",
+    "product_desc",
+    "country_of_origin",
+    "price_term",
+    "port_loading",
+    "port_discharge",
+    "ship_mode",
+    "payment_terms"
+   ],
+   [
+    "size",
+    "qty"
+   ],
+   -1,
+   "PCS",
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 437
+ },
+ "<module>.ControlSheetParser.parse.grab": {
+  "names": [
+   "get",
+   "re",
+   "search",
+   "error",
+   "groups",
+   "group",
+   "strip"
+  ],
+  "varnames": [
+   "key",
+   "hay",
+   "a",
+   "m"
+  ],
+  "consts": [
+   null,
+   "",
+   1,
+   0
+  ],
+  "n_instructions": 58
+ },
+ "<module>.ControlSheetParser.parse.<genexpr>": {
+  "names": [
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>._page_text": {
+  "names": [
+   "join",
+   "tokens"
+  ],
+  "varnames": [
+   "p"
+  ],
+  "consts": [
+   null,
+   " "
+  ],
+  "n_instructions": 13
+ },
+ "<module>._page_text.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.is_multi_po_control_sheet": {
+  "names": [
+   "_page_text"
+  ],
+  "varnames": [
+   "pages",
+   "n",
+   "p"
+  ],
+  "consts": [
+   "True when the document holds MORE THAN ONE Control Sheet PO block.",
+   0,
+   "Control Sheet",
+   1,
+   true,
+   false
+  ],
+  "n_instructions": 28
+ },
+ "<module>.split_control_sheet_pages": {
+  "names": [
+   "enumerate",
+   "_page_text",
+   "len",
+   "append"
+  ],
+  "varnames": [
+   "pages",
+   "groups",
+   "i",
+   "p",
+   "grp"
+  ],
+  "consts": [
+   "Split a multi-PO Control Sheet into per-PO page groups.\n\n    Each group is a \"Control Sheet\" page plus its immediately-following \"Fabrics\"\n    page (when present). Trailing boilerplate (e.g. the \"Master Supplier\n    Agreement\" pages) that follows the last PO is dropped.\n    ",
+   "Control Sheet",
+   1
+  ],
+  "n_instructions": 62
+ }
+}

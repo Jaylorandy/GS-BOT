@@ -1,0 +1,673 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "typing",
+   "Dict",
+   "List",
+   "Optional",
+   "os",
+   "tkinter",
+   "tk",
+   "filedialog",
+   "messagebox",
+   "theme_glass",
+   "tg",
+   "_OK_GREEN",
+   "_po_label",
+   "_cmt_label",
+   "ask_anf_pair"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/anf_file_pair.py - ANF 专用「文件配对」对话框（多文件版）。\n\nANF Special Report 需要 PO + Commitment 两个 PDF 成对。本对话框支持：\n  - 多选添加多个 PO 文件 / 多个 Commitment 文件（askopenfilenames multiple）；\n  - 按 Commitment# 自动配对，并展示「配对 N 组 · 仅 PO M · 仅 Commit K」；\n  - 缺失 Commit 时仍可通过「仅基于 PO 生成（忽略 Commit）」输出基于 PO 的报表；\n  - 默认窗口尺寸按自然尺寸 ×1.2（resizable 设定保持不变，但移到 geometry 之后，\n    避免 Windows 提前 clamp 导致高度未生效）；同一文件不重复添加。\n\n返回 {\"po\":[po_obj...], \"cmt\":[cmt_obj...], \"mode\":\"full\"|\"po_only\"} 或 None（取消）。\n",
+   0,
+   [
+    "annotations"
+   ],
+   [
+    "Dict",
+    "List",
+    "Optional"
+   ],
+   null,
+   [
+    "filedialog",
+    "messagebox"
+   ],
+   "#7FD17F",
+   "return",
+   "str",
+   "'Optional[Dict]'",
+   [
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "'Optional[Dict]'"
+   ]
+  ],
+  "n_instructions": 55
+ },
+ "<module>._po_label": {
+  "names": [
+   "entities",
+   "po_no",
+   "extra",
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   "po",
+   "pno",
+   "cno"
+  ],
+  "consts": [
+   null,
+   0,
+   "?",
+   "commitment_no",
+   "",
+   "  (Commitment# ",
+   ")",
+   "  (无 Commitment#)"
+  ],
+  "n_instructions": 45
+ },
+ "<module>._cmt_label": {
+  "names": [
+   "entities",
+   "extra",
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   "po",
+   "cno"
+  ],
+  "consts": [
+   null,
+   0,
+   "commitment_no",
+   "",
+   "?",
+   "Commitment# "
+  ],
+  "n_instructions": 26
+ },
+ "<module>.ask_anf_pair": {
+  "names": [
+   "tg",
+   "COL",
+   "_SANS",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "grab_set",
+   "withdraw",
+   "configure",
+   "bind",
+   "Frame",
+   "pack",
+   "Label",
+   "StringVar",
+   "set",
+   "update_idletasks",
+   "winfo_width",
+   "winfo_height",
+   "winfo_screenwidth",
+   "winfo_screenheight",
+   "min",
+   "int",
+   "geometry",
+   "resizable",
+   "deiconify",
+   "wait_window"
+  ],
+  "varnames": [
+   "parent",
+   "tb",
+   "_make_list",
+   "bottom",
+   "nw",
+   "nh",
+   "sw",
+   "sh",
+   "w2",
+   "h2"
+  ],
+  "consts": [
+   "弹出 ANF 多文件配对对话框。取消返回 None。",
+   [
+    "po",
+    "cmt"
+   ],
+   "v",
+   null,
+   "ANF Special · 文件配对",
+   "gap",
+   [
+    "bg"
+   ],
+   "<Escape>",
+   "x",
+   18,
+   [
+    14,
+    0
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "ink",
+   15,
+   "bold",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "×",
+   "ink_3",
+   16,
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "cursor"
+   ],
+   "right",
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   "可一次选择多个 PO / Commitment 文件；系统按 Commitment# 自动配对。仅缺 Commit 时也可基于 PO 直接生成。",
+   "ink_2",
+   12,
+   720,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "wraplength",
+    "justify"
+   ],
+   "w",
+   [
+    8,
+    12
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "both",
+   true,
+   [
+    0,
+    6
+   ],
+   [
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   "po",
+   "PO 文件",
+   "accent",
+   "cmt",
+   "Commitment 文件",
+   "请添加 PO 文件（至少 1 个）",
+   [
+    "textvariable",
+    "bg",
+    "fg",
+    "font"
+   ],
+   [
+    2,
+    10
+   ],
+   "bottom",
+   [
+    0,
+    14
+   ],
+   [
+    "side",
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "确认并生成报表",
+   "#444b57",
+   13,
+   20,
+   8,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   "仅基于 PO 生成（忽略 Commit）",
+   [
+    0,
+    12
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "取消",
+   "field",
+   "panel_border",
+   1,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   0.92,
+   1.2,
+   false
+  ],
+  "n_instructions": 629
+ },
+ "<module>.ask_anf_pair.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "field",
+   [
+    "bg"
+   ]
+  ],
+  "n_instructions": 11
+ },
+ "<module>.ask_anf_pair._make_list": {
+  "names": [
+   "tk",
+   "Frame",
+   "pack",
+   "Label",
+   "Listbox",
+   "bind"
+  ],
+  "varnames": [
+   "key",
+   "title",
+   "color",
+   "col",
+   "lb",
+   "btn_row"
+  ],
+  "consts": [
+   null,
+   "field",
+   "panel_border",
+   1,
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   "left",
+   "both",
+   true,
+   [
+    0,
+    8
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "ink",
+   13,
+   "bold",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "w",
+   14,
+   [
+    10,
+    4
+   ],
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   6,
+   "panel",
+   11,
+   "accent",
+   "select_fg",
+   "flat",
+   0,
+   [
+    "height",
+    "bg",
+    "fg",
+    "font",
+    "selectbackground",
+    "selectforeground",
+    "relief",
+    "highlightthickness"
+   ],
+   [
+    0,
+    6
+   ],
+   [
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   [
+    "bg"
+   ],
+   "x",
+   [
+    0,
+    10
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "＋ 添加文件…",
+   12,
+   5,
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   [
+    "side"
+   ],
+   "<Enter>",
+   "<Leave>",
+   "<Button-1>",
+   "－ 移除所选",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor",
+    "highlightbackground",
+    "highlightthickness"
+   ],
+   [
+    8,
+    0
+   ],
+   [
+    "side",
+    "padx"
+   ]
+  ],
+  "n_instructions": 236
+ },
+ "<module>.ask_anf_pair._make_list.<lambda>": {
+  "names": [],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 8
+ },
+ "<module>.ask_anf_pair._add": {
+  "names": [
+   "output.customer_anf",
+   "parse_single_anf_pdf",
+   "filedialog",
+   "askopenfilenames",
+   "os",
+   "path",
+   "normpath",
+   "any",
+   "messagebox",
+   "showwarning",
+   "basename",
+   "append"
+  ],
+  "varnames": [
+   "key",
+   "parse_single_anf_pdf",
+   "paths",
+   "p",
+   "kind",
+   "po"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "parse_single_anf_pdf"
+   ],
+   "选择 ANF PDF 文件（可多选）",
+   [
+    "PDF 文件",
+    "*.pdf"
+   ],
+   [
+    "title",
+    "filetypes"
+   ],
+   [
+    "log"
+   ],
+   "无法识别",
+   "该文件不是 ANF 版式的 PO 或 Commitment：\n",
+   "po",
+   "文件类型不符",
+   "该文件被识别为 Commitment，请放到右侧「Commitment 文件」列表。",
+   "cmt",
+   "commitment",
+   "该文件被识别为 PO，请放到左侧「PO 文件」列表。"
+  ],
+  "n_instructions": 125
+ },
+ "<module>.ask_anf_pair._add.<genexpr>": {
+  "names": [
+   "os",
+   "path",
+   "normpath",
+   "getattr"
+  ],
+  "varnames": [
+   ".0",
+   "existing"
+  ],
+  "consts": [
+   "source_file",
+   "",
+   null
+  ],
+  "n_instructions": 26
+ },
+ "<module>.ask_anf_pair._remove": {
+  "names": [
+   "list",
+   "curselection",
+   "sorted"
+  ],
+  "varnames": [
+   "key",
+   "lb",
+   "sel",
+   "i"
+  ],
+  "consts": [
+   null,
+   "po",
+   true,
+   [
+    "reverse"
+   ]
+  ],
+  "n_instructions": 49
+ },
+ "<module>.ask_anf_pair._refresh_lists": {
+  "names": [
+   "delete",
+   "tk",
+   "END",
+   "insert",
+   "_po_label",
+   "_cmt_label"
+  ],
+  "varnames": [
+   "po"
+  ],
+  "consts": [
+   null,
+   0,
+   "po",
+   "cmt"
+  ],
+  "n_instructions": 56
+ },
+ "<module>.ask_anf_pair._refresh_status": {
+  "names": [
+   "entities",
+   "extra",
+   "get",
+   "strip",
+   "setdefault",
+   "set",
+   "add",
+   "sum",
+   "bool",
+   "configure"
+  ],
+  "varnames": [
+   "cmt_by_cno",
+   "c",
+   "cno",
+   "paired",
+   "po_only",
+   "p",
+   "cmt_only",
+   "has_po",
+   "tail",
+   "b",
+   "ok"
+  ],
+  "consts": [
+   null,
+   "cmt",
+   0,
+   "commitment_no",
+   "",
+   1,
+   "po",
+   "请添加 PO 文件（至少 1 个）",
+   "  -  缺少 Commit 时也可仅基于 PO 生成",
+   "已配对 %d 组 - 仅 PO %d - 仅 Commitment %d%s",
+   "normal",
+   "disabled",
+   "accent",
+   "#444b57",
+   "select_fg",
+   "ink_3",
+   [
+    "state",
+    "bg",
+    "fg"
+   ]
+  ],
+  "n_instructions": 233
+ },
+ "<module>.ask_anf_pair._refresh_status.<genexpr>": {
+  "names": [
+   "entities",
+   "extra",
+   "get",
+   "strip"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   0,
+   "commitment_no",
+   "",
+   1,
+   null
+  ],
+  "n_instructions": 46
+ },
+ "<module>.ask_anf_pair._confirm": {
+  "names": [
+   "list",
+   "destroy"
+  ],
+  "varnames": [
+   "mode"
+  ],
+  "consts": [
+   null,
+   "po",
+   "cmt",
+   [
+    "po",
+    "cmt",
+    "mode"
+   ],
+   "v"
+  ],
+  "n_instructions": 33
+ }
+}

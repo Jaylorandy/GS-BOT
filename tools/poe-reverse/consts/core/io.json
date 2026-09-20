@@ -1,0 +1,21 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "pdf",
+   "pdf_to_pages",
+   "__all__"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/io package - document loaders.",
+   1,
+   [
+    "pdf_to_pages"
+   ],
+   "pdf_to_pages",
+   null
+  ],
+  "n_instructions": 14
+ }
+}

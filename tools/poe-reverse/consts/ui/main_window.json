@@ -1,0 +1,6515 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "json",
+   "os",
+   "queue",
+   "sys",
+   "threading",
+   "traceback",
+   "urllib.error",
+   "urllib",
+   "urllib.parse",
+   "urllib.request",
+   "pathlib",
+   "Path",
+   "typing",
+   "List",
+   "Optional",
+   "core.winpath",
+   "_get_short_path",
+   "tkinter",
+   "tk",
+   "ttk",
+   "filedialog",
+   "messagebox",
+   "scrolledtext",
+   "FONT_BODY",
+   "FONT_LABEL",
+   "FONT_BUTTON",
+   "FONT_HINT",
+   "PROVIDERS",
+   "DEFAULT_SYS_PROMPT",
+   "DEFAULT_INSTRUCTION",
+   "theme_glass",
+   "ImportError",
+   "getattr",
+   "__file__",
+   "parent",
+   "_p",
+   "str",
+   "path",
+   "insert",
+   "_SANS",
+   "Exception",
+   "VERSION",
+   "app.log",
+   "get_logger",
+   "core.io.pdf",
+   "pdf_to_pages",
+   "core.store.cache",
+   "RecipeCache",
+   "layout_fingerprint",
+   "core.store.config",
+   "AppConfig",
+   "core.parsers.registry",
+   "parse",
+   "parse_doc",
+   "core.parsers.base",
+   "doc_text",
+   "core.validate",
+   "reconcile",
+   "core.models",
+   "PurchaseOrder",
+   "ui._win_raise",
+   "raise_window",
+   "log",
+   "Canvas",
+   "RoundedProgressBar",
+   "Frame",
+   "CollapsibleFrame",
+   "App",
+   "_ask_template_choice",
+   "_entity_to_dict",
+   "_now",
+   "MainWindow"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/main_window.py - Purchase Order Extractor V2.0.0 main window.\n\n**Style: completely cloned from V.1.5** (控件名 / 字号 / 布局 / 主题切换 / 状态栏 /\n左 20% : 右 80% PanedWindow / 联网模型配置 / 推理参数 / System Prompt / 提取指令模板 /\n待处理文件 / PO 模板导出（可选） / 开始提取 / 停止 / 导出Excel / 日志).\n\n**Internals**: V.1.5's `OnlineModel.extract` is replaced by V.2's pipeline:\n    1) `pdf_to_pages`         - pdfplumber words (with x/y)\n    2) `layout_fingerprint`   - SHA256[:32] of normalized skeleton\n    3) `RecipeCache` lookup   - hit  -> zero-AI extraction\n                                miss -> `infer_recipe` (AI) -> `RecipeConfirmDialog` -> cache\n    4) `core.parsers.registry.parse`  - layout_type -> parser -> PurchaseOrder\n    5) Output: template_a (ERP matrix) / template_b (long table) xlsx\n\nThis module is UI-only; the V.1.5-flavor visual layout is preserved verbatim.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "Path"
+   ],
+   [
+    "List",
+    "Optional"
+   ],
+   [
+    "_get_short_path"
+   ],
+   [
+    "ttk",
+    "filedialog",
+    "messagebox",
+    "scrolledtext"
+   ],
+   [
+    "Segoe UI",
+    12
+   ],
+   [
+    "Segoe UI",
+    14
+   ],
+   [
+    "Segoe UI",
+    13
+   ],
+   [
+    "Segoe UI",
+    11
+   ],
+   "https://api.deepseek.com/v1",
+   [
+    "deepseek-chat",
+    "deepseek-reasoner",
+    "deepseek-coder"
+   ],
+   [
+    "base_url",
+    "models"
+   ],
+   "https://dashscope.aliyuncs.com/compatible-mode/v1",
+   [
+    "qwen-plus",
+    "qwen-turbo",
+    "qwen-max",
+    "qwen2.5-72b-instruct",
+    "qwen2.5-32b-instruct",
+    "qwen2.5-14b-instruct",
+    "qwen2.5-7b-instruct",
+    "qwen-long"
+   ],
+   "https://open.bigmodel.cn/api/paas/v4",
+   [
+    "glm-4",
+    "glm-4-plus",
+    "glm-4-air",
+    "glm-4-flash"
+   ],
+   "https://api.moonshot.cn/v1",
+   [
+    "moonshot-v1-8k",
+    "moonshot-v1-32k",
+    "moonshot-v1-128k"
+   ],
+   "https://api.openai.com/v1",
+   [
+    "gpt-4o-mini",
+    "gpt-4o",
+    "gpt-4-turbo",
+    "gpt-3.5-turbo",
+    "o1-mini",
+    "o1-preview"
+   ],
+   "",
+   [
+    "DeepSeek",
+    "通义千问(Qwen)",
+    "智谱GLM",
+    "Kimi(Moonshot)",
+    "OpenAI",
+    "自定义"
+   ],
+   "你是一个资深的服装外贸采购订单（PO / Purchase Order）抽取专家。V.2.0.0 模式下，AI 的任务是**生成抽取配方（PoRecipe JSON）**，告诉解析器每家客户的版式该如何解析，而不是直接抽取字段。\n输出严格 JSON 对象；不要 markdown 代码块；字段使用英文 snake_case。",
+   "请从这份 PO 文档里抽取**抽取配方**（PoRecipe），而不是字段值。\n返回 JSON：layout_type / customer / 各 anchor 正则 / line_pattern 等。\n（详细 schema 见 core.ai.recipe_infer.RECIPE_SYSTEM_PROMPT）",
+   "_MEIPASS",
+   "Microsoft YaHei UI",
+   "2.0.19.27",
+   [
+    "get_logger"
+   ],
+   [
+    "pdf_to_pages"
+   ],
+   [
+    "RecipeCache",
+    "layout_fingerprint"
+   ],
+   [
+    "AppConfig"
+   ],
+   [
+    "parse"
+   ],
+   [
+    "doc_text"
+   ],
+   [
+    "reconcile"
+   ],
+   [
+    "PurchaseOrder"
+   ],
+   [
+    "raise_window"
+   ],
+   "ui.main_window",
+   "RoundedProgressBar",
+   "CollapsibleFrame",
+   "App",
+   "return",
+   "Optional[str]",
+   "dict",
+   "str",
+   "root",
+   "tk.Tk",
+   [
+    "return",
+    "Optional[str]"
+   ],
+   [
+    "return",
+    "dict"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "root",
+    "tk.Tk",
+    "return",
+    "App"
+   ]
+  ],
+  "n_instructions": 339
+ },
+ "<module>.RoundedProgressBar": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "set",
+   "start_marquee",
+   "stop_marquee",
+   "_animate",
+   "_draw",
+   "_rr",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "RoundedProgressBar",
+   "tk.Canvas 自绘圆头进度条（pill），支持确定性 set(frac) 与不确定跑马条。",
+   10,
+   "#4CAF50",
+   "#E3E6EA",
+   40,
+   [
+    10,
+    "#4CAF50",
+    "#E3E6EA"
+   ],
+   [
+    40
+   ]
+  ],
+  "n_instructions": 39
+ },
+ "<module>.RoundedProgressBar.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "_fill",
+   "_track",
+   "_h",
+   "_frac",
+   "_mode",
+   "_marquee",
+   "bind"
+  ],
+  "varnames": [
+   "self",
+   "master",
+   "height",
+   "fill",
+   "track",
+   "kw"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "height",
+    "background",
+    "highlightthickness",
+    "borderwidth"
+   ],
+   [
+    0.0,
+    "determinate",
+    0.0
+   ],
+   "<Configure>"
+  ],
+  "n_instructions": 50
+ },
+ "<module>.RoundedProgressBar.__init__.<lambda>": {
+  "names": [
+   "_draw"
+  ],
+  "varnames": [
+   "_e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.RoundedProgressBar.set": {
+  "names": [
+   "_mode",
+   "max",
+   "min",
+   "float",
+   "_frac",
+   "_draw"
+  ],
+  "varnames": [
+   "self",
+   "frac"
+  ],
+  "consts": [
+   null,
+   "determinate",
+   0.0,
+   1.0
+  ],
+  "n_instructions": 25
+ },
+ "<module>.RoundedProgressBar.start_marquee": {
+  "names": [
+   "_mode",
+   "_marquee",
+   "_animate"
+  ],
+  "varnames": [
+   "self",
+   "_interval"
+  ],
+  "consts": [
+   null,
+   "indeterminate",
+   0.0
+  ],
+  "n_instructions": 14
+ },
+ "<module>.RoundedProgressBar.stop_marquee": {
+  "names": [
+   "_mode",
+   "_frac",
+   "_draw"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "determinate",
+   0.0
+  ],
+  "n_instructions": 14
+ },
+ "<module>.RoundedProgressBar._animate": {
+  "names": [
+   "_mode",
+   "_marquee",
+   "_draw",
+   "after",
+   "_animate"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "indeterminate",
+   0.06,
+   1.0,
+   40
+  ],
+  "n_instructions": 31
+ },
+ "<module>.RoundedProgressBar._draw": {
+  "names": [
+   "delete",
+   "winfo_width",
+   "_h",
+   "_rr",
+   "_track",
+   "_mode",
+   "_marquee",
+   "max",
+   "min",
+   "_fill",
+   "_frac"
+  ],
+  "varnames": [
+   "self",
+   "w",
+   "h",
+   "r",
+   "seg",
+   "pos",
+   "x1",
+   "x2",
+   "fw"
+  ],
+  "consts": [
+   null,
+   "all",
+   2,
+   2.0,
+   0,
+   "indeterminate",
+   0.3,
+   0.0,
+   1.0
+  ],
+  "n_instructions": 118
+ },
+ "<module>.RoundedProgressBar._rr": {
+  "names": [
+   "create_oval",
+   "create_rectangle"
+  ],
+  "varnames": [
+   "self",
+   "x1",
+   "y1",
+   "x2",
+   "y2",
+   "r",
+   "color"
+  ],
+  "consts": [
+   null,
+   2,
+   0,
+   [
+    "fill",
+    "outline",
+    "width"
+   ]
+  ],
+  "n_instructions": 79
+ },
+ "<module>.CollapsibleFrame": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__init__",
+   "_toggle",
+   "__classcell__"
+  ],
+  "varnames": [],
+  "consts": [
+   "CollapsibleFrame",
+   "可折叠区块：点击标题展开/收起内容（鼠标停在标题上即可）。\n\n    用于左栏配置面板，让「推断引擎 / 联网模型配置 / 网络韧性 / 推理参数 /\n    System Prompt / 提取指令模板」各区块按需展开，长面板用滚轮滚动更高效。\n    ",
+   true,
+   null,
+   [
+    true
+   ],
+   [
+    null
+   ]
+  ],
+  "n_instructions": 22
+ },
+ "<module>.CollapsibleFrame.__init__": {
+  "names": [
+   "super",
+   "__init__",
+   "columnconfigure",
+   "theme_glass",
+   "COL",
+   "get",
+   "tk",
+   "Frame",
+   "grid",
+   "Label",
+   "_SANS",
+   "_arrow",
+   "pack",
+   "body",
+   "grid_remove",
+   "_expanded",
+   "tuple",
+   "winfo_children",
+   "bind",
+   "_toggle"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "title",
+   "expanded",
+   "kw",
+   "gap",
+   "panel",
+   "ink",
+   "hdr",
+   "w"
+  ],
+  "consts": [
+   null,
+   0,
+   1,
+   [
+    "weight"
+   ],
+   "gap",
+   "#e4e5e6",
+   "panel",
+   "#eef0f2",
+   "ink",
+   "#23252a",
+   "hand2",
+   10,
+   6,
+   [
+    "bg",
+    "cursor",
+    "padx",
+    "pady"
+   ],
+   "ew",
+   [
+    "row",
+    "column",
+    "sticky"
+   ],
+   "▾",
+   "▸",
+   11,
+   "bold",
+   [
+    "text",
+    "font",
+    "bg",
+    "fg"
+   ],
+   "left",
+   [
+    0,
+    6
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   12,
+   [
+    "side"
+   ],
+   [
+    "bg"
+   ],
+   2,
+   [
+    0,
+    4
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   "<Button-1>"
+  ],
+  "n_instructions": 171
+ },
+ "<module>.CollapsibleFrame._toggle": {
+  "names": [
+   "_expanded",
+   "body",
+   "grid",
+   "_arrow",
+   "config",
+   "grid_remove"
+  ],
+  "varnames": [
+   "self",
+   "_e"
+  ],
+  "consts": [
+   null,
+   1,
+   0,
+   "ew",
+   2,
+   [
+    0,
+    4
+   ],
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ],
+   "▾",
+   [
+    "text"
+   ],
+   "▸"
+  ],
+  "n_instructions": 47
+ },
+ "<module>.App": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__init__",
+   "_build_widgets",
+   "_set_window_icon",
+   "_on_window_mapped",
+   "_configure_styles",
+   "_build_left",
+   "_pointer_in_widget",
+   "_on_left_wheel",
+   "_build_engine_radio",
+   "_build_left_online",
+   "_build_left_local",
+   "_build_right",
+   "_sync_config_to_ui",
+   "_sync_ui_to_model",
+   "_on_provider_selected",
+   "_save_config",
+   "_clear_config",
+   "_fingerprint_button_text",
+   "_refresh_fingerprint_button",
+   "_clear_fingerprints",
+   "_open_fingerprint_manager",
+   "_auto_osr_learn",
+   "_osr_progress_show",
+   "_osr_progress_count",
+   "_osr_progress_learn",
+   "_osr_progress_done",
+   "_apply_osr_consensus",
+   "_on_engine_changed",
+   "_browse_local_model",
+   "_test_connection",
+   "_test_local_model",
+   "_local_load_test",
+   "_on_local_test_done",
+   "_cfg_ping",
+   "_on_test_done",
+   "_add_files",
+   "_add_folder",
+   "_add_file",
+   "_clear_files",
+   "_start",
+   "_worker",
+   "_process_control_sheet_batch",
+   "MAX_INFER_TRIES",
+   "_try_swap_orientation",
+   "_infer_validated",
+   "_ask_recipe_dialog",
+   "_legacy_infer_and_confirm",
+   "_MANDATORY_PROBLEMS",
+   "_cache_confidence_problems",
+   "_cache_confidence_ok",
+   "_review_and_writeback",
+   "_warn_if_unverified",
+   "_ask_yesno_main",
+   "_stop",
+   "_on_done_total",
+   "_refresh_results_table",
+   "_update_extract_progress",
+   "_bump_stage",
+   "_mark_file_failed",
+   "_on_file_double_click",
+   "_export_json",
+   "_export_xlsx",
+   "_export_template_b_desktop",
+   "_export_template_c_csv",
+   "_suggest_for_failure",
+   "_export_template_d_failure_report",
+   "_open_customer_report_menu",
+   "_run_anf_special_report",
+   "_run_export_gate",
+   "_export_targets",
+   "_write_failure_report",
+   "_run_thread",
+   "_poll_queue",
+   "_set_status",
+   "_log"
+  ],
+  "varnames": [],
+  "consts": [
+   "App",
+   "root",
+   "tk.Tk",
+   null,
+   "x_root",
+   "int",
+   "y_root",
+   "return",
+   "bool",
+   "str",
+   "path",
+   "p",
+   "Path",
+   3,
+   "",
+   [
+    "<frozenset>",
+    "missing_color_code",
+    "missing_color_desc",
+    "missing_customer",
+    "missing_po_no",
+    "missing_qty",
+    "missing_ship_date",
+    "missing_size",
+    "missing_style_no",
+    "missing_unit_price"
+   ],
+   "list[str]",
+   "title",
+   "message",
+   0,
+   "done",
+   "total",
+   "file_idx",
+   "file_total",
+   "stage",
+   "stage_idx",
+   "stage_name",
+   "idx",
+   "reason",
+   "list",
+   "released",
+   "None",
+   "s",
+   [
+    "root",
+    "tk.Tk"
+   ],
+   [
+    null
+   ],
+   [
+    "x_root",
+    "int",
+    "y_root",
+    "int",
+    "return",
+    "bool"
+   ],
+   [
+    "return",
+    "str"
+   ],
+   [
+    "path",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "p",
+    "Path"
+   ],
+   [
+    "return",
+    "int"
+   ],
+   [
+    "",
+    ""
+   ],
+   [
+    "return",
+    "list[str]"
+   ],
+   [
+    "return",
+    "bool"
+   ],
+   [
+    "title",
+    "str",
+    "message",
+    "str",
+    "return",
+    "bool"
+   ],
+   [
+    0,
+    0,
+    ""
+   ],
+   [
+    "done",
+    "int",
+    "total",
+    "int",
+    "file_idx",
+    "int",
+    "file_total",
+    "int",
+    "stage",
+    "str"
+   ],
+   [
+    "file_idx",
+    "int",
+    "file_total",
+    "int",
+    "stage_idx",
+    "int",
+    "stage_name",
+    "str"
+   ],
+   [
+    "idx",
+    "int",
+    "reason",
+    "str"
+   ],
+   [
+    "reason",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "return",
+    "list"
+   ],
+   [
+    "released",
+    "bool",
+    "return",
+    "None"
+   ],
+   [
+    "s",
+    "str"
+   ]
+  ],
+  "n_instructions": 266
+ },
+ "<module>.App.__init__": {
+  "names": [
+   "root",
+   "title",
+   "VERSION",
+   "geometry",
+   "state",
+   "ctypes",
+   "windll",
+   "shcore",
+   "SetProcessDpiAwareness",
+   "Exception",
+   "minsize",
+   "resizable",
+   "_configure_styles",
+   "_set_window_icon",
+   "bind",
+   "_on_window_mapped",
+   "AppConfig",
+   "cfg",
+   "RecipeCache",
+   "cache",
+   "files",
+   "file_fail",
+   "_gate_blocked_reports",
+   "results",
+   "threading",
+   "Event",
+   "stop_evt",
+   "queue",
+   "Queue",
+   "q",
+   "running",
+   "_no_model_shown",
+   "_no_model_suppress",
+   "_build_widgets",
+   "_sync_config_to_ui",
+   "_poll_queue",
+   "after",
+   "_auto_osr_learn",
+   "log",
+   "info"
+  ],
+  "varnames": [
+   "self",
+   "root",
+   "windll"
+  ],
+  "consts": [
+   null,
+   "Purchase Order Extractor V",
+   "1100x780",
+   "zoomed",
+   0,
+   [
+    "windll"
+   ],
+   1,
+   1000,
+   720,
+   true,
+   "<Map>",
+   "+",
+   [
+    "add"
+   ],
+   false,
+   600,
+   "UI ready (V.1.5-style shell, V2 internals)"
+  ],
+  "n_instructions": 166
+ },
+ "<module>.App._build_widgets": {
+  "names": [
+   "theme_glass",
+   "COL",
+   "tk",
+   "Frame",
+   "root",
+   "pack",
+   "X",
+   "pack_propagate",
+   "Label",
+   "_SANS",
+   "LEFT",
+   "Y",
+   "VERSION",
+   "ge_secondary_button",
+   "_test_connection",
+   "RIGHT",
+   "_save_config",
+   "_clear_config",
+   "StringVar",
+   "status_var",
+   "FONT_HINT",
+   "ttk",
+   "PanedWindow",
+   "HORIZONTAL",
+   "BOTH",
+   "add",
+   "_build_left",
+   "_build_right",
+   "bind",
+   "after",
+   "BOTTOM",
+   "get"
+  ],
+  "varnames": [
+   "self",
+   "pad",
+   "COL",
+   "header",
+   "brand",
+   "strip",
+   "left",
+   "right",
+   "bottom"
+  ],
+  "consts": [
+   null,
+   12,
+   8,
+   [
+    "padx",
+    "pady"
+   ],
+   "panel",
+   "panel_border",
+   1,
+   0,
+   66,
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness",
+    "bd",
+    "height"
+   ],
+   [
+    "fill"
+   ],
+   false,
+   "PO",
+   "accent",
+   "select_fg",
+   13,
+   "bold",
+   10,
+   4,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady"
+   ],
+   [
+    16,
+    12
+   ],
+   [
+    "side",
+    "padx",
+    "pady"
+   ],
+   [
+    "bg"
+   ],
+   [
+    "side",
+    "fill"
+   ],
+   "Purchase Order Extractor",
+   "ink",
+   16,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "w",
+   [
+    12,
+    0
+   ],
+   [
+    "side",
+    "anchor",
+    "pady"
+   ],
+   "V",
+   "accent_soft",
+   "ink_2",
+   11,
+   2,
+   [
+    14,
+    0
+   ],
+   "测试连接",
+   6,
+   14,
+   "保存配置",
+   "清除配置",
+   "gap",
+   26,
+   [
+    "bg",
+    "height"
+   ],
+   "就绪",
+   [
+    "value"
+   ],
+   [
+    "textvariable",
+    "bg",
+    "fg",
+    "font",
+    "anchor",
+    "padx"
+   ],
+   [
+    "orient"
+   ],
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   240,
+   [
+    "width"
+   ],
+   [
+    "weight"
+   ],
+   "<Map>",
+   "+",
+   [
+    "add"
+   ],
+   120,
+   [
+    "fill",
+    "side",
+    "padx",
+    "pady"
+   ],
+   "本地运行 · 配方缓存到 %APPDATA%\\Purchase Order Extractor V2\\recipe_cache\\",
+   "ink_3",
+   "#888",
+   "sunken",
+   [
+    8,
+    4
+   ],
+   [
+    "text",
+    "font",
+    "foreground",
+    "relief",
+    "anchor",
+    "padding"
+   ],
+   [
+    "side",
+    "fill",
+    "expand"
+   ],
+   "© 2026 Kelvin. All Rights Reserved.",
+   "e",
+   [
+    "side"
+   ],
+   [],
+   [
+    null
+   ]
+  ],
+  "n_instructions": 417
+ },
+ "<module>.App._build_widgets._apply_default_ratio": {
+  "names": [
+   "winfo_width",
+   "root",
+   "after",
+   "sashpos",
+   "int",
+   "Exception"
+  ],
+  "varnames": [
+   "_evt",
+   "total"
+  ],
+  "consts": [
+   null,
+   400,
+   60,
+   0,
+   0.2
+  ],
+  "n_instructions": 48
+ },
+ "<module>.App._set_window_icon": {
+  "names": [
+   "PIL",
+   "Image",
+   "ImageTk",
+   "Path",
+   "getattr",
+   "sys",
+   "executable",
+   "parent",
+   "exists",
+   "OSError",
+   "FileNotFoundError",
+   "root",
+   "iconbitmap",
+   "str",
+   "open",
+   "seek",
+   "resize",
+   "LANCZOS",
+   "convert",
+   "PhotoImage",
+   "_icon_photo",
+   "iconphoto",
+   "Exception",
+   "print"
+  ],
+  "varnames": [
+   "self",
+   "Image",
+   "ImageTk",
+   "candidates",
+   "ico",
+   "c",
+   "im",
+   "e"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "Image",
+    "ImageTk"
+   ],
+   "_MEIPASS",
+   "",
+   "app.ico",
+   "app.ico not found in ",
+   "n_frames",
+   1,
+   [
+    256,
+    256
+   ],
+   "RGBA",
+   true,
+   "[icon] 加载失败，回退默认图标: ",
+   [
+    "flush"
+   ]
+  ],
+  "n_instructions": 163
+ },
+ "<module>.App._on_window_mapped": {
+  "names": [
+   "root",
+   "grab_current",
+   "isinstance",
+   "tk",
+   "Toplevel",
+   "raise_window"
+  ],
+  "varnames": [
+   "self",
+   "_event",
+   "grab"
+  ],
+  "consts": [
+   "Raise & focus the right window when restored from the taskbar.\n\n        Called on <Map>. If a modal dialog (e.g. RecipeConfirmDialog) currently\n        holds the grab, that dialog — not the disabled main window — must be\n        brought to the front; otherwise the app appears \"stuck\" (taskbar shows\n        running but nothing pops up) when the user switches back from another\n        app while a modal dialog is open.\n        ",
+   null
+  ],
+  "n_instructions": 31
+ },
+ "<module>.App._configure_styles": {
+  "names": [
+   "theme_glass",
+   "apply",
+   "root"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 10
+ },
+ "<module>.App._build_left": {
+  "names": [
+   "theme_glass",
+   "tk",
+   "Canvas",
+   "COL",
+   "ttk",
+   "Scrollbar",
+   "yview",
+   "configure",
+   "set",
+   "_left_canvas",
+   "_left_vsb",
+   "pack",
+   "LEFT",
+   "BOTH",
+   "Frame",
+   "_left_inner",
+   "create_window",
+   "_left_win",
+   "bind",
+   "bind_all",
+   "_on_left_wheel",
+   "_build_engine_radio",
+   "_build_left_online",
+   "_build_left_local"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "tg",
+   "vsb",
+   "inner",
+   "_adapt_scrollbar"
+  ],
+  "consts": [
+   null,
+   0,
+   "gap",
+   [
+    "highlightthickness",
+    "borderwidth",
+    "bg"
+   ],
+   "vertical",
+   [
+    "orient",
+    "command"
+   ],
+   [
+    "yscrollcommand"
+   ],
+   true,
+   [
+    "side",
+    "fill",
+    "expand"
+   ],
+   [
+    "bg"
+   ],
+   [
+    0,
+    0
+   ],
+   "nw",
+   [
+    "window",
+    "anchor"
+   ],
+   "<Configure>",
+   "<MouseWheel>",
+   "+",
+   [
+    "add"
+   ],
+   [
+    null
+   ]
+  ],
+  "n_instructions": 152
+ },
+ "<module>.App._build_left.<lambda>": {
+  "names": [
+   "itemconfig",
+   "_left_win",
+   "width"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   [
+    "width"
+   ]
+  ],
+  "n_instructions": 12
+ },
+ "<module>.App._build_left._adapt_scrollbar": {
+  "names": [
+   "_left_canvas",
+   "_left_vsb",
+   "winfo_ismapped",
+   "bbox",
+   "winfo_height",
+   "pack",
+   "tk",
+   "RIGHT",
+   "Y",
+   "yview_moveto",
+   "pack_forget",
+   "Exception"
+  ],
+  "varnames": [
+   "_e",
+   "cv",
+   "vsb",
+   "region",
+   "_",
+   "total_h",
+   "view_h"
+  ],
+  "consts": [
+   null,
+   "all",
+   4,
+   [
+    "side",
+    "fill",
+    "before"
+   ],
+   0
+  ],
+  "n_instructions": 97
+ },
+ "<module>.App._pointer_in_widget": {
+  "names": [
+   "winfo_ismapped",
+   "winfo_rootx",
+   "winfo_rooty",
+   "winfo_width",
+   "winfo_height",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "w",
+   "x_root",
+   "y_root",
+   "wx",
+   "wy",
+   "ww",
+   "wh"
+  ],
+  "consts": [
+   "指针 (x_root, y_root) 是否落在控件 w 的可见矩形内。",
+   false
+  ],
+  "n_instructions": 70
+ },
+ "<module>.App._on_left_wheel": {
+  "names": [
+   "getattr",
+   "winfo_ismapped",
+   "_pointer_in_widget",
+   "x_root",
+   "y_root",
+   "yview_scroll",
+   "int",
+   "delta",
+   "yview",
+   "yview_moveto",
+   "max"
+  ],
+  "varnames": [
+   "self",
+   "e",
+   "cv",
+   "vsb",
+   "txt",
+   "top",
+   "bottom"
+  ],
+  "consts": [
+   "全局滚轮处理：只有指针停在左栏可滚动区域内时才滚动左栏。\n\n        Tk 的绑定顺序为 widget → class → toplevel → all。本函数挂在 \"all\"\n        层，因此当指针位于日志框（ScrolledText）上时，Text 自身的 class 绑定\n        已经先行滚动了日志；此时必须原样放行（返回 None），否则左栏会被一起\n        带着滚动——这正是改造前「日志区和左面板滚动混淆」的根因。\n        ",
+   "_left_canvas",
+   null,
+   "_left_vsb",
+   "sys_txt",
+   "ins_txt",
+   -1,
+   120,
+   "units",
+   0,
+   1,
+   0.0,
+   1.0,
+   "break"
+  ],
+  "n_instructions": 125
+ },
+ "<module>.App._build_engine_radio": {
+  "names": [
+   "CollapsibleFrame",
+   "pack",
+   "tk",
+   "X",
+   "body",
+   "StringVar",
+   "engine_var",
+   "ttk",
+   "Frame",
+   "Radiobutton",
+   "_on_engine_changed",
+   "LEFT",
+   "Label",
+   "FONT_HINT",
+   "theme_glass",
+   "COL",
+   "get"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "fpad",
+   "cf",
+   "f",
+   "rb"
+  ],
+  "consts": [
+   null,
+   10,
+   6,
+   [
+    "padx",
+    "pady"
+   ],
+   "推断引擎",
+   [
+    "title"
+   ],
+   "fill",
+   "local",
+   [
+    "value"
+   ],
+   8,
+   4,
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "本地优先",
+   "Glass.TRadiobutton",
+   [
+    "text",
+    "value",
+    "variable",
+    "style",
+    "command"
+   ],
+   [
+    "side",
+    "padx"
+   ],
+   "仅在线",
+   "online",
+   "默认「本地优先」：本地引擎可用（GGUF 已配且引擎已打包）则离线推断，否则自动回退在线 AI；选「仅在线」强制走在线。",
+   "ink_3",
+   "#888",
+   440,
+   "w",
+   [
+    "text",
+    "font",
+    "foreground",
+    "wraplength",
+    "anchor"
+   ],
+   [
+    0,
+    6
+   ],
+   []
+  ],
+  "n_instructions": 122
+ },
+ "<module>.App._build_left_online": {
+  "names": [
+   "CollapsibleFrame",
+   "pack",
+   "tk",
+   "X",
+   "body",
+   "ttk",
+   "Frame",
+   "Label",
+   "FONT_BODY",
+   "LEFT",
+   "StringVar",
+   "provider_var",
+   "Combobox",
+   "provider_cb",
+   "list",
+   "PROVIDERS",
+   "keys",
+   "bind",
+   "_on_provider_selected",
+   "api_key_var",
+   "Entry",
+   "RIGHT",
+   "model_var",
+   "model_cb",
+   "base_url_var",
+   "BooleanVar",
+   "force_json_var",
+   "Checkbutton",
+   "DISABLED",
+   "FONT_HINT",
+   "theme_glass",
+   "COL",
+   "get",
+   "recipe_model_var",
+   "IntVar",
+   "data_timeout_var",
+   "Spinbox",
+   "recipe_timeout_var",
+   "http_retries_var",
+   "DoubleVar",
+   "temp",
+   "top_p",
+   "max_tok",
+   "scrolledtext",
+   "ScrolledText",
+   "sys_txt",
+   "insert",
+   "END",
+   "DEFAULT_SYS_PROMPT",
+   "config",
+   "ins_txt",
+   "DEFAULT_INSTRUCTION"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "fpad",
+   "rpad",
+   "cf",
+   "f",
+   "row",
+   "nf",
+   "pf",
+   "sf",
+   "ef"
+  ],
+  "consts": [
+   null,
+   10,
+   8,
+   [
+    "padx",
+    "pady"
+   ],
+   4,
+   "联网模型配置",
+   [
+    "title"
+   ],
+   "fill",
+   "供应商",
+   [
+    "text",
+    "font"
+   ],
+   [
+    "side"
+   ],
+   "normal",
+   [
+    "textvariable",
+    "state",
+    "font"
+   ],
+   "values",
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "<<ComboboxSelected>>",
+   "<KeyPress>",
+   "<Control-v>",
+   "<Control-V>",
+   "API Key",
+   "*",
+   [
+    "textvariable",
+    "show",
+    "font"
+   ],
+   true,
+   [
+    8,
+    0
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "模型名",
+   "Base URL",
+   [
+    "textvariable",
+    "font"
+   ],
+   [
+    "value"
+   ],
+   "强制 JSON 输出 (response_format)",
+   "Glass.TCheckbutton",
+   [
+    "text",
+    "variable",
+    "style",
+    "takefocus",
+    "state"
+   ],
+   "w",
+   [
+    "anchor",
+    "padx",
+    "pady"
+   ],
+   "强制 JSON 固定开启，不可修改",
+   "ink_3",
+   "#888",
+   440,
+   [
+    "text",
+    "font",
+    "foreground",
+    "wraplength",
+    "anchor"
+   ],
+   [
+    0,
+    6
+   ],
+   "配置自动保存到 %APPDATA%\\Purchase Order Extractor V2\\config.json",
+   "网络韧性（高级）",
+   false,
+   [
+    "title",
+    "expanded"
+   ],
+   "配方推断模型(可选)",
+   "读单超时(秒)",
+   300,
+   30,
+   600,
+   [
+    "from_",
+    "to",
+    "increment",
+    "textvariable",
+    "width",
+    "font"
+   ],
+   "配方超时(秒)",
+   180,
+   "网络重试次数",
+   3,
+   0,
+   6,
+   1,
+   "配方模型留空=与读取同模型（建议填快速文本模型如 glm-4-flash）；超时/重试防 GLM 抖动致首抽失败",
+   "推理参数",
+   "temperature",
+   0.2,
+   0.0,
+   1.0,
+   0.05,
+   12,
+   [
+    "from_",
+    "to",
+    "increment",
+    "textvariable",
+    "width",
+    "font",
+    "state"
+   ],
+   "top_p",
+   0.9,
+   "max_tokens",
+   4096,
+   64,
+   8192,
+   "推理参数为固定值，不可修改（V.2 内部使用）",
+   [
+    2,
+    6
+   ],
+   "System Prompt（固定，不可修改）",
+   5,
+   [
+    "height",
+    "font"
+   ],
+   [
+    "state"
+   ],
+   "提取指令模板（固定，不可修改）",
+   []
+  ],
+  "n_instructions": 1059
+ },
+ "<module>.App._build_left_online.<lambda>": {
+  "names": [],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "break"
+  ],
+  "n_instructions": 3
+ },
+ "<module>.App._build_left_local": {
+  "names": [
+   "theme_glass",
+   "CollapsibleFrame",
+   "pack",
+   "tk",
+   "X",
+   "body",
+   "ttk",
+   "Frame",
+   "Label",
+   "FONT_BODY",
+   "LEFT",
+   "StringVar",
+   "local_path_var",
+   "Entry",
+   "RIGHT",
+   "Button",
+   "_browse_local_model",
+   "FONT_BUTTON",
+   "local_status_var",
+   "FONT_HINT",
+   "LabelFrame",
+   "IntVar",
+   "local_ctx",
+   "local_threads",
+   "local_gpu",
+   "local_batch",
+   "DoubleVar",
+   "local_temp",
+   "local_top_p_v",
+   "local_max",
+   "COL",
+   "get",
+   "_test_local_model"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "tg",
+   "fpad",
+   "cf",
+   "f",
+   "row",
+   "lf",
+   "_spin",
+   "pf",
+   "bf"
+  ],
+  "consts": [
+   null,
+   0,
+   10,
+   8,
+   [
+    "padx",
+    "pady"
+   ],
+   4,
+   "本地AI模型配置（llama.cpp / GGUF）",
+   false,
+   [
+    "title",
+    "expanded"
+   ],
+   "fill",
+   "模型文件",
+   [
+    "text",
+    "font"
+   ],
+   [
+    "side"
+   ],
+   [
+    "textvariable",
+    "font"
+   ],
+   true,
+   [
+    8,
+    0
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "浏览...",
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   2,
+   [
+    "side",
+    "padx"
+   ],
+   "● 未选择模型",
+   [
+    "value"
+   ],
+   "#888",
+   [
+    "textvariable",
+    "font",
+    "foreground"
+   ],
+   "加载参数",
+   "Big.TLabelframe",
+   [
+    "text",
+    "style"
+   ],
+   6,
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   12,
+   4096,
+   "Context (n_ctx)",
+   256,
+   32768,
+   "Threads (0=auto)",
+   64,
+   1,
+   "GPU Layers",
+   128,
+   512,
+   "Batch (n_batch)",
+   "推理参数",
+   0.1,
+   "temperature",
+   0.0,
+   1.0,
+   0.05,
+   0.9,
+   "top_p",
+   2048,
+   "max_tokens",
+   8192,
+   "本地推理参数可调（你掌控模型，无需固定）",
+   "ink_3",
+   440,
+   "w",
+   [
+    "text",
+    "font",
+    "foreground",
+    "wraplength",
+    "anchor"
+   ],
+   [
+    2,
+    6
+   ],
+   "测试加载",
+   "校验 GGUF 文件（引擎未打包时仅检查文件）",
+   [
+    "text",
+    "font",
+    "foreground"
+   ],
+   [],
+   [
+    12
+   ]
+  ],
+  "n_instructions": 427
+ },
+ "<module>.App._build_left_local._spin": {
+  "names": [
+   "ttk",
+   "Frame",
+   "pack",
+   "tk",
+   "X",
+   "Label",
+   "FONT_BODY",
+   "LEFT",
+   "Spinbox",
+   "RIGHT"
+  ],
+  "varnames": [
+   "parent_lf",
+   "label",
+   "var",
+   "frm",
+   "to",
+   "inc",
+   "width",
+   "r"
+  ],
+  "consts": [
+   null,
+   "fill",
+   [
+    "text",
+    "font"
+   ],
+   [
+    "side"
+   ],
+   [
+    "from_",
+    "to",
+    "increment",
+    "textvariable",
+    "width",
+    "font"
+   ],
+   []
+  ],
+  "n_instructions": 56
+ },
+ "<module>.App._build_right": {
+  "names": [
+   "ttk",
+   "Frame",
+   "pack",
+   "tk",
+   "X",
+   "Button",
+   "_add_files",
+   "FONT_BUTTON",
+   "LEFT",
+   "_add_folder",
+   "_clear_files",
+   "LabelFrame",
+   "BOTH",
+   "Listbox",
+   "FONT_BODY",
+   "file_lb",
+   "bind",
+   "_on_file_double_click",
+   "_fingerprint_button_text",
+   "_clear_fingerprints",
+   "clear_fp_btn",
+   "_open_fingerprint_manager",
+   "BooleanVar",
+   "osr_consensus_var",
+   "Checkbutton",
+   "osr_pb_frame",
+   "RIGHT",
+   "Label",
+   "osr_pb_label",
+   "RoundedProgressBar",
+   "theme_glass",
+   "COL",
+   "get",
+   "osr_pb",
+   "_osr_phase",
+   "osr_pb_status",
+   "_start",
+   "PRIMARY_KW",
+   "run_btn",
+   "_stop",
+   "DISABLED",
+   "stop_btn",
+   "_export_xlsx",
+   "FONT_HEAD_BOLD",
+   "res_pb",
+   "res_pb_pct",
+   "Treeview",
+   "ge_treeview_style",
+   "result_tv",
+   "heading",
+   "column",
+   "scrolledtext",
+   "ScrolledText",
+   "log"
+  ],
+  "varnames": [
+   "self",
+   "parent",
+   "fpad",
+   "bf",
+   "lf",
+   "of",
+   "rf",
+   "resf",
+   "res_head",
+   "_c",
+   "_w",
+   "gf"
+  ],
+  "consts": [
+   null,
+   10,
+   8,
+   [
+    "padx",
+    "pady"
+   ],
+   "fill",
+   "添加文件",
+   12,
+   6,
+   [
+    "text",
+    "command",
+    "font",
+    "padx",
+    "pady"
+   ],
+   4,
+   [
+    "side",
+    "padx"
+   ],
+   "添加文件夹",
+   "清空",
+   "待处理文件",
+   "Big.TLabelframe",
+   [
+    "text",
+    "style"
+   ],
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   [
+    "font"
+   ],
+   [
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   "<Double-Button-1>",
+   "运行选项",
+   [
+    "side",
+    "padx",
+    "pady"
+   ],
+   "管理指纹配方",
+   [
+    "value"
+   ],
+   "抽取时用历史共识补全/校验",
+   "Glass.TCheckbutton",
+   [
+    "text",
+    "variable",
+    "style"
+   ],
+   [
+    10,
+    4
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx",
+    "pady"
+   ],
+   "回灌学习",
+   [
+    "text",
+    "font"
+   ],
+   [
+    2,
+    8
+   ],
+   "#4CAF50",
+   "panel",
+   "#eef0f2",
+   [
+    "height",
+    "fill",
+    "track"
+   ],
+   [
+    "side",
+    "fill",
+    "expand",
+    "padx"
+   ],
+   "read",
+   "就绪",
+   [
+    "text",
+    "font",
+    "foreground"
+   ],
+   "开始提取",
+   "停止",
+   [
+    "text",
+    "command",
+    "state",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "导出Excel",
+   "Card.TFrame",
+   [
+    "style"
+   ],
+   [
+    8,
+    2
+   ],
+   [
+    "fill",
+    "padx",
+    "pady"
+   ],
+   "提取结果",
+   [
+    "side"
+   ],
+   "#FFC107",
+   [
+    10,
+    8
+   ],
+   "0 / 0",
+   [
+    0,
+    6
+   ],
+   [
+    "源文件",
+    "客户",
+    "订单数",
+    "总数量",
+    "识别方式"
+   ],
+   "headings",
+   "GEResult.Treeview",
+   [
+    "columns",
+    "show",
+    "height",
+    "style"
+   ],
+   [
+    [
+     "源文件",
+     220
+    ],
+    [
+     "客户",
+     120
+    ],
+    [
+     "订单数",
+     60
+    ],
+    [
+     "总数量",
+     90
+    ],
+    [
+     "识别方式",
+     130
+    ]
+   ],
+   "center",
+   [
+    "text",
+    "anchor"
+   ],
+   50,
+   [
+    "width",
+    "minwidth",
+    "anchor"
+   ],
+   "日志",
+   [
+    "Consolas",
+    11
+   ],
+   [
+    "height",
+    "state",
+    "font"
+   ],
+   []
+  ],
+  "n_instructions": 629
+ },
+ "<module>.App._sync_config_to_ui": {
+  "names": [
+   "provider_var",
+   "set",
+   "cfg",
+   "provider",
+   "PROVIDERS",
+   "api_key_var",
+   "api_key",
+   "model_var",
+   "model",
+   "base_url_var",
+   "base_url",
+   "force_json_var",
+   "recipe_model_var",
+   "recipe_model",
+   "data_timeout_var",
+   "data_timeout",
+   "recipe_timeout_var",
+   "recipe_timeout",
+   "http_retries_var",
+   "http_retries",
+   "get",
+   "model_cb",
+   "engine_var",
+   "infer_engine",
+   "local_path_var",
+   "local_model_path",
+   "local_ctx",
+   "local_n_ctx",
+   "local_threads",
+   "local_n_threads",
+   "local_gpu",
+   "local_n_gpu_layers",
+   "local_batch",
+   "local_n_batch",
+   "local_temp",
+   "local_temperature",
+   "local_top_p_v",
+   "local_top_p",
+   "local_max",
+   "local_max_tokens",
+   "local_status_var",
+   "osr_consensus_var",
+   "osr_consensus"
+  ],
+  "varnames": [
+   "self",
+   "prov"
+  ],
+  "consts": [
+   null,
+   "",
+   true,
+   "models",
+   "values",
+   [
+    "online",
+    "local"
+   ],
+   "online",
+   "● 已选择模型",
+   "● 未选择模型"
+  ],
+  "n_instructions": 223
+ },
+ "<module>.App._sync_ui_to_model": {
+  "names": [
+   "provider_var",
+   "get",
+   "cfg",
+   "provider",
+   "api_key_var",
+   "strip",
+   "api_key",
+   "model_var",
+   "model",
+   "base_url_var",
+   "base_url",
+   "force_json",
+   "recipe_model_var",
+   "recipe_model",
+   "int",
+   "data_timeout_var",
+   "data_timeout",
+   "recipe_timeout_var",
+   "recipe_timeout",
+   "http_retries_var",
+   "http_retries",
+   "engine_var",
+   "infer_engine",
+   "local_path_var",
+   "local_model_path",
+   "local_ctx",
+   "local_n_ctx",
+   "local_threads",
+   "local_n_threads",
+   "local_gpu",
+   "local_n_gpu_layers",
+   "local_batch",
+   "local_n_batch",
+   "float",
+   "local_temp",
+   "local_temperature",
+   "local_top_p_v",
+   "local_top_p",
+   "local_max",
+   "local_max_tokens",
+   "bool",
+   "osr_consensus_var",
+   "osr_consensus"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   true
+  ],
+  "n_instructions": 199
+ },
+ "<module>.App._on_provider_selected": {
+  "names": [
+   "provider_var",
+   "get",
+   "PROVIDERS",
+   "model_cb",
+   "model_var",
+   "set",
+   "base_url_var",
+   "_log",
+   "len"
+  ],
+  "varnames": [
+   "self",
+   "event",
+   "p",
+   "cfg",
+   "models"
+  ],
+  "consts": [
+   null,
+   "models",
+   "values",
+   0,
+   "base_url",
+   "已切换供应商 ",
+   "：可选模型 ",
+   " 个",
+   "，预设 ",
+   "（自定义，请填写 base_url）"
+  ],
+  "n_instructions": 80
+ },
+ "<module>.App._save_config": {
+  "names": [
+   "_sync_ui_to_model",
+   "cfg",
+   "infer_engine",
+   "local_model_path",
+   "messagebox",
+   "showwarning",
+   "os",
+   "path",
+   "exists",
+   "ready",
+   "save",
+   "local_status_var",
+   "set",
+   "_set_status",
+   "Path",
+   "name",
+   "model",
+   "_log",
+   "cfg_path",
+   "Exception",
+   "showerror",
+   "str"
+  ],
+  "varnames": [
+   "self",
+   "e"
+  ],
+  "consts": [
+   null,
+   "local",
+   "配置不完整",
+   "本地 AI：请填写 GGUF 模型文件路径，或点「浏览」选择。",
+   "模型文件缺失",
+   "本地 AI：模型文件不存在：\n",
+   "请填写 API Key、模型名、Base URL 后再保存。",
+   "● 已选择模型",
+   "配置已保存（本地 AI）: ",
+   "配置已保存: ",
+   "配置已保存到 ",
+   "保存失败"
+  ],
+  "n_instructions": 153
+ },
+ "<module>.App._clear_config": {
+  "names": [
+   "cfg",
+   "clear",
+   "api_key_var",
+   "set",
+   "model_var",
+   "base_url_var",
+   "provider_var",
+   "model_cb",
+   "force_json_var",
+   "engine_var",
+   "local_path_var",
+   "local_ctx",
+   "local_threads",
+   "local_gpu",
+   "local_batch",
+   "local_temp",
+   "local_top_p_v",
+   "local_max",
+   "local_status_var",
+   "osr_consensus_var",
+   "_sync_ui_to_model",
+   "_log"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "",
+   "values",
+   true,
+   "online",
+   4096,
+   0,
+   512,
+   0.1,
+   0.9,
+   2048,
+   "● 未选择模型",
+   "已清除本地 config.json 配置"
+  ],
+  "n_instructions": 137
+ },
+ "<module>.App._fingerprint_button_text": {
+  "names": [
+   "cache",
+   "count",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "n"
+  ],
+  "consts": [
+   "生成带当前指纹数的「清除布局指纹」按钮文案。",
+   "清除布局指纹",
+   "清除布局指纹 (",
+   ")"
+  ],
+  "n_instructions": 27
+ },
+ "<module>.App._refresh_fingerprint_button": {
+  "names": [
+   "getattr",
+   "winfo_exists",
+   "config",
+   "_fingerprint_button_text",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "btn"
+  ],
+  "consts": [
+   "刷新「清除布局指纹」按钮上的指纹数量显示。",
+   "clear_fp_btn",
+   null,
+   [
+    "text"
+   ]
+  ],
+  "n_instructions": 44
+ },
+ "<module>.App._clear_fingerprints": {
+  "names": [
+   "cache",
+   "count",
+   "messagebox",
+   "showinfo",
+   "_refresh_fingerprint_button",
+   "askyesno",
+   "clear_all",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "n_now",
+   "n"
+  ],
+  "consts": [
+   "Wipe every cached layout recipe so the next import re-infers all.",
+   0,
+   "无需清除",
+   "当前没有已缓存的布局指纹配方。",
+   null,
+   "清除布局指纹",
+   "当前已缓存 ",
+   " 个版式配方。\n将全部删除，下次导入任何 PDF 都会重新 AI 推断并生成新配方。\n确定要继续吗？",
+   "已清除布局指纹缓存：删除 ",
+   " 个配方文件（下次导入将重新 AI 推断）",
+   "已清除",
+   "已删除 ",
+   " 个布局指纹配方。\n下次导入 PDF 会重新 AI 推断并生成新配方。"
+  ],
+  "n_instructions": 72
+ },
+ "<module>.App._open_fingerprint_manager": {
+  "names": [
+   "ui.fingerprint_manager",
+   "FingerprintManager",
+   "root",
+   "cache"
+  ],
+  "varnames": [
+   "self",
+   "FingerprintManager"
+  ],
+  "consts": [
+   "打开「指纹管理面板」，事后编辑已缓存的版式配方。",
+   0,
+   [
+    "FingerprintManager"
+   ],
+   null
+  ],
+  "n_instructions": 18
+ },
+ "<module>.App._auto_osr_learn": {
+  "names": [
+   "output.template_b",
+   "desktop_summary_path",
+   "read_rawdata_rows",
+   "core.osr_learn",
+   "learn_from_osr",
+   "os",
+   "path",
+   "exists",
+   "_log",
+   "osr_pb_status",
+   "configure",
+   "_osr_progress_show",
+   "threading",
+   "Thread",
+   "start"
+  ],
+  "varnames": [
+   "self",
+   "desktop_summary_path",
+   "work"
+  ],
+  "consts": [
+   "自动回灌学习：读桌面 OSR RawData → 共识写入学习库（后台线程，不阻塞）。",
+   0,
+   [
+    "desktop_summary_path",
+    "read_rawdata_rows"
+   ],
+   [
+    "learn_from_osr"
+   ],
+   "[OSR回灌] 桌面尚无 OSR 数据文件，待导出后自动学习。",
+   "无桌面 OSR，待首次导出后学习",
+   [
+    "text"
+   ],
+   null,
+   "读取桌面 OSR…",
+   true,
+   [
+    "target",
+    "daemon"
+   ]
+  ],
+  "n_instructions": 74
+ },
+ "<module>.App._auto_osr_learn.work": {
+  "names": [
+   "_osr_progress_count",
+   "root",
+   "after",
+   "_osr_progress_done",
+   "_osr_progress_learn",
+   "Exception"
+  ],
+  "varnames": [
+   "rows",
+   "res",
+   "e"
+  ],
+  "consts": [
+   null,
+   [
+    "on_progress"
+   ],
+   0,
+   "无数据可学习",
+   "完成 · ",
+   "total_rows",
+   " 行 / ",
+   "groups",
+   " 组",
+   "失败："
+  ],
+  "n_instructions": 90
+ },
+ "<module>.App._osr_progress_show": {
+  "names": [
+   "_osr_phase",
+   "osr_pb",
+   "set",
+   "osr_pb_status",
+   "configure"
+  ],
+  "varnames": [
+   "self",
+   "text"
+  ],
+  "consts": [
+   null,
+   "read",
+   0.0,
+   [
+    "text"
+   ]
+  ],
+  "n_instructions": 21
+ },
+ "<module>.App._osr_progress_count": {
+  "names": [
+   "max",
+   "osr_pb",
+   "set",
+   "osr_pb_status",
+   "configure",
+   "int",
+   "round"
+  ],
+  "varnames": [
+   "self",
+   "n",
+   "total",
+   "_frac"
+  ],
+  "consts": [
+   null,
+   0.5,
+   1,
+   "读取 ",
+   ",",
+   " / ",
+   " 行 · ",
+   100,
+   "%",
+   [
+    "text"
+   ],
+   " 行"
+  ],
+  "n_instructions": 65
+ },
+ "<module>.App._osr_progress_learn": {
+  "names": [
+   "max",
+   "osr_pb",
+   "set",
+   "osr_pb_status",
+   "configure",
+   "int",
+   "round"
+  ],
+  "varnames": [
+   "self",
+   "i",
+   "total",
+   "_frac"
+  ],
+  "consts": [
+   null,
+   0.5,
+   1,
+   "聚合 ",
+   ",",
+   " / ",
+   " 组 · ",
+   100,
+   "%",
+   [
+    "text"
+   ]
+  ],
+  "n_instructions": 50
+ },
+ "<module>.App._osr_progress_done": {
+  "names": [
+   "_log",
+   "startswith",
+   "osr_pb",
+   "set",
+   "osr_pb_status",
+   "configure"
+  ],
+  "varnames": [
+   "self",
+   "msg"
+  ],
+  "consts": [
+   null,
+   "[OSR回灌] ",
+   "完成",
+   1.0,
+   "完成 100%",
+   [
+    "text"
+   ],
+   0.0
+  ],
+  "n_instructions": 50
+ },
+ "<module>.App._apply_osr_consensus": {
+  "names": [
+   "getattr",
+   "cfg",
+   "core.osr_learn",
+   "load_learning",
+   "apply_consensus",
+   "_log",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "po",
+   "recipe",
+   "load_learning",
+   "apply_consensus",
+   "learning",
+   "fp",
+   "lines",
+   "ln",
+   "e"
+  ],
+  "consts": [
+   "抽取后：用历史 OSR 共识补全空白稳定字段（零 AI，仅填空、不覆盖）。",
+   "osr_consensus",
+   true,
+   null,
+   0,
+   [
+    "load_learning",
+    "apply_consensus"
+   ],
+   "fingerprint",
+   "",
+   [
+    "fp"
+   ],
+   "  [OSR共识] ",
+   "  [OSR共识] 异常已忽略："
+  ],
+  "n_instructions": 91
+ },
+ "<module>.App._on_engine_changed": {
+  "names": [
+   "engine_var",
+   "get",
+   "cfg",
+   "infer_engine",
+   "_log"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "推断引擎已切到：",
+   "local",
+   "本地 AI",
+   "在线 AI"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._browse_local_model": {
+  "names": [
+   "filedialog",
+   "askopenfilename",
+   "local_path_var",
+   "set",
+   "local_status_var",
+   "Path",
+   "name",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "p"
+  ],
+  "consts": [
+   null,
+   "选择 GGUF 模型文件",
+   [
+    "GGUF 模型",
+    "*.gguf"
+   ],
+   [
+    "所有文件",
+    "*.*"
+   ],
+   [
+    "title",
+    "filetypes"
+   ],
+   "● ",
+   "已选择本地模型: "
+  ],
+  "n_instructions": 47
+ },
+ "<module>.App._test_connection": {
+  "names": [
+   "_sync_ui_to_model",
+   "cfg",
+   "infer_engine",
+   "_test_local_model",
+   "ready",
+   "messagebox",
+   "showwarning",
+   "_set_status",
+   "_run_thread",
+   "_on_test_done"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "local",
+   "配置不完整",
+   "请填写 API Key、模型名、Base URL 后再测试。",
+   "测试连接中...",
+   [
+    "callback"
+   ]
+  ],
+  "n_instructions": 55
+ },
+ "<module>.App._test_connection.<lambda>": {
+  "names": [
+   "_cfg_ping"
+  ],
+  "varnames": [],
+  "consts": [
+   null
+  ],
+  "n_instructions": 7
+ },
+ "<module>.App._test_local_model": {
+  "names": [
+   "_sync_ui_to_model",
+   "cfg",
+   "local_model_path",
+   "os",
+   "path",
+   "exists",
+   "messagebox",
+   "showerror",
+   "local_status_var",
+   "set",
+   "getsize",
+   "_set_status",
+   "_run_thread",
+   "_on_local_test_done"
+  ],
+  "varnames": [
+   "self",
+   "size_mb"
+  ],
+  "consts": [
+   null,
+   "本地模型缺失",
+   "模型文件不存在：\n",
+   "● 文件不存在",
+   1048576,
+   "● 校验中… (",
+   ".0f",
+   " MB)",
+   "本地模型校验中...",
+   [
+    "callback"
+   ]
+  ],
+  "n_instructions": 82
+ },
+ "<module>.App._test_local_model.<lambda>": {
+  "names": [
+   "_local_load_test"
+  ],
+  "varnames": [],
+  "consts": [
+   null
+  ],
+  "n_instructions": 8
+ },
+ "<module>.App._local_load_test": {
+  "names": [
+   "core.ai.local_infer",
+   "load_local_model_headless",
+   "int",
+   "local_ctx",
+   "get",
+   "local_threads",
+   "local_gpu",
+   "local_batch"
+  ],
+  "varnames": [
+   "self",
+   "path",
+   "load_local_model_headless"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "load_local_model_headless"
+   ],
+   [
+    "local_model_path",
+    "local_n_ctx",
+    "local_n_threads",
+    "local_n_gpu_layers",
+    "local_n_batch"
+   ]
+  ],
+  "n_instructions": 47
+ },
+ "<module>.App._on_local_test_done": {
+  "names": [
+   "local_status_var",
+   "set",
+   "_set_status",
+   "_log",
+   "messagebox",
+   "showerror",
+   "str",
+   "showinfo"
+  ],
+  "varnames": [
+   "self",
+   "text",
+   "err"
+  ],
+  "consts": [
+   null,
+   "● 加载失败",
+   "本地模型加载失败",
+   "[本地测试] 失败: ",
+   "● 已加载",
+   "本地模型 OK",
+   "[本地测试] "
+  ],
+  "n_instructions": 68
+ },
+ "<module>.App._cfg_ping": {
+  "names": [
+   "core.ai.data_extract",
+   "_thinking_off",
+   "cfg",
+   "base_url",
+   "rstrip",
+   "model",
+   "update",
+   "json",
+   "dumps",
+   "encode",
+   "urllib",
+   "request",
+   "Request",
+   "add_header",
+   "api_key",
+   "urlopen",
+   "loads",
+   "read",
+   "decode",
+   "error",
+   "HTTPError",
+   "RuntimeError",
+   "code",
+   "URLError",
+   "reason"
+  ],
+  "varnames": [
+   "self",
+   "_thinking_off",
+   "url",
+   "payload",
+   "body",
+   "req",
+   "resp",
+   "data",
+   "e",
+   "detail"
+  ],
+  "consts": [
+   "Pure stdlib ping (urllib); same pattern as V.1.5 OnlineModel.extract.",
+   0,
+   [
+    "_thinking_off"
+   ],
+   "/",
+   "/chat/completions",
+   "system",
+   "你是测试助手，只回复一个 JSON：{\"ok\":true}",
+   [
+    "role",
+    "content"
+   ],
+   "user",
+   "ping",
+   0.0,
+   64,
+   "type",
+   "json_object",
+   [
+    "model",
+    "messages",
+    "temperature",
+    "max_tokens",
+    "response_format"
+   ],
+   [
+    "model",
+    "base_url"
+   ],
+   false,
+   [
+    "ensure_ascii"
+   ],
+   "utf-8",
+   "POST",
+   [
+    "data",
+    "method"
+   ],
+   "Content-Type",
+   "application/json",
+   "Authorization",
+   "Bearer ",
+   60,
+   [
+    "timeout"
+   ],
+   null,
+   "choices",
+   "message",
+   "content",
+   "ignore",
+   500,
+   "API HTTP ",
+   ": ",
+   "网络错误: "
+  ],
+  "n_instructions": 207
+ },
+ "<module>.App._on_test_done": {
+  "names": [
+   "_set_status",
+   "_log",
+   "messagebox",
+   "showerror",
+   "str",
+   "showinfo"
+  ],
+  "varnames": [
+   "self",
+   "text",
+   "err"
+  ],
+  "consts": [
+   null,
+   "连接失败",
+   "[测试] 失败: ",
+   "连接成功",
+   "[测试] 成功，模型返回: ",
+   120,
+   "API 连接正常，返回片段：\n",
+   200
+  ],
+  "n_instructions": 65
+ },
+ "<module>.App._add_files": {
+  "names": [
+   "filedialog",
+   "askopenfilenames",
+   "_add_file",
+   "Path"
+  ],
+  "varnames": [
+   "self",
+   "paths",
+   "p"
+  ],
+  "consts": [
+   null,
+   "选择 PO 文档 (PDF/Excel/Word/Text)",
+   [
+    "PO 文档",
+    "*.pdf *.xlsx *.xls *.docx *.txt"
+   ],
+   [
+    "所有文件",
+    "*.*"
+   ],
+   [
+    "title",
+    "filetypes"
+   ]
+  ],
+  "n_instructions": 27
+ },
+ "<module>.App._add_folder": {
+  "names": [
+   "filedialog",
+   "askdirectory",
+   "sorted",
+   "Path",
+   "rglob",
+   "_add_file"
+  ],
+  "varnames": [
+   "self",
+   "d",
+   "p"
+  ],
+  "consts": [
+   null,
+   "选择文件夹（递归加入所有 PDF）",
+   [
+    "title"
+   ],
+   "*.pdf"
+  ],
+  "n_instructions": 35
+ },
+ "<module>.App._add_file": {
+  "names": [
+   "files",
+   "append",
+   "file_lb",
+   "insert",
+   "tk",
+   "END",
+   "str"
+  ],
+  "varnames": [
+   "self",
+   "p"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 29
+ },
+ "<module>.App._clear_files": {
+  "names": [
+   "files",
+   "clear",
+   "file_fail",
+   "_gate_blocked_reports",
+   "file_lb",
+   "delete",
+   "tk",
+   "END",
+   "results",
+   "_refresh_results_table",
+   "res_pb",
+   "set",
+   "res_pb_pct",
+   "configure",
+   "Exception"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   0,
+   0.0,
+   "0 / 0",
+   [
+    "text"
+   ]
+  ],
+  "n_instructions": 69
+ },
+ "<module>.App._start": {
+  "names": [
+   "running",
+   "files",
+   "messagebox",
+   "showwarning",
+   "stop_evt",
+   "clear",
+   "run_btn",
+   "config",
+   "tk",
+   "DISABLED",
+   "stop_btn",
+   "NORMAL",
+   "results",
+   "file_fail",
+   "_gate_blocked_reports",
+   "_refresh_results_table",
+   "len",
+   "_stage_total",
+   "_stage_done",
+   "res_pb",
+   "set",
+   "res_pb_pct",
+   "configure",
+   "Exception",
+   "_set_status",
+   "_sync_ui_to_model",
+   "_log",
+   "_run_thread",
+   "_worker",
+   "_on_done_total"
+  ],
+  "varnames": [
+   "self",
+   "_total"
+  ],
+  "consts": [
+   null,
+   "无文件",
+   "请先添加 PO 文档",
+   true,
+   [
+    "state"
+   ],
+   4,
+   0,
+   0.0,
+   "0 / ",
+   [
+    "text"
+   ],
+   "提取中...",
+   "=== 开始提取 ",
+   " 份文件 ===",
+   [
+    "callback"
+   ]
+  ],
+  "n_instructions": 150
+ },
+ "<module>.App._worker": {
+  "names": [
+   "len",
+   "files",
+   "enumerate",
+   "stop_evt",
+   "is_set",
+   "_log",
+   "_stage_done",
+   "root",
+   "after",
+   "_update_extract_progress",
+   "_stage_total",
+   "name",
+   "pdf_to_pages",
+   "str",
+   "cfg",
+   "to_dict",
+   "sum",
+   "RuntimeError",
+   "_bump_stage",
+   "core.parsers.control_sheet",
+   "is_multi_po_control_sheet",
+   "_process_control_sheet_batch",
+   "_mark_file_failed",
+   "join",
+   "layout_fingerprint",
+   "doc_text",
+   "cache",
+   "exists",
+   "get",
+   "core.recipe_synth",
+   "detect_structural_layout",
+   "layout_type",
+   "invalidate",
+   "Exception",
+   "parse_doc",
+   "getattr",
+   "core.self_heal",
+   "heal_and_cache",
+   "_cache_confidence_problems",
+   "_review_and_writeback",
+   "core.ai.engine_router",
+   "resolve_infer_engine",
+   "_set_status",
+   "api_key",
+   "base_url",
+   "model",
+   "acquire_recipe",
+   "MAX_AI_TRIES",
+   "UnsupportedLayout",
+   "SynthesisError",
+   "core.store.customer_index",
+   "CustomerRecipeIndex",
+   "seed_for",
+   "core.recipe_fix",
+   "sanitize_recipe_anchors",
+   "_ask_recipe_dialog",
+   "_pending_recipe",
+   "dict",
+   "field_overrides",
+   "items",
+   "customer",
+   "clear",
+   "lower",
+   "_warn_if_unverified",
+   "put",
+   "record",
+   "_legacy_infer_and_confirm",
+   "_ask_yesno_main",
+   "entities",
+   "_apply_osr_consensus",
+   "reconcile",
+   "results",
+   "append",
+   "total_qty",
+   "traceback",
+   "format_exc"
+  ],
+  "varnames": [
+   "self",
+   "ok",
+   "_total",
+   "idx",
+   "path",
+   "fail_reason",
+   "pages",
+   "is_multi_po_control_sheet",
+   "raw_text",
+   "fp",
+   "ai_text",
+   "doc_lines",
+   "recognition",
+   "cached",
+   "recipe",
+   "detect_structural_layout",
+   "current_structural",
+   "_e",
+   "po",
+   "heal_and_cache",
+   "_he",
+   "confidence_problems",
+   "resolve_infer_engine",
+   "engine",
+   "why",
+   "acquire_recipe",
+   "MAX_AI_TRIES",
+   "UnsupportedLayout",
+   "SynthesisError",
+   "CustomerRecipeIndex",
+   "cfg_dict",
+   "_cust_idx",
+   "_seed_cust",
+   "_seed_hint",
+   "_data",
+   "sanitize_recipe_anchors",
+   "_skip",
+   "res",
+   "overrides",
+   "_ent_ov",
+   "_style_edits",
+   "_rie",
+   "e",
+   "_layout",
+   "_layout_type",
+   "_ans",
+   "_w",
+   "tb"
+  ],
+  "consts": [
+   "Per-file pipeline: pdf_to_pages -> fingerprint -> cache -> AI read+synth (if needed) -> parse.\n\n        方案甲（默认，零弹窗）：\n          命中缓存 -> 纯离线解析（零 AI）。\n          缓存未命中 -> AI 只读单 -> 程序从真实样例行反推正则 -> 离线回放校验\n                      一致则自动记录指纹并缓存；不一致直接报错停下（不导出）。\n        网格型版式方案甲暂不支持 -> 回退旧「AI 直接出配方 + 人工确认」。\n        新指纹（首份 PO）一律强制弹人工确认窗供核对/修正；命中缓存者零 AI、不弹。\n        ",
+   0,
+   1,
+   "[stop] 用户中断，已处理 ",
+   "/",
+   4,
+   "中断",
+   null,
+   "[",
+   "] ",
+   " · 抽词中...",
+   [
+    "cfg",
+    "log"
+   ],
+   "抽词为空：文本层为空且 OCR 未识别到任何文字（请检查扫描件质量或在线视觉模型配置）",
+   "抽词",
+   [
+    "is_multi_po_control_sheet"
+   ],
+   48,
+   "完成",
+   "\n",
+   "  指纹: ",
+   16,
+   "...",
+   2,
+   "指纹/缓存",
+   "",
+   [
+    "detect_structural_layout"
+   ],
+   "  缓存配方版式 ",
+   " 与当前结构检测 ",
+   " 不一致，作废该指纹并重新推断…",
+   "  [结构检测复核] 异常已忽略：",
+   [
+    "source_file",
+    "log"
+   ],
+   "entities",
+   "  命中缓存但离线解析为 0 行（疑似指纹假碰撞），作废该指纹并重新 AI 推断…",
+   "  命中缓存（layout=",
+   "）— 零 AI 离线解析",
+   [
+    "heal_and_cache"
+   ],
+   "  [自愈] 异常已忽略：",
+   "零AI·缓存命中",
+   "  命中缓存但置信度偏低，打开复核窗（允许手工修改并回写缓存）…",
+   "零AI·缓存命中·已复核",
+   [
+    "problems"
+   ],
+   [
+    "resolve_infer_engine"
+   ],
+   "  本次推断引擎：",
+   "local",
+   "本地 AI",
+   "在线 AI",
+   "（",
+   "）",
+   "推断引擎：",
+   " · ",
+   "online",
+   "首次遇到该版式需 AI 推断配方，但在线 AI 未配置完整 （且本地已回退在线：本地引擎未打包/模型缺失）。\n请在左侧『联网模型配置』填写 API Key / 模型 / Base URL 并『保存配置』后重试。",
+   "  缓存未命中：AI 读单 + 程序自动合成规则，将强制弹出人工确认窗（首份 PO 需人工确认）...",
+   [
+    "acquire_recipe",
+    "MAX_AI_TRIES",
+    "UnsupportedLayout",
+    "SynthesisError"
+   ],
+   [
+    "CustomerRecipeIndex"
+   ],
+   "infer_engine",
+   "  客户级记忆命中：已知客户「",
+   "」，注入历史特征作为 AI 辨认 seed",
+   [
+    "fingerprint",
+    "customer",
+    "cfg",
+    "source_file",
+    "max_tries",
+    "log",
+    "seed_hint"
+   ],
+   [
+    "sanitize_recipe_anchors"
+   ],
+   "  AI 读单+合成校验通过，强制弹出确认窗（首份 PO 需人工确认）...",
+   false,
+   true,
+   "  用户取消，未缓存。跳过。",
+   "RETRY",
+   "  用户要求重新识别...",
+   "__ent_overrides__",
+   "  [确认窗] 款号覆盖: ",
+   "customer",
+   [
+    "source_file",
+    "overrides",
+    "log"
+   ],
+   "structural",
+   "note",
+   "零AI·结构识别",
+   "AI推断",
+   "  配方已确认并缓存（layout=",
+   [
+    "fingerprint"
+   ],
+   "  [客户索引] 记录异常已忽略: ",
+   "data",
+   "  网格型版式（",
+   "未知",
+   "），回退旧推断链路（需人工确认配方）...",
+   [
+    "layout_type",
+    "seed_hint"
+   ],
+   "  [AI 合成失败] ",
+   " —— 自动合成规则失败，提供手工配方兜底。",
+   "AI 自动合成失败",
+   "对 ",
+   " 的 AI 自动合成规则失败：\n",
+   "\n\n是否改用『人工确认配方』手写兜底？\n（选『否』将跳过该文件，不导出）",
+   "  用户选择跳过 ",
+   "（AI 合成失败）。",
+   3,
+   "配方推断",
+   "  [FAIL] ",
+   ": 解析得到 0 条订单行 —— 配方与该 PO 实际格式不匹配。已清除此版式缓存，请重新运行以重新推断配方。",
+   "解析得到 0 条订单行",
+   "  [警告] ",
+   "解析对账",
+   [
+    "path",
+    "fingerprint",
+    "recipe",
+    "po",
+    "recognition"
+   ],
+   "  OK · customer=",
+   " · entities=",
+   " · total_qty=",
+   [
+    "limit"
+   ],
+   ": "
+  ],
+  "n_instructions": 1573
+ },
+ "<module>.App._worker.<genexpr>": {
+  "names": [
+   "join",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "pg"
+  ],
+  "consts": [
+   " ",
+   null
+  ],
+  "n_instructions": 23
+ },
+ "<module>.App._worker.<genexpr>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.App._worker.<listcomp>": {
+  "names": [
+   "lines",
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "pg",
+   "line"
+  ],
+  "consts": [
+   " "
+  ],
+  "n_instructions": 26
+ },
+ "<module>.App._worker.<listcomp>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.App._worker.<dictcomp>": {
+  "names": [
+   "isinstance",
+   "dict",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "style_no"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._process_control_sheet_batch": {
+  "names": [
+   "core.parsers.control_sheet",
+   "split_control_sheet_pages",
+   "core.recipe_synth",
+   "synthesize_control_sheet_recipe",
+   "core.recipe_fix",
+   "sanitize_recipe_anchors",
+   "_log",
+   "len",
+   "join",
+   "layout_fingerprint",
+   "PurchaseOrder",
+   "str",
+   "enumerate",
+   "parse_doc",
+   "Exception",
+   "customer",
+   "entities",
+   "extend",
+   "name",
+   "root",
+   "after",
+   "_mark_file_failed",
+   "files",
+   "index",
+   "_ask_recipe_dialog",
+   "_pending_recipe",
+   "dict",
+   "field_overrides",
+   "get",
+   "items",
+   "clear",
+   "cache",
+   "put",
+   "layout_type",
+   "_warn_if_unverified",
+   "core.store.customer_index",
+   "CustomerRecipeIndex",
+   "record",
+   "_apply_osr_consensus",
+   "doc_text",
+   "reconcile",
+   "fingerprint",
+   "results",
+   "append",
+   "total_qty"
+  ],
+  "varnames": [
+   "self",
+   "pages",
+   "path",
+   "split_control_sheet_pages",
+   "synthesize_control_sheet_recipe",
+   "sanitize_recipe_anchors",
+   "groups",
+   "first_text",
+   "fp",
+   "recipe",
+   "merged",
+   "gi",
+   "g",
+   "po_g",
+   "e",
+   "doc_lines",
+   "_skip",
+   "res",
+   "overrides",
+   "_ent_ov",
+   "_style_edits",
+   "CustomerRecipeIndex",
+   "_rie",
+   "ai_text",
+   "_w"
+  ],
+  "consts": [
+   "Pre-split a multi-PO Control Sheet into single-PO groups, extract each\n        structurally and merge into one PurchaseOrder. Returns 1 (exported) or 0\n        (skipped). ISOLATED: only the control_sheet layout ever reaches here, and\n        the shared fingerprint/parser code is untouched.",
+   0,
+   [
+    "split_control_sheet_pages"
+   ],
+   [
+    "synthesize_control_sheet_recipe"
+   ],
+   [
+    "sanitize_recipe_anchors"
+   ],
+   "  多 PO 控制表：预拆分为 ",
+   " 份单 PO，逐组结构化抽取…",
+   "\n",
+   [
+    "fingerprint",
+    "log"
+   ],
+   "",
+   [
+    "customer",
+    "source_file"
+   ],
+   1,
+   [
+    "source_file",
+    "log"
+   ],
+   "  [警告] 第 ",
+   " 组单 PO 解析失败：",
+   null,
+   "  [FAIL] ",
+   ": 控制表预拆分后解析得到 0 条订单行",
+   "控制表解析得到 0 条订单行",
+   false,
+   true,
+   "  用户取消，未缓存。跳过。",
+   "RETRY",
+   "__ent_overrides__",
+   "  [确认窗] 款号覆盖: ",
+   "customer",
+   [
+    "source_file",
+    "overrides",
+    "log"
+   ],
+   "  配方已确认并缓存（layout=",
+   "）",
+   [
+    "CustomerRecipeIndex"
+   ],
+   [
+    "fingerprint"
+   ],
+   "  [客户索引] 记录异常已忽略: ",
+   "  [警告] ",
+   "零AI·结构识别",
+   [
+    "path",
+    "fingerprint",
+    "recipe",
+    "po",
+    "recognition"
+   ],
+   "  OK · customer=",
+   " · entities=",
+   " · total_qty="
+  ],
+  "n_instructions": 452
+ },
+ "<module>.App._process_control_sheet_batch.<genexpr>": {
+  "names": [
+   "join",
+   "tokens"
+  ],
+  "varnames": [
+   ".0",
+   "pg"
+  ],
+  "consts": [
+   " ",
+   null
+  ],
+  "n_instructions": 23
+ },
+ "<module>.App._process_control_sheet_batch.<genexpr>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.App._process_control_sheet_batch.<listcomp>": {
+  "names": [
+   "lines",
+   "join"
+  ],
+  "varnames": [
+   ".0",
+   "pg",
+   "line"
+  ],
+  "consts": [
+   " "
+  ],
+  "n_instructions": 26
+ },
+ "<module>.App._process_control_sheet_batch.<listcomp>.<genexpr>": {
+  "names": [
+   "text"
+  ],
+  "varnames": [
+   ".0",
+   "t"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 14
+ },
+ "<module>.App._process_control_sheet_batch.<dictcomp>": {
+  "names": [
+   "isinstance",
+   "dict",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "style_no"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._try_swap_orientation": {
+  "names": [
+   "core.models",
+   "LayoutType",
+   "layout_type",
+   "MATRIX_1AXIS",
+   "value",
+   "MATRIX_2AXIS",
+   "from_json",
+   "to_json",
+   "parse_doc",
+   "Exception",
+   "entities",
+   "total_qty",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "pages",
+   "fname",
+   "LayoutType",
+   "alt",
+   "swapped",
+   "probe"
+  ],
+  "consts": [
+   "When a matrix recipe parses to 0 lines, try the OTHER matrix\n        orientation with the SAME anchors/line_pattern before giving up.\n\n        Matrix layouts are occasionally misclassified by the AI (matrix_1axis vs\n        matrix_2axis); the safer orientation usually parses correctly. Returns the\n        swapped recipe if it yields >0 entities, else None. This collapses the\n        \"wrong orientation -> 0 lines -> cache invalidated -> re-run\" failure cycle\n        (seen on B.pdf) into a single successful run.\n        ",
+   0,
+   [
+    "LayoutType"
+   ],
+   null,
+   [
+    "source_file"
+   ],
+   "  方向自动互换：",
+   " → ",
+   " 解析成功（",
+   " 件），采用。"
+  ],
+  "n_instructions": 97
+ },
+ "<module>.App._infer_validated": {
+  "names": [
+   "core.ai.recipe_infer",
+   "infer_recipe",
+   "range",
+   "MAX_INFER_TRIES",
+   "parse_doc",
+   "entities",
+   "total_qty",
+   "_log",
+   "_try_swap_orientation",
+   "len",
+   "Exception",
+   "type",
+   "__name__"
+  ],
+  "varnames": [
+   "self",
+   "ai_text",
+   "cfg_dict",
+   "pages",
+   "fname",
+   "layout_type",
+   "seed_hint",
+   "infer_recipe",
+   "hint",
+   "last",
+   "attempt",
+   "recipe",
+   "probe",
+   "swapped",
+   "e"
+  ],
+  "consts": [
+   "Infer a recipe and DRY-RUN it before the confirm dialog is shown.",
+   0,
+   [
+    "infer_recipe"
+   ],
+   "",
+   null,
+   1,
+   [
+    "customer",
+    "cfg",
+    "extra_hint",
+    "layout_type",
+    "seed_hint"
+   ],
+   [
+    "source_file"
+   ],
+   "  配方自校验通过（第 ",
+   " 次推断）",
+   "The recipe matched NO real order line: it produced ",
+   " order block(s) and a total quantity of ",
+   ". Your line_pattern does not match the text as it is laid out. Copy one ACTUAL order line from the text above and rebuild the regex from it token by token, keeping a (?P<middle>.*?) block for any description/colour columns.",
+   "The recipe crashed the parser: ",
+   ": ",
+   ". Make sure every regex compiles and every capture group you reference actually exists.",
+   "  配方自校验未通过（第 ",
+   "/",
+   " 次），回灌错误重试...",
+   "  [警告] 连续 ",
+   " 次推断均未通过自校验，仍弹出确认窗，请手工修正 line_pattern"
+  ],
+  "n_instructions": 164
+ },
+ "<module>.App._ask_recipe_dialog": {
+  "names": [
+   "ui.recipe_dialog",
+   "RecipeConfirmDialog",
+   "_pending_recipe",
+   "_pending_recipe_error",
+   "threading",
+   "Event",
+   "root",
+   "after",
+   "wait",
+   "RuntimeError"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "po",
+   "doc_lines",
+   "problems",
+   "show"
+  ],
+  "consts": [
+   "Run the confirm dialog on the main thread; store the result in self._pending_recipe.\n\n        ``po`` is the already-parsed preview and ``doc_lines`` the source lines\n        (for reverse anchor synthesis). The worker thread blocks on ``evt.wait()``\n        while the main thread shows the modal dialog. ``self._pending_recipe`` is\n        one of: a corrected ``PoRecipe``, the string ``\"RETRY\"``, or ``None`` (cancel).\n        ``problems`` is an optional list of confidence-gate failure keys passed to\n        the dialog so it can highlight the offending fields in red.\n        ",
+   0,
+   [
+    "RecipeConfirmDialog"
+   ],
+   null,
+   3600,
+   [
+    "timeout"
+   ],
+   "配方确认窗超时（1 小时未响应）",
+   "配方确认窗失败"
+  ],
+  "n_instructions": 68
+ },
+ "<module>.App._ask_recipe_dialog.show": {
+  "names": [
+   "root",
+   "result",
+   "_pending_recipe",
+   "Exception",
+   "_pending_recipe_error",
+   "_log",
+   "set"
+  ],
+  "varnames": [
+   "dlg",
+   "e"
+  ],
+  "consts": [
+   null,
+   [
+    "problems"
+   ],
+   "  [UI] 配方确认窗异常: "
+  ],
+  "n_instructions": 67
+ },
+ "<module>.App._legacy_infer_and_confirm": {
+  "names": [
+   "core.recipe_fix",
+   "sanitize_recipe_anchors",
+   "core.store.customer_index",
+   "CustomerRecipeIndex",
+   "_infer_validated",
+   "name",
+   "parse_doc",
+   "str",
+   "_log",
+   "_ask_recipe_dialog",
+   "_pending_recipe",
+   "dict",
+   "field_overrides",
+   "get",
+   "items",
+   "customer",
+   "field_defaults",
+   "clear",
+   "cache",
+   "put",
+   "layout_type",
+   "_warn_if_unverified",
+   "record",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "ai_text",
+   "cfg_dict",
+   "pages",
+   "path",
+   "fp",
+   "doc_lines",
+   "layout_type",
+   "seed_hint",
+   "sanitize_recipe_anchors",
+   "CustomerRecipeIndex",
+   "recipe",
+   "po",
+   "_skip",
+   "res",
+   "overrides",
+   "_ent_ov",
+   "_style_edits",
+   "_rie"
+  ],
+  "consts": [
+   "旧「AI 直接出配方 + 人工确认」手写兜底（网格型版式 / AI 自动合成失败共用）。\n\n        在确认窗里让用户核对/修正配方，确认后写入缓存（fp）。返回 ``(recipe, po,\n        skip)``：``skip=True`` 表示用户取消/跳过该文件（调用方应 ``continue``）。\n        ",
+   0,
+   [
+    "sanitize_recipe_anchors"
+   ],
+   [
+    "CustomerRecipeIndex"
+   ],
+   [
+    "layout_type",
+    "seed_hint"
+   ],
+   [
+    "source_file",
+    "log"
+   ],
+   false,
+   true,
+   null,
+   "  用户取消，未缓存。跳过。",
+   "RETRY",
+   "  用户要求重新识别...",
+   "__ent_overrides__",
+   "  [确认窗] 款号覆盖: ",
+   "customer",
+   [
+    "source_file",
+    "overrides",
+    "log"
+   ],
+   "  配方已确认并缓存（layout=",
+   "）",
+   [
+    "fingerprint"
+   ],
+   "  [客户索引] 记录异常已忽略: "
+  ],
+  "n_instructions": 268
+ },
+ "<module>.App._legacy_infer_and_confirm.<dictcomp>": {
+  "names": [
+   "isinstance",
+   "dict",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "style_no"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._cache_confidence_problems": {
+  "names": [
+   "set",
+   "getattr",
+   "strip",
+   "add",
+   "sorted",
+   "size",
+   "qty_safe",
+   "core.validate",
+   "validate_totals",
+   "validate_breakdown"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "po",
+   "problems",
+   "ents",
+   "ent",
+   "ln",
+   "sizes",
+   "validate_totals",
+   "validate_breakdown"
+  ],
+  "consts": [
+   "Return a list of problem keys for the cache-hit confidence gate.\n\n        Two failure classes:\n          * missing mandatory fields (Customer / Style No. / PO No. / Color Code /\n            Color Desc / Size / Qty / Unit Price / Ship Date); and\n          * SKU quantity deviation — parsed quantities disagree with the PDF's\n            printed totals.  This is the most basic condition for recipe\n            synthesis: if the quantity is wrong the recipe cannot be synthesised,\n            so it must be treated as a hard failure.\n        ",
+   "customer",
+   "",
+   "missing_customer",
+   "entities",
+   "missing_po_no",
+   "missing_style_no",
+   "missing_ship_date",
+   "po_no",
+   "style_no",
+   "delivery_date",
+   "lines",
+   "color_code",
+   "missing_color_code",
+   "color_desc",
+   "missing_color_desc",
+   "sizes",
+   0,
+   "missing_size",
+   "missing_qty",
+   "unit_price",
+   null,
+   "missing_unit_price",
+   [
+    "validate_totals",
+    "validate_breakdown"
+   ],
+   "qty_deviation"
+  ],
+  "n_instructions": 253
+ },
+ "<module>.App._cache_confidence_ok": {
+  "names": [
+   "_cache_confidence_problems"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "po"
+  ],
+  "consts": [
+   "Lightweight confidence gate for a CACHE-HIT (zero-AI) parse.\n\n        Returns False (=> open the human-review dialog) when a mandatory field\n        is missing OR the SKU quantities deviate from the PDF's printed totals.\n        "
+  ],
+  "n_instructions": 9
+ },
+ "<module>.App._review_and_writeback": {
+  "names": [
+   "core.recipe_fix",
+   "sanitize_recipe_anchors",
+   "_ask_recipe_dialog",
+   "_pending_recipe",
+   "_log",
+   "dict",
+   "field_overrides",
+   "get",
+   "items",
+   "customer",
+   "clear",
+   "parse_doc",
+   "cache",
+   "put",
+   "layout_type"
+  ],
+  "varnames": [
+   "self",
+   "fp",
+   "recipe",
+   "po",
+   "pages",
+   "doc_lines",
+   "fname",
+   "problems",
+   "sanitize_recipe_anchors",
+   "res",
+   "overrides",
+   "_ent_ov",
+   "_style_edits"
+  ],
+  "consts": [
+   "Open the confirm dialog in EDIT mode on a cached recipe, let the user\n        fix deviations, re-parse, and OVERWRITE the cache so the next PO of this\n        layout stays zero-AI. Returns the (possibly edited) (recipe, po).",
+   0,
+   [
+    "sanitize_recipe_anchors"
+   ],
+   true,
+   [
+    "problems"
+   ],
+   null,
+   "  用户取消复核，保留原缓存。",
+   "RETRY",
+   "__ent_overrides__",
+   "  [复核窗] 款号覆盖: ",
+   "customer",
+   [
+    "source_file",
+    "overrides",
+    "log"
+   ],
+   "  复核结果已回写缓存（layout=",
+   "）"
+  ],
+  "n_instructions": 136
+ },
+ "<module>.App._review_and_writeback.<dictcomp>": {
+  "names": [
+   "isinstance",
+   "dict",
+   "get"
+  ],
+  "varnames": [
+   ".0",
+   "k",
+   "v"
+  ],
+  "consts": [
+   "style_no"
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._warn_if_unverified": {
+  "names": [
+   "core.models",
+   "LayoutType",
+   "layout_type",
+   "MATRIX_2AXIS",
+   "value",
+   "_log",
+   "_set_status"
+  ],
+  "varnames": [
+   "self",
+   "recipe",
+   "LayoutType"
+  ],
+  "consts": [
+   "matrix_2axis is the only zero-sample 'blind' layout rule (SS27/LPP\n        commented). Warn the operator to manually review it in the confirm dialog.\n        ",
+   0,
+   [
+    "LayoutType"
+   ],
+   "  ⚠ 未经验证版式(matrix_2axis)：当前为唯一零样本盲写规则，请务必在确认窗中人工复核。",
+   "⚠ 未经验证版式 matrix_2axis，请人工复核",
+   null
+  ],
+  "n_instructions": 30
+ },
+ "<module>.App._ask_yesno_main": {
+  "names": [
+   "_pending_yesno",
+   "_pending_yesno_error",
+   "threading",
+   "Event",
+   "root",
+   "after",
+   "wait",
+   "_log",
+   "RuntimeError",
+   "bool"
+  ],
+  "varnames": [
+   "self",
+   "title",
+   "message",
+   "show"
+  ],
+  "consts": [
+   "在主线程弹出一个 yes/no 提问并阻塞 worker，直到用户回答。\n\n        与 :meth:`_ask_recipe_dialog` 同为「worker 线程 → 主线程弹窗」模式，返回\n        ``True``（是）/ ``False``（否）。超时（1 小时）视为「否」并跳过该文件。\n        ",
+   null,
+   0,
+   3600,
+   [
+    "timeout"
+   ],
+   "  询问窗超时（1 小时未响应），按「否」处理（跳过该文件）。",
+   false,
+   "询问窗失败"
+  ],
+  "n_instructions": 63
+ },
+ "<module>.App._ask_yesno_main.show": {
+  "names": [
+   "messagebox",
+   "askyesno",
+   "_pending_yesno",
+   "Exception",
+   "_pending_yesno_error",
+   "_log",
+   "set"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "  [UI] 询问窗异常: "
+  ],
+  "n_instructions": 59
+ },
+ "<module>.App._stop": {
+  "names": [
+   "running",
+   "stop_evt",
+   "set",
+   "_set_status"
+  ],
+  "varnames": [
+   "self"
+  ],
+  "consts": [
+   null,
+   "正在停止..."
+  ],
+  "n_instructions": 20
+ },
+ "<module>.App._on_done_total": {
+  "names": [
+   "running",
+   "run_btn",
+   "config",
+   "tk",
+   "NORMAL",
+   "stop_btn",
+   "DISABLED",
+   "_update_extract_progress",
+   "_stage_total",
+   "len",
+   "files",
+   "Exception",
+   "_refresh_fingerprint_button",
+   "_refresh_results_table",
+   "_set_status",
+   "_log",
+   "messagebox",
+   "showerror",
+   "str"
+  ],
+  "varnames": [
+   "self",
+   "ok",
+   "err"
+  ],
+  "consts": [
+   null,
+   false,
+   [
+    "state"
+   ],
+   "完成",
+   "提取异常",
+   "[FAIL] ",
+   "提取失败",
+   "完成：成功 ",
+   "/",
+   "=== 完成 === 成功 ",
+   " 份；点击「导出JSON / 导出Excel」写入文件。"
+  ],
+  "n_instructions": 122
+ },
+ "<module>.App._refresh_results_table": {
+  "names": [
+   "getattr",
+   "winfo_exists",
+   "get_children",
+   "delete",
+   "results",
+   "get",
+   "insert",
+   "tk",
+   "END",
+   "Path",
+   "name",
+   "len",
+   "Exception",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "tv",
+   "_row",
+   "r",
+   "po",
+   "_e"
+  ],
+  "consts": [
+   "刷新右栏『提取结果』一览表：逐行列出本批已解析 PO 的源文件/客户/订单数/总数量。",
+   "result_tv",
+   null,
+   "po",
+   "",
+   "path",
+   "customer",
+   "entities",
+   "total_qty",
+   "recognition",
+   [
+    "values"
+   ],
+   "[results] 表格刷新失败: "
+  ],
+  "n_instructions": 130
+ },
+ "<module>.App._update_extract_progress": {
+  "names": [
+   "res_pb",
+   "set",
+   "max",
+   "Exception",
+   "int",
+   "round",
+   "res_pb_pct",
+   "configure"
+  ],
+  "varnames": [
+   "self",
+   "done",
+   "total",
+   "file_idx",
+   "file_total",
+   "stage",
+   "_pct",
+   "_txt"
+  ],
+  "consts": [
+   "主线程中更新右上角明黄圆头进度条。\n\n        done/total 为「4 × 文件数」的细粒度计数（每文件 4 阶段：抽词→指纹/缓存\n        →配方推断→解析对账）；file_idx/file_total 用于显示「第几份/共几份」，\n        stage 显示当前阶段名。\n        ",
+   1,
+   100.0,
+   0,
+   "/",
+   " · ",
+   "%",
+   [
+    "text"
+   ],
+   null
+  ],
+  "n_instructions": 98
+ },
+ "<module>.App._bump_stage": {
+  "names": [
+   "_stage_done",
+   "root",
+   "after",
+   "_update_extract_progress",
+   "_stage_total"
+  ],
+  "varnames": [
+   "self",
+   "file_idx",
+   "file_total",
+   "stage_idx",
+   "stage_name"
+  ],
+  "consts": [
+   "推进一份文件的某一阶段（1–4），刷新明黄圆头进度条。",
+   1,
+   4,
+   0,
+   null
+  ],
+  "n_instructions": 28
+ },
+ "<module>.App._mark_file_failed": {
+  "names": [
+   "file_lb",
+   "size",
+   "len",
+   "files",
+   "Path",
+   "name",
+   "file_fail",
+   "delete",
+   "insert",
+   "itemconfig",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "idx",
+   "reason",
+   "_name"
+  ],
+  "consts": [
+   "主线程中把待处理列表第 idx 项标红（[失败] 前缀 + 原因）。",
+   0,
+   null,
+   "",
+   "[失败] ",
+   "  (",
+   ")",
+   "#FF8A8A",
+   "#332323",
+   [
+    "foreground",
+    "background"
+   ]
+  ],
+  "n_instructions": 97
+ },
+ "<module>.App._on_file_double_click": {
+  "names": [
+   "file_lb",
+   "curselection",
+   "len",
+   "files",
+   "exists",
+   "os",
+   "startfile",
+   "str",
+   "parent",
+   "Exception",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "event",
+   "sel",
+   "idx",
+   "p",
+   "_e"
+  ],
+  "consts": [
+   "双击待处理列表：用系统默认程序打开该 PDF；若已删除则打开所在目录。",
+   null,
+   0,
+   "  [打开文件] 失败："
+  ],
+  "n_instructions": 94
+ },
+ "<module>.App._export_json": {
+  "names": [
+   "results",
+   "messagebox",
+   "showinfo",
+   "_run_export_gate",
+   "filedialog",
+   "asksaveasfilename",
+   "_export_targets",
+   "append",
+   "str",
+   "customer",
+   "order_date",
+   "per_destination",
+   "entities",
+   "total_qty",
+   "to_json",
+   "Path",
+   "write_text",
+   "json",
+   "dumps",
+   "_set_status",
+   "_log",
+   "len"
+  ],
+  "varnames": [
+   "self",
+   "out",
+   "payload",
+   "r",
+   "po"
+  ],
+  "consts": [
+   null,
+   "无数据",
+   "请先「开始提取」",
+   "导出 JSON",
+   ".json",
+   [
+    "JSON",
+    "*.json"
+   ],
+   [
+    "title",
+    "defaultextension",
+    "filetypes"
+   ],
+   "po",
+   "fingerprint",
+   "path",
+   "recipe",
+   [
+    "fingerprint",
+    "source",
+    "customer",
+    "order_date",
+    "per_destination",
+    "entities",
+    "total_qty",
+    "recipe"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ],
+   "utf-8",
+   [
+    "encoding"
+   ],
+   "JSON 已写入 ",
+   "[JSON] 写入 ",
+   "（",
+   " 份）"
+  ],
+  "n_instructions": 130
+ },
+ "<module>.App._export_json.<listcomp>": {
+  "names": [
+   "_entity_to_dict"
+  ],
+  "varnames": [
+   ".0",
+   "e"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>.App._export_xlsx": {
+  "names": [
+   "_ask_template_choice",
+   "root",
+   "_open_customer_report_menu",
+   "results",
+   "file_fail",
+   "messagebox",
+   "showinfo",
+   "_run_export_gate",
+   "openpyxl",
+   "ImportError",
+   "showerror",
+   "_export_template_b_desktop",
+   "_export_template_c_csv",
+   "_export_template_d_failure_report",
+   "filedialog",
+   "askdirectory",
+   "Path",
+   "output.template_a",
+   "write_template_a",
+   "_export_targets",
+   "stem",
+   "str",
+   "_log",
+   "name",
+   "Exception",
+   "_set_status",
+   "len"
+  ],
+  "varnames": [
+   "self",
+   "choice",
+   "openpyxl",
+   "out_dir",
+   "write",
+   "n_ok",
+   "r",
+   "stem",
+   "out_path",
+   "e"
+  ],
+  "consts": [
+   null,
+   "C",
+   "无数据",
+   "请先「开始提取」",
+   0,
+   "缺依赖",
+   "请安装 openpyxl: py -3.11 -m pip install openpyxl",
+   "B",
+   "D",
+   "E",
+   "选择保存目录（每份 PO 写入独立 .xlsx）",
+   [
+    "title"
+   ],
+   [
+    "write_template_a"
+   ],
+   "path",
+   "_Template",
+   ".xlsx",
+   "po",
+   "[Excel-",
+   "] ",
+   1,
+   " 失败: ",
+   "Excel(",
+   ") 写入 ",
+   "/",
+   " 份到 ",
+   "=== Excel-",
+   " 完成 === ",
+   " 成功"
+  ],
+  "n_instructions": 262
+ },
+ "<module>.App._export_template_b_desktop": {
+  "names": [
+   "time",
+   "output.template_b",
+   "merge_template_b",
+   "desktop_summary_path",
+   "strftime",
+   "os",
+   "path",
+   "exists",
+   "_export_targets",
+   "get",
+   "fingerprint",
+   "append",
+   "Path",
+   "name",
+   "Exception",
+   "_log",
+   "messagebox",
+   "showerror",
+   "str",
+   "_auto_osr_learn",
+   "startfile",
+   "_set_status",
+   "showinfo"
+  ],
+  "varnames": [
+   "self",
+   "_t",
+   "merge_template_b",
+   "desktop_summary_path",
+   "out_path",
+   "import_batch",
+   "existed",
+   "items",
+   "r",
+   "written",
+   "dups",
+   "overwritten",
+   "e",
+   "_oe"
+  ],
+  "consts": [
+   "Point 3：模板 B 写入桌面固定文件 OSR-Sales Order Summary Report.xlsx 的\n        RawData 工作表（跨天累计，不按日期切分）。\n\n        首次导出自动在桌面新建该文件（含 RawData 工作表）；之后每次导出合并累计到\n        同一文件。去重按 _Row Key 做内容感知比较——真重复跳过、内容有变的原地覆盖、\n        全新的追加。用户的 OSR 透视表（若存在）始终保留、不被重建。\n        ",
+   0,
+   null,
+   [
+    "merge_template_b",
+    "desktop_summary_path"
+   ],
+   "%Y%m%d_%H%M%S",
+   "fingerprint",
+   "",
+   "po",
+   "path",
+   [
+    "import_batch"
+   ],
+   "[Excel-B] 失败: ",
+   "模板 B 导出失败",
+   "[Excel-B] ",
+   "累计到已有文件",
+   "已在桌面新建",
+   ": ",
+   "[Excel-B] 本次新增 ",
+   " 行，更新(覆盖) ",
+   " 行，跳过完全重复 ",
+   " 行",
+   "[Excel-B] 无法自动打开 OSR 文件: ",
+   "模板 B 已累计到桌面：新增 ",
+   " / 更新 ",
+   " / 重复 ",
+   "模板 B 已导出",
+   "已累计到",
+   "：\n",
+   "\n\n本次新增 ",
+   " 行\n更新(覆盖) ",
+   " 行\n跳过完全重复 "
+  ],
+  "n_instructions": 234
+ },
+ "<module>.App._export_template_c_csv": {
+  "names": [
+   "csv",
+   "filedialog",
+   "asksaveasfilename",
+   "open",
+   "writer",
+   "writerow",
+   "_export_targets",
+   "entities",
+   "lines",
+   "color_desc",
+   "color_code",
+   "sizes",
+   "po_no",
+   "Path",
+   "stem",
+   "size",
+   "qty_safe",
+   "_set_status",
+   "_log"
+  ],
+  "varnames": [
+   "self",
+   "csv",
+   "out",
+   "rows",
+   "n_po",
+   "f",
+   "w",
+   "r",
+   "po",
+   "e",
+   "ln",
+   "color",
+   "s"
+  ],
+  "consts": [
+   "模板 C：CSV 简表 — PO# / 颜色 / 尺码 / 数量 四列，逗号分隔。",
+   0,
+   null,
+   "导出 CSV 简表",
+   ".csv",
+   [
+    "CSV",
+    "*.csv"
+   ],
+   [
+    "title",
+    "defaultextension",
+    "filetypes"
+   ],
+   [
+    0,
+    0
+   ],
+   "w",
+   "",
+   "utf-8-sig",
+   [
+    "newline",
+    "encoding"
+   ],
+   [
+    "PO#",
+    "颜色",
+    "尺码",
+    "数量"
+   ],
+   "po",
+   "path",
+   1,
+   "CSV 已写入 ",
+   "（",
+   " 行，",
+   " 份 PO）",
+   "[CSV-C] ",
+   " (",
+   " rows, ",
+   " POs)"
+  ],
+  "n_instructions": 167
+ },
+ "<module>.App._suggest_for_failure": {
+  "names": [
+   "lower"
+  ],
+  "varnames": [
+   "self",
+   "reason",
+   "r"
+  ],
+  "consts": [
+   "根据失败原因给出人工处理建议。",
+   "",
+   "总金额",
+   "总数量",
+   "人工复核 PDF 印刷总额/数量与解析配方是否一致",
+   "颜色",
+   "尺码",
+   "breakdown",
+   "检查 PDF 颜色/尺码小计与解析明细是否一致",
+   "负数量",
+   "检查 PDF 数量字段是否被 OCR 错误识别",
+   "PO",
+   "订单号",
+   "检查 PDF 文本层或启用视觉模型重新识别",
+   "0 条",
+   "订单行",
+   "尝试 OCR / 视觉模型重新解析控制表",
+   "指纹",
+   "补充模板 B 或启用视觉模型",
+   "OCR",
+   "抽词",
+   "扫描",
+   "检查扫描件质量或在线视觉模型配置",
+   "对账",
+   "解析",
+   "人工复核控制表 / 源 PDF",
+   "人工复核 PDF 源文件"
+  ],
+  "n_instructions": 90
+ },
+ "<module>.App._export_template_d_failure_report": {
+  "names": [
+   "time",
+   "openpyxl",
+   "openpyxl.styles",
+   "Font",
+   "PatternFill",
+   "Alignment",
+   "Border",
+   "Side",
+   "ImportError",
+   "messagebox",
+   "showerror",
+   "set",
+   "file_fail",
+   "items",
+   "len",
+   "files",
+   "str",
+   "add",
+   "append",
+   "name",
+   "getattr",
+   "blocks",
+   "join",
+   "results",
+   "Path",
+   "get",
+   "source",
+   "showinfo",
+   "strftime",
+   "home",
+   "Workbook",
+   "active",
+   "title",
+   "font",
+   "enumerate",
+   "cell",
+   "fill",
+   "alignment",
+   "border",
+   "_suggest_for_failure",
+   "os",
+   "path",
+   "exists",
+   "_get_short_path",
+   "replace",
+   "value",
+   "column_dimensions",
+   "width",
+   "create_sheet",
+   "sorted",
+   "save",
+   "Exception",
+   "_set_status",
+   "_log",
+   "startfile"
+  ],
+  "varnames": [
+   "self",
+   "_t",
+   "openpyxl",
+   "Font",
+   "PatternFill",
+   "Alignment",
+   "Border",
+   "Side",
+   "failures",
+   "seen_paths",
+   "idx",
+   "reason",
+   "path",
+   "key",
+   "f",
+   "rep",
+   "full_path",
+   "res",
+   "stamp",
+   "out",
+   "wb",
+   "ws",
+   "headers",
+   "hdr_fill",
+   "thin",
+   "border",
+   "hr",
+   "c",
+   "h",
+   "cell",
+   "r",
+   "reason_counts",
+   "i",
+   "full",
+   "sug",
+   "link_cell",
+   "short",
+   "url",
+   "label",
+   "rc",
+   "ws2",
+   "rr",
+   "n",
+   "e"
+  ],
+  "consts": [
+   "模板 D：失败报告 — 生成桌面 Excel（失败PDF清单_YYYYMMDD_HHMMSS.xlsx）。\n\n        合并两类失败：\n          1. 提取阶段失败（self.file_fail：OCR/指纹/解析等）\n          2. 导出闸门校验失败（self._gate_blocked_reports：数量/金额/breakdown 不符）\n\n        每行包含：PDF 文件名、可点击完整路径（HYPERLINK）、失败原因、建议操作；\n        并附「汇总统计」工作表按失败原因计数。\n        ",
+   0,
+   null,
+   [
+    "Font",
+    "PatternFill",
+    "Alignment",
+    "Border",
+    "Side"
+   ],
+   "缺依赖",
+   "请安装 openpyxl: py -3.11 -m pip install openpyxl",
+   "path",
+   "reason",
+   "\n[提取] ",
+   "提取",
+   [
+    "filename",
+    "path",
+    "reason",
+    "source"
+   ],
+   "_gate_blocked_reports",
+   "；",
+   "数量校验未通过",
+   "",
+   "\n[导出校验] ",
+   "[导出校验] ",
+   "导出校验",
+   "无失败",
+   "当前没有失败 PDF，无需生成失败报告。",
+   "%Y%m%d_%H%M%S",
+   "Desktop",
+   "失败PDF清单_",
+   ".xlsx",
+   "失败明细",
+   "PO 提取/校验失败报告",
+   "A1",
+   16,
+   true,
+   "1F2937",
+   [
+    "size",
+    "bold",
+    "color"
+   ],
+   "生成时间：",
+   "%Y-%m-%d %H:%M:%S",
+   " · 失败 ",
+   " 份 / 待处理 ",
+   " 份",
+   "A2",
+   11,
+   "6B7280",
+   [
+    "size",
+    "color"
+   ],
+   [
+    "序号",
+    "PDF 文件名",
+    "完整路径（点击打开）",
+    "失败原因",
+    "建议操作"
+   ],
+   "solid",
+   "F9FAFB",
+   [
+    "fgColor"
+   ],
+   "thin",
+   "E5E7EB",
+   [
+    "style",
+    "color"
+   ],
+   [
+    "left",
+    "right",
+    "top",
+    "bottom"
+   ],
+   4,
+   1,
+   [
+    "start"
+   ],
+   [
+    "row",
+    "column",
+    "value"
+   ],
+   "374151",
+   [
+    "bold",
+    "color"
+   ],
+   "left",
+   "center",
+   [
+    "horizontal",
+    "vertical"
+   ],
+   2,
+   "filename",
+   3,
+   "file:///",
+   "\\",
+   "/",
+   "#",
+   "%23",
+   " ",
+   "%20",
+   "\"",
+   "\"\"",
+   "=HYPERLINK(\"",
+   "\", \"",
+   "\")",
+   "2563EB",
+   "single",
+   [
+    "color",
+    "underline"
+   ],
+   "（路径未找到）",
+   [
+    "color"
+   ],
+   "B91C1C",
+   5,
+   6,
+   "A",
+   30,
+   "B",
+   56,
+   "C",
+   28,
+   "D",
+   "E",
+   "汇总统计",
+   "失败原因汇总",
+   14,
+   [
+    "bold"
+   ],
+   "失败原因",
+   "数量",
+   [
+    "key"
+   ],
+   "合计",
+   44,
+   10,
+   "保存失败",
+   "失败报告已写入 ",
+   "（",
+   " 份）",
+   "[失败报告] 写入 "
+  ],
+  "n_instructions": 898
+ },
+ "<module>.App._export_template_d_failure_report.<lambda>": {
+  "names": [],
+  "varnames": [
+   "kv"
+  ],
+  "consts": [
+   null,
+   1
+  ],
+  "n_instructions": 6
+ },
+ "<module>.App._open_customer_report_menu": {
+  "names": [
+   "ui.customer_report_menu",
+   "ask_customer_report",
+   "root",
+   "_run_anf_special_report",
+   "messagebox",
+   "showinfo"
+  ],
+  "varnames": [
+   "self",
+   "ask_customer_report",
+   "cust_id"
+  ],
+  "consts": [
+   "模板 C 入口：弹出客户列表，按所选客户路由到其专属报表生成流程。\n\n        当前唯一启用客户为 ANF Special Report（Abercrombie & Fitch）：选定后提示\n        选择含 PO + Commitment 的 tech-pack 文件夹，按 Commitment# 跨 PDF 关联，\n        生成 3 表 ANF Special Report（POChart / POList / RawData）。\n        ",
+   0,
+   [
+    "ask_customer_report"
+   ],
+   null,
+   "anf",
+   "暂未启用",
+   "客户「",
+   "」的报表尚未配置。"
+  ],
+  "n_instructions": 42
+ },
+ "<module>.App._run_anf_special_report": {
+  "names": [
+   "output.customer_anf",
+   "parse_single_anf_pdf",
+   "collect_issues",
+   "apply_manual_fixes",
+   "CommitmentStore",
+   "ui.anf_file_pair",
+   "ask_anf_pair",
+   "ui.anf_report_preview",
+   "show_anf_preview",
+   "ui.anf_missing_data",
+   "ask_missing_data",
+   "time",
+   "root",
+   "list",
+   "get",
+   "strftime",
+   "_log",
+   "len",
+   "entities",
+   "extra",
+   "strip",
+   "from_commitment_pos",
+   "_set_status"
+  ],
+  "varnames": [
+   "self",
+   "parse_single_anf_pdf",
+   "collect_issues",
+   "apply_manual_fixes",
+   "CommitmentStore",
+   "ask_anf_pair",
+   "show_anf_preview",
+   "ask_missing_data",
+   "_t",
+   "sel",
+   "po_results",
+   "cmt_results",
+   "mode",
+   "stamp",
+   "cmt_by_cno",
+   "c",
+   "cno",
+   "po",
+   "pno",
+   "store",
+   "issues",
+   "fixes",
+   "suffix"
+  ],
+  "consts": [
+   "ANF Special Report 全流程（多文件版）：文件配对(多 PO + 多 Commit) ->\n        解析 -> 缺失资料补录(可选) -> 模板驱动生成 Workbook -> 预览窗 -> 保存并打开 Excel。\n\n        支持两种生成模式：\n          * full     —— 用 Commitment Store 回灌 KI/Mill/Fabric（「确认并生成报表」）\n          * po_only  —— 忽略 Commit，仅基于 PO 信息输出（「仅基于 PO 生成」）\n        ",
+   0,
+   [
+    "parse_single_anf_pdf",
+    "collect_issues",
+    "apply_manual_fixes",
+    "CommitmentStore"
+   ],
+   [
+    "ask_anf_pair"
+   ],
+   [
+    "show_anf_preview"
+   ],
+   [
+    "ask_missing_data"
+   ],
+   null,
+   "po",
+   "cmt",
+   "mode",
+   "full",
+   "%Y%m%d_%H%M%S",
+   "[ANF] 已选 ",
+   " 份 PO / ",
+   " 份 Commitment（模式：",
+   "）",
+   "commitment_no",
+   "",
+   1,
+   "po_only",
+   "[ANF] PO-only 模式：忽略 Commitment，仅基于 PO 信息生成",
+   "[ANF] 检测到 ",
+   " 处资料缺失，弹出补录窗…",
+   "[ANF] 用户取消补录，中止生成",
+   "_POOnly",
+   "[ANF] 打开预览窗（",
+   " 份 PO），等待核对与保存…",
+   "ANF Special Report 预览中（",
+   " 份 PO），可核对修正",
+   [
+    "suffix"
+   ]
+  ],
+  "n_instructions": 305
+ },
+ "<module>.App._run_export_gate": {
+  "names": [
+   "core.export_gate",
+   "scan_batch",
+   "ui.quantity_dialog",
+   "BatchExportGateDialog",
+   "results",
+   "list",
+   "_gate_blocked_reports",
+   "_export_subset",
+   "root",
+   "len",
+   "choice",
+   "CHOICE_CANCEL",
+   "_log",
+   "CHOICE_SKIP",
+   "_write_failure_report"
+  ],
+  "varnames": [
+   "self",
+   "scan_batch",
+   "BatchExportGateDialog",
+   "ok",
+   "blocked",
+   "dlg",
+   "choice"
+  ],
+  "consts": [
+   "Export-time secondary quantity interception for the current batch.\n\n        Pre-scans the WHOLE batch (every record in ``self.results``), partitions\n        it into passing records and records with hard quantity blocks, and lets\n        the operator decide once:\n\n          * no blocks             -> export everything (returns True);\n          * blocks + \"skip\"       -> export only the passing records, drop the\n                                     blocked ones, and write a failure report;\n          * blocks + \"export all\" -> export everything (operator owns the risk),\n                                     still write the failure report for reference;\n          * blocks + \"cancel\"     -> abort the whole export (returns False).\n\n        The chosen subset is stored in ``self._export_subset``; downstream export\n        helpers read it via :meth:`_export_targets`. Never touches the\n        already-accumulated desktop OSR data.\n        ",
+   0,
+   [
+    "scan_batch"
+   ],
+   [
+    "BatchExportGateDialog"
+   ],
+   true,
+   [
+    "ok_count",
+    "total_count",
+    "blocked_reports"
+   ],
+   "[导出拦截] 用户取消导出。",
+   false,
+   [
+    "released"
+   ],
+   "[导出拦截] 跳过 ",
+   " 个校验未通过 PO，导出其余 ",
+   " 个。",
+   "[导出拦截] 用户选择仍要导出全部 ",
+   " 个（含 ",
+   " 个校验未通过）。"
+  ],
+  "n_instructions": 141
+ },
+ "<module>.App._export_targets": {
+  "names": [
+   "getattr",
+   "results"
+  ],
+  "varnames": [
+   "self",
+   "sub"
+  ],
+  "consts": [
+   "Records to actually export after the gate decision.\n\n        Returns ``self._export_subset`` if the gate has run, else all results.\n        An explicitly empty subset (everything blocked + skip) is preserved.\n        ",
+   "_export_subset",
+   null
+  ],
+  "n_instructions": 15
+ },
+ "<module>.App._write_failure_report": {
+  "names": [
+   "json",
+   "time",
+   "pathlib",
+   "Path",
+   "strftime",
+   "home",
+   "write_text",
+   "dumps",
+   "_log",
+   "Exception"
+  ],
+  "varnames": [
+   "self",
+   "blocked",
+   "released",
+   "_json",
+   "_t",
+   "_Path",
+   "stamp",
+   "out",
+   "items",
+   "payload",
+   "_e"
+  ],
+  "consts": [
+   "Write a JSON report of the blocked POs to the desktop for later review.",
+   0,
+   null,
+   [
+    "Path"
+   ],
+   "%Y%m%d_%H%M%S",
+   "Desktop",
+   "导出失败清单_",
+   ".json",
+   "本清单为导出时数量校验未通过的 PO。released=True 表示操作者仍选择导出。",
+   [
+    "generated",
+    "released",
+    "note",
+    "items"
+   ],
+   false,
+   2,
+   [
+    "ensure_ascii",
+    "indent"
+   ],
+   "utf-8",
+   [
+    "encoding"
+   ],
+   "[导出拦截] 失败清单已写入：",
+   "[导出拦截] 失败清单写入失败："
+  ],
+  "n_instructions": 103
+ },
+ "<module>.App._write_failure_report.<listcomp>": {
+  "names": [
+   "customer",
+   "source",
+   "blocks",
+   "warnings"
+  ],
+  "varnames": [
+   ".0",
+   "r"
+  ],
+  "consts": [
+   [
+    "customer",
+    "source",
+    "blocks",
+    "warnings"
+   ]
+  ],
+  "n_instructions": 18
+ },
+ "<module>.App._run_thread": {
+  "names": [
+   "threading",
+   "Thread",
+   "start"
+  ],
+  "varnames": [
+   "self",
+   "fn",
+   "callback",
+   "target"
+  ],
+  "consts": [
+   null,
+   true,
+   [
+    "target",
+    "daemon"
+   ]
+  ],
+  "n_instructions": 24
+ },
+ "<module>.App._run_thread.target": {
+  "names": [
+   "Exception",
+   "q",
+   "put"
+  ],
+  "varnames": [
+   "err",
+   "result",
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 45
+ },
+ "<module>.App._poll_queue": {
+  "names": [
+   "q",
+   "get_nowait",
+   "Exception",
+   "_log",
+   "queue",
+   "Empty",
+   "root",
+   "after",
+   "_poll_queue"
+  ],
+  "varnames": [
+   "self",
+   "result",
+   "err",
+   "cb",
+   "e"
+  ],
+  "consts": [
+   null,
+   true,
+   "[callback] ",
+   120
+  ],
+  "n_instructions": 74
+ },
+ "<module>.App._set_status": {
+  "names": [
+   "status_var",
+   "set"
+  ],
+  "varnames": [
+   "self",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 10
+ },
+ "<module>.App._log": {
+  "names": [
+   "log",
+   "info",
+   "config",
+   "tk",
+   "NORMAL",
+   "insert",
+   "END",
+   "_now",
+   "see",
+   "DISABLED"
+  ],
+  "varnames": [
+   "self",
+   "s"
+  ],
+  "consts": [
+   null,
+   [
+    "state"
+   ],
+   "[",
+   "] ",
+   "\n"
+  ],
+  "n_instructions": 53
+ },
+ "<module>._ask_template_choice": {
+  "names": [
+   "theme_glass",
+   "COL",
+   "tk",
+   "Toplevel",
+   "title",
+   "transient",
+   "grab_set",
+   "resizable",
+   "configure",
+   "bind",
+   "tuple",
+   "Frame",
+   "Label",
+   "FONT_HINT",
+   "pack",
+   "FONT_BUTTON_BOLD",
+   "_SANS",
+   "VERSION",
+   "FONT_BODY",
+   "columnconfigure",
+   "rowconfigure",
+   "minsize",
+   "update_idletasks",
+   "winfo_width",
+   "winfo_height",
+   "winfo_rootx",
+   "winfo_rooty",
+   "winfo_screenwidth",
+   "winfo_screenheight",
+   "max",
+   "geometry",
+   "deiconify",
+   "update",
+   "wait_window"
+  ],
+  "varnames": [
+   "parent",
+   "W",
+   "H",
+   "bottom",
+   "_card",
+   "outer",
+   "hdr",
+   "grid",
+   "c",
+   "r",
+   "pw",
+   "ph",
+   "px",
+   "py",
+   "x",
+   "y"
+  ],
+  "consts": [
+   null,
+   0,
+   "选择导出模板",
+   false,
+   "gap",
+   [
+    "bg"
+   ],
+   "<Escape>",
+   [
+    1090,
+    620
+   ],
+   "field",
+   "panel_border",
+   [
+    1,
+    3,
+    5
+   ],
+   "v",
+   250,
+   12,
+   "悬停查看模板说明…",
+   "ink_3",
+   "w",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "anchor"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   "取消",
+   "accent",
+   "select_fg",
+   18,
+   6,
+   "hand2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady",
+    "cursor"
+   ],
+   "right",
+   "<Button-1>",
+   "<Enter>",
+   "<Leave>",
+   24,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   "x",
+   [
+    "fill"
+   ],
+   "ink",
+   17,
+   "bold",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font"
+   ],
+   "V",
+   "请选择 V.2 导出模板",
+   "ink_2",
+   [
+    6,
+    14
+   ],
+   [
+    "anchor",
+    "pady"
+   ],
+   [
+    0,
+    1,
+    2
+   ],
+   1,
+   "cardcol",
+   [
+    "weight",
+    "uniform"
+   ],
+   [
+    0,
+    1
+   ],
+   "cardrow",
+   "模板 A",
+   "A",
+   "ERP 矩阵",
+   "按客户/颜色/尺码聚合·多次合并",
+   "模板 B",
+   "B",
+   "数据标准长表",
+   "逐行明细·桌面OSR·追加合并",
+   "模板 C",
+   "C",
+   "客户指定报表",
+   "按客户专属模板导出（ANF 等）·点入客户列表",
+   2,
+   "#C2A878",
+   [
+    226,
+    196,
+    120
+   ],
+   [
+    35,
+    38,
+    45
+   ],
+   [
+    "accent",
+    "hover_bg",
+    "hover_fg"
+   ],
+   "模板 D",
+   "D",
+   "CSV 简表",
+   "PO#/颜色/尺码/数量·逗号分隔",
+   "模板 E",
+   "E",
+   "失败报告 · 失败PDF清单.xlsx",
+   "列出失败PDF：路径链接 / 失败原因 / 建议操作",
+   "#E24B4A",
+   [
+    226,
+    75,
+    74
+   ],
+   [
+    255,
+    255,
+    255
+   ],
+   [
+    14,
+    0
+   ],
+   [
+    "fill",
+    "pady"
+   ],
+   200,
+   [
+    0,
+    0
+   ],
+   "+",
+   [
+    250,
+    12
+   ],
+   [
+    null,
+    null,
+    null
+   ]
+  ],
+  "n_instructions": 634
+ },
+ "<module>._ask_template_choice.<lambda>": {
+  "names": [
+   "configure"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null,
+   "accent",
+   "select_fg",
+   [
+    "bg",
+    "fg"
+   ]
+  ],
+  "n_instructions": 14
+ },
+ "<module>._ask_template_choice.<genexpr>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "i"
+  ],
+  "consts": [
+   "select_fg",
+   2,
+   16,
+   null
+  ],
+  "n_instructions": 26
+ },
+ "<module>._ask_template_choice._hx": {
+  "names": [
+   "max",
+   "min"
+  ],
+  "varnames": [
+   "rgb"
+  ],
+  "consts": [
+   null,
+   "#%02x%02x%02x",
+   0,
+   255,
+   1,
+   2
+  ],
+  "n_instructions": 38
+ },
+ "<module>._ask_template_choice.pick": {
+  "names": [
+   "destroy"
+  ],
+  "varnames": [
+   "v"
+  ],
+  "consts": [
+   null,
+   "v"
+  ],
+  "n_instructions": 13
+ },
+ "<module>._ask_template_choice._bind_recursive": {
+  "names": [
+   "bind",
+   "Exception",
+   "winfo_children"
+  ],
+  "varnames": [
+   "w",
+   "ev",
+   "fn",
+   "c"
+  ],
+  "consts": [
+   "递归给控件 w 及其所有后代绑定事件 ev（fn）。",
+   null
+  ],
+  "n_instructions": 40
+ },
+ "<module>._ask_template_choice._collect": {
+  "names": [],
+  "varnames": [
+   "box"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 21
+ },
+ "<module>._ask_template_choice._collect.walk": {
+  "names": [
+   "keys",
+   "cget",
+   "append",
+   "winfo_children"
+  ],
+  "varnames": [
+   "w",
+   "bg",
+   "fg",
+   "c"
+  ],
+  "consts": [
+   null,
+   "bg",
+   "fg"
+  ],
+  "n_instructions": 57
+ },
+ "<module>._ask_template_choice._stop": {
+  "names": [
+   "pop",
+   "after_cancel",
+   "Exception"
+  ],
+  "varnames": [
+   "ws",
+   "w",
+   "_",
+   "aid"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 40
+ },
+ "<module>._ask_template_choice._step_anim": {
+  "names": [
+   "tuple",
+   "Exception",
+   "append"
+  ],
+  "varnames": [
+   "ws",
+   "targets",
+   "duration",
+   "steps",
+   "w",
+   "fb",
+   "ff"
+  ],
+  "consts": [
+   null,
+   [
+    1,
+    3,
+    5
+   ],
+   0
+  ],
+  "n_instructions": 113
+ },
+ "<module>._ask_template_choice._step_anim.<genexpr>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "i"
+  ],
+  "consts": [
+   2,
+   16,
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>._ask_template_choice._step_anim.step": {
+  "names": [
+   "enumerate",
+   "tuple",
+   "configure",
+   "Exception",
+   "after",
+   "max",
+   "int"
+  ],
+  "varnames": [
+   "i",
+   "idx",
+   "w",
+   "obg",
+   "ofg",
+   "nb",
+   "nf",
+   "aid",
+   "_"
+  ],
+  "consts": [
+   null,
+   [
+    0,
+    1,
+    2
+   ],
+   [
+    "bg"
+   ],
+   [
+    "fg"
+   ],
+   1
+  ],
+  "n_instructions": 139
+ },
+ "<module>._ask_template_choice._step_anim.step.<genexpr>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "k"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 29
+ },
+ "<module>._ask_template_choice._set_prompt": {
+  "names": [
+   "configure",
+   "len"
+  ],
+  "varnames": [
+   "text",
+   "s"
+  ],
+  "consts": [
+   null,
+   "悬停查看模板说明…",
+   "ink_3",
+   [
+    "text",
+    "fg"
+   ],
+   18,
+   17,
+   "…",
+   "ink_2"
+  ],
+  "n_instructions": 45
+ },
+ "<module>._ask_template_choice._card": {
+  "names": [
+   "tk",
+   "Frame",
+   "pack",
+   "Label",
+   "_SANS",
+   "FONT_BODY",
+   "append",
+   "grid"
+  ],
+  "varnames": [
+   "master",
+   "title",
+   "tag",
+   "desc_short",
+   "desc_full",
+   "val",
+   "row",
+   "col",
+   "accent",
+   "hover_bg",
+   "hover_fg",
+   "_accent_bg",
+   "_accent_fg",
+   "_border",
+   "box",
+   "inner",
+   "hdr",
+   "enter",
+   "leave",
+   "click"
+  ],
+  "consts": [
+   null,
+   "accent",
+   "select_fg",
+   1,
+   0,
+   "hand2",
+   [
+    "bg",
+    "highlightbackground",
+    "highlightthickness",
+    "bd",
+    "cursor"
+   ],
+   16,
+   12,
+   [
+    "bg",
+    "padx",
+    "pady"
+   ],
+   "both",
+   true,
+   [
+    "fill",
+    "expand"
+   ],
+   [
+    "bg"
+   ],
+   "x",
+   [
+    "fill"
+   ],
+   "ink",
+   15,
+   "bold",
+   "w",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "anchor"
+   ],
+   "left",
+   [
+    "side"
+   ],
+   10,
+   8,
+   3,
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "padx",
+    "pady"
+   ],
+   "right",
+   "ink_2",
+   [
+    "text",
+    "bg",
+    "fg",
+    "font",
+    "anchor",
+    "pady"
+   ],
+   "<Enter>",
+   "<Leave>",
+   "<Button-1>",
+   "<ButtonRelease-1>",
+   "nsew",
+   [
+    "row",
+    "column",
+    "sticky",
+    "padx",
+    "pady"
+   ]
+  ],
+  "n_instructions": 230
+ },
+ "<module>._ask_template_choice._card.enter": {
+  "names": [],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 25
+ },
+ "<module>._ask_template_choice._card.enter.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "_"
+  ],
+  "consts": [],
+  "n_instructions": 12
+ },
+ "<module>._ask_template_choice._card.leave": {
+  "names": [],
+  "varnames": [
+   "e",
+   "tgt"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 27
+ },
+ "<module>._ask_template_choice._card.leave.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "_",
+   "obg",
+   "ofg"
+  ],
+  "consts": [],
+  "n_instructions": 27
+ },
+ "<module>._ask_template_choice._card.click": {
+  "names": [],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 10
+ },
+ "<module>._ask_template_choice._rgb_of": {
+  "names": [
+   "isinstance",
+   "str",
+   "tuple",
+   "Exception"
+  ],
+  "varnames": [
+   "h"
+  ],
+  "consts": [
+   null,
+   [
+    1,
+    3,
+    5
+   ]
+  ],
+  "n_instructions": 37
+ },
+ "<module>._ask_template_choice._rgb_of.<genexpr>": {
+  "names": [
+   "int"
+  ],
+  "varnames": [
+   ".0",
+   "i"
+  ],
+  "consts": [
+   2,
+   16,
+   null
+  ],
+  "n_instructions": 24
+ },
+ "<module>._entity_to_dict": {
+  "names": [
+   "entity_index",
+   "po_no",
+   "channel",
+   "delivery_date",
+   "destination_code",
+   "packing_method",
+   "wash_method",
+   "washing_color",
+   "payment_terms",
+   "price_term",
+   "currency",
+   "size_scale",
+   "product_group",
+   "age_sex_desc",
+   "product_desc",
+   "season",
+   "port_loading",
+   "port_discharge",
+   "ship_mode",
+   "vendor_name",
+   "agent_name",
+   "lines"
+  ],
+  "varnames": [
+   "e"
+  ],
+  "consts": [
+   "Recursively convert an OrderEntity to a JSON-safe dict.",
+   "entity_index",
+   "po_no",
+   "channel",
+   "delivery_date",
+   "destination_code",
+   "packing_method",
+   "wash_method",
+   "washing_color",
+   "payment_terms",
+   "price_term",
+   "currency",
+   "size_scale",
+   "product_group",
+   "age_sex_desc",
+   "product_desc",
+   "season",
+   "port_loading",
+   [
+    "port_discharge",
+    "ship_mode",
+    "vendor_name",
+    "agent_name",
+    "lines"
+   ]
+  ],
+  "n_instructions": 89
+ },
+ "<module>._entity_to_dict.<listcomp>": {
+  "names": [
+   "style_no",
+   "color_code",
+   "color_desc",
+   "inseam",
+   "unit_price",
+   "su",
+   "sizes"
+  ],
+  "varnames": [
+   ".0",
+   "ln"
+  ],
+  "consts": [
+   [
+    "style_no",
+    "color_code",
+    "color_desc",
+    "inseam",
+    "unit_price",
+    "su",
+    "sizes"
+   ]
+  ],
+  "n_instructions": 29
+ },
+ "<module>._entity_to_dict.<listcomp>.<listcomp>": {
+  "names": [
+   "size",
+   "qty_safe"
+  ],
+  "varnames": [
+   ".0",
+   "s"
+  ],
+  "consts": [
+   [
+    "size",
+    "qty"
+   ]
+  ],
+  "n_instructions": 14
+ },
+ "<module>._now": {
+  "names": [
+   "datetime",
+   "now",
+   "strftime"
+  ],
+  "varnames": [
+   "datetime"
+  ],
+  "consts": [
+   null,
+   0,
+   [
+    "datetime"
+   ],
+   "%H:%M:%S"
+  ],
+  "n_instructions": 16
+ },
+ "<module>.MainWindow": {
+  "names": [
+   "App"
+  ],
+  "varnames": [
+   "root"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 6
+ }
+}

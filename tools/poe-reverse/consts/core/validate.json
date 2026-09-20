@@ -1,0 +1,318 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "dataclasses",
+   "dataclass",
+   "typing",
+   "Dict",
+   "List",
+   "models",
+   "OrderLine",
+   "PoRecipe",
+   "PurchaseOrder",
+   "numutil",
+   "thousands_match",
+   "BreakdownProblem",
+   "validate_breakdown",
+   "validate_totals",
+   "reconcile"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/validate.py - post-parse reconciliation.\n\nThe zero-data guard in the UI only catches ``entities == 0``. A recipe can also\nmatch the WRONG rows and produce a plausible-but-wrong result, which is more\ndangerous than a blank export because nothing looks broken. Example seen on a real\nLPP PO (PO_637JO_2627182):\n\n    correct  -> 24 detail rows  \"…MEN`S TROUSERS 80X BEIGE PCS 744 10.20 7,588.80\"  total 9000\n    wrong #1 -> 16 pack rows    \"637JO-80X-T01 PACK 2 186 372\"                       total   32\n    wrong #2 -> 10 bare rows    \"637JO-80X-S PCS 372\"                                total 4230\n\nBoth wrong variants share a tell-tale signature: no unit price was captured, and/or\nonly a small fraction of the unit-bearing lines got matched. ``reconcile`` turns\nthose signals into human-readable warnings. Per product decision the caller WARNS\nbut still exports -- the operator makes the final call.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   [
+    "dataclass"
+   ],
+   [
+    "Dict",
+    "List"
+   ],
+   1,
+   [
+    "OrderLine",
+    "PoRecipe",
+    "PurchaseOrder"
+   ],
+   [
+    "thousands_match"
+   ],
+   "BreakdownProblem",
+   "po",
+   "PurchaseOrder",
+   "recipe",
+   "PoRecipe",
+   "return",
+   "List[BreakdownProblem]",
+   "List[str]",
+   "doc",
+   "str",
+   [
+    "po",
+    "PurchaseOrder",
+    "recipe",
+    "PoRecipe",
+    "return",
+    "List[BreakdownProblem]"
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "return",
+    "List[str]"
+   ],
+   [
+    "po",
+    "PurchaseOrder",
+    "recipe",
+    "PoRecipe",
+    "doc",
+    "str",
+    "return",
+    "List[str]"
+   ]
+  ],
+  "n_instructions": 68
+ },
+ "<module>.BreakdownProblem": {
+  "names": [
+   "__name__",
+   "__module__",
+   "__qualname__",
+   "__doc__",
+   "__annotations__"
+  ],
+  "varnames": [],
+  "consts": [
+   "BreakdownProblem",
+   "One colour/size quantity that disagrees with the PDF's printed subtotal.",
+   "str",
+   "axis",
+   "entity",
+   "key",
+   "int",
+   "parsed",
+   "printed",
+   "message",
+   null
+  ],
+  "n_instructions": 34
+ },
+ "<module>.validate_breakdown": {
+  "names": [
+   "entities",
+   "po_no",
+   "destination_code",
+   "has_color_total",
+   "lines",
+   "setdefault",
+   "color_code",
+   "append",
+   "items",
+   "sum",
+   "thousands_match",
+   "BreakdownProblem",
+   "has_size_total",
+   "printed_size_totals",
+   "values",
+   "max",
+   "int",
+   "abs",
+   "total_qty"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "problems",
+   "ent",
+   "ent_label",
+   "by_color",
+   "ln",
+   "code",
+   "lns",
+   "parsed",
+   "printed",
+   "printed_sum",
+   "band"
+  ],
+  "consts": [
+   "Cross-check parsed colour/size quantities against the PDF's printed subtotals.\n\n    Runs for EVERY parse (cached or not). Two independent checks, each gated by a\n    recipe flag the AI set at synthesis time:\n\n      * ``has_color_total`` -> for each colour the summed line quantities must equal\n        the summed printed ROW TOTALs of that colour's lines (the matrix ROW TOTAL\n        column; for matrix_2axis this aggregates the inseam rows of one colour).\n      * ``has_size_total`` -> for each size the summed line quantities must equal the\n        printed bottom TOTAL row of that size. A sanity guard drops a captured TOTAL\n        row whose own sum does not match the entity's parsed total, so a mis-assigned\n        global/per-colour restatement can never raise a false alarm.\n\n    Returns ``[]`` when there is nothing printed to check against (e.g. line_items,\n    whose PDFs print only a block GRAND TOTAL), so the function is always safe to\n    call. Per-row internal consistency (every line's parsed sum == its printed row\n    total) is covered by the per-colour check when a layout prints one row per\n    colour; for multi-inseam colours the per-colour aggregation is what is checked.\n    ",
+   "?",
+   "color",
+   "颜色 ",
+   " 合计：解析 ",
+   " 件 与 PDF 行小计 ",
+   " 件不符（订单 ",
+   "）",
+   [
+    "axis",
+    "entity",
+    "key",
+    "parsed",
+    "printed",
+    "message"
+   ],
+   2,
+   0.05,
+   "size",
+   "尺码 ",
+   " 件 与 PDF 小计 "
+  ],
+  "n_instructions": 212
+ },
+ "<module>.validate_breakdown.<genexpr>": {
+  "names": [
+   "sizes",
+   "size",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "l",
+   "s"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 26
+ },
+ "<module>.validate_totals": {
+  "names": [
+   "entities",
+   "po_no",
+   "destination_code",
+   "printed_total_qty",
+   "thousands_match",
+   "total_qty",
+   "append",
+   "printed_total_amount",
+   "lines",
+   "unit_price",
+   "max",
+   "abs"
+  ],
+  "varnames": [
+   "po",
+   "problems",
+   "ent",
+   "label",
+   "computed",
+   "ln",
+   "band"
+  ],
+  "consts": [
+   "Cross-check each entity's parsed grand total / amount against the PDF's\n    printed figures (structural parsers capture them into ``printed_total_qty`` /\n    ``printed_total_amount``). Returns a list of hard-block messages (empty == ok).\n\n    * total gate: parsed ``entity.total_qty`` must equal the printed quantity\n      (allowing the European-thousands 1000x ambiguity via ``thousands_match``).\n    * amount gate: ``sum(qty * unit_price)`` must equal the printed amount within\n      a 1% / $1 band (catches a wrong unit-price column read even when the\n      quantity total happens to be right).\n    ",
+   "?",
+   null,
+   "总件数：解析 ",
+   " 件 与 PDF ",
+   " 件不符（订单 ",
+   "）",
+   0.0,
+   1.0,
+   0.01,
+   "总金额：解析 ",
+   ",.2f",
+   " 与 PDF ",
+   " 不符（订单 "
+  ],
+  "n_instructions": 112
+ },
+ "<module>.reconcile": {
+  "names": [
+   "entities",
+   "sum",
+   "len",
+   "append",
+   "total_qty",
+   "order_unit",
+   "strip",
+   "re",
+   "compile",
+   "escape",
+   "splitlines",
+   "lines",
+   "po_no",
+   "isdigit"
+  ],
+  "varnames": [
+   "po",
+   "recipe",
+   "doc",
+   "warns",
+   "lines",
+   "no_price",
+   "unit",
+   "cand",
+   "e",
+   "neg"
+  ],
+  "consts": [
+   "Return a list of human-readable warnings (empty == looks consistent).",
+   "解析结果为空（无任何订单行）",
+   "全部 ",
+   " 行均未捕获单价 —— 很可能匹配到了装箱/汇总行而非真实订单行，请核对数量（当前合计 ",
+   "）",
+   0.5,
+   "/",
+   " 行缺单价，模板 A/B 的单价列会留空",
+   "",
+   "(?<![A-Za-z])",
+   "(?![A-Za-z])",
+   0.4,
+   "仅解析出 ",
+   " 行，但文中有 ",
+   " 行含单位「",
+   "」—— 疑似大量漏行",
+   "订单 ",
+   "(无单号)",
+   " 未解析到任何订单行",
+   2,
+   "订单号「",
+   "」过短，疑似把区块序号当成了单号（请检查 entity_anchor 的捕获组）",
+   "存在无单号的订单块（po_no_anchor / entity_anchor 未命中）",
+   0,
+   "解析总数量为 0",
+   "存在 ",
+   " 个负数量"
+  ],
+  "n_instructions": 239
+ },
+ "<module>.reconcile.<listcomp>": {
+  "names": [
+   "lines"
+  ],
+  "varnames": [
+   ".0",
+   "e",
+   "ln"
+  ],
+  "consts": [],
+  "n_instructions": 15
+ },
+ "<module>.reconcile.<genexpr>": {
+  "names": [
+   "sizes",
+   "qty"
+  ],
+  "varnames": [
+   ".0",
+   "ln",
+   "s"
+  ],
+  "consts": [
+   0,
+   1,
+   null
+  ],
+  "n_instructions": 24
+ }
+}

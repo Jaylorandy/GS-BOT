@@ -1,0 +1,13 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__"
+  ],
+  "varnames": [],
+  "consts": [
+   "ui/ - Tkinter front-end for the V2 extractor.",
+   null
+  ],
+  "n_instructions": 5
+ }
+}

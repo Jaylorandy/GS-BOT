@@ -1,0 +1,1356 @@
+# module: core.parsers.matrix_percarton
+# pyc: E:\GS Bot-app\tools\poe-reverse\pyc\core\parsers\matrix_percarton.pyc
+
+
+==============================================================================
+## <module>  (args=0, locals=0)
+  0           0 RESUME                   0
+
+  1           2 LOAD_CONST               0 ('core/parsers/matrix_percarton.py - colour x size grid where the size columns\nare UNITS PER CARTON and a separate "Total Units" column carries the real total.\n\nFRANKIE #1399 (JAPAN/KOREA/TAIWAN INLINE):\n\n    XS S M L XL XXL Units / Carton Total Units     <- size header\n    BLEACH (LIGHT BLUE) 2 3 3 2 10 3,330 $8.35 ... <- colour row\n    OASIS (MEDIUM BLUE) 3 4 4 4 15 4,995 ...\n    SUMMER GREY         3 3 3 2 11 3,663 ...\n    Total Per Size      8 10 10 8 36 11,988 ...    <- sum row\n\nThe size columns print per-carton quantities (2/3/3/2), a "Units / Carton" column\nholds the per-colour carton subtotal (10), and the "Total Units" column holds the\nrow total (3,330 = per-carton x cartons). Per the product decision the size\ncolumns are output AS PRINTED (per-carton) and "Total Units" is captured as\n``printed_row_total`` (not summed into the sizes).\n\nISOLATED: this parser is self-contained. It does NOT modify matrix_1axis /\nmatrix_2axis / line_items or the shared ``size_columns`` helper; its header\ndetection (which tolerates the "Units / Carton" label block between the size run\nand the TOTAL token) is local to this module.\n')
+              4 STORE_NAME               0 (__doc__)
+
+ 23           6 LOAD_CONST               1 (0)
+              8 LOAD_CONST               2 (('annotations',))
+             10 IMPORT_NAME              1 (__future__)
+             12 IMPORT_FROM              2 (annotations)
+             14 STORE_NAME               2 (annotations)
+             16 POP_TOP
+
+ 25          18 LOAD_CONST               1 (0)
+             20 LOAD_CONST               3 (None)
+             22 IMPORT_NAME              3 (os)
+             24 STORE_NAME               3 (os)
+
+ 26          26 LOAD_CONST               1 (0)
+             28 LOAD_CONST               3 (None)
+             30 IMPORT_NAME              4 (re)
+             32 STORE_NAME               4 (re)
+
+ 28          34 LOAD_CONST               4 (2)
+             36 LOAD_CONST               5 (('LayoutType', 'OrderEntity', 'OrderLine', 'PurchaseOrder', 'SizeQty', 'PoRecipe'))
+             38 IMPORT_NAME              5 (models)
+             40 IMPORT_FROM              6 (LayoutType)
+             42 STORE_NAME               6 (LayoutType)
+             44 IMPORT_FROM              7 (OrderEntity)
+             46 STORE_NAME               7 (OrderEntity)
+             48 IMPORT_FROM              8 (OrderLine)
+             50 STORE_NAME               8 (OrderLine)
+             52 IMPORT_FROM              9 (PurchaseOrder)
+             54 STORE_NAME               9 (PurchaseOrder)
+             56 IMPORT_FROM             10 (SizeQty)
+             58 STORE_NAME              10 (SizeQty)
+             60 IMPORT_FROM             11 (PoRecipe)
+             62 STORE_NAME              11 (PoRecipe)
+             64 POP_TOP
+
+ 30          66 LOAD_CONST               6 (1)
+             68 LOAD_CONST               7 (('BaseParser', 'SIZE_TOKEN', 'split_row_total', '_nearest', '_to_int', '_to_float', 'doc_text'))
+             70 IMPORT_NAME             12 (base)
+             72 IMPORT_FROM             13 (BaseParser)
+             74 STORE_NAME              13 (BaseParser)
+             76 IMPORT_FROM             14 (SIZE_TOKEN)
+             78 STORE_NAME              14 (SIZE_TOKEN)
+             80 IMPORT_FROM             15 (split_row_total)
+             82 STORE_NAME              15 (split_row_total)
+             84 IMPORT_FROM             16 (_nearest)
+             86 STORE_NAME              16 (_nearest)
+             88 IMPORT_FROM             17 (_to_int)
+             90 STORE_NAME              17 (_to_int)
+             92 IMPORT_FROM             18 (_to_float)
+             94 STORE_NAME              18 (_to_float)
+             96 IMPORT_FROM             19 (doc_text)
+             98 STORE_NAME              19 (doc_text)
+            100 POP_TOP
+
+ 33         102 LOAD_CONST               8 (<code object _find_percarton_header at 0x000002BF94449E40, file "core\parsers\matrix_percarton.py", line 33>)
+            104 MAKE_FUNCTION            0
+            106 STORE_NAME              20 (_find_percarton_header)
+
+ 58         108 LOAD_CONST               6 (1)
+            110 LOAD_CONST               4 (2)
+            112 LOAD_CONST               9 (3)
+            114 LOAD_CONST              10 (4)
+            116 LOAD_CONST              11 (5)
+            118 LOAD_CONST              12 (6)
+
+ 59         120 LOAD_CONST              13 (7)
+            122 LOAD_CONST              14 (8)
+            124 LOAD_CONST              15 (9)
+            126 LOAD_CONST              16 (10)
+            128 LOAD_CONST              17 (11)
+            130 LOAD_CONST              18 (12)
+
+ 57         132 LOAD_CONST              19 (('jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'))
+            134 BUILD_CONST_KEY_MAP     12
+            136 STORE_NAME              21 (_FRANKIE_MONTHS)
+
+ 63         138 LOAD_CONST              29 (('s', 'str', 'return', 'str'))
+            140 LOAD_CONST              23 (<code object _frankie_date at 0x000002BF94464320, file "core\parsers\matrix_percarton.py", line 63>)
+            142 MAKE_FUNCTION            4 (annotations)
+            144 STORE_NAME              22 (_frankie_date)
+
+ 79         146 LOAD_CONST              30 (('text', 'str', 'return', 'dict'))
+            148 LOAD_CONST              26 (<code object _extract_frankie_header at 0x000002BF940C7410, file "core\parsers\matrix_percarton.py", line 79>)
+            150 MAKE_FUNCTION            4 (annotations)
+            152 STORE_NAME              23 (_extract_frankie_header)
+
+135         154 PUSH_NULL
+            156 LOAD_BUILD_CLASS
+            158 LOAD_CONST              27 (<code object MatrixPerCartonParser at 0x000002BF94AA8300, file "core\parsers\matrix_percarton.py", line 135>)
+            160 MAKE_FUNCTION            0
+            162 LOAD_CONST              28 ('MatrixPerCartonParser')
+            164 LOAD_NAME               13 (BaseParser)
+            166 PRECALL                  3
+            170 CALL                     3
+            180 STORE_NAME              24 (MatrixPerCartonParser)
+            182 LOAD_CONST               3 (None)
+            184 RETURN_VALUE
+
+==============================================================================
+## <module>._find_percarton_header  (args=1, locals=7)
+# varnames: line_tokens, ti, i, t, j, end, start
+ 33           0 RESUME                   0
+
+ 39           2 LOAD_CONST               1 (None)
+              4 STORE_FAST               1 (ti)
+
+ 40           6 LOAD_GLOBAL              1 (NULL + enumerate)
+             18 LOAD_FAST                0 (line_tokens)
+             20 PRECALL                  1
+             24 CALL                     1
+             34 GET_ITER
+        >>   36 FOR_ITER                55 (to 148)
+             38 UNPACK_SEQUENCE          2
+             42 STORE_FAST               2 (i)
+             44 STORE_FAST               3 (t)
+
+ 41          46 LOAD_FAST                3 (t)
+             48 LOAD_ATTR                1 (text)
+             58 LOAD_METHOD              2 (upper)
+             80 PRECALL                  0
+             84 CALL                     0
+             94 LOAD_METHOD              3 (rstrip)
+            116 LOAD_CONST               2 (':.')
+            118 PRECALL                  1
+            122 CALL                     1
+            132 LOAD_CONST               3 ('TOTAL')
+            134 COMPARE_OP               2 (==)
+            140 POP_JUMP_FORWARD_IF_FALSE     2 (to 146)
+
+ 42         142 LOAD_FAST                2 (i)
+            144 STORE_FAST               1 (ti)
+        >>  146 JUMP_BACKWARD           56 (to 36)
+
+ 43     >>  148 LOAD_FAST                1 (ti)
+            150 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 156)
+
+ 44         152 LOAD_CONST               1 (None)
+            154 RETURN_VALUE
+
+ 45     >>  156 LOAD_FAST                1 (ti)
+            158 LOAD_CONST               4 (1)
+            160 BINARY_OP               10 (-)
+            164 STORE_FAST               4 (j)
+
+ 46         166 LOAD_FAST                4 (j)
+            168 LOAD_CONST               5 (0)
+            170 COMPARE_OP               5 (>=)
+            176 POP_JUMP_FORWARD_IF_FALSE    73 (to 324)
+            178 LOAD_GLOBAL              9 (NULL + SIZE_TOKEN)
+            190 LOAD_ATTR                5 (match)
+            200 LOAD_FAST                0 (line_tokens)
+            202 LOAD_FAST                4 (j)
+            204 BINARY_SUBSCR
+            214 LOAD_ATTR                1 (text)
+            224 PRECALL                  1
+            228 CALL                     1
+            238 POP_JUMP_FORWARD_IF_TRUE    42 (to 324)
+
+ 47     >>  240 LOAD_FAST                4 (j)
+            242 LOAD_CONST               4 (1)
+            244 BINARY_OP               23 (-=)
+            248 STORE_FAST               4 (j)
+
+ 46         250 LOAD_FAST                4 (j)
+            252 LOAD_CONST               5 (0)
+            254 COMPARE_OP               5 (>=)
+            260 POP_JUMP_FORWARD_IF_FALSE    31 (to 324)
+            262 LOAD_GLOBAL              9 (NULL + SIZE_TOKEN)
+            274 LOAD_ATTR                5 (match)
+            284 LOAD_FAST                0 (line_tokens)
+            286 LOAD_FAST                4 (j)
+            288 BINARY_SUBSCR
+            298 LOAD_ATTR                1 (text)
+            308 PRECALL                  1
+            312 CALL                     1
+            322 POP_JUMP_BACKWARD_IF_FALSE    42 (to 240)
+
+ 48     >>  324 LOAD_FAST                4 (j)
+            326 LOAD_CONST               4 (1)
+            328 BINARY_OP                0 (+)
+            332 STORE_FAST               5 (end)
+
+ 49         334 LOAD_FAST                4 (j)
+            336 LOAD_CONST               5 (0)
+            338 COMPARE_OP               5 (>=)
+            344 POP_JUMP_FORWARD_IF_FALSE    73 (to 492)
+            346 LOAD_GLOBAL              9 (NULL + SIZE_TOKEN)
+            358 LOAD_ATTR                5 (match)
+            368 LOAD_FAST                0 (line_tokens)
+            370 LOAD_FAST                4 (j)
+            372 BINARY_SUBSCR
+            382 LOAD_ATTR                1 (text)
+            392 PRECALL                  1
+            396 CALL                     1
+            406 POP_JUMP_FORWARD_IF_FALSE    42 (to 492)
+
+ 50     >>  408 LOAD_FAST                4 (j)
+            410 LOAD_CONST               4 (1)
+            412 BINARY_OP               23 (-=)
+            416 STORE_FAST               4 (j)
+
+ 49         418 LOAD_FAST                4 (j)
+            420 LOAD_CONST               5 (0)
+            422 COMPARE_OP               5 (>=)
+            428 POP_JUMP_FORWARD_IF_FALSE    31 (to 492)
+            430 LOAD_GLOBAL              9 (NULL + SIZE_TOKEN)
+            442 LOAD_ATTR                5 (match)
+            452 LOAD_FAST                0 (line_tokens)
+            454 LOAD_FAST                4 (j)
+            456 BINARY_SUBSCR
+            466 LOAD_ATTR                1 (text)
+            476 PRECALL                  1
+            480 CALL                     1
+            490 POP_JUMP_BACKWARD_IF_TRUE    42 (to 408)
+
+ 51     >>  492 LOAD_FAST                4 (j)
+            494 LOAD_CONST               4 (1)
+            496 BINARY_OP                0 (+)
+            500 STORE_FAST               6 (start)
+
+ 52         502 LOAD_FAST                5 (end)
+            504 LOAD_FAST                6 (start)
+            506 BINARY_OP               10 (-)
+            510 LOAD_CONST               6 (2)
+            512 COMPARE_OP               0 (<)
+            518 POP_JUMP_FORWARD_IF_FALSE     2 (to 524)
+
+ 53         520 LOAD_CONST               1 (None)
+            522 RETURN_VALUE
+
+ 54     >>  524 LOAD_CONST               7 (<code object <listcomp> at 0x000002BF94A2BF00, file "core\parsers\matrix_percarton.py", line 54>)
+            526 MAKE_FUNCTION            0
+            528 LOAD_FAST                0 (line_tokens)
+            530 LOAD_FAST                6 (start)
+            532 LOAD_FAST                5 (end)
+            534 BUILD_SLICE              2
+            536 BINARY_SUBSCR
+            546 GET_ITER
+            548 PRECALL                  0
+            552 CALL                     0
+            562 LOAD_FAST                0 (line_tokens)
+            564 LOAD_FAST                1 (ti)
+            566 BINARY_SUBSCR
+            576 LOAD_ATTR                6 (xc)
+            586 BUILD_TUPLE              2
+            588 RETURN_VALUE
+
+==============================================================================
+## <module>._find_percarton_header.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+ 54           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                16 (to 40)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_ATTR                0 (text)
+             22 LOAD_FAST                1 (t)
+             24 LOAD_ATTR                1 (xc)
+             34 BUILD_TUPLE              2
+             36 LIST_APPEND              2
+             38 JUMP_BACKWARD           17 (to 6)
+        >>   40 RETURN_VALUE
+
+==============================================================================
+## <module>._frankie_date  (args=1, locals=4)
+# varnames: s, m, mo, y
+ 63           0 RESUME                   0
+
+ 65           2 LOAD_FAST                0 (s)
+              4 POP_JUMP_FORWARD_IF_TRUE     2 (to 10)
+
+ 66           6 LOAD_CONST               1 ('')
+              8 RETURN_VALUE
+
+ 67     >>   10 LOAD_GLOBAL              1 (NULL + re)
+             22 LOAD_ATTR                1 (match)
+             32 LOAD_CONST               2 ('(\\d{1,2})-([A-Za-z]{3})-(\\d{2,4})$')
+             34 LOAD_FAST                0 (s)
+             36 JUMP_IF_TRUE_OR_POP      1 (to 40)
+             38 LOAD_CONST               1 ('')
+        >>   40 LOAD_METHOD              2 (strip)
+             62 PRECALL                  0
+             66 CALL                     0
+             76 PRECALL                  2
+             80 CALL                     2
+             90 STORE_FAST               1 (m)
+
+ 68          92 LOAD_FAST                1 (m)
+             94 POP_JUMP_FORWARD_IF_TRUE     2 (to 100)
+
+ 69          96 LOAD_CONST               1 ('')
+             98 RETURN_VALUE
+
+ 70     >>  100 LOAD_GLOBAL              6 (_FRANKIE_MONTHS)
+            112 LOAD_METHOD              4 (get)
+            134 LOAD_FAST                1 (m)
+            136 LOAD_METHOD              5 (group)
+            158 LOAD_CONST               3 (2)
+            160 PRECALL                  1
+            164 CALL                     1
+            174 LOAD_METHOD              6 (lower)
+            196 PRECALL                  0
+            200 CALL                     0
+            210 PRECALL                  1
+            214 CALL                     1
+            224 STORE_FAST               2 (mo)
+
+ 71         226 LOAD_FAST                1 (m)
+            228 LOAD_METHOD              5 (group)
+            250 LOAD_CONST               4 (3)
+            252 PRECALL                  1
+            256 CALL                     1
+            266 STORE_FAST               3 (y)
+
+ 72         268 LOAD_GLOBAL             15 (NULL + len)
+            280 LOAD_FAST                3 (y)
+            282 PRECALL                  1
+            286 CALL                     1
+            296 LOAD_CONST               3 (2)
+            298 COMPARE_OP               2 (==)
+            304 POP_JUMP_FORWARD_IF_FALSE     5 (to 316)
+
+ 73         306 LOAD_CONST               5 ('20')
+            308 LOAD_FAST                3 (y)
+            310 BINARY_OP                0 (+)
+            314 STORE_FAST               3 (y)
+
+ 74     >>  316 LOAD_FAST                2 (mo)
+            318 POP_JUMP_FORWARD_IF_TRUE     2 (to 324)
+
+ 75         320 LOAD_CONST               1 ('')
+            322 RETURN_VALUE
+
+ 76     >>  324 LOAD_GLOBAL             17 (NULL + int)
+            336 LOAD_FAST                3 (y)
+            338 PRECALL                  1
+            342 CALL                     1
+            352 LOAD_CONST               6 ('04d')
+            354 FORMAT_VALUE             4 (with format)
+            356 LOAD_CONST               7 ('-')
+            358 LOAD_FAST                2 (mo)
+            360 LOAD_CONST               8 ('02d')
+            362 FORMAT_VALUE             4 (with format)
+            364 LOAD_CONST               7 ('-')
+            366 LOAD_GLOBAL             17 (NULL + int)
+            378 LOAD_FAST                1 (m)
+            380 LOAD_METHOD              5 (group)
+            402 LOAD_CONST               9 (1)
+            404 PRECALL                  1
+            408 CALL                     1
+            418 PRECALL                  1
+            422 CALL                     1
+            432 LOAD_CONST               8 ('02d')
+            434 FORMAT_VALUE             4 (with format)
+            436 BUILD_STRING             5
+            438 RETURN_VALUE
+
+==============================================================================
+## <module>._extract_frankie_header  (args=1, locals=3)
+# varnames: text, h, m
+ 79           0 RESUME                   0
+
+ 90           2 BUILD_MAP                0
+              4 STORE_FAST               1 (h)
+
+ 92           6 LOAD_GLOBAL              1 (NULL + re)
+             18 LOAD_ATTR                1 (search)
+             28 LOAD_CONST               1 ('PO\\s*Number\\s+(\\S+)')
+             30 LOAD_FAST                0 (text)
+             32 PRECALL                  2
+             36 CALL                     2
+             46 STORE_FAST               2 (m)
+
+ 93          48 LOAD_FAST                2 (m)
+             50 POP_JUMP_FORWARD_IF_FALSE    21 (to 94)
+             52 LOAD_FAST                2 (m)
+             54 LOAD_METHOD              2 (group)
+             76 LOAD_CONST               2 (1)
+             78 PRECALL                  1
+             82 CALL                     1
+             92 JUMP_FORWARD             1 (to 96)
+        >>   94 LOAD_CONST               3 ('')
+        >>   96 LOAD_FAST                1 (h)
+             98 LOAD_CONST               4 ('po_no')
+            100 STORE_SUBSCR
+
+ 96         104 LOAD_GLOBAL              1 (NULL + re)
+            116 LOAD_ATTR                1 (search)
+            126 LOAD_CONST               5 ("\\b([A-Z][A-Z0-9&'., \\-]{4,60}?\\bINC\\.)")
+            128 LOAD_FAST                0 (text)
+            130 PRECALL                  2
+            134 CALL                     2
+            144 STORE_FAST               2 (m)
+
+ 97         146 LOAD_FAST                2 (m)
+            148 POP_JUMP_FORWARD_IF_FALSE    39 (to 228)
+            150 LOAD_FAST                2 (m)
+            152 LOAD_METHOD              2 (group)
+            174 LOAD_CONST               2 (1)
+            176 PRECALL                  1
+            180 CALL                     1
+            190 LOAD_METHOD              3 (strip)
+            212 PRECALL                  0
+            216 CALL                     0
+            226 JUMP_FORWARD             1 (to 230)
+        >>  228 LOAD_CONST               3 ('')
+        >>  230 LOAD_FAST                1 (h)
+            232 LOAD_CONST               6 ('customer')
+            234 STORE_SUBSCR
+
+ 99         238 LOAD_GLOBAL              1 (NULL + re)
+            250 LOAD_ATTR                1 (search)
+            260 LOAD_CONST               7 ('(FRANKIE\\s*#\\s*\\d+)')
+            262 LOAD_FAST                0 (text)
+            264 LOAD_GLOBAL              0 (re)
+            276 LOAD_ATTR                4 (I)
+            286 PRECALL                  3
+            290 CALL                     3
+            300 STORE_FAST               2 (m)
+
+100         302 LOAD_FAST                2 (m)
+            304 POP_JUMP_FORWARD_IF_FALSE    21 (to 348)
+            306 LOAD_FAST                2 (m)
+            308 LOAD_METHOD              2 (group)
+            330 LOAD_CONST               2 (1)
+            332 PRECALL                  1
+            336 CALL                     1
+            346 JUMP_FORWARD             1 (to 350)
+        >>  348 LOAD_CONST               3 ('')
+        >>  350 LOAD_FAST                1 (h)
+            352 LOAD_CONST               8 ('style_no')
+            354 STORE_SUBSCR
+
+103         358 LOAD_GLOBAL              1 (NULL + re)
+            370 LOAD_ATTR                1 (search)
+            380 LOAD_CONST               9 ('Unit\\s*Cost\\s*\\(?\\s*FOB\\s*\\)?\\s*\\$?([\\d,]+\\.\\d+)')
+            382 LOAD_FAST                0 (text)
+            384 LOAD_GLOBAL              0 (re)
+            396 LOAD_ATTR                4 (I)
+            406 PRECALL                  3
+            410 CALL                     3
+            420 STORE_FAST               2 (m)
+
+104         422 LOAD_FAST                2 (m)
+            424 POP_JUMP_FORWARD_IF_FALSE    41 (to 508)
+            426 LOAD_FAST                2 (m)
+            428 LOAD_METHOD              2 (group)
+            450 LOAD_CONST               2 (1)
+            452 PRECALL                  1
+            456 CALL                     1
+            466 LOAD_METHOD              5 (replace)
+            488 LOAD_CONST              10 (',')
+            490 LOAD_CONST               3 ('')
+            492 PRECALL                  2
+            496 CALL                     2
+            506 JUMP_FORWARD             1 (to 510)
+        >>  508 LOAD_CONST               3 ('')
+        >>  510 LOAD_FAST                1 (h)
+            512 LOAD_CONST              11 ('unit_price')
+            514 STORE_SUBSCR
+
+106         518 LOAD_GLOBAL              1 (NULL + re)
+            530 LOAD_ATTR                1 (search)
+            540 LOAD_CONST              12 ('\\bUSD\\b')
+            542 LOAD_FAST                0 (text)
+            544 PRECALL                  2
+            548 CALL                     2
+            558 POP_JUMP_FORWARD_IF_FALSE     2 (to 564)
+            560 LOAD_CONST              13 ('USD')
+            562 JUMP_FORWARD             1 (to 566)
+        >>  564 LOAD_CONST               3 ('')
+        >>  566 LOAD_FAST                1 (h)
+            568 LOAD_CONST              14 ('currency')
+            570 STORE_SUBSCR
+
+109         574 LOAD_GLOBAL              1 (NULL + re)
+            586 LOAD_ATTR                1 (search)
+
+110         596 LOAD_CONST              15 ('(\\d{1,2}-[A-Za-z]{3}-\\d{2,4})\\s+CAMBODIA\\s+(\\S+)\\s+(SEA|AIR|OCEAN|VESSEL)\\s+')
+
+111         598 LOAD_FAST                0 (text)
+
+109         600 PRECALL                  2
+            604 CALL                     2
+            614 STORE_FAST               2 (m)
+
+113         616 LOAD_FAST                2 (m)
+            618 POP_JUMP_FORWARD_IF_FALSE    86 (to 792)
+
+114         620 LOAD_GLOBAL             13 (NULL + _frankie_date)
+            632 LOAD_FAST                2 (m)
+            634 LOAD_METHOD              2 (group)
+            656 LOAD_CONST               2 (1)
+            658 PRECALL                  1
+            662 CALL                     1
+            672 PRECALL                  1
+            676 CALL                     1
+            686 LOAD_FAST                1 (h)
+            688 LOAD_CONST              16 ('ship_date')
+            690 STORE_SUBSCR
+
+115         694 LOAD_FAST                2 (m)
+            696 LOAD_METHOD              2 (group)
+            718 LOAD_CONST              17 (2)
+            720 PRECALL                  1
+            724 CALL                     1
+            734 LOAD_FAST                1 (h)
+            736 LOAD_CONST              18 ('port_discharge')
+            738 STORE_SUBSCR
+
+116         742 LOAD_FAST                2 (m)
+            744 LOAD_METHOD              2 (group)
+            766 LOAD_CONST              19 (3)
+            768 PRECALL                  1
+            772 CALL                     1
+            782 LOAD_FAST                1 (h)
+            784 LOAD_CONST              20 ('ship_mode')
+            786 STORE_SUBSCR
+            790 JUMP_FORWARD            15 (to 822)
+
+118     >>  792 LOAD_CONST               3 ('')
+            794 LOAD_FAST                1 (h)
+            796 LOAD_CONST              16 ('ship_date')
+            798 STORE_SUBSCR
+
+119         802 LOAD_CONST               3 ('')
+            804 LOAD_FAST                1 (h)
+            806 LOAD_CONST              18 ('port_discharge')
+            808 STORE_SUBSCR
+
+120         812 LOAD_CONST               3 ('')
+            814 LOAD_FAST                1 (h)
+            816 LOAD_CONST              20 ('ship_mode')
+            818 STORE_SUBSCR
+
+123     >>  822 LOAD_GLOBAL              1 (NULL + re)
+            834 LOAD_ATTR                1 (search)
+            844 LOAD_CONST              21 ('\\bFOB\\b')
+            846 LOAD_FAST                0 (text)
+            848 LOAD_GLOBAL              0 (re)
+            860 LOAD_ATTR                4 (I)
+            870 PRECALL                  3
+            874 CALL                     3
+            884 POP_JUMP_FORWARD_IF_FALSE     2 (to 890)
+            886 LOAD_CONST              22 ('FOB')
+            888 JUMP_FORWARD             1 (to 892)
+        >>  890 LOAD_CONST               3 ('')
+        >>  892 LOAD_FAST                1 (h)
+            894 LOAD_CONST              23 ('price_term')
+            896 STORE_SUBSCR
+
+124         900 LOAD_GLOBAL              1 (NULL + re)
+            912 LOAD_ATTR                1 (search)
+            922 LOAD_CONST              24 ('FOB\\s+([A-Z][A-Z]+)\\s+(JAPAN|KOREA|TAIWAN)\\b')
+            924 LOAD_FAST                0 (text)
+            926 PRECALL                  2
+            930 CALL                     2
+            940 STORE_FAST               2 (m)
+
+125         942 LOAD_FAST                2 (m)
+            944 POP_JUMP_FORWARD_IF_FALSE    21 (to 988)
+            946 LOAD_FAST                2 (m)
+            948 LOAD_METHOD              2 (group)
+            970 LOAD_CONST               2 (1)
+            972 PRECALL                  1
+            976 CALL                     1
+            986 JUMP_FORWARD             1 (to 990)
+        >>  988 LOAD_CONST               3 ('')
+        >>  990 LOAD_FAST                1 (h)
+            992 LOAD_CONST              25 ('port_loading')
+            994 STORE_SUBSCR
+
+129         998 LOAD_GLOBAL              1 (NULL + re)
+           1010 LOAD_ATTR                1 (search)
+           1020 LOAD_CONST              26 ('Season\\s+(\\S+\\s+\\d{4})')
+           1022 LOAD_FAST                0 (text)
+           1024 LOAD_GLOBAL              0 (re)
+           1036 LOAD_ATTR                4 (I)
+           1046 PRECALL                  3
+           1050 CALL                     3
+           1060 STORE_FAST               2 (m)
+
+130        1062 LOAD_FAST                2 (m)
+           1064 POP_JUMP_FORWARD_IF_FALSE    39 (to 1144)
+           1066 LOAD_FAST                2 (m)
+           1068 LOAD_METHOD              2 (group)
+           1090 LOAD_CONST               2 (1)
+           1092 PRECALL                  1
+           1096 CALL                     1
+           1106 LOAD_METHOD              3 (strip)
+           1128 PRECALL                  0
+           1132 CALL                     0
+           1142 JUMP_FORWARD             1 (to 1146)
+        >> 1144 LOAD_CONST               3 ('')
+        >> 1146 LOAD_FAST                1 (h)
+           1148 LOAD_CONST              27 ('season')
+           1150 STORE_SUBSCR
+
+132        1154 LOAD_FAST                1 (h)
+           1156 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser  (args=0, locals=0)
+135           0 RESUME                   0
+              2 LOAD_NAME                0 (__name__)
+              4 STORE_NAME               1 (__module__)
+              6 LOAD_CONST               0 ('MatrixPerCartonParser')
+              8 STORE_NAME               2 (__qualname__)
+
+136          10 LOAD_NAME                3 (LayoutType)
+             12 LOAD_ATTR                4 (MATRIX_PERCARTON)
+             22 STORE_NAME               5 (layout_type)
+
+138          24 LOAD_CONST               1 ('')
+             26 LOAD_CONST               2 (('source_file',))
+             28 BUILD_CONST_KEY_MAP      1
+             30 LOAD_CONST              11 (('recipe', 'PoRecipe', 'source_file', 'str', 'return', 'PurchaseOrder'))
+             32 LOAD_CONST               9 (<code object parse at 0x000002BF940D38B0, file "core\parsers\matrix_percarton.py", line 138>)
+             34 MAKE_FUNCTION            6 (kwdefaults, annotations)
+             36 STORE_NAME               6 (parse)
+             38 LOAD_CONST              10 (None)
+             40 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse  (args=3, locals=30)
+# varnames: self, pages, recipe, source_file, po, ent, size_cols, total_xc, size_totals, printed_qty, printed_amount, hdr, style_no, unit_price, page, line, nums, grand_percarton, t, col, code, idx, desc_parts, qty_toks, keep, row_total, sizes, rv, carton_sum, desc
+              0 MAKE_CELL               30 (scale)
+
+138           2 RESUME                   0
+
+139           4 LOAD_GLOBAL              1 (NULL + PurchaseOrder)
+
+140          16 LOAD_FAST                2 (recipe)
+             18 LOAD_ATTR                1 (customer)
+
+141          28 LOAD_FAST                3 (source_file)
+             30 POP_JUMP_FORWARD_IF_FALSE    31 (to 94)
+             32 LOAD_GLOBAL              4 (os)
+             44 LOAD_ATTR                3 (path)
+             54 LOAD_METHOD              4 (basename)
+             76 LOAD_FAST                3 (source_file)
+             78 PRECALL                  1
+             82 CALL                     1
+             92 JUMP_FORWARD             1 (to 96)
+        >>   94 LOAD_CONST               1 ('')
+
+142     >>   96 LOAD_FAST                3 (source_file)
+
+139          98 KW_NAMES                 2
+            100 PRECALL                  3
+            104 CALL                     3
+            114 STORE_FAST               4 (po)
+
+144         116 LOAD_GLOBAL             11 (NULL + OrderEntity)
+            128 PRECALL                  0
+            132 CALL                     0
+            142 STORE_FAST               5 (ent)
+
+145         144 BUILD_LIST               0
+            146 STORE_FAST               6 (size_cols)
+
+146         148 LOAD_CONST               0 (None)
+            150 STORE_FAST               7 (total_xc)
+
+147         152 BUILD_MAP                0
+            154 STORE_FAST               8 (size_totals)
+
+148         156 LOAD_CONST               0 (None)
+            158 STORE_FAST               9 (printed_qty)
+
+149         160 LOAD_CONST               0 (None)
+            162 STORE_FAST              10 (printed_amount)
+
+153         164 LOAD_GLOBAL             13 (NULL + _extract_frankie_header)
+            176 LOAD_GLOBAL             15 (NULL + doc_text)
+            188 LOAD_FAST                1 (pages)
+            190 PRECALL                  1
+            194 CALL                     1
+            204 PRECALL                  1
+            208 CALL                     1
+            218 STORE_FAST              11 (hdr)
+
+154         220 LOAD_FAST               11 (hdr)
+            222 LOAD_CONST               3 ('customer')
+            224 BINARY_SUBSCR
+            234 JUMP_IF_TRUE_OR_POP      6 (to 248)
+            236 LOAD_FAST                2 (recipe)
+            238 LOAD_ATTR                1 (customer)
+        >>  248 LOAD_FAST                4 (po)
+            250 STORE_ATTR               1 (customer)
+
+155         260 LOAD_FAST               11 (hdr)
+            262 LOAD_CONST               4 ('po_no')
+            264 BINARY_SUBSCR
+            274 LOAD_FAST                5 (ent)
+            276 STORE_ATTR               8 (po_no)
+
+156         286 LOAD_FAST               11 (hdr)
+            288 LOAD_CONST               5 ('price_term')
+            290 BINARY_SUBSCR
+            300 LOAD_FAST                5 (ent)
+            302 STORE_ATTR               9 (price_term)
+
+157         312 LOAD_FAST               11 (hdr)
+            314 LOAD_CONST               6 ('currency')
+            316 BINARY_SUBSCR
+            326 LOAD_FAST                5 (ent)
+            328 STORE_ATTR              10 (currency)
+
+158         338 LOAD_FAST               11 (hdr)
+            340 LOAD_CONST               7 ('ship_date')
+            342 BINARY_SUBSCR
+            352 LOAD_FAST                5 (ent)
+            354 STORE_ATTR              11 (delivery_date)
+
+159         364 LOAD_FAST               11 (hdr)
+            366 LOAD_CONST               8 ('port_loading')
+            368 BINARY_SUBSCR
+            378 LOAD_FAST                5 (ent)
+            380 STORE_ATTR              12 (port_loading)
+
+160         390 LOAD_FAST               11 (hdr)
+            392 LOAD_CONST               9 ('ship_mode')
+            394 BINARY_SUBSCR
+            404 LOAD_FAST                5 (ent)
+            406 STORE_ATTR              13 (ship_mode)
+
+161         416 LOAD_FAST               11 (hdr)
+            418 LOAD_CONST              10 ('port_discharge')
+            420 BINARY_SUBSCR
+            430 LOAD_FAST                5 (ent)
+            432 STORE_ATTR              14 (port_discharge)
+
+162         442 LOAD_FAST               11 (hdr)
+            444 LOAD_CONST              11 ('season')
+            446 BINARY_SUBSCR
+            456 LOAD_FAST                5 (ent)
+            458 STORE_ATTR              15 (season)
+
+163         468 LOAD_FAST               11 (hdr)
+            470 LOAD_CONST              12 ('style_no')
+            472 BINARY_SUBSCR
+            482 STORE_FAST              12 (style_no)
+
+164         484 LOAD_FAST               12 (style_no)
+            486 LOAD_FAST                5 (ent)
+            488 STORE_ATTR              16 (style_no)
+
+165         498 LOAD_GLOBAL             35 (NULL + _to_float)
+            510 LOAD_FAST               11 (hdr)
+            512 LOAD_CONST              13 ('unit_price')
+            514 BINARY_SUBSCR
+            524 PRECALL                  1
+            528 CALL                     1
+            538 STORE_FAST              13 (unit_price)
+
+167         540 LOAD_FAST                1 (pages)
+            542 GET_ITER
+        >>  544 EXTENDED_ARG             3
+            546 FOR_ITER               957 (to 2462)
+            548 STORE_FAST              14 (page)
+
+168         550 LOAD_FAST               14 (page)
+            552 LOAD_METHOD             18 (lines)
+            574 PRECALL                  0
+            578 CALL                     0
+            588 GET_ITER
+        >>  590 EXTENDED_ARG             3
+            592 FOR_ITER               932 (to 2458)
+            594 STORE_FAST              15 (line)
+
+169         596 LOAD_FAST               15 (line)
+            598 POP_JUMP_FORWARD_IF_TRUE     1 (to 602)
+
+170         600 JUMP_BACKWARD            6 (to 590)
+
+172     >>  602 LOAD_GLOBAL             39 (NULL + any)
+            614 LOAD_CONST              14 (<code object <genexpr> at 0x000002BF9472B800, file "core\parsers\matrix_percarton.py", line 172>)
+            616 MAKE_FUNCTION            0
+            618 LOAD_FAST               15 (line)
+            620 GET_ITER
+            622 PRECALL                  0
+            626 CALL                     0
+            636 PRECALL                  1
+            640 CALL                     1
+            650 POP_JUMP_FORWARD_IF_FALSE    23 (to 698)
+
+173         652 LOAD_GLOBAL             41 (NULL + _find_percarton_header)
+            664 LOAD_FAST               15 (line)
+            666 PRECALL                  1
+            670 CALL                     1
+            680 STORE_FAST              11 (hdr)
+
+174         682 LOAD_FAST               11 (hdr)
+            684 POP_JUMP_FORWARD_IF_NONE     6 (to 698)
+
+175         686 LOAD_FAST               11 (hdr)
+            688 UNPACK_SEQUENCE          2
+            692 STORE_FAST               6 (size_cols)
+            694 STORE_FAST               7 (total_xc)
+
+176         696 JUMP_BACKWARD           54 (to 590)
+
+179     >>  698 LOAD_FAST               15 (line)
+            700 LOAD_CONST              15 (0)
+            702 BINARY_SUBSCR
+            712 LOAD_ATTR               21 (text)
+            722 LOAD_METHOD             22 (upper)
+            744 PRECALL                  0
+            748 CALL                     0
+            758 LOAD_METHOD             23 (startswith)
+            780 LOAD_CONST              16 ('TOTAL')
+            782 PRECALL                  1
+            786 CALL                     1
+            796 POP_JUMP_FORWARD_IF_FALSE   253 (to 1304)
+
+180         798 LOAD_CONST              17 (<code object <listcomp> at 0x000002BF94A2ED30, file "core\parsers\matrix_percarton.py", line 180>)
+            800 MAKE_FUNCTION            0
+            802 LOAD_FAST               15 (line)
+            804 GET_ITER
+            806 PRECALL                  0
+            810 CALL                     0
+            820 STORE_FAST              16 (nums)
+
+181         822 LOAD_GLOBAL             49 (NULL + len)
+            834 LOAD_FAST               16 (nums)
+            836 PRECALL                  1
+            840 CALL                     1
+            850 LOAD_CONST              18 (2)
+            852 COMPARE_OP               5 (>=)
+            858 POP_JUMP_FORWARD_IF_FALSE   159 (to 1178)
+            860 LOAD_FAST                6 (size_cols)
+            862 POP_JUMP_FORWARD_IF_FALSE   157 (to 1178)
+
+182         864 LOAD_GLOBAL             51 (NULL + _to_int)
+            876 LOAD_FAST               16 (nums)
+            878 LOAD_CONST              19 (-1)
+            880 BINARY_SUBSCR
+            890 LOAD_ATTR               21 (text)
+            900 PRECALL                  1
+            904 CALL                     1
+            914 STORE_FAST               9 (printed_qty)
+
+183         916 LOAD_GLOBAL             51 (NULL + _to_int)
+            928 LOAD_FAST               16 (nums)
+            930 LOAD_CONST              20 (-2)
+            932 BINARY_SUBSCR
+            942 LOAD_ATTR               21 (text)
+            952 PRECALL                  1
+            956 CALL                     1
+            966 STORE_FAST              17 (grand_percarton)
+
+184         968 LOAD_FAST               17 (grand_percarton)
+            970 POP_JUMP_FORWARD_IF_FALSE     5 (to 982)
+            972 LOAD_FAST                9 (printed_qty)
+            974 LOAD_FAST               17 (grand_percarton)
+            976 BINARY_OP               11 (/)
+            980 JUMP_FORWARD             1 (to 984)
+        >>  982 LOAD_CONST              21 (0.0)
+        >>  984 STORE_DEREF             30 (scale)
+
+185         986 LOAD_FAST               16 (nums)
+            988 LOAD_CONST               0 (None)
+            990 LOAD_CONST              20 (-2)
+            992 BUILD_SLICE              2
+            994 BINARY_SUBSCR
+           1004 GET_ITER
+        >> 1006 FOR_ITER                85 (to 1178)
+           1008 STORE_FAST              18 (t)
+
+186        1010 LOAD_GLOBAL             53 (NULL + _nearest)
+           1022 LOAD_FAST                6 (size_cols)
+           1024 LOAD_FAST               18 (t)
+           1026 LOAD_ATTR               27 (xc)
+           1036 PRECALL                  2
+           1040 CALL                     2
+           1050 STORE_FAST              19 (col)
+
+187        1052 LOAD_FAST               19 (col)
+           1054 POP_JUMP_FORWARD_IF_NONE    60 (to 1176)
+           1056 LOAD_DEREF              30 (scale)
+           1058 POP_JUMP_FORWARD_IF_FALSE    58 (to 1176)
+
+188        1060 LOAD_GLOBAL             57 (NULL + int)
+           1072 LOAD_GLOBAL             59 (NULL + round)
+           1084 LOAD_GLOBAL             51 (NULL + _to_int)
+           1096 LOAD_FAST               18 (t)
+           1098 LOAD_ATTR               21 (text)
+           1108 PRECALL                  1
+           1112 CALL                     1
+           1122 LOAD_DEREF              30 (scale)
+           1124 BINARY_OP                5 (*)
+           1128 PRECALL                  1
+           1132 CALL                     1
+           1142 PRECALL                  1
+           1146 CALL                     1
+           1156 LOAD_FAST                8 (size_totals)
+           1158 LOAD_FAST               19 (col)
+           1160 LOAD_CONST              15 (0)
+           1162 BINARY_SUBSCR
+           1172 STORE_SUBSCR
+        >> 1176 JUMP_BACKWARD           86 (to 1006)
+
+189     >> 1178 LOAD_FAST               15 (line)
+           1180 GET_ITER
+        >> 1182 FOR_ITER                58 (to 1300)
+           1184 STORE_FAST              18 (t)
+
+190        1186 LOAD_FAST               18 (t)
+           1188 LOAD_ATTR               21 (text)
+           1198 LOAD_METHOD             23 (startswith)
+           1220 LOAD_CONST              22 ('$')
+           1222 PRECALL                  1
+           1226 CALL                     1
+           1236 POP_JUMP_FORWARD_IF_FALSE    30 (to 1298)
+
+191        1238 LOAD_GLOBAL             35 (NULL + _to_float)
+           1250 LOAD_FAST               18 (t)
+           1252 LOAD_ATTR               21 (text)
+           1262 LOAD_CONST              23 (1)
+           1264 LOAD_CONST               0 (None)
+           1266 BUILD_SLICE              2
+           1268 BINARY_SUBSCR
+           1278 PRECALL                  1
+           1282 CALL                     1
+           1292 STORE_FAST              10 (printed_amount)
+
+192        1294 POP_TOP
+           1296 JUMP_FORWARD             1 (to 1300)
+
+190     >> 1298 JUMP_BACKWARD           59 (to 1182)
+
+193     >> 1300 EXTENDED_ARG             1
+           1302 JUMP_BACKWARD          357 (to 590)
+
+196     >> 1304 LOAD_FAST               15 (line)
+           1306 LOAD_CONST              15 (0)
+           1308 BINARY_SUBSCR
+           1318 LOAD_ATTR               21 (text)
+           1328 LOAD_METHOD             30 (isalpha)
+           1350 PRECALL                  0
+           1354 CALL                     0
+           1364 POP_JUMP_FORWARD_IF_FALSE    31 (to 1428)
+           1366 LOAD_FAST               15 (line)
+           1368 LOAD_CONST              15 (0)
+           1370 BINARY_SUBSCR
+           1380 LOAD_ATTR               21 (text)
+           1390 LOAD_METHOD             31 (isupper)
+           1412 PRECALL                  0
+           1416 CALL                     0
+           1426 POP_JUMP_FORWARD_IF_TRUE     2 (to 1432)
+
+197     >> 1428 EXTENDED_ARG             1
+           1430 JUMP_BACKWARD          421 (to 590)
+
+198     >> 1432 LOAD_GLOBAL             39 (NULL + any)
+           1444 LOAD_CONST              24 (<code object <genexpr> at 0x000002BF94A65680, file "core\parsers\matrix_percarton.py", line 198>)
+           1446 MAKE_FUNCTION            0
+           1448 LOAD_FAST               15 (line)
+           1450 GET_ITER
+           1452 PRECALL                  0
+           1456 CALL                     0
+           1466 PRECALL                  1
+           1470 CALL                     1
+           1480 POP_JUMP_FORWARD_IF_TRUE     2 (to 1486)
+
+199        1482 EXTENDED_ARG             1
+           1484 JUMP_BACKWARD          448 (to 590)
+
+200     >> 1486 LOAD_FAST                6 (size_cols)
+           1488 POP_JUMP_FORWARD_IF_TRUE     2 (to 1494)
+
+201        1490 EXTENDED_ARG             1
+           1492 JUMP_BACKWARD          452 (to 590)
+
+202     >> 1494 LOAD_FAST               15 (line)
+           1496 LOAD_CONST              15 (0)
+           1498 BINARY_SUBSCR
+           1508 LOAD_ATTR               21 (text)
+           1518 STORE_FAST              20 (code)
+
+203        1520 LOAD_CONST              23 (1)
+           1522 STORE_FAST              21 (idx)
+
+204        1524 BUILD_LIST               0
+           1526 STORE_FAST              22 (desc_parts)
+
+205        1528 LOAD_FAST               21 (idx)
+           1530 LOAD_GLOBAL             49 (NULL + len)
+           1542 LOAD_FAST               15 (line)
+           1544 PRECALL                  1
+           1548 CALL                     1
+           1558 COMPARE_OP               0 (<)
+           1564 POP_JUMP_FORWARD_IF_FALSE   108 (to 1782)
+           1566 LOAD_FAST               15 (line)
+           1568 LOAD_FAST               21 (idx)
+           1570 BINARY_SUBSCR
+           1580 LOAD_METHOD             32 (is_number)
+           1602 PRECALL                  0
+           1606 CALL                     0
+           1616 POP_JUMP_FORWARD_IF_TRUE    82 (to 1782)
+
+206     >> 1618 LOAD_FAST               22 (desc_parts)
+           1620 LOAD_METHOD             33 (append)
+           1642 LOAD_FAST               15 (line)
+           1644 LOAD_FAST               21 (idx)
+           1646 BINARY_SUBSCR
+           1656 LOAD_ATTR               21 (text)
+           1666 PRECALL                  1
+           1670 CALL                     1
+           1680 POP_TOP
+
+207        1682 LOAD_FAST               21 (idx)
+           1684 LOAD_CONST              23 (1)
+           1686 BINARY_OP               13 (+=)
+           1690 STORE_FAST              21 (idx)
+
+205        1692 LOAD_FAST               21 (idx)
+           1694 LOAD_GLOBAL             49 (NULL + len)
+           1706 LOAD_FAST               15 (line)
+           1708 PRECALL                  1
+           1712 CALL                     1
+           1722 COMPARE_OP               0 (<)
+           1728 POP_JUMP_FORWARD_IF_FALSE    26 (to 1782)
+           1730 LOAD_FAST               15 (line)
+           1732 LOAD_FAST               21 (idx)
+           1734 BINARY_SUBSCR
+           1744 LOAD_METHOD             32 (is_number)
+           1766 PRECALL                  0
+           1770 CALL                     0
+           1780 POP_JUMP_BACKWARD_IF_FALSE    82 (to 1618)
+
+208     >> 1782 LOAD_FAST               15 (line)
+           1784 LOAD_FAST               21 (idx)
+           1786 LOAD_CONST               0 (None)
+           1788 BUILD_SLICE              2
+           1790 BINARY_SUBSCR
+           1800 STORE_FAST              23 (qty_toks)
+
+209        1802 LOAD_GLOBAL             69 (NULL + split_row_total)
+           1814 LOAD_FAST               23 (qty_toks)
+           1816 LOAD_FAST                6 (size_cols)
+           1818 LOAD_FAST                7 (total_xc)
+           1820 PRECALL                  3
+           1824 CALL                     3
+           1834 UNPACK_SEQUENCE          2
+           1838 STORE_FAST              24 (keep)
+           1840 STORE_FAST              25 (row_total)
+
+210        1842 LOAD_FAST               25 (row_total)
+           1844 POP_JUMP_FORWARD_IF_NOT_NONE     2 (to 1850)
+
+211        1846 EXTENDED_ARG             2
+           1848 JUMP_BACKWARD          630 (to 590)
+
+212     >> 1850 BUILD_LIST               0
+           1852 STORE_FAST              26 (sizes)
+
+213        1854 LOAD_FAST               24 (keep)
+           1856 GET_ITER
+        >> 1858 FOR_ITER                86 (to 2032)
+           1860 STORE_FAST              18 (t)
+
+214        1862 LOAD_GLOBAL             53 (NULL + _nearest)
+           1874 LOAD_FAST                6 (size_cols)
+           1876 LOAD_FAST               18 (t)
+           1878 LOAD_ATTR               27 (xc)
+           1888 PRECALL                  2
+           1892 CALL                     2
+           1902 STORE_FAST              19 (col)
+
+215        1904 LOAD_FAST               19 (col)
+           1906 POP_JUMP_FORWARD_IF_NOT_NONE     1 (to 1910)
+
+216        1908 JUMP_BACKWARD           26 (to 1858)
+
+217     >> 1910 LOAD_FAST               26 (sizes)
+           1912 LOAD_METHOD             33 (append)
+           1934 LOAD_GLOBAL             71 (NULL + SizeQty)
+           1946 LOAD_FAST               19 (col)
+           1948 LOAD_CONST              15 (0)
+           1950 BINARY_SUBSCR
+           1960 LOAD_GLOBAL             51 (NULL + _to_int)
+           1972 LOAD_FAST               18 (t)
+           1974 LOAD_ATTR               21 (text)
+           1984 PRECALL                  1
+           1988 CALL                     1
+           1998 KW_NAMES                25
+           2000 PRECALL                  2
+           2004 CALL                     2
+           2014 PRECALL                  1
+           2018 CALL                     1
+           2028 POP_TOP
+           2030 JUMP_BACKWARD           87 (to 1858)
+
+218     >> 2032 LOAD_FAST               26 (sizes)
+           2034 POP_JUMP_FORWARD_IF_FALSE   209 (to 2454)
+
+219        2036 LOAD_GLOBAL             51 (NULL + _to_int)
+           2048 LOAD_FAST               25 (row_total)
+           2050 LOAD_ATTR               21 (text)
+           2060 PRECALL                  1
+           2064 CALL                     1
+           2074 STORE_FAST              27 (rv)
+
+224        2076 LOAD_GLOBAL             73 (NULL + sum)
+           2088 LOAD_CONST              26 (<code object <genexpr> at 0x000002BF94A6EB10, file "core\parsers\matrix_percarton.py", line 224>)
+           2090 MAKE_FUNCTION            0
+           2092 LOAD_FAST               26 (sizes)
+           2094 GET_ITER
+           2096 PRECALL                  0
+           2100 CALL                     0
+           2110 PRECALL                  1
+           2114 CALL                     1
+           2124 STORE_FAST              28 (carton_sum)
+
+225        2126 LOAD_FAST               28 (carton_sum)
+           2128 LOAD_CONST              15 (0)
+           2130 COMPARE_OP               4 (>)
+           2136 POP_JUMP_FORWARD_IF_FALSE    31 (to 2200)
+           2138 LOAD_FAST               27 (rv)
+           2140 LOAD_CONST              15 (0)
+           2142 COMPARE_OP               4 (>)
+           2148 POP_JUMP_FORWARD_IF_FALSE    25 (to 2200)
+           2150 LOAD_FAST               27 (rv)
+           2152 LOAD_FAST               28 (carton_sum)
+           2154 COMPARE_OP               3 (!=)
+           2160 POP_JUMP_FORWARD_IF_FALSE    19 (to 2200)
+
+226        2162 LOAD_FAST               27 (rv)
+           2164 LOAD_FAST               28 (carton_sum)
+           2166 BINARY_OP               11 (/)
+           2170 STORE_DEREF             30 (scale)
+
+227        2172 LOAD_CLOSURE            30 (scale)
+           2174 BUILD_TUPLE              1
+           2176 LOAD_CONST              27 (<code object <listcomp> at 0x000002BF9473E830, file "core\parsers\matrix_percarton.py", line 227>)
+           2178 MAKE_FUNCTION            8 (closure)
+
+228        2180 LOAD_FAST               26 (sizes)
+
+227        2182 GET_ITER
+           2184 PRECALL                  0
+           2188 CALL                     0
+           2198 STORE_FAST              26 (sizes)
+
+229     >> 2200 LOAD_GLOBAL             75 (NULL + re)
+           2212 LOAD_ATTR               38 (sub)
+           2222 LOAD_CONST              28 ('\\(\\s+')
+           2224 LOAD_CONST              29 ('(')
+           2226 LOAD_CONST              30 (' ')
+           2228 LOAD_METHOD             39 (join)
+           2250 LOAD_FAST               22 (desc_parts)
+           2252 PRECALL                  1
+           2256 CALL                     1
+           2266 PRECALL                  3
+           2270 CALL                     3
+           2280 LOAD_METHOD             40 (strip)
+           2302 PRECALL                  0
+           2306 CALL                     0
+           2316 STORE_FAST              29 (desc)
+
+230        2318 LOAD_GLOBAL             75 (NULL + re)
+           2330 LOAD_ATTR               38 (sub)
+           2340 LOAD_CONST              31 ('\\s+\\)')
+           2342 LOAD_CONST              32 (')')
+           2344 LOAD_FAST               29 (desc)
+           2346 PRECALL                  3
+           2350 CALL                     3
+           2360 STORE_FAST              29 (desc)
+
+231        2362 LOAD_FAST                5 (ent)
+           2364 LOAD_ATTR               18 (lines)
+           2374 LOAD_METHOD             33 (append)
+           2396 LOAD_GLOBAL             83 (NULL + OrderLine)
+
+232        2408 LOAD_FAST               12 (style_no)
+
+233        2410 LOAD_FAST               20 (code)
+
+234        2412 LOAD_FAST               29 (desc)
+
+235        2414 LOAD_FAST               13 (unit_price)
+
+236        2416 LOAD_CONST              33 ('PCS')
+
+237        2418 LOAD_FAST               26 (sizes)
+
+238        2420 LOAD_FAST               27 (rv)
+
+231        2422 KW_NAMES                34
+           2424 PRECALL                  7
+           2428 CALL                     7
+           2438 PRECALL                  1
+           2442 CALL                     1
+           2452 POP_TOP
+        >> 2454 EXTENDED_ARG             3
+           2456 JUMP_BACKWARD          934 (to 590)
+
+168     >> 2458 EXTENDED_ARG             3
+           2460 JUMP_BACKWARD          959 (to 544)
+
+240     >> 2462 LOAD_FAST                5 (ent)
+           2464 LOAD_ATTR               18 (lines)
+           2474 POP_JUMP_FORWARD_IF_FALSE    47 (to 2570)
+
+241        2476 LOAD_FAST                8 (size_totals)
+           2478 LOAD_FAST                5 (ent)
+           2480 STORE_ATTR              42 (printed_size_totals)
+
+242        2490 LOAD_FAST                9 (printed_qty)
+           2492 LOAD_FAST                5 (ent)
+           2494 STORE_ATTR              43 (printed_total_qty)
+
+243        2504 LOAD_FAST               10 (printed_amount)
+           2506 LOAD_FAST                5 (ent)
+           2508 STORE_ATTR              44 (printed_total_amount)
+
+244        2518 LOAD_FAST                4 (po)
+           2520 LOAD_ATTR               45 (entities)
+           2530 LOAD_METHOD             33 (append)
+           2552 LOAD_FAST                5 (ent)
+           2554 PRECALL                  1
+           2558 CALL                     1
+           2568 POP_TOP
+
+245     >> 2570 LOAD_FAST                4 (po)
+           2572 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+172           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                52 (to 114)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 LOAD_METHOD              1 (upper)
+             46 PRECALL                  0
+             50 CALL                     0
+             60 LOAD_METHOD              2 (rstrip)
+             82 LOAD_CONST               0 (':.')
+             84 PRECALL                  1
+             88 CALL                     1
+             98 LOAD_CONST               1 ('TOTAL')
+            100 COMPARE_OP               2 (==)
+            106 YIELD_VALUE
+            108 RESUME                   1
+            110 POP_TOP
+            112 JUMP_BACKWARD           53 (to 8)
+        >>  114 LOAD_CONST               2 (None)
+            116 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, t
+180           0 RESUME                   0
+              2 BUILD_LIST               0
+              4 LOAD_FAST                0 (.0)
+        >>    6 FOR_ITER                24 (to 56)
+              8 STORE_FAST               1 (t)
+             10 LOAD_FAST                1 (t)
+             12 LOAD_METHOD              0 (is_number)
+             34 PRECALL                  0
+             38 CALL                     0
+             48 POP_JUMP_BACKWARD_IF_FALSE    22 (to 6)
+             50 LOAD_FAST                1 (t)
+             52 LIST_APPEND              2
+             54 JUMP_BACKWARD           25 (to 6)
+        >>   56 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, t
+198           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                30 (to 70)
+             10 STORE_FAST               1 (t)
+             12 LOAD_FAST                1 (t)
+             14 LOAD_ATTR                0 (text)
+             24 LOAD_METHOD              1 (startswith)
+             46 LOAD_CONST               0 ('$')
+             48 PRECALL                  1
+             52 CALL                     1
+             62 YIELD_VALUE
+             64 RESUME                   1
+             66 POP_TOP
+             68 JUMP_BACKWARD           31 (to 8)
+        >>   70 LOAD_CONST               1 (None)
+             72 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse.<genexpr>  (args=1, locals=2)
+# varnames: .0, s
+224           0 RETURN_GENERATOR
+              2 POP_TOP
+              4 RESUME                   0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                11 (to 32)
+             10 STORE_FAST               1 (s)
+             12 LOAD_FAST                1 (s)
+             14 LOAD_ATTR                0 (qty)
+             24 YIELD_VALUE
+             26 RESUME                   1
+             28 POP_TOP
+             30 JUMP_BACKWARD           12 (to 8)
+        >>   32 LOAD_CONST               0 (None)
+             34 RETURN_VALUE
+
+==============================================================================
+## <module>.MatrixPerCartonParser.parse.<listcomp>  (args=1, locals=2)
+# varnames: .0, s
+              0 COPY_FREE_VARS           1
+
+227           2 RESUME                   0
+              4 BUILD_LIST               0
+              6 LOAD_FAST                0 (.0)
+        >>    8 FOR_ITER                58 (to 126)
+
+228          10 STORE_FAST               1 (s)
+
+227          12 LOAD_GLOBAL              1 (NULL + SizeQty)
+             24 LOAD_FAST                1 (s)
+             26 LOAD_ATTR                1 (size)
+             36 LOAD_GLOBAL              5 (NULL + int)
+             48 LOAD_GLOBAL              7 (NULL + round)
+             60 LOAD_FAST                1 (s)
+             62 LOAD_ATTR                4 (qty)
+             72 LOAD_DEREF               2 (scale)
+             74 BINARY_OP                5 (*)
+             78 PRECALL                  1
+             82 CALL                     1
+             92 PRECALL                  1
+             96 CALL                     1
+            106 KW_NAMES                 0
+            108 PRECALL                  2
+            112 CALL                     2
+            122 LIST_APPEND              2
+            124 JUMP_BACKWARD           59 (to 8)
+        >>  126 RETURN_VALUE

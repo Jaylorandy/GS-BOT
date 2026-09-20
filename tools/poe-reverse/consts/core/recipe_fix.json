@@ -1,0 +1,423 @@
+{
+ "<module>": {
+  "names": [
+   "__doc__",
+   "__future__",
+   "annotations",
+   "re",
+   "models",
+   "PoRecipe",
+   "_HEADER_ANCHORS",
+   "_ESCAPE",
+   "_PRICE_DEFAULT",
+   "_norm_label",
+   "synth_anchor_for_value",
+   "_generalize_removed",
+   "derive_clean_transform",
+   "derive_color_clean",
+   "add_clean",
+   "sanitize_recipe_anchors"
+  ],
+  "varnames": [],
+  "consts": [
+   "core/recipe_fix.py - user-friendly recipe repair (no regex knowledge needed).\n\nTwo helpers back the new \"confirm the RESULT, not the recipe\" dialog:\n\n* ``synth_anchor_for_value(doc_lines, value)``\n    Given a value the user typed (e.g. ``PO10151999``), find the line in the\n    source PDF that contains it and build a regex anchor that captures exactly\n    that value, swallowing the label/colon. So an ordinary office worker never\n    writes a regex - they only type the correct text.\n\n* ``sanitize_recipe_anchors(recipe, doc_lines)``\n    Auto-fixes the most common AI mistakes BEFORE the dialog is shown:\n      1. a captured value that still carries a leading colon (``:PO10151999``)\n         -> re-synthesize the anchor so it captures cleanly;\n      2. ``UNIT PRICE`` without Turkish dotted-I tolerance -> ``UNIT PR[İI]CE``;\n      3. a price anchor that fails to match at all -> fall back to the known-good\n         default shape.\n    This makes the preview correct by default, so the confirm step is usually a\n    single click.\n",
+   0,
+   [
+    "annotations"
+   ],
+   null,
+   1,
+   [
+    "PoRecipe"
+   ],
+   [
+    "po_no_anchor",
+    "season_anchor",
+    "delivery_anchor",
+    "currency_anchor",
+    "price_term_anchor",
+    "style_anchor",
+    "price_anchor",
+    "packing_anchor",
+    "port_discharge_anchor",
+    "port_loading_anchor",
+    "ship_mode_anchor",
+    "agent_anchor",
+    "vendor_anchor",
+    "payment_terms_anchor",
+    "import_po_no_anchor",
+    "reference_no_anchor",
+    "cir_no_anchor",
+    "freight_terms_anchor",
+    "country_of_origin_anchor",
+    "dc_address_anchor"
+   ],
+   ".^$*+?()[]{}|\\\\",
+   "UNIT PR[İI]CE\\S*:\\s*([\\d.,]+)",
+   "label",
+   "str",
+   "return",
+   "value",
+   "removed",
+   "side",
+   "orig",
+   "new",
+   "orig_combined",
+   "new_combined",
+   "recipe",
+   "PoRecipe",
+   "field",
+   "rule",
+   "Dict[str, str]",
+   "None",
+   [
+    "label",
+    "str",
+    "return",
+    "str"
+   ],
+   [
+    "value",
+    "str"
+   ],
+   [
+    "removed",
+    "str",
+    "side",
+    "str"
+   ],
+   [
+    "orig",
+    "str",
+    "new",
+    "str"
+   ],
+   [
+    "orig_combined",
+    "str",
+    "new_combined",
+    "str"
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "field",
+    "str",
+    "rule",
+    "Dict[str, str]",
+    "return",
+    "None"
+   ],
+   [
+    "recipe",
+    "PoRecipe",
+    "return",
+    "PoRecipe"
+   ]
+  ],
+  "n_instructions": 55
+ },
+ "<module>._norm_label": {
+  "names": [
+   "len",
+   "append",
+   "isspace",
+   "_ESCAPE",
+   "join"
+  ],
+  "varnames": [
+   "label",
+   "out",
+   "i",
+   "n",
+   "c",
+   "j"
+  ],
+  "consts": [
+   "Turn a raw label (e.g. ``ORDER NO....:``) into a relaxed regex piece.\n\n    Dots -> ``\\.+``, whitespace -> ``\\s+``, regex-special chars escaped,\n    everything else kept verbatim (so a Turkish dotted-I label still matches).\n    ",
+   0,
+   ".",
+   1,
+   "\\.+",
+   "\\s+",
+   "\\",
+   ""
+  ],
+  "n_instructions": 138
+ },
+ "<module>.synth_anchor_for_value": {
+  "names": [
+   "strip",
+   "index",
+   "_norm_label",
+   "len",
+   "re",
+   "search",
+   "group",
+   "split",
+   "escape",
+   "compile",
+   "error"
+  ],
+  "varnames": [
+   "doc_lines",
+   "value",
+   "ln",
+   "idx",
+   "label",
+   "label_re",
+   "suffix",
+   "next_label",
+   "m",
+   "group",
+   "cand"
+  ],
+  "consts": [
+   "Build an anchor regex that captures ``value`` from the source lines.\n\n    Returns the regex string, or ``None`` if ``value`` cannot be located / the\n    generated pattern fails to compile.\n    ",
+   null,
+   "^\\s+([A-Z][A-Z0-9\\s]{1,})(?:[:\\.])",
+   1,
+   0,
+   "(.+?)(?=\\s+",
+   "\\b)",
+   " ",
+   "(.+)",
+   "(\\S+)",
+   "\\s*[:.]?\\s*"
+  ],
+  "n_instructions": 133
+ },
+ "<module>._generalize_removed": {
+  "names": [
+   "split",
+   "all",
+   "join"
+  ],
+  "varnames": [
+   "removed",
+   "side",
+   "parts",
+   "tokens"
+  ],
+  "consts": [
+   "If ``removed`` is a sequence of hyphen-separated alphanumeric tokens,\n    return a structural regex that strips the same *shape* of suffix/prefix\n    instead of a literal string. This lets one correction (e.g.\n    ``\"014KK-08X-XS\"`` -> ``\"014KK\"``) clean sibling styles like\n    ``\"257FM-09Y-S\"`` or ``\"637JO-10Z-M\"`` without learning each suffix.\n\n    ``side`` is \"tail\" (orig starts with new, removed is at the end) or\n    \"head\" (orig ends with new, removed is at the beginning).\n    Returns ``{\"pat\", \"repl\"}`` or ``None``.\n    ",
+   "-",
+   "tail",
+   0,
+   "",
+   null,
+   1,
+   "$",
+   [
+    "pat",
+    "repl"
+   ],
+   -1,
+   "^"
+  ],
+  "n_instructions": 113
+ },
+ "<module>._generalize_removed.<listcomp>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "p"
+  ],
+  "consts": [],
+  "n_instructions": 11
+ },
+ "<module>._generalize_removed.<genexpr>": {
+  "names": [],
+  "varnames": [
+   ".0",
+   "_"
+  ],
+  "consts": [
+   "[A-Za-z0-9]+-",
+   null
+  ],
+  "n_instructions": 13
+ },
+ "<module>.derive_clean_transform": {
+  "names": [
+   "startswith",
+   "len",
+   "_generalize_removed",
+   "re",
+   "escape",
+   "endswith"
+  ],
+  "varnames": [
+   "orig",
+   "new",
+   "removed",
+   "spec"
+  ],
+  "consts": [
+   "From a user correction (orig -> new), build a regex-sub spec that yields\n    ``new`` given ``orig`` and generalises to sibling values of the same layout.\n\n    Strategy (most specific first):\n      * new is a prefix of orig -> strip the trailing removed chunk. E.g.\n        ``\"014KK-08X-XS\"`` -> ``\"014KK\"`` yields a structural rule that strips\n        the trailing ``-COLOR-SIZE`` tokens, so ``\"257FM-09Y-S\"`` also cleans\n        to ``\"257FM\"`` on later POs.\n      * new is a suffix of orig -> strip the leading removed chunk.\n      * otherwise -> literal replace ``orig`` -> ``new`` (constant field,\n        e.g. a fixed color that never varies across POs).\n    Returns ``{\"pat\", \"repl\"}`` or ``None`` when the correction is degenerate\n    (empty / unchanged).\n    ",
+   null,
+   "tail",
+   "$",
+   "",
+   [
+    "pat",
+    "repl"
+   ],
+   "head",
+   "^"
+  ],
+  "n_instructions": 97
+ },
+ "<module>.derive_color_clean": {
+  "names": [
+   "strip",
+   "derive_clean_transform",
+   "split",
+   "startswith",
+   "len",
+   "endswith"
+  ],
+  "varnames": [
+   "orig_combined",
+   "new_combined",
+   "o",
+   "n",
+   "code",
+   "rest",
+   "tail",
+   "middle",
+   "mid_tokens"
+  ],
+  "consts": [
+   "Cleanup-transform for the combined \"CODE / DESC\" color string.\n\n    Two *structural* branches (each fixes EVERY color group of the layout with a\n    single edit), tried in order, then a literal fallback:\n\n    1. **Full strip** – the user keeps only the DESC segment after \" / \"\n       (``\"08X / SAND\"`` -> ``\"SAND\"``). Everything up to and including the first\n       \" / \" is removed. The color_code column becomes empty. Use this only when\n       the code carries no disambiguating value.\n\n    2. **Repeat-code strip (A-2, keeps color_code)** – the raw combined string\n       embeds a *repeated* code token in front of the real color name, e.g.\n       ``\"08X / TROUSERS 08X 08X SAND\"``. The user trims the box down to the pure\n       color name (``\"SAND\"``, or equivalently ``\"08X / SAND\"``). We then derive a\n       rule that removes the middle noise **up to and including the doubled\n       token** while PRESERVING the leading ``code / `` prefix, so ``color_code``\n       - and therefore ``_Row Key`` - stays distinguishable between colors that\n       share one PO. Lazy ``.*?`` is mandatory: a greedy ``.*`` would latch onto\n       the *last* doubled token and eat into adversarial names such as\n       ``\"OFF OFF WHITE\"``.\n\n    Falls back to :func:`derive_clean_transform` (literal, non-propagating) when\n    neither structural shape is recognised.\n    ",
+   "",
+   " / ",
+   1,
+   "^[^/]*? /\\s*",
+   [
+    "pat",
+    "repl"
+   ],
+   3,
+   null,
+   2,
+   -1,
+   -2,
+   "^(\\S+) / .*?(\\b\\S+)\\s+\\2\\s+",
+   "\\1 / "
+  ],
+  "n_instructions": 140
+ },
+ "<module>.add_clean": {
+  "names": [
+   "get",
+   "isinstance",
+   "dict",
+   "getattr",
+   "cleans",
+   "setdefault",
+   "append"
+  ],
+  "varnames": [
+   "recipe",
+   "field",
+   "rule",
+   "ntype",
+   "pat",
+   "cleans",
+   "lst",
+   "pair",
+   "r",
+   "vocab",
+   "entry"
+  ],
+  "consts": [
+   "Append a cleanup rule to ``recipe.cleans[field]`` (no overwrite).\n\n    ``rule`` format:\n        * regex: ``{\"pat\": \"...\", \"repl\": \"...\"}``  (existing behaviour)\n        * normalizer: ``{\"type\": \"normalize_date\"}``  (V2.0.19.10+)\n        * normalizer with params: ``{\"type\": \"normalize_term\", \"vocab\": {...}}``\n\n    Duplicate rules are skipped (idempotent).  ``pat``-based rules are deduped\n    on ``(pat, repl)``; ``type``-based rules are deduped on ``(type, vocab)``.\n    A rule with neither ``pat`` nor ``type`` is ignored.\n    ",
+   "type",
+   "",
+   "pat",
+   null,
+   "cleans",
+   "repl",
+   0,
+   1,
+   [
+    "pat",
+    "repl"
+   ],
+   "vocab"
+  ],
+  "n_instructions": 164
+ },
+ "<module>.sanitize_recipe_anchors": {
+  "names": [
+   "isinstance",
+   "list",
+   "tuple",
+   "join",
+   "PoRecipe",
+   "from_json",
+   "to_json",
+   "price_anchor",
+   "replace",
+   "_HEADER_ANCHORS",
+   "getattr",
+   "re",
+   "search",
+   "error",
+   "groups",
+   "group",
+   "lstrip",
+   "strip",
+   "synth_anchor_for_value",
+   "setattr",
+   "bool",
+   "any",
+   "_PRICE_DEFAULT"
+  ],
+  "varnames": [
+   "recipe",
+   "doc_lines",
+   "text",
+   "d",
+   "attr",
+   "pat",
+   "m",
+   "val",
+   "correct",
+   "new",
+   "pm",
+   "ok",
+   "g"
+  ],
+  "consts": [
+   "Repair obvious AI anchor bugs against the real document. Returns recipe.",
+   "\n",
+   "PRICE",
+   "PR[İI]CE",
+   1,
+   0,
+   null,
+   [
+    ":",
+    "："
+   ],
+   ":：",
+   false
+  ],
+  "n_instructions": 202
+ },
+ "<module>.sanitize_recipe_anchors.<genexpr>": {
+  "names": [
+   "isdigit"
+  ],
+  "varnames": [
+   ".0",
+   "c"
+  ],
+  "consts": [
+   null
+  ],
+  "n_instructions": 16
+ }
+}
