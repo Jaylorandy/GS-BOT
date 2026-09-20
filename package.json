@@ -63,6 +63,7 @@
       "src/shared/labelOcrDefaults.json",
       "main.js",
       "preload.js",
+      "auto-updater.js",
       "firecrawl-service.js",
       "firecrawl-fallback.js",
       "pdf-squeezer-handlers.js",
