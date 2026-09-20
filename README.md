@@ -24,7 +24,6 @@ GS Bot is an Electron desktop app for apparel operations workflows: web scraping
 - Frontend: React 18 + esbuild bundle pipeline
 - Desktop bridge: [preload.js](preload.js)
 - Python utilities for slides, PDF, and garment processing
-- Optional local model runtimes for RMBG, SegFormer, and OCR-related flows (onnxruntime-node)
 
 ## Scripts
 
@@ -58,4 +57,3 @@ Releases are published to [GitHub Releases](https://github.com/Jaylorandy/GS-BOT
 - Python 3 for Python-backed workflows in development
 - Electron dependencies from `package-lock.json`
 - Chrome or Chromium for scraping workflows
-- Optional model files for RMBG 2.0 garment cutout, SegFormer garment-boundary refinement, and OCR runtimes
