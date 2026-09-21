@@ -6,6 +6,7 @@ import {
   isEmbeddedPaddleOcrEngine,
   mergeOcrConfig,
 } from '../utils/ocrEngines';
+import { splitModelsByVision, pickDefaultModel } from '../utils/modelCapabilities';
 import OcrModelStore from './OcrModelStore';
 import './SetupGuide.css';
 
@@ -516,7 +517,9 @@ const DEFAULT_CONFIG = {
         name: 'GLM (智谱AI)',
         baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
         apiKey: '',
-        model: 'glm-4-plus',
+        // Empty by default: auto-filled with the endpoint's default (highest-
+        // versioned "flash" model) after a successful connection test.
+        model: '',
         availableModels: [],
         fallbackModels: [
           'glm-4-plus',
@@ -1000,8 +1003,8 @@ function SetupGuide({
     try {
       const payload =
         type === 'local'
-          ? { baseUrl: config.local.baseUrl, apiKey: '' }
-          : { baseUrl: config.cloud.baseUrl, apiKey: config.cloud.apiKey };
+          ? { baseUrl: config.local.baseUrl, apiKey: '', kind: 'local' }
+          : { baseUrl: config.cloud.baseUrl, apiKey: config.cloud.apiKey, kind: 'cloud' };
 
       const result = await window.electronAPI?.testLLMConnection?.(payload);
       if (result?.success) {
@@ -1014,7 +1017,10 @@ function SetupGuide({
             [type]: {
               ...prev[type],
               availableModels: result.models,
-              model: prev[type].model || result.models[0],
+              // Auto-fill an empty model slot with a sensible default:
+              // highest-versioned "flash" model on the cloud endpoint, first
+              // installed model locally. The main process computes it.
+              model: prev[type].model || result.suggestedModel || result.models[0],
             },
           }));
         }
@@ -1097,7 +1103,15 @@ function SetupGuide({
             apiCloud: {
               ...prev.apiCloud,
               presets: (prev.apiCloud?.presets || []).map((p) =>
-                p.id === presetId ? { ...p, availableModels: result.models } : p
+                p.id === presetId
+                  ? {
+                    ...p,
+                    availableModels: result.models,
+                    // Auto-fill an empty model with the endpoint's default
+                    // (highest-versioned "flash" model for GLM & co.).
+                    model: p.model || result.suggestedModel || result.models[0] || '',
+                  }
+                  : p
               ),
             },
           }));
@@ -1282,13 +1296,15 @@ function SetupGuide({
   // When a cloud model list has been fetched but no model is selected yet, the
   // dropdown shows the "choose a model" placeholder while config.cloud.model
   // stays empty — which keeps Save greyed out even though models were detected.
-  // Auto-select the first detected model so Save unblocks; the user can change
-  // it. Runs regardless of mode so configuring cloud always completes cleanly.
+  // Auto-select a sensible default so Save unblocks: the highest-versioned
+  // "flash" model (same rule the runtime uses), not just the first entry. The
+  // user can always change it. Runs regardless of mode so configuring cloud
+  // always completes cleanly.
   useEffect(() => {
     if (cloudModelList.length > 0 && !config.cloud.model) {
       setConfig((prev) => ({
         ...prev,
-        cloud: { ...prev.cloud, model: cloudModelList[0] },
+        cloud: { ...prev.cloud, model: pickDefaultModel('cloud', cloudModelList) },
       }));
     }
   }, [cloudModelList, config.cloud.model]);
@@ -1666,6 +1682,10 @@ function SetupGuide({
 
   const renderCloudModelField = () => {
     if (cloudModelList.length > 0) {
+      // Vision-capable models first; the rest stay in a second group. Many
+      // Ollama cloud models are text-only, and every AI feature in GS Bot reads
+      // product photos, so the ordering is a correctness hint, not cosmetic.
+      const { visionModels, otherModels } = splitModelsByVision(cloudModelList);
       return (
         <label className="setup-field">
           <span>{tx('Cloud model', '云端模型')}</span>
@@ -1679,10 +1699,22 @@ function SetupGuide({
             }
           >
             <option value="">{tx('Choose a model...', '选择一个模型...')}</option>
-            {cloudModelList.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
+            {visionModels.length > 0 && (
+              <optgroup label={tx(`Reads images (${visionModels.length})`, `可读图（${visionModels.length}）`)}>
+                {visionModels.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </optgroup>
+            )}
+            {otherModels.length > 0 && (
+              <optgroup label={tx(`Text only · no images (${otherModels.length})`, `纯文本 · 不看图（${otherModels.length}）`)}>
+                {otherModels.map((model) => (
+                  <option key={model} value={model}>{model}</option>
+                ))}
+              </optgroup>
+            )}
+            {!visionModels.length && !otherModels.length && cloudModelList.map((model) => (
+              <option key={model} value={model}>{model}</option>
             ))}
           </select>
         </label>
@@ -2132,6 +2164,8 @@ function SetupGuide({
             const knownModels = uniq([...fetchedModels, ...fallbackModels]);
             const currentModel = activePreset.model || '';
             const modelIsKnown = currentModel && knownModels.includes(currentModel);
+            // Vision-capable models first, same grouping as the cloud picker.
+            const { visionModels: presetVisionModels, otherModels: presetOtherModels } = splitModelsByVision(knownModels);
 
             return (
               <>
@@ -2170,9 +2204,20 @@ function SetupGuide({
                           }
                         }}
                       >
-                        {knownModels.map((m) => (
-                          <option key={m} value={m}>{m}</option>
-                        ))}
+                        {presetVisionModels.length > 0 && (
+                          <optgroup label={tx(`Reads images (${presetVisionModels.length})`, `可读图（${presetVisionModels.length}）`)}>
+                            {presetVisionModels.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </optgroup>
+                        )}
+                        {presetOtherModels.length > 0 && (
+                          <optgroup label={tx(`Text only · no images (${presetOtherModels.length})`, `纯文本 · 不看图（${presetOtherModels.length}）`)}>
+                            {presetOtherModels.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </optgroup>
+                        )}
                         <option value="__custom_input__">{tx('Custom input...', '自定义输入...')}</option>
                         {!modelIsKnown && currentModel && (
                           <option value={currentModel}>{currentModel}</option>

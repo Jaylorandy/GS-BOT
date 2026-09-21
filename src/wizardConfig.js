@@ -133,32 +133,7 @@ export const WIZARD_CONFIG = {
         title: { en: 'AI & Output', zh: 'AI 与输出' },
         desc: { en: 'Enable AI descriptions and set the output path.', zh: '启用 AI 描述并设置输出路径。' },
         fields: [
-          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。' } },
-          {
-            key: 'aiModeOverride', type: 'select', label: { en: 'AI Model', zh: 'AI 模型' },
-            // Shown whenever any AI feature is on (descriptions OR summary page),
-            // because the summary page calls AI on its own.
-            showWhen: (p) => p.ollamaEnabled || p.enableSummary,
-            default: 'local',
-            options: [
-              { value: 'local', label: { en: 'Local (Ollama)', zh: '本地 (Ollama)' } },
-              { value: 'cloud', label: { en: 'Cloud', zh: '云端' } },
-              { value: 'apiCloud', label: { en: 'API Cloud (GLM/DeepSeek)', zh: 'API 云端（GLM/DeepSeek）' } },
-            ],
-          },
-          {
-            key: 'llmModel', type: 'model-picker', label: { en: 'Model Name', zh: '模型名称' },
-            showWhen: (p) => (p.ollamaEnabled || p.enableSummary) && p.aiModeOverride,
-            hint: { en: 'Leave empty to use the default model from settings.', zh: '留空则使用设置中的默认模型。' },
-          },
-          {
-            key: 'visionModel', type: 'model-picker', label: { en: 'Vision Model', zh: '视觉模型' },
-            showWhen: (p) => (p.ollamaEnabled || p.enableSummary) && p.aiModeOverride,
-            hint: {
-              en: 'Reads the product images. Leave empty to follow the model above. Text-only models such as GLM-4.7 cannot read images — pick a vision model (e.g. glm-4.6v, glm-4v-plus) here and AI will keep working with images.',
-              zh: '用于识别产品图片。留空则跟随上方主模型。GLM-4.7 这类纯文本模型无法读图，在此选择视觉模型（如 glm-4.6v、glm-4v-plus）AI 才能看图分析。',
-            },
-          },
+          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions. Model & endpoint are configured in Settings.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。模型与端点在设置页配置。' } },
           { key: 'outputPath', type: 'save-picker', label: { en: 'Output File', zh: '输出文件' }, ext: 'pptx', hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
         ],
       },
@@ -215,23 +190,7 @@ export const WIZARD_CONFIG = {
           { key: 'outputDir', type: 'dir-picker', label: { en: 'Output Folder', zh: '输出目录' }, hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
           { key: 'downloadConcurrency', type: 'number', label: { en: 'Download Threads', zh: '下载线程数' }, default: 10, min: 1, max: 20 },
           { key: 'zaraBackupMode', type: 'toggle', label: { en: 'Zara Backup Search', zh: 'Zara 备用搜索' }, showWhen: (p) => p.brand === 'zara' },
-          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Analysis', zh: 'AI 趋势分析' }, desc: { en: 'Run AI analysis after scraping.', zh: '抓取后自动运行 AI 分析。' } },
-          {
-            key: 'llmMode', type: 'select', label: { en: 'AI Model', zh: 'AI 模型' },
-            showWhen: (p) => p.doAnalyze,
-            default: 'default',
-            options: [
-              { value: 'default', label: { en: 'Default', zh: '默认' } },
-              { value: 'cloud', label: { en: 'Cloud', zh: '云端' } },
-              { value: 'local', label: { en: 'Local (Ollama)', zh: '本地 (Ollama)' } },
-              { value: 'apiCloud', label: { en: 'API Cloud (GLM/DeepSeek)', zh: 'API 云端（GLM/DeepSeek）' } },
-            ],
-          },
-          {
-            key: 'llmModel', type: 'model-picker', label: { en: 'Model Name', zh: '模型名称' },
-            showWhen: (p) => p.doAnalyze && p.llmMode && p.llmMode !== 'default',
-            hint: { en: 'Leave empty to use the default model from settings.', zh: '留空则使用设置中的默认模型。' },
-          },
+          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Analysis', zh: 'AI 趋势分析' }, desc: { en: 'Run AI analysis after scraping. The AI model is configured in Settings.', zh: '抓取后自动运行 AI 分析。AI 模型在设置页配置。' } },
           {
             key: 'language', type: 'select', label: { en: 'Report Language', zh: '报告语言' },
             showWhen: (p) => p.doAnalyze,
@@ -330,23 +289,7 @@ export const WIZARD_CONFIG = {
         desc: { en: 'Set output folder and AI analysis options.', zh: '设置输出目录和 AI 分析选项。' },
         fields: [
           { key: 'outputDir', type: 'dir-picker', label: { en: 'Output Folder', zh: '输出目录' }, hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
-          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Report', zh: 'AI 趋势报告' }, default: true },
-          {
-            key: 'llmMode', type: 'select', label: { en: 'AI Model', zh: 'AI 模型' },
-            showWhen: (p) => p.doAnalyze,
-            default: 'default',
-            options: [
-              { value: 'default', label: { en: 'Default', zh: '默认' } },
-              { value: 'cloud', label: { en: 'Cloud', zh: '云端' } },
-              { value: 'local', label: { en: 'Local (Ollama)', zh: '本地 (Ollama)' } },
-              { value: 'apiCloud', label: { en: 'API Cloud (GLM/DeepSeek)', zh: 'API 云端（GLM/DeepSeek）' } },
-            ],
-          },
-          {
-            key: 'llmModel', type: 'model-picker', label: { en: 'Model Name', zh: '模型名称' },
-            showWhen: (p) => p.doAnalyze && p.llmMode && p.llmMode !== 'default',
-            hint: { en: 'Leave empty to use the default model from settings.', zh: '留空则使用设置中的默认模型。' },
-          },
+          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Report', zh: 'AI 趋势报告' }, default: true, desc: { en: 'Generate an AI trend report after scraping. The AI model is configured in Settings.', zh: '抓取后生成 AI 趋势报告。AI 模型在设置页配置。' } },
           {
             key: 'language', type: 'select', label: { en: 'Report Language', zh: '报告语言' },
             showWhen: (p) => p.doAnalyze,

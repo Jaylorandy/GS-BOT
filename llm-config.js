@@ -19,7 +19,11 @@ const DEFAULT_API_PRESETS = [
     id: 'glm',
     name: '智谱AI (GLM)',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    model: 'glm-4-plus',
+    // Empty by default: the settings page auto-fills the endpoint's default
+    // model after a successful connection test (highest-versioned "flash"
+    // model for GLM), and the runtime chains resolve an empty model the same
+    // way. Hardcoding a version here goes stale and text-only.
+    model: '',
     apiKey: '',
   },
   {

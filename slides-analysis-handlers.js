@@ -1,5 +1,6 @@
 const { spawn } = require('child_process');
 const { getDefaultOcrEngine, getDefaultOcrFallbackEngine } = require('./ocr-engine-config');
+const { modelSupportsVision, pickDefaultModel } = require('./llm-client');
 
 function normalizePathSafeText(value = '') {
   return String(value || '')
@@ -232,6 +233,8 @@ function registerSlidesAnalysisHandlers({
   activeTaskControllers,
   assertLicensedForFeature,
   getLicenseFailurePayload,
+  listVisionCandidates,
+  promptVisionDecision,
 }) {
   ipcMain.handle('read-dir', async (_event, dirPath) => {
     try {
@@ -398,6 +401,94 @@ function registerSlidesAnalysisHandlers({
 
       (async () => {
         try {
+          // Vision pre-flight. Every AI path below hands images to the model
+          // (style photos, label images, fabric swatches) and a text-only model
+          // comes back with prose about images it never received — Python only
+          // notices after the fact via VISION_UNSUPPORTED_TARGETS. Ask first.
+          const llmSettings = slidesSettings.llmConfig || {};
+          const configuredVision = slidesSettings.apparelVision || {};
+          // The wizard only carries an "AI on/off" switch; the model comes from
+          // the settings page. If the saved model is empty, resolve one from the
+          // endpoint itself (highest flash version on clouds, first installed
+          // model locally) so Python never sees an empty model name.
+          let mainModel = String(llmSettings.model || '').trim();
+          if (!mainModel && (slidesSettings.ollamaEnabled || slidesSettings.enableSummary)) {
+            try {
+              const LLMClient = require('./llm-client');
+              const probe = new LLMClient({
+                baseUrl: llmSettings.baseUrl || 'http://localhost:11434',
+                model: '',
+                apiKey: llmSettings.apiKey || '',
+                provider: llmSettings.provider || 'auto',
+                timeout: 15000,
+              });
+              const test = await probe.testConnection();
+              const picked = pickDefaultModel(llmSettings.mode, test?.models || []);
+              if (picked) {
+                // Mutate in place: this object is spread into the Python stdin
+                // payload later, so the resolved model must land here.
+                slidesSettings.llmConfig.model = picked;
+                mainModel = picked;
+                event.sender.send('slides-log', {
+                  time: new Date().toLocaleTimeString(),
+                  message: `No model configured — using ${picked} from ${llmSettings.mode === 'apiCloud' ? 'API cloud' : llmSettings.mode === 'cloud' ? 'cloud' : 'local'} endpoint.`,
+                  type: 'info',
+                });
+              }
+            } catch {
+              // Endpoint unreachable: leave the model empty and let the run
+              // fail with the endpoint's own error message.
+            }
+          }
+          // Mirrors Python's resolve_apparel_vision_settings(): an empty slot
+          // falls back to the main model. Only the models that actually receive
+          // images are checked, so a deliberate "text-only main model + separate
+          // vision model" setup is not flagged.
+          const resolveVisionSlot = (value) => String(value || '').trim() || mainModel;
+          const visionInPlay = Array.from(new Set([
+            resolveVisionSlot(configuredVision.garmentModel),
+            resolveVisionSlot(configuredVision.fabricModel),
+          ].filter(Boolean)));
+          const nonVisionModels = visionInPlay.filter((m) => !modelSupportsVision(m));
+          if (nonVisionModels.length) {
+            const candidates = await listVisionCandidates(llmSettings);
+            const decision = await promptVisionDecision({
+              sender: event.sender,
+              model: nonVisionModels[0],
+              candidates,
+              cn: /^zh/i.test(String(app.getLocale() || '')),
+              log: (message, type = 'info') => event.sender.send('slides-log', {
+                time: new Date().toLocaleTimeString(),
+                message,
+                type,
+              }),
+            });
+            if (decision.action === 'cancel') {
+              resolve({
+                success: false,
+                cancelled: true,
+                error: 'Presentation generation cancelled: the selected model cannot read images.',
+              });
+              return;
+            }
+            if (decision.action === 'switch' && decision.model) {
+              // Mutate in place: this very object is spread into a new config
+              // later (plainly, right before Python is spawned), so replacing it
+              // here would silently drop the user's choice.
+              slidesSettings.apparelVision = {
+                ...configuredVision,
+                enabled: true,
+                garmentModel: decision.model,
+                fabricModel: decision.model,
+              };
+              event.sender.send('slides-log', {
+                time: new Date().toLocaleTimeString(),
+                message: `Switched vision model to ${decision.model}`,
+                type: 'success',
+              });
+            }
+          }
+
           if (slidesSettings.sourceMode === 'label-images' || slidesSettings.sourceMode === 'fabric-images' || slidesSettings.sourceMode === 'style-images-only') {
             event.sender.send('slides-log', {
               time: new Date().toLocaleTimeString(),
@@ -661,7 +752,20 @@ function registerSlidesAnalysisHandlers({
         apiKey: config.apiKey || '',
         provider: config.provider || 'auto',
       });
-      return await client.testConnection();
+      const result = await client.testConnection();
+      if (result && result.success) {
+        // Group vision models first and suggest a default so the settings page
+        // can auto-fill an empty model slot with something sensible.
+        const models = (result.models || []).map((m) => String(m));
+        const kind = config.kind === 'local' ? 'local' : 'cloud';
+        return {
+          ...result,
+          visionModels: models.filter((m) => LLMClient.modelSupportsVision(m)),
+          otherModels: models.filter((m) => !LLMClient.modelSupportsVision(m)),
+          suggestedModel: LLMClient.pickDefaultModel(kind, models),
+        };
+      }
+      return result;
     } catch (error) {
       return { success: false, error: error.message };
     }

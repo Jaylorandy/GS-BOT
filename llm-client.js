@@ -133,6 +133,87 @@ function normalizeToolArguments(input) {
   return {};
 }
 
+// ── Vision (image-reading) capability detection ───────────────────────────
+// Name-based by necessity: Ollama's /api/tags and OpenAI's /v1/models do not
+// report modality, and probing /api/show once per model is too slow for a
+// dropdown refresh. These patterns cover the naming conventions of the
+// multimodal families people actually run locally or via GLM/Ollama cloud.
+//
+// Why it matters: a text-only model (glm-4.7, qwen2.5-coder, …) does not error
+// out on the image path — it silently produces plausible prose about a garment
+// it never saw. The picker uses this to steer users toward vision models.
+const VISION_MODEL_PATTERNS = [
+  /glm[-_.]?\d+(?:\.\d+)?v/,        // GLM 视觉系: glm-4v, glm-4v-plus, glm-4.5v, glm-4.6v
+  /vision/,                          // llama3.2-vision, phi-3-vision, gpt-4-vision
+  /(?:^|[-_.\d])vl(?![a-z])/,        // qwen2.5-vl, qwen2.5vl, qwen3-vl
+  /llava|bakllava/,                  // llava, llava-llama3, bakllava
+  /moondream/,
+  /minicpm[-_.]?v/,
+  /internvl/,
+  /pixtral/,
+  /smolvlm/,
+  /cogvlm/,
+  /molmo/,
+  /fuyu/,
+  /xcomposer/,
+  /(?:^|[-_.])yi[-_.]?vl/,
+  /deepseek[-_.]?vl/,
+  /step[-_.]?1v/,
+  /omni/,                            // qwen2.5-omni, qwen3-omni
+  /gemma[-_.]?3/,                    // gemma3 (4b+) ships a vision encoder
+  /llama[-_.]?4/,                    // llama4 is natively multimodal
+  /mistral[-_.]?small[-_.]?3[._-]?1/,
+  /\b(?:gpt[-_.]?4o|gpt[-_.]?4\.1|gpt[-_.]?4v|gpt[-_.]?5|o3|o4)\b/,
+  /claude[-_.]?[345]/,
+  /gemini/,
+];
+
+function modelSupportsVision(modelName = '') {
+  const name = String(modelName || '').trim().toLowerCase();
+  if (!name) return false;
+  return VISION_MODEL_PATTERNS.some((re) => re.test(name));
+}
+
+// ── Default model picking ──────────────────────────────────
+// Feature wizards only carry a single "AI on/off" switch; the concrete model is
+// whatever the settings page has configured. When that is empty, these helpers
+// pick a sensible default from the models the endpoint actually serves:
+//   * cloud / apiCloud (GLM etc.): the highest-versioned "flash" model, falling
+//     back to the highest-versioned model overall. "glm-5.3-flash" beats
+//     "glm-4.7-flash"; non-flash text models are never preferred over a flash.
+//   * local: whatever is installed — first entry wins ("有哪个用哪个").
+function _versionKey(name) {
+  const str = String(name || '');
+  // For tagged models ("qwen3-vl:235b") the tag carries the meaningful size —
+  // prefer it over the small version number in the base name.
+  const tag = str.includes(':') ? str.slice(str.lastIndexOf(':') + 1) : '';
+  const match = (tag || str).match(/(\d+(?:\.\d+)*)/);
+  return match ? match[1].split('.').map((n) => parseInt(n, 10) || 0) : [];
+}
+
+function _pickHighestVersion(list) {
+  return [...list].sort((a, b) => {
+    const va = _versionKey(a);
+    const vb = _versionKey(b);
+    const len = Math.max(va.length, vb.length);
+    for (let i = 0; i < len; i += 1) {
+      const diff = (va[i] || 0) - (vb[i] || 0);
+      if (diff) return diff;
+    }
+    return String(a).localeCompare(String(b));
+  }).pop() || '';
+}
+
+function pickDefaultModel(mode, models = []) {
+  const list = Array.from(new Set((models || []).filter(Boolean).map((m) => String(m))));
+  if (!list.length) return '';
+  if (mode === 'cloud' || mode === 'apiCloud') {
+    const flash = list.filter((m) => /flash/i.test(m));
+    return flash.length ? _pickHighestVersion(flash) : _pickHighestVersion(list);
+  }
+  return list[0];
+}
+
 class LLMClient {
   constructor(options = {}) {
     this.baseUrl = this._fixCommonUrlMistakes(options.baseUrl || 'http://localhost:11434');
@@ -141,7 +222,6 @@ class LLMClient {
     this.provider = this._normalizeProvider(options.provider);
     this.timeout = options.timeout || options.timeoutMs || 600000; // 默认10分钟
   }
-
   _fixCommonUrlMistakes(url) {
     const raw = String(url || '').trim();
     if (!raw) return raw;
@@ -298,10 +378,7 @@ class LLMClient {
    * 获取可用模型列表
    */
   supportsVision() {
-    const m = (this.model || '').toLowerCase();
-    const isQwenVl = m.includes('qwen') && m.includes('-vl');
-    const isGlmVision = m.includes('glm-4v') || /glm[-_.]?\d+(\.\d+)?v\b/.test(m);
-    return m.includes('vision') || m.includes('llava') || m.includes('minicpm') || isQwenVl || isGlmVision || m.includes('moondream');
+    return modelSupportsVision(this.model);
   }
 
   supportsTools() {
@@ -1202,3 +1279,5 @@ Include: key strengths, potential gaps, market opportunities, and 2-3 actionable
 }
 
 module.exports = LLMClient;
+module.exports.modelSupportsVision = modelSupportsVision;
+module.exports.pickDefaultModel = pickDefaultModel;

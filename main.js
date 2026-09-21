@@ -1568,6 +1568,17 @@ function getScraperOutputFolderName(brand = '') {
   return 'Zara';
 }
 
+// Single source of truth for "where did the scrape actually write?".
+// Every brand scraper resolves its own targetDir as:
+//     !outputDir || outputDir === '未选择' ? <Desktop>/<folderName> : outputDir
+// with folderName taken from getScraperOutputFolderName(). Keep both in sync —
+// start-task relies on this to tell the frontend where the AI report should read from.
+function resolveScraperOutputDir(brand = '', outputDir = '') {
+  const requested = String(outputDir || '').trim();
+  if (requested && requested !== '未选择') return requested;
+  return path.join(app.getPath('desktop'), getScraperOutputFolderName(brand));
+}
+
 function loadMixedBrandExcelQueue(excelPath, emitLog = () => {}) {
   const workbook = XLSX.readFile(excelPath);
   const worksheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -19795,9 +19806,15 @@ ipcMain.handle('start-task', async (event, config) => {
         cacheMode: 'live-run',
       });
       await runScraper(config, emitLog, emitProgress, taskController, null);
+      // Return the RESOLVED output dir, not the raw config value: when the user
+      // leaves "Output Folder" empty every brand scraper silently falls back to
+      // <Desktop>/<Brand>, and the post-scrape AI trend analysis is told to read
+      // from whatever we return here. Returning config.outputDir (often '') made
+      // the analysis throw "No scraped folder provided" on the default path —
+      // i.e. AI analysis silently never ran unless a folder was hand-picked.
       return {
         success: true,
-        outputPath: String(config?.outputDir || '').trim(),
+        outputPath: resolveScraperOutputDir(config?.brand, config?.outputDir),
       };
     }, activeTaskControllers);
   } catch (error) {
@@ -19856,6 +19873,17 @@ ipcMain.handle('bestseller-analyze', async (event, config = {}) => {
         summary: 'Bestseller trend analysis',
         cacheMode: 'live-run',
       });
+      // The whole chain (per-style vision note + trend aggregation) feeds product
+      // photos to the model, and a text-only model degrades silently instead of
+      // failing. Surface the choice to the user before the run starts.
+      const requestVisionDecision = ({ model, candidates }) => promptVisionDecision({
+        sender: event.sender,
+        model,
+        candidates,
+        cn: language === 'zh' || language === 'cn' || language === 'zh-CN',
+        log: emitLog,
+      });
+
       return await generateBestsellerReport(sourceDir, outputPath, {
         language,
         imagesPerStyle: Number(config?.imagesPerStyle) || 3,
@@ -19866,11 +19894,16 @@ ipcMain.handle('bestseller-analyze', async (event, config = {}) => {
         emitLog,
         emitProgress,
         ensureActive: () => taskController.throwIfCancelled(),
+        requestVisionDecision,
       });
     }, activeTaskControllers);
   } catch (error) {
     const licenseFailure = getLicenseFailurePayload(error);
     if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    if (error.userCancelled) {
+      emitLog(error.message, 'warning');
+      return { success: false, error: error.message, cancelled: true };
+    }
     emitLog(`分析失败: ${error.message}`, 'error');
     return { success: false, error: error.message };
   }
@@ -19968,6 +20001,79 @@ app.on('activate', () => {
 });
 
 // ============= Slides Maker / Analysis IPC Handlers =============
+// ── Shared vision pre-flight ───────────────────────────────────────────────
+// Both image-reading chains (scrape → trend report, and PPT generation) hand
+// product photos to a model. A text-only model does not fail on that: the image
+// formats get exhausted, the call drops to a plain-text chat, and the output
+// then reads as if the photos had actually been examined. Ask the user up front
+// instead of shipping a document that quietly has no visual basis.
+async function listVisionCandidates({ baseUrl, apiKey, provider } = {}) {
+  try {
+    const LLMClient = require('./llm-client');
+    const client = new LLMClient({
+      baseUrl: baseUrl || 'http://localhost:11434',
+      model: '',
+      apiKey: apiKey || '',
+      provider: provider || 'auto',
+      timeout: 15000,
+    });
+    const result = await client.testConnection();
+    if (!result || result.success === false) return [];
+    return (result.models || [])
+      .map((m) => String(m))
+      .filter((m) => LLMClient.modelSupportsVision(m));
+  } catch {
+    return [];
+  }
+}
+
+async function promptVisionDecision({ sender, model, candidates, cn = false, log = () => {} }) {
+  const list = Array.isArray(candidates) ? candidates : [];
+  const best = list[0] || '';
+  log(cn
+    ? `模型「${model}」不支持读图，等待确认…`
+    : `Model "${model}" cannot read images — waiting for your decision…`, 'warning');
+  const buttons = best
+    ? [
+      cn ? `改用 ${best}` : `Use ${best}`,
+      cn ? '仍要继续（不看图）' : 'Continue anyway (no images)',
+      cn ? '取消' : 'Cancel',
+    ]
+    : [
+      cn ? '仍要继续（不看图）' : 'Continue anyway (no images)',
+      cn ? '取消' : 'Cancel',
+    ];
+  const box = {
+    type: 'warning',
+    buttons,
+    defaultId: 0,
+    cancelId: buttons.length - 1,
+    noLink: true,
+    title: cn ? 'AI 模型不支持读图' : 'AI model cannot read images',
+    message: cn ? `模型「${model}」无法读取产品图片` : `Model "${model}" cannot read images`,
+    detail: [
+      cn ? `当前模型：${model}` : `Current model: ${model}`,
+      best
+        ? (cn
+          ? `该端点上有 ${list.length} 个支持读图的模型，可改用 ${best}${list.length > 1 ? `（其余：${list.slice(1, 4).join('、')}${list.length > 4 ? ' 等' : ''}）` : ''}。`
+          : `${list.length} image-capable model(s) on this endpoint; ${best} can be used${list.length > 1 ? ` (others: ${list.slice(1, 4).join(', ')}${list.length > 4 ? ', …' : ''})` : ''}.`)
+        : (cn
+          ? '该端点上没有检测到支持读图的模型。可在设置中安装视觉模型（如 llava、qwen2.5-vl）后重试。'
+          : 'No image-capable model was detected on this endpoint. Install one (e.g. llava, qwen2.5-vl) in the settings and retry.'),
+      cn
+        ? '不读图也能继续，但面料质感、织法一类的描述将没有图像依据（结果会标注）。'
+        : 'Continuing without images still produces a result, but fabric texture and weave observations will have no visual basis (this is flagged in the output).',
+    ].join('\n'),
+  };
+  const win = sender ? BrowserWindow.fromWebContents(sender) : null;
+  const { response } = win
+    ? await dialog.showMessageBox(win, box)
+    : await dialog.showMessageBox(box);
+  if (best && response === 0) return { action: 'switch', model: best };
+  if (response === (best ? 1 : 0)) return { action: 'continue' };
+  return { action: 'cancel' };
+}
+
 registerSlidesAnalysisHandlers({
   ipcMain,
   dialog,
@@ -19981,6 +20087,8 @@ registerSlidesAnalysisHandlers({
   activeTaskControllers,
   assertLicensedForFeature,
   getLicenseFailurePayload,
+  listVisionCandidates,
+  promptVisionDecision,
 });
 
 registerPdfSqueezerHandlers({
@@ -20624,9 +20732,17 @@ ipcMain.handle('test-api-cloud-connection', async (_event, config = {}) => {
 
     const result = await client.testConnection();
     if (result.success) {
+      // Annotate the model list so the settings UI can group vision models
+      // first and auto-fill an empty model with a sensible default (highest
+      // "flash" version for API clouds).
+      const { modelSupportsVision, pickDefaultModel } = require('./llm-client');
+      const models = (result.models || []).map((m) => String(m));
       return {
         success: true,
-        models: result.models || [],
+        models,
+        visionModels: models.filter((m) => modelSupportsVision(m)),
+        otherModels: models.filter((m) => !modelSupportsVision(m)),
+        suggestedModel: pickDefaultModel('apiCloud', models),
       };
     }
     return { success: false, error: result.error || 'Connection test failed.' };
@@ -20637,6 +20753,48 @@ ipcMain.handle('test-api-cloud-connection', async (_event, config = {}) => {
 
 // 列出指定模式下可用的模型（options.force=true 时跳过缓存强制在线刷新）
 ipcMain.handle('list-llm-models', async (_event, options = {}) => {
+  const { modelSupportsVision } = require('./llm-client');
+
+  // Vision-capable models are listed first so the picker can group them above a
+  // collapsed "cannot read images" block. This chain (scrape -> per-style vision
+  // note -> trend report) needs image input, and a text-only model degrades
+  // silently instead of failing, so the ordering is a correctness hint, not
+  // cosmetic. Sorted alphabetically inside each group for a stable list.
+  const annotate = (models, extra = {}) => {
+    const list = Array.from(new Set((models || []).filter(Boolean).map((m) => String(m))));
+    const byName = (a, b) => a.localeCompare(b);
+    const visionModels = list.filter((m) => modelSupportsVision(m)).sort(byName);
+    const otherModels = list.filter((m) => !modelSupportsVision(m)).sort(byName);
+    return {
+      success: true,
+      models: [...visionModels, ...otherModels],
+      visionModels,
+      otherModels,
+      totalModels: list.length,
+      visionCount: visionModels.length,
+      ...withCurrentVision(extra),
+    };
+  };
+  const fail = (error, extra = {}) => ({
+    success: false,
+    error,
+    models: [],
+    visionModels: [],
+    otherModels: [],
+    totalModels: 0,
+    visionCount: 0,
+    ...withCurrentVision(extra),
+  });
+
+  // The model the run falls back to when the picker is left on "use default
+  // model". The renderer needs its capability up front, otherwise the most
+  // common path (default model = glm-4.7) shows no warning at all.
+  const withCurrentVision = (extra = {}) => (
+    extra.currentModel
+      ? { ...extra, currentModelVision: modelSupportsVision(extra.currentModel) }
+      : extra
+  );
+
   try {
     const LLMClient = require('./llm-client');
     const cfg = llmConfig.mergeWithDefaults(llmConfig.loadConfig());
@@ -20650,7 +20808,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       apiKey = cfg.cloud?.apiKey || '';
       // Return cached models first if available
       if (!force && cfg.cloud?.availableModels?.length) {
-        return { success: true, models: cfg.cloud.availableModels, cached: true, currentModel: model };
+        return annotate(cfg.cloud.availableModels, { cached: true, currentModel: model });
       }
     } else if (mode === 'apiCloud') {
       const preset = (cfg.apiCloud?.presets || []).find((p) => p.id === (options.presetId || cfg.apiCloud?.activePresetId)) || {};
@@ -20658,7 +20816,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       model = preset.model || '';
       apiKey = preset.apiKey || '';
       if (!force && preset.availableModels?.length) {
-        return { success: true, models: preset.availableModels, cached: true, currentModel: model };
+        return annotate(preset.availableModels, { cached: true, currentModel: model });
       }
     } else {
       // local
@@ -20666,22 +20824,22 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       model = cfg.local?.model || '';
       apiKey = '';
       if (!force && cfg.local?.installedModels?.length) {
-        return { success: true, models: cfg.local.installedModels, cached: true, currentModel: model };
+        return annotate(cfg.local.installedModels, { cached: true, currentModel: model });
       }
     }
 
     if (!baseUrl) {
-      return { success: false, error: 'No base URL configured for this mode.', models: [], currentModel: model };
+      return fail('No base URL configured for this mode.', { currentModel: model });
     }
 
     const client = new LLMClient({ baseUrl, model, apiKey, timeout: 15000 });
     const result = await client.testConnection();
     if (result.success) {
-      return { success: true, models: result.models || [], cached: false, currentModel: model };
+      return annotate(result.models, { cached: false, currentModel: model });
     }
-    return { success: false, error: result.error || 'Connection failed', models: [], currentModel: model };
+    return fail(result.error || 'Connection failed', { currentModel: model });
   } catch (error) {
-    return { success: false, error: error.message, models: [] };
+    return fail(error.message);
   }
 });
 

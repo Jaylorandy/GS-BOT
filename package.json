@@ -1,7 +1,7 @@
 {
   "name": "zara-scraper-pro",
   "private": true,
-  "version": "2.0.5",
+  "version": "2.0.6",
   "main": "main.js",
   "description": "GS Bot - 本地服装净图、整理与工作流工具",
   "author": "Jaylor Andy",
@@ -18,6 +18,8 @@
     "dist:win:light": "GSBOT_WINDOWS_CUTOUT_VARIANT=light node scripts/build-windows-installer.js",
     "repro:win-asar": "node scripts/repro-win-asar-integrity.js",
     "verify:onnx-load": "node scripts/verify-onnxruntime-model-load.js",
+    "verify:scraper-folders": "node scripts/verify-scraper-folders.js",
+    "verify:vision-preflight": "node scripts/verify-vision-preflight.js",
     "test:regression": "node scripts/run-regression-tests.js",
     "license:generate": "node scripts/generate-license.js",
     "license:gui": "electron license-generator-app/main.js",

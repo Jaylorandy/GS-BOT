@@ -194,9 +194,22 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
 
   // Model picker state
   const [modelList, setModelList] = useState([]);
+  // Vision-capable models, split out by the main process. This picker feeds the
+  // scrape -> vision-note -> trend-report chain, where a text-only model does not
+  // error but silently produces prose about images it never received.
+  const [visionModels, setVisionModels] = useState([]);
+  const [otherModels, setOtherModels] = useState([]);
+  const [showNonVision, setShowNonVision] = useState(false);
+  // The model this run will really use when the field is left empty, and whether
+  // it can read images. Without these the most common path — empty field on a
+  // text-only default model — shows no warning at all.
+  const [currentModel, setCurrentModel] = useState('');
+  const [currentModelVision, setCurrentModelVision] = useState(null);
   const [modelLoading, setModelLoading] = useState(false);
   const retryRef = useRef(false);
-  // 'llmMode' covers scraper/bestseller wizards; slides uses 'aiModeOverride' (local/cloud/apiCloud).
+  // Model pickers are no longer part of any wizard (AI config lives in the
+  // settings page), so 'llmMode' stays 'default' — the fetch/effects below only
+  // run if a model-picker field is ever reintroduced.
   const llmMode = allParams?.llmMode || allParams?.aiModeOverride || 'default';
   const fetchModels = useCallback(async (mode, force = false) => {
     const api = window.electronAPI;
@@ -206,12 +219,21 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
       const result = await api.listLLMModels({ mode: mode === 'default' ? undefined : mode, force });
       if (result?.success && Array.isArray(result.models)) {
         setModelList(result.models);
+        setVisionModels(Array.isArray(result.visionModels) ? result.visionModels : []);
+        setOtherModels(Array.isArray(result.otherModels) ? result.otherModels : []);
+        setCurrentModel(typeof result.currentModel === 'string' ? result.currentModel : '');
+        setCurrentModelVision(typeof result.currentModelVision === 'boolean' ? result.currentModelVision : null);
         return result.models;
       } else {
-        setModelList([]);
+        setModelList([]); setVisionModels([]); setOtherModels([]);
+        setCurrentModel(''); setCurrentModelVision(null);
         return [];
       }
-    } catch { setModelList([]); return []; }
+    } catch {
+      setModelList([]); setVisionModels([]); setOtherModels([]);
+      setCurrentModel(''); setCurrentModelVision(null);
+      return [];
+    }
     finally { setModelLoading(false); }
   }, []);
 
@@ -334,6 +356,28 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
   if (field.type === 'model-picker') {
     const showModels = modelList.length > 0;
     const optStyle = { background: '#2a2a3e', color: '#e8e8f0' };
+    // Grouped rendering when the main process annotated capabilities AND this
+    // field's chain actually needs image input (`vision: true` in wizardConfig).
+    // Vision models come first; the rest stay hidden behind a toggle unless one
+    // of them is the current value (so we never drop the user's saved selection).
+    const hasVisionSplit = field.vision === true && (visionModels.length + otherModels.length > 0);
+    // The model this run will really use: the explicit pick, or — when the field
+    // is left empty ("use default model") — whatever the active endpoint
+    // resolves to. Warning off the effective model, not just off `val`, so the
+    // default path is covered too.
+    const effectiveModel = String(val || currentModel || '').trim();
+    const effectiveIsNonVision = Boolean(effectiveModel) && (
+      otherModels.includes(effectiveModel)
+      || (currentModelVision === false && effectiveModel === currentModel)
+    );
+    const selectedIsNonVision = effectiveIsNonVision && effectiveModel === val;
+    const visibleOthers = showNonVision
+      ? otherModels
+      : (otherModels.includes(effectiveModel) ? [effectiveModel] : []);
+    const noVisionAvailable = hasVisionSplit && visionModels.length === 0;
+    const followLabel = field.key === 'visionModel'
+      ? tx('Follow the main model', '跟随主模型')
+      : tx('Use default model', '使用默认模型');
     return (
       <div className="wizard-field wizard-field--select">
         <label className="wizard-field__label">{t(field.label)}</label>
@@ -348,13 +392,32 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
               }}
             >
               <option value="" style={optStyle}>
-                {field.key === 'visionModel'
-                  ? tx('Follow the main model', '跟随主模型')
-                  : tx('Use default model', '使用默认模型')}
+                {showModels && currentModel
+                  ? `${followLabel}（${currentModel}）`
+                  : followLabel}
               </option>
-              {modelList.map((m) => (
-                <option key={m} value={m} style={optStyle}>{m}</option>
-              ))}
+              {hasVisionSplit ? (
+                <>
+                  {visionModels.length > 0 && (
+                    <optgroup label={tx(`Reads images (${visionModels.length})`, `可读图（${visionModels.length}）`)}>
+                      {visionModels.map((m) => (
+                        <option key={m} value={m} style={optStyle}>{m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {visibleOthers.length > 0 && (
+                    <optgroup label={tx(`Text only — cannot read images (${otherModels.length})`, `纯文本 · 不看图（${otherModels.length}）`)}>
+                      {visibleOthers.map((m) => (
+                        <option key={m} value={m} style={optStyle}>{m}</option>
+                      ))}
+                    </optgroup>
+                  )}
+                </>
+              ) : (
+                modelList.map((m) => (
+                  <option key={m} value={m} style={optStyle}>{m}</option>
+                ))
+              )}
             </select>
           ) : (
             <input
@@ -381,6 +444,53 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
             {modelLoading ? '...' : tx('Refresh', '刷新')}
           </button>
         </div>
+        {showModels && hasVisionSplit && (
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
+            <span className="wizard-field__hint" style={{ margin: 0 }}>
+              {tx(`${visionModels.length} of ${modelList.length} models can read images`,
+                `${modelList.length} 个模型中 ${visionModels.length} 个支持读图`)}
+            </span>
+            {otherModels.length > 0 && !showNonVision && !selectedIsNonVision && (
+              <button
+                type="button"
+                onClick={() => setShowNonVision(true)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  color: 'inherit', opacity: 0.75, fontSize: 12, textDecoration: 'underline',
+                }}
+              >
+                {tx(`Show ${otherModels.length} text-only models`, `展开其余 ${otherModels.length} 个不看图的模型`)}
+              </button>
+            )}
+            {(showNonVision || selectedIsNonVision) && otherModels.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowNonVision(false)}
+                style={{
+                  background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                  color: 'inherit', opacity: 0.75, fontSize: 12, textDecoration: 'underline',
+                }}
+              >
+                {tx('Collapse text-only models', '收起不看图的模型')}
+              </button>
+            )}
+          </div>
+        )}
+        {noVisionAvailable && (
+          <span className="wizard-field__hint" style={{ color: '#e0a24a' }}>
+            {tx('No image-capable model found on this endpoint. AI notes will have no visual basis — install a vision model (e.g. llava, qwen2.5-vl) or switch the model above.',
+              '该端点下没有找到支持读图的模型。AI 笔记将没有图像依据——请安装视觉模型（如 llava、qwen2.5-vl）或在上方切换模型。')}
+          </span>
+        )}
+        {effectiveIsNonVision && (
+          <span className="wizard-field__hint" style={{ color: '#e0a24a' }}>
+            {selectedIsNonVision
+              ? tx(`"${effectiveModel}" cannot read images — the analysis will describe styles without looking at the product photos.`,
+                `「${effectiveModel}」不支持读图——分析将不会查看产品图片。`)
+              : tx(`The default model "${effectiveModel}" cannot read images — the analysis will describe styles without looking at the product photos. Pick an image-capable model above, or change the default in settings.`,
+                `当前默认模型「${effectiveModel}」不支持读图——分析将不会查看产品图片。请在上方更换支持读图的模型，或到设置页更换默认模型。`)}
+          </span>
+        )}
         {field.hint && <span className="wizard-field__hint">{t(field.hint)}</span>}
         {llmMode === 'default' && (
           <span className="wizard-field__hint" style={{ opacity: 0.7 }}>
@@ -1133,50 +1243,33 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           fillMissingSlots: params.fillMissingSlots ?? true,
         };
         // AI is needed by AI descriptions AND by the summary page (its overview
-        // and category suggestions are AI-generated). Sending the LLM config for
-        // either one keeps `enableSummary` from being silently skipped.
+        // and category suggestions are AI-generated). The wizard only carries
+        // the on/off switch — mode, endpoint and model all come from the saved
+        // settings config (an empty model is resolved by the main process).
         if (params.ollamaEnabled || params.enableSummary) {
-          const aiMode = params.aiModeOverride || 'local';
           const cfg = llmSettings || {};
-          const effectiveMode = aiMode === 'cloud' ? 'cloud' : (aiMode === 'apiCloud' ? 'apiCloud' : 'local');
+          const mode = cfg.mode || 'local';
           const apiPreset = (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {};
+          const endpoint = mode === 'cloud'
+            ? cfg.cloud || {}
+            : mode === 'apiCloud'
+              ? apiPreset
+              : (cfg.local || {});
           payload.config.ollamaEnabled = true;
-          payload.config.aiModeOverride = aiMode;
-          // Only per-style description rewriting stays tied to the AI-description
-          // toggle — the summary page is its own switch and must not force it.
-          // Vision stays on for any AI feature: styles without a description are
-          // classified from their image.
           payload.config.enableVision = true;
           payload.config.generateDescription = !!params.ollamaEnabled;
           payload.config.llmConfig = {
-            mode: effectiveMode,
-            baseUrl: effectiveMode === 'cloud'
-              ? (cfg.cloud?.baseUrl || '')
-              : effectiveMode === 'apiCloud'
-                ? (apiPreset.baseUrl || '')
-                : (cfg.local?.baseUrl || 'http://localhost:11434'),
-            model: effectiveMode === 'cloud'
-              ? (cfg.cloud?.model || '')
-              : effectiveMode === 'apiCloud'
-                ? (apiPreset.model || '')
-                : (cfg.local?.model || ''),
-            apiKey: effectiveMode === 'cloud'
-              ? (cfg.cloud?.apiKey || '')
-              : effectiveMode === 'apiCloud'
-                ? (apiPreset.apiKey || '')
-                : '',
+            mode,
+            baseUrl: endpoint.baseUrl || (mode === 'local' ? 'http://localhost:11434' : ''),
+            model: endpoint.model || '',
+            apiKey: endpoint.apiKey || '',
           };
-          // User-picked model name from the wizard overrides the saved-config default.
-          if (params.llmModel) payload.config.llmConfig.model = params.llmModel;
-          // Vision model is configured on its own: text-only models (GLM-4.7 and
-          // friends) cannot read images, so the wizard lets the user point vision
-          // at a multimodal model while keeping the main model for text.
-          // Empty string means "follow the main model".
+          // Vision slots stay empty = follow the main model (resolved by Python
+          // and guarded by the main-process vision pre-flight).
           payload.config.apparelVision = {
-            ...(params.apparelVision || {}),
             enabled: true,
-            garmentModel: params.visionModel || '',
-            fabricModel: params.visionModel || '',
+            garmentModel: '',
+            fabricModel: '',
           };
         }
       }
@@ -1205,22 +1298,9 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           payload.styleNumbers = params.styleNumbers || '';
         }
         payload.excelPath = params.excelPath || '';
-        // Live LLM endpoint for the optional post-scrape AI trend analysis.
-        // Same convention as the bestseller tab: 'default' keeps the saved
-        // disk config; cloud/apiCloud/local send the live endpoint.
-        const scrapeLlmMode = params.llmMode || 'default';
-        if (params.doAnalyze && (scrapeLlmMode === 'cloud' || scrapeLlmMode === 'apiCloud' || scrapeLlmMode === 'local')) {
-          const cfg = llmSettings || {};
-          const apiPreset = (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {};
-          const endpoint = scrapeLlmMode === 'cloud'
-            ? { baseUrl: cfg.cloud?.baseUrl || '', model: cfg.cloud?.model || '', apiKey: cfg.cloud?.apiKey || '' }
-            : scrapeLlmMode === 'apiCloud'
-              ? { baseUrl: apiPreset.baseUrl || '', model: apiPreset.model || '', apiKey: apiPreset.apiKey || '' }
-              : { baseUrl: cfg.local?.baseUrl || 'http://localhost:11434', model: cfg.local?.model || '', apiKey: '' };
-          payload.llm = { mode: scrapeLlmMode, ...endpoint };
-          // User-picked model name from the wizard overrides the saved-config default.
-          if (params.llmModel) payload.llm.model = params.llmModel;
-        }
+        // The AI trend analysis (params.doAnalyze) uses the saved settings
+        // config: the scraper handler falls back to 'default' mode when no
+        // explicit llm endpoint is passed, and resolves an empty model itself.
       }
       if (tab.id === 'bestseller') {
         payload.brand = params.brand || 'newyorker';
@@ -1232,23 +1312,10 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           payload.productCount = Number(params.productCount) || 0;
         }
         // doAnalyze defaults to true (matching wizardConfig default);
-        // the toggle's default is only used at render time so params may be undefined.
-        const doAnalyze = params.doAnalyze !== false;
-        // Live LLM endpoint for the AI trend report (doAnalyze path).
-        // 'default' keeps the saved disk config; cloud/apiCloud/local send the live endpoint.
-        const llmMode = params.llmMode || 'default';
-        if (doAnalyze && (llmMode === 'cloud' || llmMode === 'apiCloud' || llmMode === 'local')) {
-          const cfg = llmSettings || {};
-          const apiPreset = (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {};
-          const endpoint = llmMode === 'cloud'
-            ? { baseUrl: cfg.cloud?.baseUrl || '', model: cfg.cloud?.model || '', apiKey: cfg.cloud?.apiKey || '' }
-            : llmMode === 'apiCloud'
-              ? { baseUrl: apiPreset.baseUrl || '', model: apiPreset.model || '', apiKey: apiPreset.apiKey || '' }
-              : { baseUrl: cfg.local?.baseUrl || 'http://localhost:11434', model: cfg.local?.model || '', apiKey: '' };
-          payload.llm = { mode: llmMode, ...endpoint };
-          // User-picked model name from the wizard overrides the saved-config default.
-          if (params.llmModel) payload.llm.model = params.llmModel;
-        }
+        // the toggle's default is only used at render time so params may be
+        // undefined. The AI trend report uses the saved settings config: the
+        // report falls back to 'default' mode and resolves an empty model from
+        // the endpoint itself.
       }
       if (tab.id === 'cleaner') {
         const src = params.sourcePath;
@@ -1281,11 +1348,12 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           const analyzePayload = {
             sourceDir: res?.outputPath || res?.outputDir || payload.outputDir || '',
             language: params.language || 'en',
-            llmMode: params.llmMode || 'default',
+            // 'default' = use the saved settings config (mode/endpoint/model);
+            // an empty model is resolved by bestseller-report itself.
+            llmMode: 'default',
             imagesPerStyle: Number(params.imagesPerStyle) || 3,
             brandLabel: payload.brandLabel,
             genderLabel: payload.genderLabel,
-            llm: payload.llm || {},
           };
           const analyzeRes = await api.bestsellerAnalyze?.(analyzePayload);
           if (analyzeRes?.success === false) {
@@ -1312,11 +1380,12 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           const analyzePayload = {
             sourceDir: res?.outputPath || res?.outputDir || params.outputDir || '',
             language: params.language || 'en',
-            llmMode: params.llmMode || 'default',
+            // 'default' = use the saved settings config (mode/endpoint/model);
+            // an empty model is resolved by bestseller-report itself.
+            llmMode: 'default',
             imagesPerStyle: 3,
             brandLabel: brandLabels[params.brand] || params.brand || 'Brand',
             genderLabel: '',
-            llm: payload.llm || {},
           };
           const analyzeRes = await api.bestsellerAnalyze?.(analyzePayload);
           if (analyzeRes?.success === false) {

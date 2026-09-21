@@ -457,6 +457,12 @@
 .wizard-toggle__text {
   display: flex;
   flex-direction: column;
+  /* Fill the card so label + desc sit in the vertical middle of the box,
+     regardless of how tall the description renders. */
+  flex: 1 1 auto;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
   gap: 2px;
 }
 

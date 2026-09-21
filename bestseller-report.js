@@ -21,6 +21,8 @@ const {
 } = require('docx');
 const LLMClient = require('./llm-client');
 const llmConfigManager = require('./llm-config');
+// Name-based capability table, shared with the wizard's model picker.
+const { modelSupportsVision } = LLMClient;
 
 function readJsonSafe(p) {
   try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; }
@@ -41,23 +43,39 @@ function computeSeason(now = new Date()) {
   };
 }
 
-function listStyleFolders(rootDir) {
+// One level: every direct sub-folder that carries a *_info.json is a style.
+function collectStyleFoldersIn(dir) {
   const out = [];
   let entries = [];
-  try { entries = fs.readdirSync(rootDir, { withFileTypes: true }); } catch { return out; }
+  try { entries = fs.readdirSync(dir, { withFileTypes: true }); } catch { return out; }
   for (const e of entries) {
     if (!e.isDirectory()) continue;
-    const dir = path.join(rootDir, e.name);
-    const infoFile = fs.readdirSync(dir).find((f) => /_info\.json$/i.test(f));
+    const sub = path.join(dir, e.name);
+    const infoFile = fs.readdirSync(sub).find((f) => /_info\.json$/i.test(f));
     if (!infoFile) continue;
-    const info = readJsonSafe(path.join(dir, infoFile));
+    const info = readJsonSafe(path.join(sub, infoFile));
     if (!info) continue;
-    const images = fs.readdirSync(dir)
+    const images = fs.readdirSync(sub)
       .filter((f) => /\.(?:jpe?g|png|webp)$/i.test(f))
-      .map((f) => path.join(dir, f));
-    out.push({ dir, info, images });
+      .map((f) => path.join(sub, f));
+    out.push({ dir: sub, info, images });
   }
   return out;
+}
+
+function listStyleFolders(rootDir) {
+  const direct = collectStyleFoldersIn(rootDir);
+  if (direct.length) return direct;
+  // Mixed-brand mode nests one extra level — <root>/<Brand>/<style>/… — so
+  // nothing is found at the top level. Fall back to walking the brand folders.
+  const nested = [];
+  let entries = [];
+  try { entries = fs.readdirSync(rootDir, { withFileTypes: true }); } catch { return nested; }
+  for (const e of entries) {
+    if (!e.isDirectory()) continue;
+    nested.push(...collectStyleFoldersIn(path.join(rootDir, e.name)));
+  }
+  return nested;
 }
 
 function compositionToText(composition) {
@@ -79,7 +97,10 @@ function imageToBase64(p) {
   }
 }
 
-function buildLlmClient(llmOpts = {}, forceMode = 'default') {
+// Resolve the endpoint this run will talk to. Split out from client
+// construction so the vision pre-flight can build a second client against the
+// very same endpoint but with a different (image-capable) model.
+function resolveLlmEndpoint(llmOpts = {}, forceMode = 'default') {
   // Prefer explicit options passed from the handler (live frontend config);
   // fall back to saved config when the caller did not supply a full endpoint.
   let baseUrl = llmOpts.baseUrl;
@@ -101,6 +122,11 @@ function buildLlmClient(llmOpts = {}, forceMode = 'default') {
     model = model || active?.model || '';
     apiKey = apiKey || active?.apiKey || '';
   }
+  return { baseUrl, model, apiKey };
+}
+
+function buildLlmClient(llmOpts = {}, forceMode = 'default') {
+  const { baseUrl, model, apiKey } = resolveLlmEndpoint(llmOpts, forceMode);
   return new LLMClient({ baseUrl, model, apiKey, timeoutMs: 300000 });
 }
 
@@ -259,6 +285,22 @@ function parseSectionsToDocx(reportText, meta) {
     children: [new TextRun({ text: `${meta.brandLabel} · ${meta.genderLabel} · ${meta.styleCount} ${cn ? '款' : 'styles'} · ${new Date().toLocaleDateString()}`, italics: true, size: 20 })],
   }));
 
+  // Make the absence of visual input impossible to miss: the notes below would
+  // otherwise read exactly like a run that did examine the photos.
+  if (meta.visionFallback) {
+    children.push(new Paragraph({
+      spacing: { after: 260 },
+      children: [new TextRun({
+        text: cn
+          ? '⚠️ 本次分析未读取产品图片：所选模型不支持视觉输入，以下描述仅基于文档数据（款式名称、价格、成分），不包含对图片中面料/工艺的观察。'
+          : '⚠️ This run did not read the product photos: the selected model has no vision support, so everything below is based on document data only (style name, price, composition) with no observation of the garments in the images.',
+        italics: true,
+        size: 18,
+        color: 'C0561F',
+      })],
+    }));
+  }
+
   // Split the model's prose into headed sections. Lines that look like a header
   // (short, possibly numbered, optionally ending with ':') become Heading 2.
   const lines = String(reportText || '').split(/\r?\n/);
@@ -309,41 +351,83 @@ async function generateBestsellerReport(rootDir, outputPath, options = {}) {
 
   const client = buildLlmClient(options.llm || {}, options.llmMode || 'default');
 
-  // Check that a model is configured.
-  if (!client.model || client.model === 'llama3') {
-    const cfg = llmConfigManager.mergeWithDefaults(llmConfigManager.loadConfig());
-    const mode = (options.llmMode === 'cloud' || options.llmMode === 'local' || options.llmMode === 'apiCloud')
-      ? options.llmMode
-      : (cfg.mode || 'local');
-    const active = mode === 'cloud'
-      ? cfg.cloud
-      : mode === 'apiCloud'
-        ? (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {}
-        : cfg.local;
-    if (!active?.model) {
-      throw new Error(
-        cn
-          ? '未配置 AI 模型。请在设置中选择一个已安装的模型。'
-          : 'No AI model configured. Please select an installed model in the settings.'
-      );
-    }
-  }
+  const cfg = llmConfigManager.mergeWithDefaults(llmConfigManager.loadConfig());
+  const mode = (options.llmMode === 'cloud' || options.llmMode === 'local' || options.llmMode === 'apiCloud')
+    ? options.llmMode
+    : (cfg.mode || 'local');
 
+  let availableModels = [];
   try {
     const test = await client.testConnection();
     if (test && test.success === false) {
       throw new Error(test.error || 'LLM connection failed');
     }
-    // Verify the configured model is available.
     if (test && test.success && Array.isArray(test.models) && test.models.length > 0) {
-      const modelLower = String(client.model || '').toLowerCase();
-      const isAvailable = test.models.some((m) => String(m).toLowerCase() === modelLower);
-      if (!isAvailable && modelLower && modelLower !== 'llama3') {
-        emitLog(`⚠️ Model "${client.model}" not found. Available: ${test.models.slice(0, 5).join(', ')}${test.models.length > 5 ? '...' : ''}`, 'warning');
-      }
+      availableModels = test.models.map((m) => String(m));
     }
   } catch (error) {
     throw new Error(`LLM not reachable: ${error.message}. Check the model settings.`);
+  }
+
+  // The wizard only carries an "AI on/off" switch — the model lives in the
+  // settings page. When that is empty (LLMClient falls back to the 'llama3'
+  if (!client.model || client.model === 'llama3') {
+    const picked = LLMClient.pickDefaultModel(mode, availableModels);
+    if (!picked) {
+      throw new Error(
+        cn
+          ? '未配置 AI 模型，且端点上没有可用模型。请在设置中选择一个模型。'
+          : 'No AI model configured and the endpoint serves no models. Please select a model in the settings.'
+      );
+    }
+    client.model = picked;
+    emitLog(
+      cn
+        ? `未配置模型 — 使用端点默认：${picked}`
+        : `No model configured — using endpoint default: ${picked}`,
+      'info'
+    );
+  } else {
+    const modelLower = String(client.model).toLowerCase();
+    const isAvailable = availableModels.some((m) => String(m).toLowerCase() === modelLower);
+    if (availableModels.length > 0 && !isAvailable) {
+      emitLog(`⚠️ Model "${client.model}" not found. Available: ${availableModels.slice(0, 5).join(', ')}${availableModels.length > 5 ? '...' : ''}`, 'warning');
+    }
+  }
+
+  // ---- Vision pre-flight ---------------------------------------------------
+  // Every step below feeds product photos to the model. A text-only model does
+  // NOT error out: generateWithImages() exhausts its three image formats,
+  // silently drops to a plain-text chat, and the model then happily describes
+  // weave and drape it never saw. Ask the user before that happens rather than
+  // shipping a report that reads as if the photos had been examined.
+  const visionCapable = typeof client.supportsVision === 'function' ? client.supportsVision() : true;
+  let activeClient = client;
+  let visionFallback = false;
+  if (!visionCapable) {
+    const candidates = availableModels.filter((m) => modelSupportsVision(m));
+    const decision = typeof options.requestVisionDecision === 'function'
+      ? await options.requestVisionDecision({ model: client.model, candidates, cn })
+      : { action: 'continue' };
+    ensureActive();
+    if (decision?.action === 'cancel') {
+      const err = new Error(cn
+        ? `已取消：模型「${client.model}」无法读取图片。`
+        : `Cancelled: model "${client.model}" cannot read images.`);
+      err.userCancelled = true;
+      throw err;
+    }
+    if (decision?.action === 'switch' && decision.model) {
+      const chosen = String(decision.model);
+      const endpoint = resolveLlmEndpoint(options.llm || {}, options.llmMode || 'default');
+      activeClient = new LLMClient({ ...endpoint, model: chosen, timeoutMs: 300000 });
+      emitLog(cn ? `已切换到视觉模型：${chosen}` : `Switched to vision model: ${chosen}`, 'success');
+    } else {
+      visionFallback = true;
+      emitLog(cn
+        ? `⚠️ 模型「${client.model}」不支持读图，本次分析不会查看产品图片（报告已标注）。`
+        : `⚠️ Model "${client.model}" cannot read images — this run will not look at the product photos (noted in the report).`, 'warning');
+    }
   }
 
   // Per-style vision notes.
@@ -354,7 +438,7 @@ async function generateBestsellerReport(rootDir, outputPath, options = {}) {
     emitLog(`Analyzing style ${i + 1}/${styles.length}: ${style.info?.name || style.info?.styleNumber || ''}`, 'info');
     let note;
     try {
-      note = await describeStyle(client, style, { imagesPerStyle, emitLog, ensureActive, cn });
+      note = await describeStyle(activeClient, style, { imagesPerStyle, emitLog, ensureActive, cn });
     } catch (error) {
       if (error.fatalModel) {
         throw new Error(`Vision model unavailable — ${error.message}. Open LLM settings and select a current vision model (the previously configured model appears to be retired or unreachable).`);
@@ -368,18 +452,20 @@ async function generateBestsellerReport(rootDir, outputPath, options = {}) {
   // Aggregate trend overview.
   ensureActive();
   const season = computeSeason();
-  const reportText = await aggregateTrends(client, notes, { language, brandLabel, genderLabel, emitLog, ensureActive, season });
+  const reportText = await aggregateTrends(activeClient, notes, { language, brandLabel, genderLabel, emitLog, ensureActive, season });
   emitProgress(88);
 
   // Build the docx.
-  const children = parseSectionsToDocx(reportText, { cn, brandLabel, genderLabel, styleCount: styles.length, season });
+  const children = parseSectionsToDocx(reportText, {
+    cn, brandLabel, genderLabel, styleCount: styles.length, season, visionFallback,
+  });
   const doc = new Document({ sections: [{ properties: {}, children }] });
   const buffer = await Packer.toBuffer(doc);
   fs.writeFileSync(outputPath, buffer);
   emitProgress(100);
   emitLog(`Trend report saved: ${outputPath}`, 'success');
 
-  return { success: true, outputPath, styleCount: styles.length };
+  return { success: true, outputPath, styleCount: styles.length, visionFallback };
 }
 
-module.exports = { generateBestsellerReport };
+module.exports = { generateBestsellerReport, listStyleFolders };
