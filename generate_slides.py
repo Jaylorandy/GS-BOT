@@ -464,7 +464,7 @@ class LLMClient:
             except Exception:
                 _body = ''
             _detail = _body.strip() or str(e)
-            return {'success': False, 'error': f'HTTP {e.code} [{self.model}]: {_detail}'}
+            return {'success': False, 'error': f'HTTP {e.code} [{self.model}]: {_friendly_http_error(e.code, _detail, self.base_url)}'}
         except urllib.error.URLError as e:
             return {'success': False, 'error': f'连接错误: {e.reason}'}
         except Exception as e:
@@ -563,6 +563,25 @@ def _looks_like_vision_unsupported(code, detail):
         return True
     # 400/415/422 且无更明确原因时，大概率是输入模态不匹配，值得降级重试
     return code in (400, 415, 422)
+
+
+def _friendly_http_error(code, detail, url=''):
+    """把付费墙类错误翻译成明确指引。
+    Ollama 云端 402 = 免费额度不含该模型（2026-09-21 实测）：
+    需要到 ollama.com/settings 购买用量或 ollama.com/upgrade 升级付费。
+    Ollama 云端偶发 401 + {"error":"Unauthorized"}，实际也可能是同一付费墙（key 本身有效时）。"""
+    d = str(detail or '')
+    is_ollama_host = 'ollama.com' in str(url or '').lower()
+    if code == 402 or 'not included in your free usage' in d.lower():
+        return ('付费模型：当前 Ollama 账号的免费额度不包含该模型，'
+                '请到 ollama.com/settings 购买用量，或 ollama.com/upgrade 升级付费以解锁'
+                f'（原始错误: {d[:140]}）')
+    if is_ollama_host and code == 401 and 'unauthorized' in d.lower():
+        return ('Ollama 云端拒绝访问（401）：API Key 可能失效；若 Key 有效，'
+                '则是免费额度不包含该模型 —— 请到 ollama.com/settings 购买用量'
+                '或 ollama.com/upgrade 升级付费以解锁，或在设置里改用免费模型（如 gemma4:31b）'
+                f'（原始错误: {d[:140]}）')
+    return d
 
 
 def _call_text_fallback(prompt, url, model, api_key, provider, timeout, reason=''):
@@ -688,13 +707,13 @@ def call_llm_api_with_image(prompt, image_base64, timeout, override=None):
         except Exception:
             _body = ''
         _detail = _body.strip() or str(e)
-        print(f"  [!] vision call failed: HTTP {e.code} [{model}] {_detail[:200]}")
+        print(f"  [!] vision call failed: HTTP {e.code} [{model}] {_friendly_http_error(e.code, _detail, url)[:200]}")
         # 模型不支持图片输入（GLM-4.7 等纯文本模型）→ 缓存并降级为纯文本调用
         if _looks_like_vision_unsupported(e.code, _detail):
             VISION_UNSUPPORTED_TARGETS.add(target_key)
             return _call_text_fallback(prompt, url, model, api_key, provider, timeout,
                                        reason=f'HTTP {e.code}')
-        return {'success': False, 'error': f'HTTP {e.code} [{model}]: {_detail}'}
+        return {'success': False, 'error': f'HTTP {e.code} [{model}]: {_friendly_http_error(e.code, _detail, url)}'}
     except urllib.error.URLError as e:
         return {'success': False, 'error': f'连接错误: {e.reason}'}
     except Exception as e:

@@ -133,7 +133,19 @@ export const WIZARD_CONFIG = {
         title: { en: 'AI & Output', zh: 'AI 与输出' },
         desc: { en: 'Enable AI descriptions and set the output path.', zh: '启用 AI 描述并设置输出路径。' },
         fields: [
-          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions. Model & endpoint are configured in Settings.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。模型与端点在设置页配置。' } },
+          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions. Pick the endpoint below; models are configured in Settings.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。在下方选择 AI 来源，具体模型在设置页配置。' } },
+          {
+            key: 'llmMode', type: 'select', label: { en: 'AI Model Source', zh: 'AI 模型来源' },
+            showWhen: (p) => p.ollamaEnabled,
+            default: 'default',
+            hint: { en: 'The concrete model comes from the Settings page for the chosen source.', zh: '具体模型取设置页中所选来源已配置的模型。' },
+            options: [
+              { value: 'default', label: { en: 'Follow Settings', zh: '跟随设置页' } },
+              { value: 'local', label: { en: 'Ollama (Local)', zh: 'Ollama 本地' } },
+              { value: 'cloud', label: { en: 'Ollama Cloud', zh: 'Ollama 云端' } },
+              { value: 'apiCloud', label: { en: 'GLM / API Cloud', zh: 'GLM 云端（API）' } },
+            ],
+          },
           { key: 'outputPath', type: 'save-picker', label: { en: 'Output File', zh: '输出文件' }, ext: 'pptx', hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
         ],
       },
@@ -190,7 +202,19 @@ export const WIZARD_CONFIG = {
           { key: 'outputDir', type: 'dir-picker', label: { en: 'Output Folder', zh: '输出目录' }, hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
           { key: 'downloadConcurrency', type: 'number', label: { en: 'Download Threads', zh: '下载线程数' }, default: 10, min: 1, max: 20 },
           { key: 'zaraBackupMode', type: 'toggle', label: { en: 'Zara Backup Search', zh: 'Zara 备用搜索' }, showWhen: (p) => p.brand === 'zara' },
-          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Analysis', zh: 'AI 趋势分析' }, desc: { en: 'Run AI analysis after scraping. The AI model is configured in Settings.', zh: '抓取后自动运行 AI 分析。AI 模型在设置页配置。' } },
+          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Analysis', zh: 'AI 趋势分析' }, desc: { en: 'Run AI analysis after scraping. Pick the AI source below; models are configured in Settings.', zh: '抓取后自动运行 AI 分析。在下方选择 AI 来源，具体模型在设置页配置。' } },
+          {
+            key: 'llmMode', type: 'select', label: { en: 'AI Model Source', zh: 'AI 模型来源' },
+            showWhen: (p) => p.doAnalyze,
+            default: 'default',
+            hint: { en: 'The concrete model comes from the Settings page for the chosen source.', zh: '具体模型取设置页中所选来源已配置的模型。' },
+            options: [
+              { value: 'default', label: { en: 'Follow Settings', zh: '跟随设置页' } },
+              { value: 'local', label: { en: 'Ollama (Local)', zh: 'Ollama 本地' } },
+              { value: 'cloud', label: { en: 'Ollama Cloud', zh: 'Ollama 云端' } },
+              { value: 'apiCloud', label: { en: 'GLM / API Cloud', zh: 'GLM 云端（API）' } },
+            ],
+          },
           {
             key: 'language', type: 'select', label: { en: 'Report Language', zh: '报告语言' },
             showWhen: (p) => p.doAnalyze,
@@ -289,7 +313,19 @@ export const WIZARD_CONFIG = {
         desc: { en: 'Set output folder and AI analysis options.', zh: '设置输出目录和 AI 分析选项。' },
         fields: [
           { key: 'outputDir', type: 'dir-picker', label: { en: 'Output Folder', zh: '输出目录' }, hint: { en: 'Defaults to Desktop', zh: '默认保存到桌面' } },
-          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Report', zh: 'AI 趋势报告' }, default: true, desc: { en: 'Generate an AI trend report after scraping. The AI model is configured in Settings.', zh: '抓取后生成 AI 趋势报告。AI 模型在设置页配置。' } },
+          { key: 'doAnalyze', type: 'toggle', label: { en: 'AI Trend Report', zh: 'AI 趋势报告' }, default: true, desc: { en: 'Generate an AI trend report after scraping. Pick the AI source below; models are configured in Settings.', zh: '抓取后生成 AI 趋势报告。在下方选择 AI 来源，具体模型在设置页配置。' } },
+          {
+            key: 'llmMode', type: 'select', label: { en: 'AI Model Source', zh: 'AI 模型来源' },
+            showWhen: (p) => p.doAnalyze,
+            default: 'default',
+            hint: { en: 'The concrete model comes from the Settings page for the chosen source.', zh: '具体模型取设置页中所选来源已配置的模型。' },
+            options: [
+              { value: 'default', label: { en: 'Follow Settings', zh: '跟随设置页' } },
+              { value: 'local', label: { en: 'Ollama (Local)', zh: 'Ollama 本地' } },
+              { value: 'cloud', label: { en: 'Ollama Cloud', zh: 'Ollama 云端' } },
+              { value: 'apiCloud', label: { en: 'GLM / API Cloud', zh: 'GLM 云端（API）' } },
+            ],
+          },
           {
             key: 'language', type: 'select', label: { en: 'Report Language', zh: '报告语言' },
             showWhen: (p) => p.doAnalyze,

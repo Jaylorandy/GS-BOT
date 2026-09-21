@@ -401,11 +401,29 @@ async function generateBestsellerReport(rootDir, outputPath, options = {}) {
   // silently drops to a plain-text chat, and the model then happily describes
   // weave and drape it never saw. Ask the user before that happens rather than
   // shipping a report that reads as if the photos had been examined.
-  const visionCapable = typeof client.supportsVision === 'function' ? client.supportsVision() : true;
+  // Capability is probed from the endpoint first (Ollama /api/show
+  // "capabilities"); the name heuristic is only the fallback. Name-guessing
+  // alone misjudges modern families (gemma4, glm-5.3-flash, kimi-k3, qwen3.5
+  // all read images without a vision-ish token in their name).
+  let visionCapable = typeof client.supportsVision === 'function' ? client.supportsVision() : true;
+  try {
+    const probed = await client.probeVision();
+    if (probed !== null) visionCapable = probed;
+  } catch {
+    // endpoint unreachable for /api/show — keep the heuristic answer
+  }
   let activeClient = client;
   let visionFallback = false;
   if (!visionCapable) {
-    const candidates = availableModels.filter((m) => modelSupportsVision(m));
+    const probeEndpoint = resolveLlmEndpoint(options.llm || {}, options.llmMode || 'default');
+    const probedMap = await LLMClient.probeVisionForModels(probeEndpoint.baseUrl, probeEndpoint.apiKey, availableModels)
+      .catch(() => new Map());
+    const candidates = availableModels.filter((m) => {
+      const real = probedMap.get(m);
+      if (real === true) return true;
+      if (real === false) return false;
+      return modelSupportsVision(m);
+    });
     const decision = typeof options.requestVisionDecision === 'function'
       ? await options.requestVisionDecision({ model: client.model, candidates, cn })
       : { action: 'continue' };

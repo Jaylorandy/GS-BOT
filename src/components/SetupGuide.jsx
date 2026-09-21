@@ -775,6 +775,10 @@ function normalizeSystemStatus(status) {
   };
 }
 
+// One quiet /api/show capability probe per renderer session (see effect below).
+// Module scope on purpose: survives remounts of the settings page.
+let cloudVisionProbeAttempted = false;
+
 function SetupGuide({
   initialConfig,
   systemStatus,
@@ -1017,6 +1021,10 @@ function SetupGuide({
             [type]: {
               ...prev[type],
               availableModels: result.models,
+              // Persist the endpoint-reported vision list so the picker keeps
+              // grouping correctly after restart (name heuristics alone miss
+              // gemma4 / glm-5.3-flash / kimi-k3 / qwen3.5).
+              visionModels: Array.isArray(result.visionModels) ? result.visionModels : [],
               // Auto-fill an empty model slot with a sensible default:
               // highest-versioned "flash" model on the cloud endpoint, first
               // installed model locally. The main process computes it.
@@ -1107,6 +1115,8 @@ function SetupGuide({
                   ? {
                     ...p,
                     availableModels: result.models,
+                    // Persist the endpoint-reported vision list (see cloud).
+                    visionModels: Array.isArray(result.visionModels) ? result.visionModels : [],
                     // Auto-fill an empty model with the endpoint's default
                     // (highest-versioned "flash" model for GLM & co.).
                     model: p.model || result.suggestedModel || result.models[0] || '',
@@ -1308,6 +1318,33 @@ function SetupGuide({
       }));
     }
   }, [cloudModelList, config.cloud.model]);
+
+  // One attempt per renderer session: if a cached cloud model list exists but
+  // no real capability report has been persisted yet, quietly re-ask the
+  // endpoint (list-llm-models probes Ollama /api/show even for cached lists)
+  // and store the true vision groups. Name heuristics alone miss gemma4 /
+  // glm-5.3-flash / kimi-k3 / qwen3.5, so the first paint after an old cached
+  // list can under-report — the user should not have to press "test connection"
+  // just to get an honest 可读图 group.
+  useEffect(() => {
+    if (cloudVisionProbeAttempted) return;
+    if (!cloudModelList.length) return;
+    if (Array.isArray(config.cloud.visionModels) && config.cloud.visionModels.length) return;
+    cloudVisionProbeAttempted = true;
+    (async () => {
+      try {
+        const result = await window.electronAPI?.listLLMModels?.({ mode: 'cloud' });
+        if (!result?.success) return;
+        if (!Array.isArray(result.visionModels) || !result.visionModels.length) return;
+        setConfig((prev) => ({
+          ...prev,
+          cloud: { ...prev.cloud, visionModels: result.visionModels },
+        }));
+      } catch {
+        // Silent — the heuristic grouping still applies as a floor.
+      }
+    })();
+  }, [cloudModelList, config.cloud.visionModels]);
 
   // Human-readable reason Save is blocked, so a greyed-out button is never a
   // mystery. Mirrors canSave: hybrid needs both; otherwise either endpoint works.
@@ -1685,7 +1722,7 @@ function SetupGuide({
       // Vision-capable models first; the rest stay in a second group. Many
       // Ollama cloud models are text-only, and every AI feature in GS Bot reads
       // product photos, so the ordering is a correctness hint, not cosmetic.
-      const { visionModels, otherModels } = splitModelsByVision(cloudModelList);
+      const { visionModels, otherModels } = splitModelsByVision(cloudModelList, config.cloud.visionModels);
       return (
         <label className="setup-field">
           <span>{tx('Cloud model', '云端模型')}</span>
@@ -1699,23 +1736,28 @@ function SetupGuide({
             }
           >
             <option value="">{tx('Choose a model...', '选择一个模型...')}</option>
-            {visionModels.length > 0 && (
-              <optgroup label={tx(`Reads images (${visionModels.length})`, `可读图（${visionModels.length}）`)}>
-                {visionModels.map((model) => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </optgroup>
+            {visionModels.length > 0 ? (
+              // Text-only models are hidden: every AI feature in GS Bot reads
+              // product photos, and the user asked for a vision-only picker.
+              // The currently saved model stays reachable even when it is a
+              // text model, so an existing config never silently breaks.
+              <>
+                <optgroup label={tx(`Reads images (${visionModels.length})`, `可读图（${visionModels.length}）`)}>
+                  {visionModels.map((model) => (
+                    <option key={model} value={model}>{model}</option>
+                  ))}
+                </optgroup>
+                {otherModels.includes(config.cloud.model) && (
+                  <option value={config.cloud.model}>
+                    {tx(`${config.cloud.model} (current · text only)`, `${config.cloud.model}（当前 · 纯文本）`)}
+                  </option>
+                )}
+              </>
+            ) : (
+              cloudModelList.map((model) => (
+                <option key={model} value={model}>{model}</option>
+              ))
             )}
-            {otherModels.length > 0 && (
-              <optgroup label={tx(`Text only · no images (${otherModels.length})`, `纯文本 · 不看图（${otherModels.length}）`)}>
-                {otherModels.map((model) => (
-                  <option key={model} value={model}>{model}</option>
-                ))}
-              </optgroup>
-            )}
-            {!visionModels.length && !otherModels.length && cloudModelList.map((model) => (
-              <option key={model} value={model}>{model}</option>
-            ))}
           </select>
         </label>
       );
@@ -2165,7 +2207,7 @@ function SetupGuide({
             const currentModel = activePreset.model || '';
             const modelIsKnown = currentModel && knownModels.includes(currentModel);
             // Vision-capable models first, same grouping as the cloud picker.
-            const { visionModels: presetVisionModels, otherModels: presetOtherModels } = splitModelsByVision(knownModels);
+            const { visionModels: presetVisionModels, otherModels: presetOtherModels } = splitModelsByVision(knownModels, activePreset.visionModels);
 
             return (
               <>

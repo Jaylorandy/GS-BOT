@@ -20019,9 +20019,18 @@ async function listVisionCandidates({ baseUrl, apiKey, provider } = {}) {
     });
     const result = await client.testConnection();
     if (!result || result.success === false) return [];
-    return (result.models || [])
-      .map((m) => String(m))
-      .filter((m) => LLMClient.modelSupportsVision(m));
+    const models = (result.models || []).map((m) => String(m));
+    // Prefer the endpoint's real capability report (Ollama /api/show
+    // "capabilities") over the name heuristic — several modern families
+    // (glm-5.3-flash, kimi-k3, qwen3.5) read images without any
+    // vision-ish token in the name. Probing failures fall back to names.
+    const probed = await LLMClient.probeVisionForModels(baseUrl, apiKey, models);
+    return models.filter((m) => {
+      const real = probed.get(m);
+      if (real === true) return true;
+      if (real === false) return false;
+      return LLMClient.modelSupportsVision(m);
+    });
   } catch {
     return [];
   }
@@ -20735,13 +20744,29 @@ ipcMain.handle('test-api-cloud-connection', async (_event, config = {}) => {
       // Annotate the model list so the settings UI can group vision models
       // first and auto-fill an empty model with a sensible default (highest
       // "flash" version for API clouds).
-      const { modelSupportsVision, pickDefaultModel } = require('./llm-client');
+      const { modelSupportsVision, pickDefaultModel, probeVisionForModels, isOllamaLikeEndpoint } = require('./llm-client');
       const models = (result.models || []).map((m) => String(m));
+      // Real capability probing applies to Ollama-shaped endpoints only;
+      // OpenAI-compatible APIs (GLM, DeepSeek…) fall back to name heuristics.
+      let probed = null;
+      if (isOllamaLikeEndpoint(baseUrl)) {
+        try {
+          probed = await probeVisionForModels(baseUrl, apiKey, models);
+        } catch {
+          probed = null;
+        }
+      }
+      const isVision = (m) => {
+        const real = probed ? probed.get(m) : null;
+        if (real === true) return true;
+        if (real === false) return false;
+        return modelSupportsVision(m);
+      };
       return {
         success: true,
         models,
-        visionModels: models.filter((m) => modelSupportsVision(m)),
-        otherModels: models.filter((m) => !modelSupportsVision(m)),
+        visionModels: models.filter((m) => isVision(m)),
+        otherModels: models.filter((m) => !isVision(m)),
         suggestedModel: pickDefaultModel('apiCloud', models),
       };
     }
@@ -20760,11 +20785,30 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
   // note -> trend report) needs image input, and a text-only model degrades
   // silently instead of failing, so the ordering is a correctness hint, not
   // cosmetic. Sorted alphabetically inside each group for a stable list.
-  const annotate = (models, extra = {}) => {
+  // Grouping prefers the endpoint's real capability report (Ollama /api/show
+  // "capabilities") and only falls back to the name heuristic when the probe
+  // is inconclusive — several modern families (gemma4, glm-5.3-flash, kimi-k3,
+  // qwen3.5) read images without any vision-ish token in the name.
+  const annotate = async (models, extra = {}, endpoint = {}) => {
     const list = Array.from(new Set((models || []).filter(Boolean).map((m) => String(m))));
     const byName = (a, b) => a.localeCompare(b);
-    const visionModels = list.filter((m) => modelSupportsVision(m)).sort(byName);
-    const otherModels = list.filter((m) => !modelSupportsVision(m)).sort(byName);
+    let probed = null;
+    const LLMClient = require('./llm-client');
+    if (endpoint.baseUrl && LLMClient.isOllamaLikeEndpoint(endpoint.baseUrl)) {
+      try {
+        probed = await LLMClient.probeVisionForModels(endpoint.baseUrl, endpoint.apiKey, list);
+      } catch {
+        probed = null;
+      }
+    }
+    const isVision = (m) => {
+      const real = probed ? probed.get(m) : null;
+      if (real === true) return true;
+      if (real === false) return false;
+      return modelSupportsVision(m);
+    };
+    const visionModels = list.filter((m) => isVision(m)).sort(byName);
+    const otherModels = list.filter((m) => !isVision(m)).sort(byName);
     return {
       success: true,
       models: [...visionModels, ...otherModels],
@@ -20772,6 +20816,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       otherModels,
       totalModels: list.length,
       visionCount: visionModels.length,
+      probedVision: !!probed && probed.size > 0,
       ...withCurrentVision(extra),
     };
   };
@@ -20808,7 +20853,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       apiKey = cfg.cloud?.apiKey || '';
       // Return cached models first if available
       if (!force && cfg.cloud?.availableModels?.length) {
-        return annotate(cfg.cloud.availableModels, { cached: true, currentModel: model });
+        return await annotate(cfg.cloud.availableModels, { cached: true, currentModel: model }, { baseUrl, apiKey });
       }
     } else if (mode === 'apiCloud') {
       const preset = (cfg.apiCloud?.presets || []).find((p) => p.id === (options.presetId || cfg.apiCloud?.activePresetId)) || {};
@@ -20816,7 +20861,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       model = preset.model || '';
       apiKey = preset.apiKey || '';
       if (!force && preset.availableModels?.length) {
-        return annotate(preset.availableModels, { cached: true, currentModel: model });
+        return await annotate(preset.availableModels, { cached: true, currentModel: model }, { baseUrl, apiKey });
       }
     } else {
       // local
@@ -20824,7 +20869,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
       model = cfg.local?.model || '';
       apiKey = '';
       if (!force && cfg.local?.installedModels?.length) {
-        return annotate(cfg.local.installedModels, { cached: true, currentModel: model });
+        return await annotate(cfg.local.installedModels, { cached: true, currentModel: model }, { baseUrl, apiKey });
       }
     }
 
@@ -20835,7 +20880,7 @@ ipcMain.handle('list-llm-models', async (_event, options = {}) => {
     const client = new LLMClient({ baseUrl, model, apiKey, timeout: 15000 });
     const result = await client.testConnection();
     if (result.success) {
-      return annotate(result.models, { cached: false, currentModel: model });
+      return await annotate(result.models, { cached: false, currentModel: model }, { baseUrl, apiKey });
     }
     return fail(result.error || 'Connection failed', { currentModel: model });
   } catch (error) {

@@ -144,6 +144,8 @@ function normalizeToolArguments(input) {
 // it never saw. The picker uses this to steer users toward vision models.
 const VISION_MODEL_PATTERNS = [
   /glm[-_.]?\d+(?:\.\d+)?v/,        // GLM 视觉系: glm-4v, glm-4v-plus, glm-4.5v, glm-4.6v
+  /glm[-_.]?5\.\d[-_.]?flash/,      // GLM 5.x flash 系自带视觉（2026-09-21 逐个实测）：glm-5.3-flash, glm-5.3-flashx。
+                                    // ⚠️ glm-5.3 不带 flash 是纯文本（400 code 1210），别放宽成 /glm.*5\.3/
   /vision/,                          // llama3.2-vision, phi-3-vision, gpt-4-vision
   /(?:^|[-_.\d])vl(?![a-z])/,        // qwen2.5-vl, qwen2.5vl, qwen3-vl
   /llava|bakllava/,                  // llava, llava-llama3, bakllava
@@ -160,7 +162,7 @@ const VISION_MODEL_PATTERNS = [
   /deepseek[-_.]?vl/,
   /step[-_.]?1v/,
   /omni/,                            // qwen2.5-omni, qwen3-omni
-  /gemma[-_.]?3/,                    // gemma3 (4b+) ships a vision encoder
+  /gemma[-_.]?[3-9]/,                // gemma3 (4b+) and newer gemma generations ship a vision encoder
   /llama[-_.]?4/,                    // llama4 is natively multimodal
   /mistral[-_.]?small[-_.]?3[._-]?1/,
   /\b(?:gpt[-_.]?4o|gpt[-_.]?4\.1|gpt[-_.]?4v|gpt[-_.]?5|o3|o4)\b/,
@@ -172,6 +174,82 @@ function modelSupportsVision(modelName = '') {
   const name = String(modelName || '').trim().toLowerCase();
   if (!name) return false;
   return VISION_MODEL_PATTERNS.some((re) => re.test(name));
+}
+
+// ── Real capability probing (Ollama /api/show) ─────────────
+// Ollama (local and cloud) reports true per-model capabilities:
+//   POST /api/show {"model":"gemma4:31b"} → { capabilities: ["completion","vision",…] }
+// Name heuristics misjudge modern families (glm-5.3-flash, kimi-k3, qwen3.5
+// are vision-capable without any vision-ish token in the name), so the model
+// dropdown and the vision pre-flight prefer the endpoint's real answer and
+// fall back to the name heuristic only when /api/show fails.
+const _visionProbeCache = new Map(); // `${baseUrl}|${model}` → true/false
+
+async function probeOllamaVision(baseUrl, apiKey, modelName, timeoutMs = 8000) {
+  const model = String(modelName || '').trim();
+  const base = String(baseUrl || '').trim();
+  // Only Ollama-shaped endpoints answer /api/show with capabilities. Other
+  // APIs (GLM, DeepSeek…) return an error body that would parse into an
+  // empty capability list and be misread as "text-only" — never probe them.
+  if (!model || !base || !isOllamaLikeEndpoint(base)) return null;
+  const cacheKey = `${base}|${model}`;
+  if (_visionProbeCache.has(cacheKey)) return _visionProbeCache.get(cacheKey);
+  try {
+    const probe = new LLMClient({ baseUrl: base, model, apiKey: apiKey || '', timeoutMs });
+    const data = await probe._requestJson(
+      'POST',
+      '/api/show',
+      { model, name: model },
+      apiKey ? { Authorization: `Bearer ${apiKey}` } : {}
+    );
+    const caps = Array.isArray(data.capabilities)
+      ? data.capabilities.map((c) => String(c).toLowerCase())
+      : [];
+    const hasVision = caps.includes('vision');
+    _visionProbeCache.set(cacheKey, hasVision);
+    return hasVision;
+  } catch {
+    // Do not cache failures — the endpoint may be an old Ollama without
+    // capability reporting, temporarily offline, or rate-limiting.
+    return null;
+  }
+}
+
+// Probe a list of models in bounded batches (default 5 at a time) so a 20-model
+// Ollama cloud list does not fire 20 simultaneous /api/show requests and get
+// rate-limited. Returns Map name → true/false/null. Cached per endpoint+model,
+// so repeat calls are free.
+async function probeVisionForModels(baseUrl, apiKey, models = [], concurrency = 5) {
+  const list = Array.from(new Set((models || []).filter(Boolean).map((m) => String(m))));
+  const size = Math.max(1, Number(concurrency) || 5);
+  const result = new Map();
+  for (let i = 0; i < list.length; i += size) {
+    const batch = list.slice(i, i + size);
+    const entries = await Promise.all(
+      batch.map((m) => probeOllamaVision(baseUrl, apiKey, m).then((v) => [m, v]))
+    );
+    entries.forEach(([m, v]) => result.set(m, v));
+  }
+  return result;
+}
+
+// Probe first, name heuristic as fallback.
+async function resolveVisionSupport({ baseUrl, apiKey, model }) {
+  const probed = await probeOllamaVision(baseUrl, apiKey, model);
+  if (probed !== null) return probed;
+  return modelSupportsVision(model);
+}
+
+// Only Ollama-shaped endpoints (local Ollama / ollama.com cloud) expose
+// /api/show capabilities. OpenAI-compatible APIs (GLM, DeepSeek…) would just
+// 404, so callers skip probing for them.
+function isOllamaLikeEndpoint(baseUrl = '') {
+  const u = String(baseUrl || '').trim().toLowerCase();
+  if (!u) return false;
+  if (u.includes('ollama.com')) return true;
+  if (/(^|\/\/|[^.\w])(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:|\/|$)/.test(u)) return true;
+  if (u.includes(':11434')) return true;
+  return false;
 }
 
 // ── Default model picking ──────────────────────────────────
@@ -208,6 +286,12 @@ function pickDefaultModel(mode, models = []) {
   const list = Array.from(new Set((models || []).filter(Boolean).map((m) => String(m))));
   if (!list.length) return '';
   if (mode === 'cloud' || mode === 'apiCloud') {
+    // Ollama 云端免费额度目前只覆盖 gemma4:31b（2026-09-21 逐个实测，其余全 402），
+    // 默认优先锁它；列表里没有再退回「最高版本带 flash」的老规则。
+    if (mode === 'cloud') {
+      const free = list.find((m) => /^gemma4:31b$/i.test(m.trim()));
+      if (free) return free;
+    }
     const flash = list.filter((m) => /flash/i.test(m));
     return flash.length ? _pickHighestVersion(flash) : _pickHighestVersion(list);
   }
@@ -377,8 +461,32 @@ class LLMClient {
   /**
    * 获取可用模型列表
    */
+  _describeHttpError(statusCode, body) {
+    const raw = `HTTP ${statusCode}: ${String(body || '').substring(0, 200)}`;
+    const text = String(body || '');
+    const isOllamaHost = /ollama\.com/i.test(String(this.baseUrl || ''));
+    // Ollama 云端 402 = 免费额度不含该模型（2026-09-21 实测）。
+    // 401 + {"error":"Unauthorized"} 在 key 本身有效时也可能就是同一道付费墙。
+    if (statusCode === 402 || /not included in your free usage/i.test(text)) {
+      return `付费模型：当前 Ollama 账号的免费额度不包含该模型，请到 ollama.com/settings 购买用量，或 ollama.com/upgrade 升级付费以解锁（原始错误: ${text.substring(0, 140)}）`;
+    }
+    if (isOllamaHost && statusCode === 401 && /unauthorized/i.test(text)) {
+      return `Ollama 云端拒绝访问（401）：API Key 可能失效；若 Key 有效，则是免费额度不包含该模型 —— 请到 ollama.com/settings 购买用量或 ollama.com/upgrade 升级付费以解锁，或在设置里改用免费模型（如 gemma4:31b）（原始错误: ${text.substring(0, 140)}）`;
+    }
+    return raw;
+  }
+
   supportsVision() {
     return modelSupportsVision(this.model);
+  }
+
+  /**
+   * Ask the endpoint for this model's real vision capability (Ollama
+   * /api/show). Returns true/false, or null when the endpoint cannot answer
+   * (caller falls back to supportsVision()'s name heuristic).
+   */
+  probeVision() {
+    return probeOllamaVision(this.baseUrl, this.apiKey, this.model);
   }
 
   supportsTools() {
@@ -1223,7 +1331,7 @@ Include: key strengths, potential gaps, market opportunities, and 2-3 actionable
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(data);
           } else {
-            reject(new Error(`HTTP ${res.statusCode}: ${data.substring(0, 200)}`));
+            reject(new Error(this._describeHttpError(res.statusCode, data)));
           }
         });
       };
@@ -1281,3 +1389,7 @@ Include: key strengths, potential gaps, market opportunities, and 2-3 actionable
 module.exports = LLMClient;
 module.exports.modelSupportsVision = modelSupportsVision;
 module.exports.pickDefaultModel = pickDefaultModel;
+module.exports.probeOllamaVision = probeOllamaVision;
+module.exports.probeVisionForModels = probeVisionForModels;
+module.exports.resolveVisionSupport = resolveVisionSupport;
+module.exports.isOllamaLikeEndpoint = isOllamaLikeEndpoint;

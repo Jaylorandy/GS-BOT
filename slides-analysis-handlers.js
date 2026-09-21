@@ -449,7 +449,22 @@ function registerSlidesAnalysisHandlers({
             resolveVisionSlot(configuredVision.garmentModel),
             resolveVisionSlot(configuredVision.fabricModel),
           ].filter(Boolean)));
-          const nonVisionModels = visionInPlay.filter((m) => !modelSupportsVision(m));
+          // Probe each model's real capability from the endpoint (Ollama
+          // /api/show) before falling back to the name heuristic — several
+          // modern families read images without a vision-ish name.
+          const llmClientModule = require('./llm-client');
+          const probedMap = await llmClientModule.probeVisionForModels(
+            llmSettings.baseUrl,
+            llmSettings.apiKey,
+            visionInPlay
+          ).catch(() => new Map());
+          const isVisionModel = (m) => {
+            const real = probedMap.get(m);
+            if (real === true) return true;
+            if (real === false) return false;
+            return modelSupportsVision(m);
+          };
+          const nonVisionModels = visionInPlay.filter((m) => !isVisionModel(m));
           if (nonVisionModels.length) {
             const candidates = await listVisionCandidates(llmSettings);
             const decision = await promptVisionDecision({
@@ -755,13 +770,29 @@ function registerSlidesAnalysisHandlers({
       const result = await client.testConnection();
       if (result && result.success) {
         // Group vision models first and suggest a default so the settings page
-        // can auto-fill an empty model slot with something sensible.
+        // can auto-fill an empty model slot with something sensible. Grouping
+        // prefers the endpoint's real capability report (Ollama /api/show
+        // "capabilities") over the name heuristic.
         const models = (result.models || []).map((m) => String(m));
         const kind = config.kind === 'local' ? 'local' : 'cloud';
+        let probed = null;
+        if (LLMClient.isOllamaLikeEndpoint(client.baseUrl)) {
+          try {
+            probed = await LLMClient.probeVisionForModels(client.baseUrl, client.apiKey, models);
+          } catch {
+            probed = null;
+          }
+        }
+        const isVision = (m) => {
+          const real = probed ? probed.get(m) : null;
+          if (real === true) return true;
+          if (real === false) return false;
+          return LLMClient.modelSupportsVision(m);
+        };
         return {
           ...result,
-          visionModels: models.filter((m) => LLMClient.modelSupportsVision(m)),
-          otherModels: models.filter((m) => !LLMClient.modelSupportsVision(m)),
+          visionModels: models.filter((m) => isVision(m)),
+          otherModels: models.filter((m) => !isVision(m)),
           suggestedModel: LLMClient.pickDefaultModel(kind, models),
         };
       }

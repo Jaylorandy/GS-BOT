@@ -1248,7 +1248,11 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         // settings config (an empty model is resolved by the main process).
         if (params.ollamaEnabled || params.enableSummary) {
           const cfg = llmSettings || {};
-          const mode = cfg.mode || 'local';
+          // Wizard override: 'default' = whatever the settings page saved;
+          // local / cloud / apiCloud force that endpoint for this run.
+          const mode = (params.llmMode && params.llmMode !== 'default')
+            ? params.llmMode
+            : (cfg.mode || 'local');
           const apiPreset = (cfg.apiCloud?.presets || []).find((p) => p.id === cfg.apiCloud?.activePresetId) || {};
           const endpoint = mode === 'cloud'
             ? cfg.cloud || {}
@@ -1348,9 +1352,10 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           const analyzePayload = {
             sourceDir: res?.outputPath || res?.outputDir || payload.outputDir || '',
             language: params.language || 'en',
-            // 'default' = use the saved settings config (mode/endpoint/model);
-            // an empty model is resolved by bestseller-report itself.
-            llmMode: 'default',
+            // Wizard override ('local'/'cloud'/'apiCloud') or 'default' = use
+            // the saved settings config; an empty model is resolved by
+            // bestseller-report itself.
+            llmMode: params.llmMode || 'default',
             imagesPerStyle: Number(params.imagesPerStyle) || 3,
             brandLabel: payload.brandLabel,
             genderLabel: payload.genderLabel,
@@ -1380,9 +1385,10 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           const analyzePayload = {
             sourceDir: res?.outputPath || res?.outputDir || params.outputDir || '',
             language: params.language || 'en',
-            // 'default' = use the saved settings config (mode/endpoint/model);
-            // an empty model is resolved by bestseller-report itself.
-            llmMode: 'default',
+            // Wizard override ('local'/'cloud'/'apiCloud') or 'default' = use
+            // the saved settings config; an empty model is resolved by
+            // bestseller-report itself.
+            llmMode: params.llmMode || 'default',
             imagesPerStyle: 3,
             brandLabel: brandLabels[params.brand] || params.brand || 'Brand',
             genderLabel: '',
