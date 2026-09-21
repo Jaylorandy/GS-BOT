@@ -5,6 +5,7 @@ dist-ssr/
 release/
 # alternate electron-builder output (used when release/win-unpacked is file-locked)
 release-build/
+release-build-*/
 build-logs/
 tmp/
 .tmp/
