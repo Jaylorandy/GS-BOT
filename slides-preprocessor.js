@@ -422,12 +422,23 @@ const PRECOMPUTE_RELEVANT_EXTENSIONS = new Set([
   '.txt',
 ]);
 
+function parseSuffixList(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(/[,，;；\s]+/).map((entry) => entry.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 function normalizeSlidesPrecomputeSettings(settings = {}) {
+  const configuredSuffixes = parseSuffixList(settings.imageSuffixes);
   return {
     sourceMode: settings.sourceMode || 'document-images',
     sourceOrganization: settings.sourceOrganization || 'auto',
-    imageSuffixes: Array.isArray(settings.imageSuffixes) && settings.imageSuffixes.length > 0
-      ? settings.imageSuffixes.map((value) => String(value || '').trim()).filter(Boolean)
+    imageSuffixes: configuredSuffixes.length > 0
+      ? configuredSuffixes
       : (settings.sourceMode === 'style-images-only' ? ['F', 'B'] : []),
     ocrEngine: normalizeOcrEngineName(settings.ocrEngine || getDefaultOcrEngine()),
     ocrFallbackEngine: normalizeOcrEngineName(settings.ocrFallbackEngine || ''),
@@ -610,6 +621,117 @@ function stripAliasPrefix(line, aliases = []) {
   }
 
   return stripped.trim();
+}
+
+function findLastAliasMatch(line = '', aliases = []) {
+  const text = String(line || '');
+  if (!text) {
+    return null;
+  }
+
+  let best = null;
+  for (const alias of aliases) {
+    const value = String(alias || '').trim();
+    if (!value) {
+      continue;
+    }
+    if (/[\u4e00-\u9fff]/.test(value)) {
+      let index = text.indexOf(value);
+      while (index >= 0) {
+        if (!best || index > best.start) {
+          best = { start: index, end: index + value.length };
+        }
+        index = text.indexOf(value, index + 1);
+      }
+      continue;
+    }
+    const pattern = buildOcrTolerantAliasPattern(value);
+    const regex = new RegExp(pattern, 'gi');
+    let match = regex.exec(text);
+    while (match !== null) {
+      if (match[0].length === 0) {
+        regex.lastIndex += 1;
+      } else {
+        if (!best || match.index > best.start) {
+          best = { start: match.index, end: match.index + match[0].length };
+        }
+      }
+      match = regex.exec(text);
+    }
+  }
+
+  return best;
+}
+
+function stripLeadingAliasTokens(value = '', aliases = []) {
+  const leadingJunk = /^[^A-Za-z0-9\u4e00-\u9fff]{1,4}/;
+  let current = String(value || '').replace(leadingJunk, '').trim();
+  const normalizedAliases = aliases.filter(Boolean);
+
+  for (let guard = 0; guard < 6; guard += 1) {
+    const match = findLastAliasMatch(current, normalizedAliases);
+    if (!match || match.start !== 0) {
+      break;
+    }
+    const remainder = current.slice(match.end).replace(leadingJunk, '').trim();
+    if (remainder === current) {
+      break;
+    }
+    current = remainder;
+  }
+
+  return current;
+}
+
+// Relaxed pass: the alias may sit anywhere in the line, not only at the start.
+// This keeps values like "Season:FA27 Dick' s Style #: DAM80" usable (-> DAM80)
+// and strips bilingual label pairs ("编号 Article No. LT19024-9" -> LT19024-9).
+// Guards: plain text without digits is ignored for code fields, and a candidate
+// that still starts with another field alias is skipped, so supplier/brand text
+// can never be captured as a code.
+function parseRelaxedAliasValue(lines = [], aliases = [], allAliases = [], options = {}) {
+  const requireDigit = options.requireDigit !== false;
+  const normalizedAliases = aliases.filter(Boolean);
+  if (!Array.isArray(lines) || lines.length === 0 || normalizedAliases.length === 0) {
+    return '';
+  }
+
+  const allAliasTokens = allAliases.map((alias) => normalizeKeyToken(alias)).filter(Boolean);
+  const stripTargets = [...normalizedAliases, ...allAliases];
+
+  for (let index = 0; index < lines.length; index += 1) {
+    const line = String(lines[index] || '');
+    const match = findLastAliasMatch(line, normalizedAliases);
+    if (!match) {
+      continue;
+    }
+
+    let candidate = stripLeadingAliasTokens(line.slice(match.end), stripTargets);
+    if (!candidate) {
+      for (let pointer = index + 1; pointer < Math.min(lines.length, index + 3); pointer += 1) {
+        const nextLine = String(lines[pointer] || '').trim();
+        if (!nextLine) {
+          continue;
+        }
+        const nextToken = normalizeKeyToken(nextLine);
+        if (nextToken && allAliasTokens.some((aliasToken) => nextToken.startsWith(aliasToken))) {
+          break;
+        }
+        candidate = stripLeadingAliasTokens(nextLine, stripTargets);
+        break;
+      }
+    }
+
+    if (!candidate) {
+      continue;
+    }
+    if (requireDigit && !/\d/.test(candidate)) {
+      continue;
+    }
+    return candidate;
+  }
+
+  return '';
 }
 
 function parseFieldFromLines(lines, aliases = [], allAliases = []) {
@@ -908,19 +1030,29 @@ function looksLikeStyleNumber(value = '') {
     return false;
   }
 
+  // Compact styles without a separator (DAM80, FA27, MD622X) are valid style
+  // numbers too; the old rule required a separator or 8+ characters and threw
+  // them away.
+  if (/^[A-Z]{1,6}\d{1,8}[A-Z]{0,4}$/.test(normalized)) {
+    return true;
+  }
+
   return /[-_/]/.test(normalized) || normalized.length >= 8;
 }
 
 function normalizeStyleNumberText(value = '') {
-  const normalizedText = normalizeFieldText(value).toUpperCase();
-  const match = String(value || '').toUpperCase().match(/[A-Z0-9]+(?:[-_/][A-Z0-9]+)+/);
+  const upper = String(value || '').toUpperCase();
+  const match = upper.match(/[A-Z0-9]+(?:[-_/][A-Z0-9]+)+/);
   if (match && /[A-Z]/.test(match[0]) && /\d/.test(match[0])) {
     return match[0].replace(/\//g, '-');
   }
-  if (!normalizedText || !looksLikeStyleNumber(normalizedText)) {
+  // Without a separator, only trust the first token: trailing OCR noise such as
+  // "DAM80 printing" must not leak into the file name.
+  const firstToken = normalizeFieldText(upper.trim().split(/\s+/)[0] || '');
+  if (!firstToken || !looksLikeStyleNumber(firstToken)) {
     return '';
   }
-  return normalizedText;
+  return firstToken;
 }
 
 function findFallbackFabricCodeLine(lines = []) {
@@ -1443,7 +1575,8 @@ function parseLabelOcrText(rawText, profile = LABEL_OCR_DEFAULTS, ocrLines = [])
 
   const explicitFabricCode = parseAdjacentAliasValuePairs(lines, normalizedProfile.fields.fabricCode, allAliases)
     || parseFieldFromLines(lines, normalizedProfile.fields.fabricCode, allAliases)
-    || parseSpatialFieldFromLines(positionedLines, normalizedProfile.fields.fabricCode, allAliases);
+    || parseSpatialFieldFromLines(positionedLines, normalizedProfile.fields.fabricCode, allAliases)
+    || parseRelaxedAliasValue(lines, normalizedProfile.fields.fabricCode, allAliases, { requireDigit: true });
   const styleNumberAliases = (normalizedProfile.fields.styleNumber || [])
     .filter((alias) => !/^DESC(?:RIPTION)?$/i.test(String(alias || '').trim()));
   const descriptionAliases = [
@@ -1453,7 +1586,8 @@ function parseLabelOcrText(rawText, profile = LABEL_OCR_DEFAULTS, ocrLines = [])
   ];
   const explicitStyleCandidate = parseAdjacentAliasValuePairs(lines, styleNumberAliases, allAliases)
     || parseFieldFromLines(lines, styleNumberAliases, allAliases)
-    || parseSpatialFieldFromLines(positionedLines, styleNumberAliases, allAliases);
+    || parseSpatialFieldFromLines(positionedLines, styleNumberAliases, allAliases)
+    || parseRelaxedAliasValue(lines, styleNumberAliases, allAliases, { requireDigit: true });
   const explicitDescription = parseFieldFromLines(lines, descriptionAliases, allAliases)
     || parseSpatialFieldFromLines(positionedLines, descriptionAliases, allAliases);
   const explicitStyleText = normalizeFieldText(explicitStyleCandidate);
@@ -1494,9 +1628,12 @@ function parseLabelOcrText(rawText, profile = LABEL_OCR_DEFAULTS, ocrLines = [])
     styleNumber = '';
   }
   const styleNumberLooksLikeFabricCode = styleNumber && /^([A-Z]{1,4}\d[A-Z0-9.\-]{5,}|[A-Z]{1,3}-\d{4,}[A-Z0-9.\-]*)$/i.test(styleNumber);
+  // A label can legitimately carry both a style number and a fabric code
+  // ("Fabric ID #:F26030082" next to "Style #: DAM80"). Keep the scanned fabric
+  // code whenever it differs from the style token we already resolved.
   const fabricCode = explicitFabricCode
     ? candidateFabricCode
-    : (!explicitStyleText && candidateFabricCode && candidateFabricCode !== styleNumber
+    : (candidateFabricCode && normalizedCodeToken && normalizedCodeToken !== normalizedStyleToken
       ? candidateFabricCode
       : (!explicitStyleText && styleNumberLooksLikeFabricCode ? styleNumber : ''));
   const explicitComposition = collectCompositionBlock(lines, normalizedProfile.fields.composition, allAliases)
@@ -2692,8 +2829,9 @@ async function buildSlidesPrecomputedInfo(sourceFolder, settings = {}, emitLog =
       'info',
     );
 
-    const configuredSuffixes = Array.isArray(settings.imageSuffixes) && settings.imageSuffixes.length > 0
-      ? settings.imageSuffixes.filter(Boolean)
+    const suffixList = parseSuffixList(settings.imageSuffixes);
+    const configuredSuffixes = suffixList.length > 0
+      ? suffixList
       : (sourceMode === 'style-images-only' ? ['F', 'B'] : []);
     const orderedStyleImages = sourceMode === 'style-images-only'
       ? configuredSuffixes

@@ -1289,6 +1289,10 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           imageSuffixes: params.imageSuffixes || '',
           labelIndex: params.labelIndex || 4,
           ocrEngine: params['ocrEngine.engine'] || 'guten-ocr',
+          // The label alias profile lives in renderer localStorage; without this
+          // the organizer silently fell back to the built-in aliases and custom
+          // aliases set in Label Settings never took effect.
+          labelOcrProfile: loadSharedLabelOcrProfile(),
         };
         payload.outputFolder = params.sourceFolder;
       }

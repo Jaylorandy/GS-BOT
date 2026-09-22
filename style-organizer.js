@@ -370,10 +370,31 @@ function getExpectedSuffixCount(config = {}) {
   return 0;
 }
 
+const DEFAULT_IMAGE_SUFFIXES = ['F', 'B', 'S', 'D'];
+
+function parseSuffixList(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry || '').trim()).filter(Boolean);
+  }
+  if (typeof value === 'string' && value.trim()) {
+    return value.split(/[,，;；\s]+/).map((entry) => entry.trim()).filter(Boolean);
+  }
+  return [];
+}
+
 function getImageSuffixes(config = {}) {
-  const list = Array.isArray(config.imageSuffixes) ? config.imageSuffixes : [];
   const count = getExpectedSuffixCount(config);
-  return Array.from({ length: count }, (_unused, index) => normalizeSuffix(list[index] || ''));
+  if (count <= 0) {
+    return [];
+  }
+  const list = parseSuffixList(config.imageSuffixes);
+  // The label image itself keeps no suffix; the remaining images default to
+  // F, B, S (D) when the user left the suffix field empty, and a partially
+  // filled list is topped up from the same defaults so two files in a group
+  // can never collapse onto the same name.
+  return Array.from({ length: count }, (_unused, index) => (
+    normalizeSuffix(list[index] || DEFAULT_IMAGE_SUFFIXES[index] || '')
+  ));
 }
 
 function getLabelSuffix(config = {}) {
@@ -392,13 +413,23 @@ function resolvePrimaryName(labelInfo = {}, config = {}, options = {}) {
       keyField: 'description',
       value: formatFallbackStyleName(options.fallbackIndex),
       usedFallback: true,
+      fallbackFrom: 'description',
     };
   }
+
+  // Style naming requested but the style number could not be read — the name
+  // comes from the fabric code instead. Never silent: the caller flags the
+  // group for review so a fabric-code name is never mistaken for a style name.
+  const fellBackToFabricCode = labelNamingTarget === 'style'
+    && styleNameField === 'styleNumber'
+    && !normalizePathSafeText(labelInfo.styleNumber || '')
+    && Boolean(normalizedValue);
 
   return {
     keyField: labelNamingTarget === 'fabric' ? 'fabricCode' : styleNameField,
     value: normalizedValue,
-    usedFallback: false,
+    usedFallback: fellBackToFabricCode,
+    fallbackFrom: fellBackToFabricCode ? 'fabricCode' : '',
   };
 }
 
@@ -629,6 +660,11 @@ function buildStyleLabelGroups(items = [], config = {}, emitLog = () => {}) {
     let resolvedName = primaryName.value;
     let needsReview = false;
     let reviewFailureReason = '';
+    if (primaryName.usedFallback && primaryName.fallbackFrom === 'fabricCode') {
+      needsReview = true;
+      reviewFailureReason = 'Style number could not be read; named by fabric code instead.';
+      emitLog(`⚠️ Group ${Math.floor(start / groupSize) + 1}: style number not found, named by fabric code ${resolvedName}.`, 'warning');
+    }
     if (!resolvedName) {
       needsReview = true;
       reviewFailureReason = `Group ${Math.floor(start / groupSize) + 1} did not produce a usable ${primaryName.keyField}.`;
@@ -700,6 +736,9 @@ function buildStyleLabelGroupsByDetectedLabels(items = [], config = {}, emitLog 
         reason: 'Detected label image did not produce a usable style number.',
       });
       return;
+    }
+    if (primaryName.usedFallback && primaryName.fallbackFrom === 'fabricCode') {
+      emitLog(`⚠️ Detected label ${labelItem.fileName}: style number not found, named by fabric code ${primaryName.value}.`, 'warning');
     }
 
     const nextLabelIndex = labelIndexes[labelCursor + 1]?.index ?? items.length;

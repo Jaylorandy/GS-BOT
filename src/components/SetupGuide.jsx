@@ -792,7 +792,7 @@ function SetupGuide({
   const [surfaceMode, setSurfaceMode] = useState(isOnboarding ? 'guide' : 'status');
   const [guideStep, setGuideStep] = useState(0);
   const [setupView, setSetupView] = useState('basic');
-  const [settingsTab, setSettingsTab] = useState('ollama');
+  const [settingsTab, setSettingsTab] = useState('basic');
   const [setupAccessMode, setSetupAccessMode] = useState(
     initialConfig?.mode === 'cloud' ? 'cloud' : initialConfig?.mode === 'apiCloud' ? 'apiCloud' : 'local'
   );
@@ -2396,7 +2396,30 @@ function SetupGuide({
         </div>
       </header>
 
+      <nav className="setup-tab-bar" role="tablist">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={settingsTab === 'basic'}
+          className={`setup-tab ${settingsTab === 'basic' ? 'active' : ''}`}
+          onClick={() => setSettingsTab('basic')}
+        >
+          {tx('Core Services', '基础服务')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={settingsTab === 'ollama'}
+          className={`setup-tab ${settingsTab === 'ollama' ? 'active' : ''}`}
+          onClick={() => setSettingsTab('ollama')}
+        >
+          {tx('Ollama Configuration & Models', 'Ollama 配置与模型')}
+        </button>
+      </nav>
+
       <div className="setup-module-grid">
+        {settingsTab === 'basic' && (
+          <>
         {/* Module 1: API Cloud */}
         <div className="setup-module-card">
           <div className="setup-module-card__head">
@@ -2468,6 +2491,11 @@ function SetupGuide({
           </div>
         </div>
 
+          </>
+        )}
+
+        {settingsTab === 'ollama' && (
+          <>
         {/* Module 4: Ollama Configuration */}
         <div className="setup-module-card setup-module-card--wide">
           <div className="setup-module-card__head">
@@ -2501,6 +2529,8 @@ function SetupGuide({
             </button>
           </div>
         </div>
+          </>
+        )}
       </div>
 
       {/* Logs panel — hidden in status mode, available in guide mode */}
