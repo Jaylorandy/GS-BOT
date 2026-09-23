@@ -195,7 +195,7 @@ function FirecrawlConfigPanel() {
             borderRadius: '6px',
             border: 'none',
             background: saving || !apiKey.trim() ? 'var(--btn-disabled-bg)' : 'var(--primary-color)',
-            color: saving || !apiKey.trim() ? 'var(--btn-disabled-text)' : '#fff',
+            color: saving || !apiKey.trim() ? 'var(--btn-disabled-text)' : 'var(--accent-ink)',
             cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer',
             fontWeight: 500,
             fontSize: '0.95em',
@@ -446,8 +446,8 @@ function PaddleOcrConfigPanel() {
             padding: '0.7em 1.2em',
             borderRadius: '6px',
             border: 'none',
-            background: !token.trim() || saving ? 'var(--border-color)' : 'var(--primary-color)',
-            color: 'white',
+            background: !token.trim() || saving ? 'var(--btn-disabled-bg)' : 'var(--primary-color)',
+            color: 'var(--accent-ink)',
             cursor: !token.trim() || saving ? 'not-allowed' : 'pointer',
             fontWeight: 600,
             fontSize: '0.9em',
@@ -2041,15 +2041,15 @@ function SetupGuide({
         <div className="setup-section-block">
           <div className="setup-subtitle-row">
             <h3>{tx('Local configuration', '本地配置')}</h3>
-          </div>
-          <div className="setup-mini-summary">
-            <span className={`setup-runtime-pill ${config.local.installed ? 'ready' : ''}`}>
-              {config.local.installed ? tx('Installed', '已安装') : tx('Not installed', '未安装')}
-            </span>
-            <span className={`setup-runtime-pill ${config.local.running ? 'ready' : ''}`}>
-              {config.local.running ? tx('Running', '运行中') : tx('Stopped', '已停止')}
-            </span>
-            <span className="setup-runtime-pill">{tx(`${localModelList.length} local models`, `${localModelList.length} 个本地模型`)}</span>
+            <div className="setup-mini-summary">
+              <span className={`setup-runtime-pill ${config.local.installed ? 'ready' : ''}`}>
+                {config.local.installed ? tx('Installed', '已安装') : tx('Not installed', '未安装')}
+              </span>
+              <span className={`setup-runtime-pill ${config.local.running ? 'ready' : ''}`}>
+                {config.local.running ? tx('Running', '运行中') : tx('Stopped', '已停止')}
+              </span>
+              <span className="setup-runtime-pill">{tx(`${localModelList.length} local models`, `${localModelList.length} 个本地模型`)}</span>
+            </div>
           </div>
 
           <div className="setup-form-grid">
@@ -2073,7 +2073,7 @@ function SetupGuide({
 
           <div className="setup-inline-actions">
             <button className="setup-secondary-btn" onClick={() => refreshOllamaStatus()} disabled={loading}>
-              {loading ? tx('Checking...', '检查中...') : tx('Refresh', '刷新')}
+              {loading ? tx('Checking...', '检查中...') : tx('Recheck', '重新检测')}
             </button>
             {!config.local.installed && (
               <button className="setup-primary-btn" onClick={installOllama} disabled={busyAction === 'install'}>
@@ -2089,8 +2089,8 @@ function SetupGuide({
               {testStatus.local === 'testing'
                 ? tx('Testing...', '测试中...')
                 : testStatus.local === 'connected'
-                  ? tx('Local connected', '本地已连接')
-                  : tx('Test local connection', '测试本地连接')}
+                  ? tx('Connected', '已连接')
+                  : tx('Test connection', '测试连接')}
             </button>
           </div>
         </div>
@@ -2098,14 +2098,14 @@ function SetupGuide({
         <div className="setup-section-block">
           <div className="setup-subtitle-row">
             <h3>{tx('Cloud configuration', '云端配置')}</h3>
-          </div>
-          <div className="setup-mini-summary">
-            <span className={`setup-runtime-pill ${config.cloud.apiKey ? 'ready' : ''}`}>
-              {config.cloud.apiKey ? tx('API key added', '已填写 API key') : tx('API key missing', '未填写 API key')}
-            </span>
-            <span className={`setup-runtime-pill ${config.cloud.model ? 'ready' : ''}`}>
-              {config.cloud.model ? tx('Model selected', '已选择模型') : tx('Model missing', '未选择模型')}
-            </span>
+            <div className="setup-mini-summary">
+              <span className={`setup-runtime-pill ${config.cloud.apiKey ? 'ready' : ''}`}>
+                {config.cloud.apiKey ? tx('API key added', '已填写 API key') : tx('API key missing', '未填写 API key')}
+              </span>
+              <span className={`setup-runtime-pill ${config.cloud.model ? 'ready' : ''}`}>
+                {config.cloud.model ? tx('Model selected', '已选择模型') : tx('Model missing', '未选择模型')}
+              </span>
+            </div>
           </div>
 
           <div className="setup-form-grid">
@@ -2142,15 +2142,15 @@ function SetupGuide({
           {renderCloudModelField()}
 
           <div className="setup-inline-actions">
+            <button className="setup-secondary-btn" onClick={refreshCloudModelsFromGuide}>
+              {tx('Refresh models', '刷新模型列表')}
+            </button>
             <button className={`setup-secondary-btn ${testStatus.cloud || ''}`} onClick={() => testConnection('cloud')}>
               {testStatus.cloud === 'testing'
                 ? tx('Testing...', '测试中...')
                 : testStatus.cloud === 'connected'
                   ? tx('Connected', '已连接')
-                  : tx('Test cloud', '测试云端')}
-            </button>
-            <button className="setup-secondary-btn" onClick={refreshCloudModelsFromGuide}>
-              {tx('Refresh models', '刷新模型')}
+                  : tx('Test connection', '测试连接')}
             </button>
           </div>
 
@@ -2522,7 +2522,7 @@ function SetupGuide({
           </div>
           <div className="setup-module-card__foot">
             <button className="setup-secondary-btn" onClick={() => refreshOllamaStatus()} disabled={loading}>
-              {loading ? tx('Checking...', '检查中...') : tx('Refresh', '刷新')}
+              {loading ? tx('Checking...', '检查中...') : tx('Recheck', '重新检测')}
             </button>
             <button className="setup-secondary-btn" onClick={() => window.electronAPI?.openExternalUrl?.('https://ollama.com')}>
               {tx('Get Ollama', '获取 Ollama')} ↗

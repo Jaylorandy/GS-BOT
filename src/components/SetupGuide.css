@@ -28,7 +28,7 @@
 
 .setup-status-shell,
 .setup-guide-frame {
-  width: min(1680px, calc(100vw - 24px));
+  width: 100%;
   display: grid;
   gap: 18px;
   padding-right: 6px;
@@ -1018,8 +1018,7 @@
 
 .setup-modules {
   padding: clamp(16px, 2vw, 28px);
-  max-width: 1680px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .setup-modules__header {
@@ -1051,16 +1050,14 @@
 }
 
 /* ── Grid ──────────────────────────────────────────────── */
+/* Single column at every breakpoint on purpose: the Basic Services tab holds
+   3 cards while the Ollama tab holds 1, and the old repeat(3, 1fr) rule made
+   the Ollama card span the full row while the Basic cards were a third as
+   wide — the two tabs looked like different pages. */
 .setup-module-grid {
   display: grid;
   grid-template-columns: 1fr;
   gap: clamp(14px, 1.5vw, 20px);
-}
-
-@media (min-width: 860px) {
-  .setup-module-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 /* ── Card ──────────────────────────────────────────────── */
@@ -1192,8 +1189,47 @@
 }
 
 .setup-module-card__body .setup-access-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   gap: 16px;
+  align-items: stretch;
+}
+
+/* 本地 / 云端两块等高对齐：内部 flex 撑满，条件按钮统一贴底。
+   注意：src/App.css 的同名规则在级联中位置更靠后（App.jsx 先 import 组件、
+   后 import ./App.css），实际生效的是 App.css；此处保持同步以免误读。 */
+.setup-module-card__body .setup-access-grid > .setup-section-block {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  margin-top: 0;
+  padding: 16px 18px;
+}
+
+.setup-module-card__body .setup-access-grid > .setup-section-block > .setup-inline-actions {
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.setup-module-card__body .setup-access-grid .setup-subtitle-row .setup-mini-summary {
+  margin-top: 0;
+  justify-content: flex-end;
+}
+
+.setup-module-card__body .setup-access-grid .setup-subtitle-row {
+  align-items: center;
+  gap: 8px 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--card-surface-border);
+  margin-bottom: 15px;
+}
+
+.setup-module-card__body .setup-access-grid .setup-form-grid {
+  margin-top: 0;
+  gap: 12px;
+}
+
+.setup-module-card__body .setup-access-grid > .setup-section-block > .setup-field {
+  margin-top: 12px;
 }
 
 /* ── Card Footer ────────────────────────────────────────── */
