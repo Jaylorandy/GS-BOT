@@ -3219,9 +3219,21 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     try {
       // Land on the ranking page first so the session looks like a real
       // visitor that then calls the API from the same origin.
+      //
+      // NOTE: this warm-up is purely cosmetic — the actual ranking data comes
+      // from the ranked-products API below, never from this document. Akamai
+      // regularly answers the FIRST hit on a cold session with 403 (a real
+      // HTTP response, so page.goto resolves normally and no error is thrown),
+      // while the same-origin API call still succeeds. Do not treat a warm-up
+      // 403 as fatal; just make it visible in the log so the run is not
+      // misleading.
       const referer = UNIQLO_RANKING_PAGE[genderParam === 'men' ? 'male' : 'female'] || UNIQLO_RANKING_PAGE.female;
       try {
-        await page.goto(referer, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        const warmupResponse = await page.goto(referer, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        const warmupStatus = warmupResponse ? warmupResponse.status() : 0;
+        if (warmupStatus >= 400) {
+          emitLog(`    ⚠️ Ranking page warm-up returned HTTP ${warmupStatus} (Akamai cold-session challenge). Continuing via the API — ranking data is unaffected.`, 'warning');
+        }
       } catch (navError) {
         emitLog(`    ⚠️ Ranking page navigation: ${navError.message}`, 'warning');
       }
