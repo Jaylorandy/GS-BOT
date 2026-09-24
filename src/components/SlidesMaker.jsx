@@ -194,9 +194,8 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
       // When switching source mode, uncheck fields irrelevant to that mode
       if (updates.sourceMode && updates.sourceMode !== prev.sourceMode) {
         if (updates.sourceMode === 'fabric-images') {
-          // Fabric mode: uncheck style-related fields
+          // 面料图模式：款号/价格仍不适用，但「产品名称」现在可由 AI 生成，故保留勾选状态。
           next.includeStyleNumber = false;
-          next.includeName = false;
           next.includePrice = false;
         } else if (updates.sourceMode === 'style-images-only') {
           // Style mode: uncheck fabric-related fields
@@ -698,19 +697,19 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
               </div>
 
               <div className="slides-field-group">
-                <div className="slides-field-group-title">{tx('Description', '描述')}</div>
+                <div className="slides-field-group-title">{tx('Description & AI Fill', '描述与 AI 补全')}</div>
                 <label className="slides-check slides-check--wide">
                   <input type="checkbox" checked={config.includeDescription} onChange={(e) => updateConfig({ includeDescription: e.target.checked })} />
                   <span>{tx('Show description on slides', '在 PPT 中显示描述文字')}</span>
                 </label>
 
-                {config.includeDescription && (
+                {(config.includeDescription || config.includeName) && (
                   <div className="slides-ai-block">
                     <label className="slides-check slides-check--wide slides-check--ai">
                       <input type="checkbox" checked={ollamaEnabled} onChange={(e) => setOllamaEnabled(e.target.checked)} />
                       <span>
-                        <strong>{tx('Let AI write descriptions from product images', '让 AI 根据产品图自动写描述')}</strong>
-                        <em>{tx('Recommended when source files have no description text.', '当源文件没有现成描述时推荐启用。')}</em>
+                        <strong>{tx('Let AI fill missing product name / description from images', '让 AI 根据产品图自动补全缺失的产品名称、描述')}</strong>
+                        <em>{tx('Only fields that are checked AND empty are filled — existing text is always kept.', '只补「已勾选且为空」的字段，已有内容一律保留。')}</em>
                       </span>
                     </label>
 

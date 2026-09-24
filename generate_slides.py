@@ -273,14 +273,15 @@ LINDI_BACK_X = Inches(5.55)
 
 FABRIC_SINGLE_LAYOUT = {
     'style':        {'x': Inches(0.78), 'w': Inches(4.8), 'y': 0.58, 'h': 0.4,  'size': 22, 'bold': True,  'color': 'black'},
+    'name':         {'x': Inches(0.82), 'w': Inches(5.1), 'y': 1.00, 'h': 0.34, 'size': 16, 'bold': True,  'color': 'black'},
     'brand':        {'x': Inches(0.82), 'w': Inches(3.0), 'y': 6.62, 'h': 0.32, 'size': 16, 'bold': True,  'color': 'black'},
-    'fabric_code':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 1.38, 'h': 0.36, 'size': 14, 'bold': False, 'color': 'black'},
-    'composition':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 1.84, 'h': 0.36, 'size': 14, 'bold': False, 'color': 'black'},
-    'width':        {'x': Inches(0.82), 'w': Inches(5.1), 'y': 2.30, 'h': 0.34, 'size': 14, 'bold': False, 'color': 'black'},
-    'cuttable':     {'x': Inches(0.82), 'w': Inches(5.1), 'y': 2.76, 'h': 0.34, 'size': 14, 'bold': False, 'color': 'black'},
-    'weight':       {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.22, 'h': 0.34, 'size': 14, 'bold': False, 'color': 'black'},
-    'description_label': {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.68, 'h': 0.24, 'size': 11, 'bold': True, 'color': 'black'},
-    'description':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.97, 'h': 1.72, 'size': 11, 'bold': False, 'color': 'black'},
+    'fabric_code':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 1.46, 'h': 0.32, 'size': 13, 'bold': False, 'color': 'black'},
+    'composition':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 1.88, 'h': 0.32, 'size': 13, 'bold': False, 'color': 'black'},
+    'width':        {'x': Inches(0.82), 'w': Inches(5.1), 'y': 2.30, 'h': 0.30, 'size': 13, 'bold': False, 'color': 'black'},
+    'cuttable':     {'x': Inches(0.82), 'w': Inches(5.1), 'y': 2.68, 'h': 0.30, 'size': 13, 'bold': False, 'color': 'black'},
+    'weight':       {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.06, 'h': 0.30, 'size': 13, 'bold': False, 'color': 'black'},
+    'description_label': {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.46, 'h': 0.24, 'size': 11, 'bold': True, 'color': 'black'},
+    'description':  {'x': Inches(0.82), 'w': Inches(5.1), 'y': 3.75, 'h': 1.94, 'size': 11, 'bold': False, 'color': 'black'},
 }
 
 FABRIC_SINGLE_IMAGE = {
@@ -295,20 +296,22 @@ FABRIC_DOUBLE_DIVIDER_Y = Inches(3.82)
 FABRIC_DOUBLE_ROWS = [
     {
         'style':       {'x': Inches(0.78), 'w': Inches(4.6), 'y': 0.58, 'h': 0.3,  'size': 17, 'bold': True,  'color': 'black'},
-        'fabric_code': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.14, 'h': 0.28, 'size': 12, 'bold': False, 'color': 'black'},
-        'composition': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.48, 'h': 0.28, 'size': 12, 'bold': False, 'color': 'black'},
-        'width':       {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.82, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
-        'cuttable':    {'x': Inches(0.82), 'w': Inches(5.0), 'y': 2.16, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
-        'weight':      {'x': Inches(0.82), 'w': Inches(5.0), 'y': 2.50, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'name':        {'x': Inches(0.82), 'w': Inches(5.0), 'y': 0.92, 'h': 0.28, 'size': 13, 'bold': True,  'color': 'black'},
+        'fabric_code': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.24, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'composition': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.54, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'width':       {'x': Inches(0.82), 'w': Inches(5.0), 'y': 1.84, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
+        'cuttable':    {'x': Inches(0.82), 'w': Inches(5.0), 'y': 2.14, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
+        'weight':      {'x': Inches(0.82), 'w': Inches(5.0), 'y': 2.44, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
         'image':       {'x': Inches(7.2),  'y': Inches(0.78), 'w': Inches(4.7), 'h': Inches(2.8)},
     },
     {
         'style':       {'x': Inches(0.78), 'w': Inches(4.6), 'y': 4.1, 'h': 0.3,  'size': 17, 'bold': True,  'color': 'black'},
-        'fabric_code': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 4.66, 'h': 0.28, 'size': 12, 'bold': False, 'color': 'black'},
-        'composition': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.00, 'h': 0.28, 'size': 12, 'bold': False, 'color': 'black'},
-        'width':       {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.34, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
-        'cuttable':    {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.68, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
-        'weight':      {'x': Inches(0.82), 'w': Inches(5.0), 'y': 6.02, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'name':        {'x': Inches(0.82), 'w': Inches(5.0), 'y': 4.44, 'h': 0.28, 'size': 13, 'bold': True,  'color': 'black'},
+        'fabric_code': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 4.76, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'composition': {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.06, 'h': 0.26, 'size': 12, 'bold': False, 'color': 'black'},
+        'width':       {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.36, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
+        'cuttable':    {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.66, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
+        'weight':      {'x': Inches(0.82), 'w': Inches(5.0), 'y': 5.96, 'h': 0.24, 'size': 12, 'bold': False, 'color': 'black'},
         'image':       {'x': Inches(7.2),  'y': Inches(4.3), 'w': Inches(4.7), 'h': Inches(2.8)},
     },
 ]
@@ -320,24 +323,26 @@ FABRIC_PAIR_DATE = {'x': Inches(0.78), 'w': Inches(3.0), 'y': 6.88, 'h': 0.3, 's
 
 FABRIC_PAIR_COLS = [
     {
-        'image':       {'x': Inches(0.78), 'y': Inches(0.80), 'w': Inches(5.0), 'h': Inches(3.45)},
-        'style':       {'x': Inches(0.78), 'w': Inches(5.0), 'y': 0.50, 'h': 0.28, 'size': 11, 'bold': True,  'color': 'black'},
-        'fabric_code': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 4.40, 'h': 0.30, 'size': 11, 'bold': False, 'color': 'black'},
-        'composition': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 4.78, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'width':       {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.08, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'cuttable':    {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.36, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'weight':      {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.64, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'description': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.92, 'h': 0.85, 'size': 10, 'bold': False, 'color': 'black'},
+        'image':       {'x': Inches(0.78), 'y': Inches(0.80), 'w': Inches(5.0), 'h': Inches(3.05)},
+        'style':       {'x': Inches(0.78), 'w': Inches(5.0), 'y': 0.46, 'h': 0.26, 'size': 11, 'bold': True,  'color': 'black'},
+        'name':        {'x': Inches(0.78), 'w': Inches(5.0), 'y': 3.92, 'h': 0.36, 'size': 12, 'bold': True,  'color': 'black'},
+        'fabric_code': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 4.32, 'h': 0.28, 'size': 11, 'bold': False, 'color': 'black'},
+        'composition': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 4.66, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'width':       {'x': Inches(0.78), 'w': Inches(5.0), 'y': 4.94, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'cuttable':    {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.22, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'weight':      {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.50, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'description': {'x': Inches(0.78), 'w': Inches(5.0), 'y': 5.78, 'h': 0.99, 'size': 10, 'bold': False, 'color': 'black'},
     },
     {
-        'image':       {'x': Inches(7.55), 'y': Inches(0.80), 'w': Inches(5.0), 'h': Inches(3.45)},
-        'style':       {'x': Inches(7.55), 'w': Inches(5.0), 'y': 0.50, 'h': 0.28, 'size': 11, 'bold': True,  'color': 'black'},
-        'fabric_code': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 4.40, 'h': 0.30, 'size': 11, 'bold': False, 'color': 'black'},
-        'composition': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 4.78, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'width':       {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.08, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'cuttable':    {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.36, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'weight':      {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.64, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
-        'description': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.92, 'h': 0.85, 'size': 10, 'bold': False, 'color': 'black'},
+        'image':       {'x': Inches(7.55), 'y': Inches(0.80), 'w': Inches(5.0), 'h': Inches(3.05)},
+        'style':       {'x': Inches(7.55), 'w': Inches(5.0), 'y': 0.46, 'h': 0.26, 'size': 11, 'bold': True,  'color': 'black'},
+        'name':        {'x': Inches(7.55), 'w': Inches(5.0), 'y': 3.92, 'h': 0.36, 'size': 12, 'bold': True,  'color': 'black'},
+        'fabric_code': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 4.32, 'h': 0.28, 'size': 11, 'bold': False, 'color': 'black'},
+        'composition': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 4.66, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'width':       {'x': Inches(7.55), 'w': Inches(5.0), 'y': 4.94, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'cuttable':    {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.22, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'weight':      {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.50, 'h': 0.24, 'size': 10, 'bold': False, 'color': 'black'},
+        'description': {'x': Inches(7.55), 'w': Inches(5.0), 'y': 5.78, 'h': 0.99, 'size': 10, 'bold': False, 'color': 'black'},
     },
 ]
 
@@ -789,11 +794,13 @@ Analyze the clothing item in the image and extract:
 5. Dominant color
 
 Based on your analysis, generate:
-- A concise product name (2-5 words describing the garment)
+- A complete product name following the rule below
 - A brief description (1-2 sentences about style and features)
 
+""" + PRODUCT_NAME_INSTRUCTION + """
+
 Return this JSON format (replace the example values with your actual analysis):
-{{"styleNumber": "{folder_name}", "name": "Cargo Pants", "color": "Olive Green", "price": "", "description": "Relaxed fit cargo pants with multiple pockets and adjustable cuffs.", "composition": ""}}
+{{"styleNumber": "{folder_name}", "name": "Women's Relaxed-Fit Long-Sleeve Hooded Sweatshirt", "color": "Olive Green", "price": "", "description": "Relaxed fit hooded sweatshirt with kangaroo pocket and ribbed cuffs.", "composition": ""}}
 
 Text reference (optional):
 {text[:300]}
@@ -804,12 +811,14 @@ REMEMBER: Return ONLY the JSON object with real values, not placeholder text."""
         prompt = f"""Extract product info from text. Return JSON only:
 {{
   "styleNumber": "use folder name if not found: {folder_name}",
-  "name": "product name",
+  "name": "complete English product name per the rule below",
   "color": "color",
   "price": "",
   "description": "short description",
   "composition": "fabric composition"
 }}
+
+""" + PRODUCT_NAME_INSTRUCTION + """
 
 Text:
 {text[:1000]}
@@ -968,6 +977,8 @@ Rules:
 - Focus on garment category, fit, silhouette, and visible construction details.
 - Keep the description short and presentation-ready.
 - If style number is not visible, reuse {folder_name}.
+
+{PRODUCT_NAME_INSTRUCTION}
 
 Context:
 {context}
@@ -1902,11 +1913,13 @@ def _ai_missing_fields(info, settings):
     """
     settings = settings or {}
     missing = []
-    if settings.get('includeName', True) and not str(info.get('name') or '').strip():
+    # 名称：既空、或只是占位符/裸款号，都算「没有名称」→ 交给 AI 生成。
+    if settings.get('includeName', True) and _looks_like_placeholder_name(info.get('name')):
         missing.append('name')
     if settings.get('includeDescription', True) and not str(info.get('description') or '').strip():
         missing.append('description')
-    if not str(info.get('colorRef') or info.get('colorName') or '').strip():
+    # 颜色同样只在「勾选了颜色」时才补 —— 未勾选就不该为此调用 AI。
+    if settings.get('includeColorRef', True) and not str(info.get('colorRef') or info.get('colorName') or '').strip():
         missing.append('color')
     return missing
 
@@ -1919,9 +1932,10 @@ def _apply_ai_field_fill(info, llm_result, missing_fields):
     """
     filled = []
     data = llm_result or {}
-    if 'name' in missing_fields and not str(info.get('name') or '').strip():
+    # 名称：当前为空/占位符/裸款号时，才用 AI 结果覆盖（已有真实名称一律保留）。
+    if 'name' in missing_fields and _looks_like_placeholder_name(info.get('name')):
         value = str(data.get('name') or '').strip()
-        if value:
+        if value and not _looks_like_placeholder_name(value):
             info['name'] = value
             filled.append('name')
     if 'description' in missing_fields and not str(info.get('description') or '').strip():
@@ -1935,6 +1949,47 @@ def _apply_ai_field_fill(info, llm_result, missing_fields):
             info['colorRef'] = value
             filled.append('color')
     return filled
+
+
+# ── AI 产品名称规则（PPT 侧）─────────────────────────
+# 零售商标注惯例的六段式公式。旧提示词只写 "a concise product name (2-5 words)"，
+# 永远不可能产出 "Men's Regular-Fit Long-Sleeve Hooded Sweatshirt" 这种完整名称。
+PRODUCT_NAME_INSTRUCTION = """PRODUCT NAME RULE (IMPORTANT):
+- Build the "name" with the retailer six-part formula, on ONE line, no commas:
+  Gender + Fit + Length + Sleeve + Category + Closure
+- Write it in ENGLISH, Title Case.
+- Example: "Men's Regular-Fit Long-Sleeve Hooded Sweatshirt".
+- Gender: Men's / Women's / Unisex. Fit: Regular-Fit, Slim-Fit, Relaxed-Fit, Oversized...
+- Length: Long-Sleeve, Short-Sleeve, Sleeveless, Cropped, Midi, Maxi (only when evident).
+- Category: the specific garment type (Hooded Sweatshirt, Oxford Shirt, Cargo Pants, ...).
+- Closure: Zip-Up, Button-Up, Pullover, Drawstring (only when visually evident).
+- OMIT any segment you cannot support with evidence — never invent one.
+- Never output a bare style number, "Unknown", or a material/composition string as the name."""
+
+
+def _looks_like_placeholder_name(value):
+    """名称是否「不可用」：空、占位符、或纯款号/编码。
+
+    这类值视为「没有名称」，允许 AI 生成完整名称；已有真实名称一律保留。
+
+    注意：不要仅凭「没有空格」就判定为款号 —— "Parka"、"Hoodie" 也是合法的
+    单词名称。只有真的像编码（含数字、或含 -/./_ 分隔符、或全大写无空格）
+    才算款号。
+    """
+    name = str(value or '').strip()
+    if not name:
+        return True
+    if re.fullmatch(r'(?i)(unknown(?:\s+product)?|n/?a|none|null|undefined|tbd|-+|\?+)', name):
+        return True
+    # 纯款号/编码：必须含数字，或含 -/./_ 分隔符，或为全大写无空格串。
+    if not re.search(r'\s', name):
+        if re.search(r'\d', name):
+            return True
+        if re.search(r'[-./_]', name):
+            return True
+        if name == name.upper() and len(name) >= 4:
+            return True
+    return False
 
 
 # 幻灯片上描述可用的宽度权重（CJK 字符按 2 计）。超过就不要硬塞，交给 AI 精简。
@@ -2003,9 +2058,10 @@ def _apply_ai_condense(info, settings, style_number):
 
 def ensure_label_mode_description(info, style_number, image_paths, settings=None):
     """标签模式下按需基于图片生成描述。"""
-    missing_fields = _ai_missing_fields(info, settings)
     # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
     _apply_ai_condense(info, settings, style_number)
+    # 精简之后再算缺失字段，避免用精简前的旧状态判断。
+    missing_fields = _ai_missing_fields(info, settings)
     if not missing_fields:
         return info
 
@@ -2039,9 +2095,10 @@ def ensure_label_mode_description(info, style_number, image_paths, settings=None
 
 def ensure_style_only_mode_description(info, style_number, image_paths, settings=None):
     """仅款式图片模式下按需基于图片生成描述。"""
-    missing_fields = _ai_missing_fields(info, settings)
     # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
     _apply_ai_condense(info, settings, style_number)
+    # 精简之后再算缺失字段，避免用精简前的旧状态判断。
+    missing_fields = _ai_missing_fields(info, settings)
     if not missing_fields:
         return info
 
@@ -2072,9 +2129,10 @@ def ensure_style_only_mode_description(info, style_number, image_paths, settings
 
 def ensure_document_mode_description(info, style_number, image_paths, settings=None):
     """文档模式下按需基于图片补齐描述。"""
-    missing_fields = _ai_missing_fields(info, settings)
     # 已有描述但太长 → 先精简（纯文本即可，不需要图片）
     _apply_ai_condense(info, settings, style_number)
+    # 精简之后再算缺失字段，避免用精简前的旧状态判断。
+    missing_fields = _ai_missing_fields(info, settings)
     if not missing_fields:
         return info
 
@@ -2111,12 +2169,17 @@ def ensure_document_mode_description(info, style_number, image_paths, settings=N
 
 
 def ensure_fabric_mode_description(info, style_number, image_paths, settings=None):
-    """面料模式下按需基于面料图生成描述。"""
+    """面料模式下按需补齐「已勾选但为空」的字段（描述 / 名称 / 颜色）。
+
+    注意：本函数原来只处理 description，导致面料图模式下勾了「产品名称」
+    也永远不会生成名称。现在与其它三个 ensure_* 函数走同一套 missing_fields
+    逻辑。
+    """
     settings = settings or {}
     # 已有描述但太长 → 先精简
     _apply_ai_condense(info, settings, style_number)
-    # 描述未勾选 / 已有描述 → 不需要补全
-    if info.get('description') or not settings.get('includeDescription', True):
+    missing_fields = _ai_missing_fields(info, settings)
+    if not missing_fields:
         return info
 
     vision_image_path = image_paths.get('vision') or image_paths.get('fabric')
@@ -2136,13 +2199,18 @@ def ensure_fabric_mode_description(info, style_number, image_paths, settings=Non
     if info.get('weight'):
         context_parts.append(f"Weight: {info.get('weight')}")
 
-    print("  🤖 Generating description from fabric image...")
-    llm_result = parse_with_fabric_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
-    if llm_result and llm_result.get('description'):
-        info['description'] = llm_result['description']
-        print("  ✓ AI fabric description generated")
+    print(f"  🤖 AI filling missing fields {missing_fields} from fabric image...")
+    # 描述优先走面料视觉模型；名称/颜色需要成衣视觉模型，两个都试。
+    llm_result = parse_with_apparel_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
+    if not llm_result:
+        llm_result = parse_with_fabric_vision('\n'.join(context_parts), info.get('styleNumber') or style_number, vision_image_path)
+    if not llm_result:
+        llm_result = parse_with_llm('\n'.join(context_parts), info.get('styleNumber') or style_number, 'Unknown', image_path=vision_image_path)
+    filled = _apply_ai_field_fill(info, llm_result, missing_fields)
+    if filled:
+        print(f"  ✓ AI filled: {', '.join(filled)}")
     else:
-        print("  ⚠️ AI fabric description unavailable")
+        print("  ⚠️ AI returned nothing usable")
 
     return info
 
@@ -2443,6 +2511,10 @@ def add_fabric_single_slide(prs, style_number, folder, settings, brand='BRAND', 
 
     add_custom_text(slide, brand.upper() if brand else 'BRAND', FABRIC_SINGLE_LAYOUT['brand'])
 
+    # 产品名称（AI 可补全；未勾选或为空则整行不画，不留空框）
+    if settings.get('includeName', True) and str(info.get('name') or '').strip():
+        add_custom_text(slide, info['name'], FABRIC_SINGLE_LAYOUT['name'])
+
     if settings.get('includeFabricCode', True):
         add_custom_text(slide, f"Fabric Code:  {blank_if_empty(info.get('fabricCode', ''))}", FABRIC_SINGLE_LAYOUT['fabric_code'])
     if settings.get('includeComposition', True):
@@ -2482,6 +2554,9 @@ def add_fabric_double_slide(prs, entries, settings, brand='BRAND'):
 
         if settings.get('includeStyleNumber', True):
             add_custom_text(slide, style_value, row['style'])
+        # 产品名称（AI 可补全；未勾选或为空则整行不画）
+        if settings.get('includeName', True) and str(info.get('name') or '').strip():
+            add_custom_text(slide, info['name'], row['name'])
         if settings.get('includeFabricCode', True):
             add_fabric_info_line(slide, 'Fabric Code', info.get('fabricCode', ''), row['fabric_code'])
         if settings.get('includeComposition', True):
@@ -2563,10 +2638,14 @@ def add_fabric_pair_slide(prs, entries, settings, brand='BRAND'):
             print("  ✗ No fabric image")
 
         # Shift text boxes so they start below the taller rendered image.
-        text_keys = ['fabric_code', 'composition', 'width', 'cuttable', 'weight', 'description']
+        text_keys = ['name', 'fabric_code', 'composition', 'width', 'cuttable', 'weight', 'description']
         for key in text_keys:
             if key in col:
                 col[key]['y'] = col[key]['y'] + y_delta_inches
+
+        # 产品名称（AI 可补全；未勾选或为空则整行不画）
+        if settings.get('includeName', True) and str(info.get('name') or '').strip():
+            add_custom_text(slide, info['name'], col['name'])
 
         if settings.get('includeFabricCode', True):
             add_fabric_info_line(slide, 'Fabric Code', info.get('fabricCode', ''), col['fabric_code'])

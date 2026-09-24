@@ -148,6 +148,7 @@ function buildMergedDescription(garment = {}, fabric = {}) {
 function mergeApparelVisionResults(garment = {}, fabric = {}) {
   const category = String(garment.category || garment.garmentCategory || '').trim();
   const fit = normalizeVisionFitLabel(garment.fit || garment.silhouette || '');
+  const productName = String(garment.productName || garment.name || '').trim();
   const details = normalizeStringList(garment.details || garment.keyDetails || garment.designDetails || garment.constructionDetails);
   const textileSignals = normalizeStringList(fabric.textileSignals || fabric.surfaceSignals || fabric.finishSignals || fabric.materialDetails);
   const fabricAppearance = String(fabric.fabricAppearance || fabric.materialRead || '').trim();
@@ -155,6 +156,7 @@ function mergeApparelVisionResults(garment = {}, fabric = {}) {
   return {
     category,
     fit,
+    productName,
     details,
     textileSignals,
     fabricAppearance,
@@ -206,7 +208,15 @@ Focus on:
 - garment category
 - fit / silhouette
 - visible design and construction details
+- a complete English product name
 - commercially useful short description
+
+Naming rule (IMPORTANT):
+- Build "productName" with the retailer six-part formula, one line, no commas:
+  Gender + Fit + Length + Sleeve + Category + Closure
+- Example: "Men's Regular-Fit Long-Sleeve Hooded Sweatshirt".
+- Use English Title Case. OMIT any segment you cannot support visually — never invent one.
+- "Closure" means Zip-Up / Button-Up / Pullover / Drawstring, and only when clearly visible.
 
 Important fit guidance:
 - For pants, jeans, trousers, and shorts, identify the most specific visible fit or leg shape you can support.
@@ -224,6 +234,7 @@ Return:
 {
   "category": "",
   "fit": "",
+  "productName": "",
   "details": ["", ""],
   "description": ""
 }
@@ -296,6 +307,9 @@ function buildApparelVisionSummary(visionResult = null) {
 
   const merged = visionResult.merged;
   const lines = [];
+  if (merged.productName) {
+    lines.push(`Suggested product name: ${merged.productName}`);
+  }
   if (merged.category) {
     lines.push(`Garment category: ${merged.category}`);
   }

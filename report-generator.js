@@ -2051,7 +2051,14 @@ function normalizeAiProduct(item) {
     || rawCode
   ).trim();
   if (!code) return null;
-  const name = productParser.sanitizeProductName(rawName) || rawName || 'Unknown Product';
+  // Keep a real name when the source (or an earlier AI pass) supplied one.
+  // Only fall back to the placeholder when there is genuinely nothing usable —
+  // isUsableProductName() rejects placeholders, bare codes and stub names that
+  // carry neither a gender nor a garment category, which is exactly the signal
+  // the naming instructions use to ask the model for a full six-part name.
+  const sanitized = productParser.sanitizeProductName(rawName);
+  const name = (sanitized && isUsableProductName(sanitized)) ? sanitized
+    : (sanitized || rawName || 'Unknown Product');
   const rawCategory = String(item.category || '').trim();
   const inferredCategory = productParser.inferCategory(
     `${name} ${rawCategory}`,
@@ -2120,6 +2127,65 @@ function dedupeAiProductsByCode(products) {
 
 function normalizeProductCode(code) {
   return String(code || '').replace(/[^a-z0-9]/gi, '').toLowerCase();
+}
+
+// ── Product-name completeness ────────────────────────────────────────────────
+// The AI writes great descriptions but the name used to be either copied from
+// the source or left as a placeholder ("Unknown Product", a bare style number,
+// or supplier boilerplate). Retailers describe a garment with a fixed six-part
+// formula, so we detect when an existing name is NOT usable and let the model
+// build one in that shape:
+//
+//   Gender + Fit + Length + Sleeve + Category + Closure
+//   e.g. Men's Regular-Fit Long-Sleeve Hooded Sweatshirt
+//
+// A name counts as usable when it is real prose (not a code, not a placeholder)
+// and already carries BOTH a gender marker and a garment category. Anything
+// thinner than that is what the model gets asked to fill in.
+const NAME_PLACEHOLDER_RE = /^(?:unknown(?:\s+product)?|n\/?a|none|null|undefined|tbd|-+|\?+)$/i;
+// NOTE on plurals: write the stem and then `s?` — e.g. `dress(?:es)?` for
+// dress/dresses. Writing `dresses?` silently matches "dresse"/"dresses" but
+// NEVER the singular "dress", because the literal `s` is consumed before `s?`.
+const NAME_GENDER_RE = /\b(?:men'?s?|women'?s?|ladies|mens|womens|male|female|unisex|boys?|girls?|kids?|juniors?)\b/i;
+const NAME_GARMENT_RE = /\b(?:shirts?|t-?shirts?|tees?|polos?|tops?|blouse(?:s|es)?|dress(?:es)?|skirts?|jeans|trousers|pants|chinos?|joggers?|shorts?|leggings?|sweatshirts?|hoodies?|sweaters?|jumpers?|cardigans?|knitwear|jackets?|coats?|parkas?|blazers?|waistcoats?|vests?|gilets?|overshirts?|bodysuits?|jumpsuits?|playsuits?|loungewear|pyjamas?|pajamas?|robe(?:s|es)?|swimwear|bikinis?|swimsuits?|bras?|underwear|socks?|tights?|scarf|scarves|hats?|caps?|beanies?|belts?|bags?|backpacks?|shoes?|sneakers?|boots?|sandals?)\b/i;
+
+/**
+ * Is an existing product name good enough to keep as-is?
+ * Requires real prose that already names a gender AND a garment category.
+ * @param {string} value
+ * @returns {boolean}
+ */
+function isUsableProductName(value) {
+  const name = String(value || '').trim();
+  if (!name) return false;
+  if (NAME_PLACEHOLDER_RE.test(name)) return false;
+  // A bare style number / code is not a product name.
+  if (/^[A-Z0-9][A-Z0-9./_-]{2,}$/i.test(name) && !/\s/.test(name)) return false;
+  // Too short to carry both a gender and a garment type.
+  if (name.split(/\s+/).filter(Boolean).length < 3) return false;
+  return NAME_GENDER_RE.test(name) && NAME_GARMENT_RE.test(name);
+}
+
+/**
+ * Build the instruction block that teaches the model the six-part name formula.
+ * @param {boolean} enabled
+ * @returns {string}
+ */
+function buildProductNameInstructions(enabled) {
+  if (!enabled) return '';
+  return `
+Product-name rule (IMPORTANT):
+- The "name" must follow the retailer six-part formula:
+  Gender + Fit + Length + Sleeve + Category + Closure
+- Write it in ENGLISH, Title Case, as one line without commas.
+- Example: "Men's Regular-Fit Long-Sleeve Hooded Sweatshirt".
+- Gender: Men's / Women's / Unisex. Fit: Regular-Fit, Slim-Fit, Relaxed-Fit, Oversized...
+- Length: Long-Sleeve, Short-Sleeve, Sleeveless, Cropped, Midi, Maxi (only when evident).
+- Category: the specific garment type (Hooded Sweatshirt, Oxford Shirt, Cargo Pants, ...).
+- Closure: Zip-Up, Button-Up, Pullover, Drawstring (only when visually evident).
+- OMIT any segment you cannot support with evidence — never invent one.
+- If the existing "name" is already a complete, correct garment name, keep it verbatim.
+- Never output a bare style number, "Unknown Product", or a material/composition string as the name.`;
 }
 
 function mergeProductInventories(baseProducts = [], aiProducts = []) {
@@ -2193,7 +2259,7 @@ ${buildFashionDomainInstructions()}
 Return JSON ONLY as an array. Each item must include:
 {
   "code": "style number (e.g. LC2259, GS12GD-LT24043-5, S27-84479, 1234/567/890 or 1234567890)",
-  "name": "product name",
+  "name": "complete English product name built with the six-part formula below; keep the source name verbatim when it is already a valid garment name",
   "category": "prefer a specific apparel family such as Waistcoats & Vests, Blazers, Jackets, Outerwear, Overshirts, Shirts, T-Shirts, Polos, Tops, Jeans, Chino Pants, Cargo Pants, Joggers, Tailored Pants, Shorts, Dresses, Skirts, Knitwear, Hoodies & Sweatshirts, Accessories, Footwear or Underwear. Use 'Other' only if there is truly no category evidence. Do not use fabric buckets like Woven or Denim as the final category.",
   "fit": "use the most specific fit or silhouette term visible in the source or visual notes, such as Skinny, Slim, Baggy, Regular, Relaxed, Oversized, Loose, Straight, Wide Leg, Bootcut, Flare, Tapered, Cropped, Boxy, Barrel, Balloon, Jogger, Mom, Dad, Boyfriend or Carrot. Leave empty only if there is truly no fit evidence.",
   "materials": ["Cotton","Recycled Cotton","BCI Cotton","Organic Cotton","Polyester","Recycled Polyester","Viscose","Rayon","Lyocell","Tencel","Linen","Elastane","Spandex","Polyamide","Nylon", "..."] (array, may be empty),
@@ -2211,6 +2277,7 @@ Rules:
 - If a section heading says MEN'S DENIM, WOMEN'S DENIM, MEN'S WOVEN, WOMEN'S WOVEN, OUTERWEAR, or similar, use that as context for the products that follow, but still return an apparel category rather than a fabric bucket.
 - Use specialist visual notes and structured product candidates to refine category granularity. Do not collapse all tops into Shirts if jacket, coat, vest, waistcoat, overshirt, blazer, polo, t-shirt, knitwear, or top is better supported.
 - Preserve and merge compositionText and material clues from the source when they are already available.
+${buildProductNameInstructions(true)}
 - Do not hallucinate.
 - Return JSON only, no markdown.
 
@@ -3571,11 +3638,12 @@ Your task:
 - do NOT delete products
 - only improve fields when the source evidence supports it
 - focus on category granularity, fit, materials, composition, and visible design detail
+- for "name": keep the existing name verbatim when it is already a complete garment name; otherwise build the full six-part name described below
 
 Return JSON ONLY as an array of objects. Each object must include:
 {
   "code": "same product code",
-  "name": "same or improved product name",
+  "name": "keep the existing name when it is already a complete garment name, otherwise the full six-part English name",
   "primaryCategory": "broad apparel family such as Tops, Bottoms, Outerwear, One-Piece, Accessories, Footwear or Underwear",
   "subcategory": "most specific apparel category supportable",
   "category": "most specific apparel category supportable",
@@ -3596,6 +3664,7 @@ Strict rules:
 - Leave fit empty only if there is truly no evidence.
 - If the evidence context contains batch-level or collection-level visual notes, do NOT apply those notes to every product automatically. Only use a visual cue when it clearly matches the specific product being refined.
 - If a product object already includes its own "visualNotes", treat those as higher-priority evidence for that product than any shared batch note.
+${buildProductNameInstructions(true)}
 - Keep output valid JSON only.
 
 Evidence context:
@@ -3668,6 +3737,7 @@ ${buildFashionDomainInstructions()}
 Return JSON ONLY:
 {
   "code": "${code}",
+  "name": "keep the existing name when it is already a complete garment name, otherwise the full six-part English name described below",
   "primaryCategory": "broad family such as Outerwear, Tops, Bottoms, One-Piece, Accessories, Footwear or Underwear",
   "subcategory": "most specific apparel type supportable",
   "category": "same as subcategory",
@@ -3681,6 +3751,7 @@ Rules:
 - prefer specific subcategories such as Trucker Jacket, Oxford Shirt, Cargo Pants, Pleated Trousers, Straight Jeans, Waistcoat, Gilet, Hoodie, Sweatshirt, Bermuda Shorts, Jorts
 - do not use fabric buckets like Denim or Woven as the final subcategory
 - if evidence is weak, preserve the current fields instead of inventing
+${buildProductNameInstructions(true)}
 - keep valid JSON only
 
 Product evidence:
