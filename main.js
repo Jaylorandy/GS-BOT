@@ -1474,55 +1474,241 @@ function findSystemChromeUserDataDir() {
   return null;
 }
 
-// Clone the essential auth/fingerprint files from the user's real Chrome
-// "Default" profile into the H&M scraper session dir, so the scraper browser
-// carries a trusted identity (cookies + device fingerprint) that H&M's Akamai
-// guard recognises as a normal user. We copy only the small state files — not
-// the whole multi-GB profile — and only once (idempotent). The user chose this
-// approach knowing it copies their login state.
+// ─────────────────────────────────────────────────────────────────────────────
+// H&M browser identity (Chrome profile clone)
+//
+// WHY THIS EXISTS
+// H&M sits behind Akamai, which fingerprints the browser *identity*, not just
+// the IP. An anonymous browser gets "Access Denied" no matter how the request
+// is dressed up. So the scraper launches a headed browser whose user-data dir
+// is seeded with a copy of the user's real Chrome profile (cookies + device
+// fingerprint + decryption key). The user approved this approach knowing it
+// copies their login state into the scraper's own session directory.
+//
+// ⚠️ THE HARD CONSTRAINT — READ BEFORE EDITING (learned the hard way)
+// While the user's Chrome is RUNNING it holds an EXCLUSIVE lock on
+// `Default/Network/Cookies`, and NOTHING outside that process can read it.
+// Verified 2026-09-24 by trying thirteen different approaches — every one
+// failed:
+//     fs.copyFileSync / readFileSync / openSync .......... EBUSY
+//     copyFileSync + COPYFILE_FICLONE_FORCE .............. ENOSYS
+//     robocopy /B, esentutl /y, Copy-Item -Force ......... failed
+//     PowerShell FileShare.ReadWrite ..................... failed
+//     node:sqlite readOnly .............................. failed
+//     VSS shadow copy ................................... service stopped
+// There is no clever workaround. The copy simply cannot happen while Chrome
+// runs, and the only correct behaviour is to SAY SO.
+//
+// 🩸 HOW THIS WAS MISDIAGNOSED FOR DAYS
+// The copy was wrapped in `try { … } catch { /* skip locked file */ }`. The
+// empty catch swallowed EBUSY, the function returned "success" anyway, and it
+// logged the byte count of a STALE file left over from an earlier run — so the
+// log confidently claimed `cookies 1824 KB` while the browser was in fact
+// running with ZERO cookies (confirmed via `SELECT count(*) FROM cookies` → 0).
+// That fake success sent the whole investigation chasing UA strings, headless
+// mode, TLS fingerprints and egress IPs — all red herrings, because the real
+// defect was that the identity was never there at all.
+// ⇒ NEVER swallow an error here. Distinguish ENOENT (source absent — fine) from
+//   EBUSY (real failure — must surface), and only report success when the copy
+//   actually produced bytes.
+//
+// A-PLAN BEHAVIOUR
+//   1. If the source is locked (Chrome running) → return { ok:false, reason:
+//      'chrome-locked' } and tell the user to fully quit Chrome and retry.
+//      Do NOT touch the existing session — a previously-built good identity
+//      keeps working, so this failure is only fatal on a cold start.
+//   2. If the source is free → copy a complete identity (including Local
+//      Storage, which H&M's login state actually lives in), verify the result,
+//      then record metadata so we can judge freshness later.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Files that together constitute a usable identity. Root-level entries are
+// relative to the Chrome user-data root; `Default/…` entries are per-profile.
+// `Local State` carries the DPAPI-wrapped AES key that decrypts the Cookies
+// store — without it Chrome silently discards the copied cookies as unreadable.
+const HM_IDENTITY_ROOT_FILES = ['Local State', 'first_party_sets.db'];
+
+const HM_IDENTITY_PROFILE_FILES = [
+  'Preferences',
+  'Secure Preferences',
+  'TransportSecurity',
+];
+
+// Modern Chrome keeps cookies and network state under Default/Network/.
+const HM_IDENTITY_NETWORK_FILES = [
+  'Cookies',
+  'Cookies-journal',
+  'Network Persistent State',
+  'Trust Tokens',
+  'TransportSecurity',
+  'Reporting and NEL',
+];
+
+// H&M stores session/login markers in Local Storage, not only in cookies.
+// Measured 2026-09-24: 3 of 22 leveldb files in the user's profile contained
+// `hm.com` references. Copying only cookies gave an identity H&M still
+// rejected, so this directory travels with the clone.
+const HM_IDENTITY_LOCAL_STORAGE_DIR = ['Local Storage', path.join('Local Storage', 'leveldb')];
+
+function getHmIdentityMetaPath() {
+  return path.join(getHmSessionDir(), '.gsbot-identity-meta.json');
+}
+
+function readHmIdentityMeta() {
+  try {
+    const raw = fs.readFileSync(getHmIdentityMetaPath(), 'utf8');
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+// Read the profile's cookie store with Node's built-in SQLite (Node 22+).
+// Returns -1 when the store is missing or unreadable. Used purely for honest
+// reporting — a zero here is exactly the condition that caused the silent 403s.
+function countHmSessionCookies() {
+  const store = path.join(getHmSessionDir(), 'Default', 'Network', 'Cookies');
+  try {
+    if (!fs.existsSync(store)) return -1;
+    // eslint-disable-next-line global-require
+    const { DatabaseSync } = require('node:sqlite');
+    const db = new DatabaseSync(store, { readOnly: true });
+    const row = db.prepare('SELECT count(*) AS n FROM cookies').get();
+    db.close();
+    return row && typeof row.n === 'number' ? row.n : -1;
+  } catch {
+    return -1;
+  }
+}
+
+function writeHmIdentityMeta(info = {}) {
+  try {
+    fs.writeFileSync(
+      getHmIdentityMetaPath(),
+      JSON.stringify({
+        clonedAt: new Date().toISOString(),
+        cookieBytes: info.cookieBytes || 0,
+        cookieCount: typeof info.cookieCount === 'number' ? info.cookieCount : null,
+        source: info.source || '',
+        files: info.files || 0,
+        skipped: info.skipped || [],
+      }, null, 2),
+      'utf8',
+    );
+  } catch { /* metadata is a convenience, never a hard dependency */ }
+}
+
 function prepareHmChromeProfile(emitLog = () => {}) {
   const sessionDir = getHmSessionDir();
-  const marker = path.join(sessionDir, '.gsbot-chrome-cloned');
-  if (fs.existsSync(marker)) return true; // already cloned once
-
   const srcRoot = findSystemChromeUserDataDir();
   if (!srcRoot) {
-    emitLog('    ⚠️ System Chrome profile not found — using a clean session (H&M detail may be blocked).', 'warning');
-    return false;
+    return {
+      ok: false,
+      reason: 'no-chrome',
+      message: 'No system Chrome profile was found, so the H&M browser cannot inherit your browsing identity.',
+    };
   }
 
-  try {
-    const srcDefault = path.join(srcRoot, 'Default');
-    const dstDefault = path.join(sessionDir, 'Default');
-    fs.mkdirSync(dstDefault, { recursive: true });
+  const srcDefault = path.join(srcRoot, 'Default');
+  const srcCookies = path.join(srcDefault, 'Network', 'Cookies');
 
-    // Root-level state (device fingerprint / decryption key lives here).
-    for (const f of ['Local State']) {
-      const s = path.join(srcRoot, f);
-      if (fs.existsSync(s)) fs.copyFileSync(s, path.join(sessionDir, f));
+  if (!fs.existsSync(srcCookies)) {
+    return {
+      ok: false,
+      reason: 'no-cookies',
+      message: `No Chrome cookie store was found at ${srcCookies}. Open H&M once in Chrome, then retry.`,
+    };
+  }
+
+  const dstDefault = path.join(sessionDir, 'Default');
+  const dstNet = path.join(dstDefault, 'Network');
+  fs.mkdirSync(dstNet, { recursive: true });
+
+  const skipped = [];
+  let copied = 0;
+
+  // A real copy is the ONLY definitive readability test. `existsSync` returns
+  // true for a locked file, and `accessSync(R_OK)` also passes because the lock
+  // is a sharing violation rather than a permission denial — so neither can
+  // pre-flight this. Only copyFileSync distinguishes the two cases, via EBUSY.
+  const copyOne = (src, dst, label) => {
+    try {
+      if (!fs.existsSync(src)) return; // ENOENT — legitimately absent, fine
+      fs.copyFileSync(src, dst);
+      copied += 1;
+    } catch (error) {
+      skipped.push(`${label}:${error.code || error.message}`);
     }
-    // Per-profile auth + fingerprint files.
-    for (const f of ['Cookies', 'Cookies-journal', 'Preferences', 'Secure Preferences', 'Network Persistent State', 'Trust Tokens']) {
-      const s = path.join(srcDefault, f);
-      try { if (fs.existsSync(s)) fs.copyFileSync(s, path.join(dstDefault, f)); } catch { /* skip locked file */ }
-    }
-    // The Network/ subfolder holds the modern Cookies store on recent Chrome.
-    const srcNet = path.join(srcDefault, 'Network');
-    if (fs.existsSync(srcNet)) {
-      const dstNet = path.join(dstDefault, 'Network');
-      fs.mkdirSync(dstNet, { recursive: true });
-      for (const f of ['Cookies', 'Cookies-journal', 'Network Persistent State', 'Trust Tokens', 'TransportSecurity']) {
-        const s = path.join(srcNet, f);
-        try { if (fs.existsSync(s)) fs.copyFileSync(s, path.join(dstNet, f)); } catch { /* skip */ }
+  };
+
+  for (const f of HM_IDENTITY_ROOT_FILES) {
+    copyOne(path.join(srcRoot, f), path.join(sessionDir, f), f);
+  }
+  for (const f of HM_IDENTITY_PROFILE_FILES) {
+    copyOne(path.join(srcDefault, f), path.join(dstDefault, f), `Default/${f}`);
+  }
+  for (const f of HM_IDENTITY_NETWORK_FILES) {
+    copyOne(path.join(srcDefault, 'Network', f), path.join(dstNet, f), `Default/Network/${f}`);
+  }
+
+  // Local Storage travels as a small tree (leveldb + its LOCK/LOG files).
+  // A held LOCK file is expected and harmless — it is the DATA that matters.
+  const srcLs = path.join(srcDefault, 'Local Storage', 'leveldb');
+  const dstLs = path.join(dstDefault, 'Local Storage', 'leveldb');
+  if (fs.existsSync(srcLs)) {
+    try {
+      fs.mkdirSync(dstLs, { recursive: true });
+      for (const f of fs.readdirSync(srcLs)) {
+        if (f === 'LOCK') continue;
+        copyOne(path.join(srcLs, f), path.join(dstLs, f), `LocalStorage/${f}`);
       }
+    } catch (error) {
+      skipped.push(`LocalStorage:${error.code || error.message}`);
     }
-    fs.writeFileSync(marker, new Date().toISOString());
-    emitLog('    🔐 Cloned system Chrome identity into the H&M scraper session.', 'info');
-    return true;
-  } catch (error) {
-    emitLog(`    ⚠️ Could not clone Chrome profile (${error.message}); using a clean session.`, 'warning');
-    return false;
   }
+
+  // Did the cookie store actually land? This is the make-or-break file.
+  const cookieLocked = skipped.some((s) => s.includes('Default/Network/Cookies:EBUSY'));
+  let cookieBytes = 0;
+  try { cookieBytes = fs.statSync(path.join(dstNet, 'Cookies')).size; } catch { /* absent */ }
+
+  // ── Failure: Chrome is holding the source ─────────────────────────────────
+  if (cookieLocked && cookieBytes === 0) {
+    const meta = readHmIdentityMeta();
+    return {
+      ok: false,
+      reason: 'chrome-locked',
+      hasUsableSession: !!(meta && meta.cookieCount > 0),
+      message: 'Chrome is running and has the cookie store locked, so the H&M browser cannot inherit your login. Fully quit Chrome (check the tray / task manager — every chrome.exe must be gone), then retry.',
+    };
+  }
+
+  if (cookieBytes === 0) {
+    return {
+      ok: false,
+      reason: 'copy-failed',
+      hasUsableSession: false,
+      message: `The Chrome cookie store could not be copied (${skipped[0] || 'unknown reason'}). Open H&M in Chrome once, fully quit Chrome, then retry.`,
+    };
+  }
+
+  // ── Success ───────────────────────────────────────────────────────────────
+  const cookieCount = countHmSessionCookies();
+  writeHmIdentityMeta({ cookieBytes, cookieCount, source: srcRoot, files: copied, skipped });
+
+  const skipNote = skipped.length ? `, ${skipped.length} optional file(s) skipped` : '';
+  emitLog(`    🔐 Chrome identity copied for H&M (cookies ${Math.round(cookieBytes / 1024)} KB, ${cookieCount >= 0 ? `${cookieCount} entries` : 'count unavailable'}${skipNote}).`, 'info');
+  return { ok: true, reason: 'refreshed', cookieBytes, cookieCount, skipped };
+}
+
+// Human-readable guidance for the failure the user is most likely to hit.
+function describeHmIdentityProblem(result) {
+  if (!result || result.ok) return '';
+  if (result.reason === 'chrome-locked') {
+    return 'To fix this: fully quit Chrome (make sure no chrome.exe remains in Task Manager), then start the H&M scrape again. A previously successful identity keeps working, so this is only required on a cold start.';
+  }
+  return result.message || '';
 }
 
 function normalizeScraperBrand(value = '') {
@@ -16383,9 +16569,11 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
     // When reusing a page (bestseller flow), the page already has anti-detection
     // set up from the listing page. Only apply fresh profiles for new pages.
     if (ownsPage) {
+      // Profile only — same rule as collectHmBestsellerLinks: never override
+      // the UA here. A Mac/Safari UA on this Windows Chromium (plus the
+      // userAgentData wipe that page.setUserAgent causes) is an instant
+      // Akamai block; the browser's real identity passes.
       await antiDetection.applyRetailBrowsingProfile(page);
-      await page.setUserAgent(antiDetection.getRandomUserAgent());
-      await page.setViewport(antiDetection.getRandomViewport());
     }
     // When skipNavigation is true, the page is already on the product page
     // (e.g. we clicked through from the listing page). Skip goto().
@@ -17280,8 +17468,18 @@ function getBestsellerSessionDir() {
 const BESTSELLER_SOURCES = {
   'newyorker|male': 'https://www.newyorker.de/products/?gender=MALE&editorials=218',
   'newyorker|female': 'https://www.newyorker.de/products/?gender=FEMALE&editorials=217',
-  // H&M removed: its Akamai bot-guard 403s all automated product-page access
-  // (verified — even manual clicks in the automation browser are blocked).
+  'uniqlo|male': 'https://www.uniqlo.com/us/en/spl/ranking/men',
+  'uniqlo|female': 'https://www.uniqlo.com/us/en/spl/ranking/women',
+  // H&M editorial bestseller lists. These are Next.js SSR pages whose whole
+  // ranked catalogue arrives in __NEXT_DATA__ (see collectHmBestsellerLinks),
+  // paginated with a plain ?page=N — no PDP visits needed for the images.
+  //
+  // NOTE (corrected 2026-09-23): the earlier "Akamai 403s everything" verdict
+  // was wrong. The 403 was caused by HEADLESS mode. With headless:false +
+  // getRetailLaunchArgs() + ignoreDefaultArgs:['--enable-automation'] both
+  // pages return 200 even without a cloned Chrome profile.
+  'hm|male': 'https://www2.hm.com/en_us/men/seasonal-trending/best-sellers.html',
+  'hm|female': 'https://www2.hm.com/en_us/women/seasonal-trending/best-sellers.html',
 };
 
 function resolveBestsellerSource(brand, gender) {
@@ -17544,197 +17742,389 @@ async function collectZaraBestsellerLinks(browser, listingUrl, emitLog, ensureAc
   }
 }
 
-async function collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActive) {
+// ── Parse a raw H&M listing HTML (server response) into the SAME shape the
+//    in-browser evaluate in collectHmBestsellerLinks produces. Used by the
+//    Firecrawl route, where the page never exists inside our browser.
+//    Field mapping must stay in lockstep with the browser evaluate below.
+function parseHmListingHtml(html) {
+  const out = { hits: [], totalHits: 0, totalPages: 1, currentPage: 1, pageSize: 36, ldPositions: null, blocked: false, blockReason: '', viaFirecrawl: true };
+  const text = String(html || '');
+  const ndMatch = text.match(/<script[^>]*id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+  if (!ndMatch) {
+    // No Next.js payload — an Akamai/edge guard page (HTTP 200 or 403).
+    const visible = text.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    out.blocked = true;
+    out.blockReason = /access denied|edgesuite\.net|reference #\d/i.test(visible) ? 'akamai-access-denied' : 'no-next-data';
+    return out;
+  }
+  try {
+    const j = JSON.parse(ndMatch[1].trim());
+    const d = j?.props?.pageProps?.plpProps?.productListingSectionProps?.productListingData;
+    if (d) {
+      out.totalHits = Number(d.totalHits) || 0;
+      out.pageSize = Number(d.pagination?.pageSize) || 36;
+      out.totalPages = Number(d.pagination?.totalPages) || 1;
+      out.currentPage = Number(d.pagination?.currentPageNum || d.pagination?.currentPage) || 1;
+      const list = Array.isArray(d.hits) && d.hits.length ? d.hits : (d.rawProductList || []);
+      out.hits = list.map((h) => ({
+        article: String(h.articleCode || h.id || '').replace(/\D/g, ''),
+        name: String(h.title || h.productName || '').trim(),
+        price: h.prices?.[0]?.formattedPrice || h.prices?.[0]?.price || '',
+        discounted: h.prices?.[0]?.formattedDiscountedPrice
+          || h.prices?.[0]?.formattedRedPrice || h.prices?.[0]?.formattedYellowPrice || '',
+        category: h.category || h.mainCatCode || '',
+        pdpUrl: h.pdpUrl || (h.articleCode ? `/en_us/productpage.${h.articleCode}.html` : ''),
+        images: [
+          h.imageModelSrc || h.modelImage,
+          h.imageProductSrc || h.productImage,
+          ...(Array.isArray(h.galleryImages) ? h.galleryImages.map((g) => g?.url) : []),
+          ...(Array.isArray(h.images) ? h.images.map((g) => g?.url || g) : []),
+        ].filter((u) => typeof u === 'string' && u),
+        swatches: Array.isArray(h.swatches) ? h.swatches.length : 0,
+        colorName: h.productColor || h.colorName || '',
+      })).filter((h) => h.article);
+    } else {
+      out.blocked = true;
+      out.blockReason = 'listing-data-missing';
+    }
+  } catch {
+    out.blocked = true;
+    out.blockReason = 'next-data-parse-failed';
+  }
+
+  // JSON-LD ItemList carries an explicit position for the products on THIS
+  // page — same cross-check as the browser path.
+  try {
+    const ldRe = /<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/gi;
+    let ldMatch;
+    while ((ldMatch = ldRe.exec(text)) !== null) {
+      const j = JSON.parse(ldMatch[1].trim());
+      if (j && j['@type'] === 'ItemList' && Array.isArray(j.itemListElement)) {
+        out.ldPositions = j.itemListElement.map((x) => ({
+          position: x.position,
+          name: x.item?.name || '',
+          sku: String(x.item?.sku || '').replace(/\D/g, ''),
+        }));
+        break;
+      }
+    }
+  } catch { /* ignore */ }
+
+  return out;
+}
+
+async function collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActive, options = {}) {
+  // Firecrawl is no longer the H&M listing path — the headed browser with a
+  // freshly-cloned Chrome identity is primary (see readListingPage). So we do
+  // NOT fail fast on "manual mode without a key" any more; the local browser
+  // handles it regardless of the Firecrawl setting.
   const page = await browser.newPage();
 
-  // Intercept H&M listing API responses to extract article codes AND product
-  // data (images, names, prices, descriptions) directly, so we can skip
-  // opening individual product pages when the API provides enough detail.
-  const apiArticles = new Set();
-  const apiProducts = {};  // article → { name, price, images: Set, description }
-  page.on('response', async (resp) => {
-    const url = resp.url();
-    // Broaden interception to catch all H&M listing/product API responses.
-    if (/hmwebservice|\/api\/|\/listing|contentatom|graphql|pagebuilder/i.test(url) && resp.status() === 200) {
-      try {
-        const ct = resp.headers()['content-type'] || '';
-        if (!/json/i.test(ct)) return;
-        const json = await resp.json();
-        // Walk the JSON tree for article codes and product data.
-        const walk = (obj, parentKey) => {
-          if (!obj || typeof obj !== 'object') return;
-          for (const key of Object.keys(obj)) {
-            const val = obj[key];
-            if (typeof val === 'string' && /^\d{7,10}$/.test(val)) {
-              apiArticles.add(val);
-            } else if (typeof val === 'string') {
-              // Capture image URLs from API
-              if (/image\.hm\.com|hmgoepprod|lp\d?\.hm\.com/i.test(val) && /\.(jpe?g|png|webp)/i.test(val)) {
-                // Try to find the associated article in this subtree
-                const bare = val.split('?')[0];
-                // Extract article from image filename: e.g. 1342946001.jpg
-                const artFromImg = bare.match(/(\d{7,10})\.(?:jpe?g|png|webp)/i);
-                if (artFromImg) {
-                  const art = artFromImg[1];
-                  if (!apiProducts[art]) apiProducts[art] = { name: '', price: '', images: new Set(), description: '' };
-                  apiProducts[art].images.add(val);
-                }
-              }
-            } else if (typeof val === 'object') {
-              walk(val, key);
-            }
-          }
-        };
-        walk(json, '');
-      } catch { /* response body already consumed or not JSON */ }
-    }
-  });
-
   try {
+    // Patch webdriver/chrome/langs only. Proven 2026-09-24: overriding the UA
+    // here is what gets H&M blocked — the random UA pool claims Mac/Safari
+    // while the real browser is a Windows Chromium, and Puppeteer's UA
+    // override also wipes navigator.userAgentData / sec-ch-ua client hints,
+    // an instant Akamai tell (~5 of 7 pool entries → 403 "Access Denied").
+    // The browser's own self-consistent identity passes cleanly.
     await antiDetection.applyRetailBrowsingProfile(page);
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
-    await page.setViewport(antiDetection.getRandomViewport());
     emitLog(`    🌐 Opening H&M bestseller listing: ${listingUrl}`, 'info');
-    await page.goto(listingUrl, { waitUntil: 'networkidle2', timeout: 60000 });
-    await antiDetection.randomDelay(2500, 4000);
-    ensureActive();
 
-    // Cookie / region consent.
-    await page.evaluate(() => {
-      const texts = ['accept', 'agree', 'allow all', 'got it', 'continue', 'i accept', 'accept all'];
-      const clickable = [...document.querySelectorAll('button, [role="button"], a')];
-      for (const el of clickable) {
-        const t = String(el.textContent || '').trim().toLowerCase();
-        if (t && texts.some((x) => t === x || t.includes(x)) && t.length < 30) {
-          try { el.click(); } catch { /* noop */ }
-        }
-      }
-    }).catch(() => {});
-    await antiDetection.randomDelay(800, 1400);
-    ensureActive();
+    // ── Read one listing page and pull the ranked product array out of the
+    //    Next.js payload. H&M renders this page server-side, so __NEXT_DATA__
+    //    carries the authoritative, already-rank-ordered `hits[]` — no DOM
+    //    scraping, no lazy-load juggling, no PDP visits needed for the images.
+    //
+    //    Pagination is a plain `?page=N` on this same route. Verified
+    //    2026-09-23: `?page=2` returns the next batch and advances nextPageNum,
+    //    while ?currentPage/?pageNumber/?offset/?start/?p are all ignored, and
+    //    the on-page "Load next page" button does NOT append anything.
+    let firecrawlViaCloud = false;
 
-    // H&M bestseller pages use lazy-loading AND paginate. First scroll the
-    // current page to the bottom (triggers lazy-load + API calls we intercept),
-    // then walk explicit pages via ?page=N until no new articles appear.
-    const scrollToBottom = async () => {
-      let stable = 0;
-      let lastApiCount = -1;
-      for (let round = 0; round < 40 && stable < 4; round += 1) {
-        ensureActive();
-        await page.evaluate(async () => {
-          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-          for (let i = 0; i < 6; i += 1) { window.scrollBy(0, window.innerHeight * 1.5); await sleep(350); }
-          // Click a "load more" control if H&M shows one instead of infinite scroll.
-          const re = /load\s*more|show\s*more|view\s*more|see\s*more|加载更多|更多/i;
-          for (const el of document.querySelectorAll('button, a, [role="button"]')) {
-            const t = String(el.textContent || '').trim();
-            if (t && t.length < 30 && re.test(t)) { try { el.click(); } catch { /* noop */ } }
-          }
-        }).catch(() => {});
-        await antiDetection.randomDelay(1000, 1600);
-        const currentCount = apiArticles.size;
-        if (currentCount === lastApiCount) stable += 1; else stable = 0;
-        lastApiCount = currentCount;
-      }
+    // H&M's Akamai edge blocks Firecrawl's egress range outright — verified
+    // 2026-09-24 with 12 parameter variants (v1/v2, maxAge 0/48h/omit,
+    // proxy enhanced/stealth/auto/omit, location US, waitFor, mobile, listing
+    // and product and home pages); every fresh scrape returned HTTP 500
+    // "All scraping engines failed", while the same key fetched example.com and
+    // zara.com fine and still had plan credits. So Firecrawl is not a viable
+    // fallback for H&M. Flip this to false if H&M's edge policy ever changes.
+    const HM_FIRECRAWL_KNOWN_DEAD = true;
+
+    // ── Firecrawl route: fetch the raw server HTML from the cloud and parse
+    //    it with parseHmListingHtml (same shape as the browser evaluate).
+    //    rawHtml is preferred — the cleaned "html" format may strip <script>.
+    const readListingPageViaFirecrawl = async (url) => {
+      emitLog(`    ☁️ H&M listing page via Firecrawl: ${url}`, 'info');
+      const result = await firecrawlService.scrapePage(url, { formats: ['rawHtml', 'html'], onlyMainContent: false, timeout: 60000 });
+      return parseHmListingHtml(result.rawHtml || result.html || '');
     };
 
-    await scrollToBottom();
-    emitLog(`    📦 H&M page 1: ${apiArticles.size} articles so far…`, 'info');
+    const readListingPage = async (pageNo) => {
+      const url = pageNo <= 1
+        ? listingUrl
+        : `${listingUrl}${listingUrl.includes('?') ? '&' : '?'}page=${pageNo}`;
 
-    // Paginate: append/replace ?page=N and reload until a page adds nothing new.
-    const baseUrl = listingUrl.split('#')[0];
-    const joiner = baseUrl.includes('?') ? '&' : '?';
-    let pageStable = 0;
-    for (let pageNo = 2; pageNo <= 40 && pageStable < 2; pageNo += 1) {
+      // ── Path priority: LOCAL BROWSER FIRST, Firecrawl only as a rescue. ──
+      // History: this used to short-circuit every page to Firecrawl whenever
+      // Firecrawl was configured in "manual" mode. That was written when the
+      // local browser path was believed dead. The actual reason the local path
+      // was failing turned out to be that the browser never received an
+      // identity at all — the Chrome-profile copy was silently failing on an
+      // EBUSY lock and reporting success anyway (see prepareHmChromeProfile).
+      // With that fixed and an identity actually present, the headed browser
+      // loads the listing reliably (verified: 200, __NEXT_DATA__, 72 product
+      // links in ~6s), while Firecrawl is hard-blocked by H&M's Akamai edge
+      // (12 parameter variants, all HTTP 500). So the manual-mode bypass is
+      // gone: local first, cloud only if local is denied.
+      //
+      // `firecrawlViaCloud` is still honoured — it means the local edge already
+      // denied us earlier in THIS run, so we stop hammering it.
+      if (firecrawlViaCloud) {
+        return readListingPageViaFirecrawl(url);
+      }
+
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      await antiDetection.randomDelay(1800, 3000);
       ensureActive();
-      const before = apiArticles.size;
-      const pagedUrl = `${baseUrl}${joiner}page=${pageNo}`;
-      try {
-        await page.goto(pagedUrl, { waitUntil: 'networkidle2', timeout: 60000 });
-        await antiDetection.randomDelay(1500, 2500);
-        await scrollToBottom();
-      } catch { /* a non-existent page may error; treated as no-gain below */ }
-      const gained = apiArticles.size - before;
-      emitLog(`    📄 H&M page ${pageNo}: +${gained} (total ${apiArticles.size})`, 'info');
-      if (gained <= 0) pageStable += 1; else pageStable = 0;
-    }
 
-    // Also scan rendered DOM links as a fallback — H&M uses /productpage.{digits}.html
-    // AND extract product card data (name, price, thumbnail) from the DOM.
-    const domCards = await page.evaluate(() => {
-      const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
-      const out = [];
-      for (const a of document.querySelectorAll('a[href]')) {
-        const href = a.href || '';
-        const m = href.match(/productpage\.(\d{7,10})\.html/i) || href.match(/\/(\d{7,10})\.html/i);
-        if (m && /hm\.com/i.test(href)) {
-          const article = m[1];
-          // Walk up from the <a> to find the product card container.
-          let card = a.closest('[class*="item"], [class*="product"], [class*="card"], [class*="article"], [data-articlecode], [class*="grid"]');
-          if (!card) {
-            // Fallback: walk up a few levels
-            card = a.parentElement?.parentElement?.parentElement;
+      // Cookie / region consent (some regions gate the payload behind it).
+      await page.evaluate(() => {
+        const texts = ['accept', 'agree', 'allow all', 'got it', 'continue', 'i accept', 'accept all'];
+        const clickable = [...document.querySelectorAll('button, [role="button"], a')];
+        for (const el of clickable) {
+          const t = String(el.textContent || '').trim().toLowerCase();
+          if (t && texts.some((x) => t === x || t.includes(x)) && t.length < 30) {
+            try { el.click(); } catch { /* noop */ }
           }
-          const name = card ? clean(card.querySelector('h2, h3, [class*="name" i], [class*="heading" i]')?.textContent || '') : '';
-          const price = card ? (() => {
-            for (const el of card.querySelectorAll('[class*="price" i], [data-testid*="price" i]')) {
-              const t = clean(el.textContent);
-              if (/\d/.test(t) && /[$€£¥]|USD|EUR|GBP/i.test(t) && t.length < 30) return t;
+        }
+      }).catch(() => {});
+      await antiDetection.randomDelay(600, 1100);
+      ensureActive();
+
+      const out = await page.evaluate(() => {
+        const out = { hits: [], totalHits: 0, totalPages: 1, currentPage: 1, pageSize: 36, ldPositions: null, blocked: false, blockReason: '' };
+        try {
+          const nd = document.getElementById('__NEXT_DATA__');
+          if (!nd) {
+            // No Next.js payload at all. Almost always an Akamai/edge block page
+            // ("Access Denied … errors.edgesuite.net") served with HTTP **200**,
+            // so the response status alone cannot catch it. Surface it explicitly
+            // — otherwise this is indistinguishable from "the list is empty",
+            // which is exactly how a rate-limit gets misread as a code bug.
+            const text = (document.body ? document.body.innerText : '').slice(0, 400);
+            if (/access denied|edgesuite\.net|reference #\d/i.test(text)) {
+              out.blocked = true;
+              out.blockReason = 'akamai-access-denied';
+            } else {
+              out.blocked = true;
+              out.blockReason = 'no-next-data';
             }
-            return '';
-          })() : '';
-          // Thumbnail image from the card
-          const img = card ? card.querySelector('img') : null;
-          const thumbUrl = img ? (img.currentSrc || img.src || img.getAttribute('data-src') || '') : '';
-          out.push({ url: href.split('?')[0], article, name, price, thumbUrl });
+            return out;
+          }
+          const j = JSON.parse(nd.textContent);
+          const d = j?.props?.pageProps?.plpProps?.productListingSectionProps?.productListingData;
+          if (d) {
+            out.totalHits = Number(d.totalHits) || 0;
+            out.pageSize = Number(d.pagination?.pageSize) || 36;
+            out.totalPages = Number(d.pagination?.totalPages) || 1;
+            out.currentPage = Number(d.pagination?.currentPageNum || d.pagination?.currentPage) || 1;
+            // `hits[]` is the DOM-render shape: carries title / galleryImages /
+            // category — richer than rawProductList for our purposes.
+            const list = Array.isArray(d.hits) && d.hits.length ? d.hits : (d.rawProductList || []);
+            out.hits = list.map((h) => ({
+              article: String(h.articleCode || h.id || '').replace(/\D/g, ''),
+              name: String(h.title || h.productName || '').trim(),
+              price: h.prices?.[0]?.formattedPrice || h.prices?.[0]?.price || '',
+              discounted: h.prices?.[0]?.formattedDiscountedPrice
+                || h.prices?.[0]?.formattedRedPrice || h.prices?.[0]?.formattedYellowPrice || '',
+              category: h.category || h.mainCatCode || '',
+              pdpUrl: h.pdpUrl || (h.articleCode ? `/en_us/productpage.${h.articleCode}.html` : ''),
+              images: [
+                h.imageModelSrc || h.modelImage,
+                h.imageProductSrc || h.productImage,
+                ...(Array.isArray(h.galleryImages) ? h.galleryImages.map((g) => g?.url) : []),
+                ...(Array.isArray(h.images) ? h.images.map((g) => g?.url || g) : []),
+              ].filter((u) => typeof u === 'string' && u),
+              swatches: Array.isArray(h.swatches) ? h.swatches.length : 0,
+              colorName: h.productColor || h.colorName || '',
+            })).filter((h) => h.article);
+          } else {
+            // Payload present but the listing section is gone: H&M changed the
+            // shape, or this page is a soft block. Flag it so we don't silently
+            // report "0 products".
+            out.blocked = true;
+            out.blockReason = 'listing-data-missing';
+          }
+        } catch { /* payload missing or unparseable */ }
+
+        // JSON-LD ItemList carries an explicit position for the products on THIS
+        // page — useful as a cross-check on rank order / a last-resort fallback.
+        try {
+          for (const s of document.querySelectorAll('script[type="application/ld+json"]')) {
+            const j = JSON.parse(s.textContent);
+            if (j && j['@type'] === 'ItemList' && Array.isArray(j.itemListElement)) {
+              out.ldPositions = j.itemListElement.map((x) => ({
+                position: x.position,
+                name: x.item?.name || '',
+                sku: String(x.item?.sku || '').replace(/\D/g, ''),
+              }));
+              break;
+            }
+          }
+        } catch { /* ignore */ }
+
+        return out;
+      });
+
+      // ── Rescue: the local browser just got edge-denied. If a Firecrawl key
+      //    exists, retry this page from the cloud; once the cloud answers, stop
+      //    touching the flagged local edge for the rest of the run.
+      //
+      //    NOTE: H&M's Akamai edge currently blocks Firecrawl's egress outright
+      //    (verified 2026-09-24 across 12 parameter variants — every one failed
+      //    with "All scraping engines failed"). When we get here the local path
+      //    has ALREADY been denied, so spending another ~30s on a known-dead
+      //    cloud route only delays the real error. We therefore skip the rescue
+      //    and let the caller throw a message that describes the actual state.
+      if (out.blocked && firecrawlService.isConfigured() && !HM_FIRECRAWL_KNOWN_DEAD) {
+        emitLog('    🔄 Local request blocked — retrying this page via Firecrawl…', 'warning');
+        try {
+          const rescued = await readListingPageViaFirecrawl(url);
+          if (!rescued.blocked) {
+            firecrawlViaCloud = true;
+            emitLog(`    ✅ Firecrawl rescued page ${pageNo} (${rescued.hits.length} row(s)); remaining pages will use Firecrawl.`, 'success');
+            return rescued;
+          }
+          emitLog(`    ⚠️ Firecrawl also returned a guard page (${rescued.blockReason}).`, 'warning');
+        } catch (fcError) {
+          if (isCancellationError(fcError)) throw fcError;
+          emitLog(`    ⚠️ Firecrawl rescue failed: ${fcError.message}`, 'warning');
         }
       }
       return out;
-    }).catch(() => []);
+    };
 
-    // Merge API articles and DOM links, dedupe by style (first 7 digits).
-    const seenStyles = new Set();
+    // ── Walk EVERY page (totalPages from the payload) and dedupe afterwards.
+    //
+    //    Why not stop early once we hit totalHits uniques? Because many styles
+    //    appear once per COLOUR, so a page can be entirely colour variants of
+    //    styles we've already seen. Counting uniques against totalHits would
+    //    then stop short and silently truncate the ranking (observed: 101/142).
+    //    We therefore always visit all pages, then collapse to one entry per
+    //    style — preserving rank order (page 1 first, document order within).
+    const seen = new Set();
+    const allRows = [];
+    let totalHits = 0;
+    let totalPages = 1;
+    let blockReason = '';
+    let lastReadError = null;
+
+    const MAX_PAGES = 60;
+    for (let pageNo = 1; pageNo <= MAX_PAGES; pageNo += 1) {
+      ensureActive();
+      let info;
+      try {
+        info = await readListingPage(pageNo);
+      } catch (error) {
+        if (isCancellationError(error)) throw error;
+        // A navigation race (context destroyed) or a transient block: retry once.
+        emitLog(`    ⚠️ H&M listing page ${pageNo} failed (${error.message}); retrying once…`, 'warning');
+        try {
+          await antiDetection.randomDelay(1500, 2600);
+          info = await readListingPage(pageNo);
+        } catch (retryError) {
+          if (isCancellationError(retryError)) throw retryError;
+          emitLog(`    ⚠️ H&M listing page ${pageNo} failed again (${retryError.message}); stopping.`, 'warning');
+          lastReadError = retryError;
+          break;
+        }
+      }
+
+      if (pageNo === 1) {
+        totalHits = info.totalHits;
+        totalPages = info.totalPages;
+        emitLog(`    📋 H&M bestseller: ${totalHits} product(s) across ${totalPages} page(s) of ${info.pageSize}.`, 'info');
+      }
+      if (!info.hits.length) {
+        // Distinguish a real block from a genuinely exhausted list. Akamai
+        // answers with HTTP 200 + "Access Denied", so without this check a
+        // rate-limit looks identical to "the ranking is empty".
+        if (info.blocked) {
+          blockReason = info.blockReason || 'unknown';
+          emitLog(
+            `    🛑 H&M blocked this request (${blockReason}). The listing returned an edge-guard page, not products.`,
+            'warning',
+          );
+          break;
+        }
+        emitLog(`    📄 H&M page ${pageNo}: no products (end of list).`, 'info');
+        break;
+      }
+
+      let added = 0;
+      for (const h of info.hits) {
+        allRows.push({ ...h, page: pageNo });
+        added += 1;
+      }
+      emitLog(`    📄 H&M page ${pageNo}: ${added} row(s) (${allRows.length} rows total).`, 'info');
+
+      // Stop when the payload says we've consumed the last page.
+      if (totalPages && pageNo >= totalPages) break;
+      await antiDetection.randomDelay(900, 1600);
+    }
+
+    // Collapse colour variants into one entry per style (first 7 digits) unless
+    // the user asked for every colour. H&M ranks each COLOURWAY as its own row
+    // (e.g. "Regular Fit Oxford Shirt" in White on page 1 and Dark blue on page
+    // 4), so 142 ranked rows → ~101 distinct styles. Keeping one representative
+    // colourway per style is the sensible default (and matches how the New
+    // Yorker flow treats colours); enabling All Colors keeps each ranked row.
+    const allColors = options.allColors === true;
     const articleLinks = [];
-
-    // Priority: API-intercepted articles → build productpage URLs
-    for (const article of [...apiArticles]) {
-      const styleKey = article.slice(0, 7);
-      if (!seenStyles.has(styleKey)) {
-        seenStyles.add(styleKey);
-        const apiProd = apiProducts[article] || {};
-        articleLinks.push({
-          url: `${HM_BASE_URL}/productpage.${article}.html`,
-          article,
-          name: apiProd.name || '',
-          price: apiProd.price || '',
-          apiImages: apiProd.images ? [...apiProd.images] : [],
-        });
-      }
+    for (const h of allRows) {
+      const styleKey = allColors ? h.article : h.article.slice(0, 7);
+      if (seen.has(styleKey)) continue;
+      seen.add(styleKey);
+      articleLinks.push({
+        article: h.article,
+        url: h.pdpUrl?.startsWith('http') ? h.pdpUrl : `${HM_BASE_URL}${h.pdpUrl || `/productpage.${h.article}.html`}`,
+        name: h.name,
+        price: h.discounted || h.price,
+        category: h.category,
+        colorName: typeof h.colorName === 'string' ? h.colorName : (h.colorName?.colorName || ''),
+        rank: articleLinks.length + 1,
+        apiImages: h.images,
+      });
     }
 
-    // Fallback: DOM links (only add if not already captured by API)
-    for (const entry of domCards) {
-      const styleKey = entry.article.slice(0, 7);
-      if (!seenStyles.has(styleKey)) {
-        seenStyles.add(styleKey);
-        articleLinks.push({
-          url: entry.url,
-          article: entry.article,
-          name: entry.name || '',
-          price: entry.price || '',
-          thumbUrl: entry.thumbUrl || '',
-          apiImages: [],
-        });
-      } else {
-        // Merge DOM card data into existing entry if it has richer info
-        const existing = articleLinks.find((e) => e.article.slice(0, 7) === styleKey);
-        if (existing && !existing.name && entry.name) existing.name = entry.name;
-        if (existing && !existing.price && entry.price) existing.price = entry.price;
-        if (existing && !existing.thumbUrl && entry.thumbUrl) existing.thumbUrl = entry.thumbUrl;
+    if (!articleLinks.length) {
+      if (blockReason) {
+        // Tailor the advice to what can actually help. Firecrawl is known-dead
+        // for H&M (see HM_FIRECRAWL_KNOWN_DEAD), so we do NOT promise it as a
+        // fix — we point at the two things that do work: retry later, or make
+        // sure the real Chrome profile still has a live H&M session.
+        const fcHint = HM_FIRECRAWL_KNOWN_DEAD
+          ? 'Note: the Firecrawl cloud fallback cannot help here — H&M also blocks Firecrawl\'s servers, so this is not a setting you can fix in the app. Make sure Chrome itself can still open the H&M bestseller page (the scraper reuses your Chrome profile), then retry.'
+          : (firecrawlService.isConfigured()
+            ? 'A Firecrawl rescue was attempted and also returned a guard page — the block is wider than this machine\'s IP; wait longer or switch networks.'
+            : 'Tip: adding a Firecrawl API Key in Settings lets the app finish the run from the cloud automatically when this happens.');
+        throw new Error(
+          `H&M blocked the bestseller request (${blockReason}). H&M's bot guard (Akamai) served an "Access Denied" page instead of the ranking. Usually this means the cloned Chrome session has gone stale — open the H&M bestseller page in Chrome once, then retry. If that still fails, wait a few minutes or switch networks/VPN. ${fcHint}`,
+        );
       }
+      if (lastReadError) {
+        // A read error (navigation failure, Firecrawl API error, …) broke the
+        // page walk before any row was collected. Surface the REAL failure —
+        // the generic "no styles found" message sends the user hunting for a
+        // data problem that does not exist.
+        throw new Error(`H&M listing harvest failed: ${lastReadError.message}`);
+      }
+      throw new Error('No bestseller styles were found on the H&M listing page.');
     }
-
-    emitLog(`    ✅ H&M listing harvested ${apiArticles.size} API articles + ${domCards.length} DOM links → ${articleLinks.length} unique styles.`, 'success');
+    emitLog(
+      `    ✅ H&M listing harvested ${allRows.length} ranked row(s) → ${articleLinks.length} ${allColors ? 'colourway' : 'unique style'}(s) in rank order.`,
+      'success',
+    );
 
     // Return both the links AND the listing page so the bestseller flow can
     // reuse it for product detail navigation (avoiding new-tab bot detection).
@@ -18120,9 +18510,27 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     // scraping far more reliable than a fresh bestseller-only session.
     const sessionDir = brandKey === 'hm' ? getHmSessionDir() : getBestsellerSessionDir();
     // H&M's Akamai guard flags the default automation browser (verified: direct
-    // nav 403s while the user's own Chrome works). Clone the user's real Chrome
+    // nav 403s while the user's own Chrome works). Copy the user's real Chrome
     // identity into the H&M session so product pages load.
-    if (brandKey === 'hm') prepareHmChromeProfile(emitLog);
+    //
+    // This can legitimately fail when Chrome is running — Chrome holds an
+    // exclusive lock on its cookie store and nothing can read it (see the long
+    // note on prepareHmChromeProfile). We surface that as an actionable message
+    // instead of the silent "success" that previously produced unexplained
+    // 403s. If a usable session from an earlier successful copy already exists
+    // we carry on: a stale identity usually still works, and failing fast would
+    // break a setup that is otherwise fine.
+    if (brandKey === 'hm') {
+      const identity = prepareHmChromeProfile(emitLog);
+      if (!identity.ok) {
+        const hint = describeHmIdentityProblem(identity);
+        if (identity.hasUsableSession) {
+          emitLog(`    ⚠️ Using the previously saved Chrome identity. ${hint}`, 'warning');
+        } else {
+          emitLog(`    ⚠️ ${hint}`, 'warning');
+        }
+      }
+    }
     browser = await puppeteer.launch({
       executablePath,
       headless: false,
@@ -18137,10 +18545,9 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     emitProgress(3);
     emitLog('🚀 Step 1/2: harvesting bestseller style list…', 'warning');
 
-    // Apparel-only filter shared by all brands. Excludes footwear, bags,
-    // fragrance/perfume, beauty, luggage/suitcases, slippers, accessories, etc.
-    const excludeCategoryRe = /sandal|slide|slipper|shoe|sneaker|boot|footwear|flip[\s-]?flop|espadrille|loafer|mule|heel|trainer|accessoire|accessory|bag|handbag|backpack|belt|jewel|sock|hat|cap|beanie|scarf|sunglass|glasses|watch|wallet|purse|perfume|fragrance|cologne|eau de|beauty|cosmetic|makeup|make-up|skincare|lipstick|nail|luggage|suitcase|trolley|cabin case|umbrella|tasche|gürtel|schuh|parfüm/i;
-    const excludeApparel = config?.includeAccessories === true ? null : excludeCategoryRe;
+    // Apparel-only filter shared by all brands — see isNonApparelBestseller()
+    // above for why the taxonomy category takes precedence over the product name.
+    const excludeApparelActive = config?.includeAccessories !== true;
 
     const products = [];
     let skippedNonApparel = 0;
@@ -18157,8 +18564,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         const handle = handles[i];
         try {
           const result = await scrapeIntersportProduct(handle, emitLog, ensureActive);
-          const catHay = `${result.category || ''} ${result.name || ''}`;
-          if (excludeApparel && excludeApparel.test(catHay)) {
+          if (excludeApparelActive && isNonApparelBestseller(result.category, result.name)) {
             skippedNonApparel += 1;
             emitLog(`    🚫 Skipped non-apparel: ${result.name || handle}`, 'info');
           } else {
@@ -18183,8 +18589,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         const pdpUrl = links[i];
         try {
           const result = await scrapeZaraBestsellerProduct(browser, pdpUrl, emitLog, ensureActive);
-          const catHay = `${result.category || ''} ${result.name || ''}`;
-          if (excludeApparel && excludeApparel.test(catHay)) {
+          if (excludeApparelActive && isNonApparelBestseller(result.category, result.name)) {
             skippedNonApparel += 1;
             emitLog(`    🚫 Skipped non-apparel: ${result.name || pdpUrl}`, 'info');
           } else if (!result.imageUrls?.length) {
@@ -18201,95 +18606,122 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         await antiDetection.randomDelay(400, 900);
       }
     } else if (brandKey === 'hm') {
-      // ── H&M: harvest article codes from listing (scroll + paginate + API),
-      // then open EACH product page directly — the same reliable path the
-      // regular H&M scraper (runHmScraper) uses. scrapeHmProduct navigates in
-      // its own tab within the shared H&M session (established cookies), which
-      // works far better than the old click-through+goBack juggling that lost
-      // listing state and stalled. Product detail (composition/description) is
-      // captured this way. If a product page is genuinely blocked, we fall back
-      // to the listing-card images for that item and move on.
-      const { articleLinks, listingPage } = await collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActive);
-      if (!articleLinks.length) throw new Error('No bestseller styles were found on the H&M listing page.');
-      emitProgress(10);
-      emitLog(`🚀 Step 2/2: opening ${articleLinks.length} H&M product pages (in-session navigation)…`, 'warning');
+      // ── H&M: the listing's own Next.js payload already carries, per ranked
+      // style, the product name, price, category AND the full image set
+      // (imageProductSrc / imageModelSrc / galleryImages). Verified 2026-09-23:
+      // that is plenty for the report, so we do NOT visit product pages here —
+      // PDPs are exactly what Akamai guards, and avoiding them removes the main
+      // failure mode of the old implementation.
+      //
+      // A PDP is opened only when a style is missing images (rare), and any PDP
+      // failure degrades to the listing data instead of killing the run.
+      const rawLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+      const wantsAll = !Number.isFinite(rawLimit) || rawLimit === 0;
+      // H&M's ranking is live and rotates; 150 is a generous ceiling so a
+      // genuinely large run is still capped instead of unbounded.
+      const HM_RANKING_MAX = 150;
+      const limit = rawLimit > 0 ? Math.min(Math.floor(rawLimit), HM_RANKING_MAX) : HM_RANKING_MAX;
 
-      // Reuse the ONE listing tab that already cleared Akamai. Navigate it
-      // product→product with an explicit Referer (previous page), so each hit
-      // looks like same-origin in-session browsing rather than a cold direct
-      // hit (which H&M 403s). No goBack — we jump straight to the next product.
+      // collectHmBestsellerLinks already throws a block-aware error when the
+      // listing comes back empty, so no extra guard is needed here.
+      const { articleLinks, listingPage } = await collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActive, { allColors: config?.allColors === true });
+      emitProgress(10);
+      const requestedLabel = wantsAll ? `all (cap ${HM_RANKING_MAX})` : String(limit);
+      emitLog(`🚀 Step 2/2: collecting ${requestedLabel} H&M style(s) from the ranked list…`, 'warning');
+
+      // Reuse the ONE listing tab that already cleared Akamai for the rare PDP
+      // fallback below, so those hits look like in-session browsing.
       let refererUrl = listingUrl;
 
       for (let i = 0; i < articleLinks.length; i += 1) {
         ensureActive();
+
+        // Hard ceiling: stop as soon as we have `limit` apparel styles so the
+        // over-fetched tail is never turned into downloads.
+        if (products.length >= limit) {
+          if (!wantsAll) {
+            emitLog(`    ✋ Reached the requested ${limit} apparel style(s); ${articleLinks.length - i} candidate(s) left unprocessed.`, 'info');
+          }
+          break;
+        }
+
         const entry = articleLinks[i];
         const article = entry.article;
-        let result = null;
 
-        // Build a listing-card fallback result (used if the product page blocks).
-        const cardFallback = () => {
-          const thumbUrl = entry.thumbUrl || '';
-          const normThumb = thumbUrl ? normalizeHmImageUrl(thumbUrl.startsWith('http') ? thumbUrl : `https:${thumbUrl}`) : '';
-          const apiImgs = (entry.apiImages || []).map((u) => normalizeHmImageUrl(u.startsWith('http') ? u : `https:${u}`)).filter(Boolean);
-          const allImgs = [normThumb, ...apiImgs].filter(Boolean);
-          const deduped = [];
-          const dedupSeen = new Set();
-          for (const img of allImgs) {
-            const key = hmImageDedupeKey(img);
-            if (!dedupSeen.has(key)) { dedupSeen.add(key); deduped.push(img); }
+        // Normalize + dedupe the images the listing handed us. galleryImages
+        // contains both Lookbook and DescriptiveStillLife shots; keep the
+        // model/front shot first so image F is sensibly chosen downstream.
+        const normalizeList = (urls) => {
+          const out = [];
+          const seen = new Set();
+          for (const raw of urls || []) {
+            const u = normalizeHmImageUrl(String(raw || '').startsWith('http') ? raw : `https:${raw}`);
+            if (!u) continue;
+            const key = hmImageDedupeKey(u);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            out.push(u);
           }
-          return {
-            styleNumber: article,
-            productId: article,
-            colorRef: article.length >= 10 ? article.slice(-3) : '',
-            name: entry.name || '',
-            price: entry.price || '',
-            description: '',
-            composition: '',
-            url: entry.url,
-            imageUrls: deduped,
-          };
+          return out;
         };
 
-        try {
-          emitLog(`    🌐 H&M ${i + 1}/${articleLinks.length}: navigating to product ${article}…`, 'info');
-          // Navigate the SAME (already-trusted) listing tab to the product URL
-          // with a Referer of the previous page — mimics in-session browsing so
-          // Akamai doesn't 403 it like a cold direct hit.
-          const productUrl = entry.url || buildHmProductUrl(article);
-          await listingPage.setExtraHTTPHeaders({ Referer: refererUrl }).catch(() => {});
-          await listingPage.goto(productUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-          await antiDetection.randomDelay(1800, 2800);
-          ensureActive();
-          // Scrape the current page in-place (reusePage + skipNavigation).
-          result = await scrapeHmProduct(browser, article, emitLog, ensureActive, listingPage, true);
-          refererUrl = productUrl; // next product's referer = this product
-          if (!result.imageUrls?.length) {
-            const fb = cardFallback();
-            if (fb.imageUrls.length) {
-              emitLog(`    📋 H&M ${article}: product page gave no images, using ${fb.imageUrls.length} listing-card images`, 'info');
-              result = fb;
-            }
+        let result = {
+          styleNumber: article,
+          productId: article,
+          brand: 'H&M',
+          colorRef: article.length >= 10 ? article.slice(-3) : '',
+          name: entry.name || '',
+          category: entry.category || '',
+          price: entry.price || '',
+          colorName: entry.colorName || '',
+          rank: entry.rank,
+          description: '',
+          composition: '',
+          url: entry.url,
+          imageUrls: normalizeList(entry.apiImages),
+        };
+
+        // Only fall back to a product page when the listing gave us nothing —
+        // that keeps the (Akamai-guarded) PDP traffic near zero. It also can
+        // supply description + composition, which the listing doesn't carry.
+        if (!result.imageUrls.length) {
+          try {
+            emitLog(`    🌐 H&M ${article}: no listing images — opening product page…`, 'info');
+            const productUrl = entry.url || buildHmProductUrl(article);
+            await listingPage.setExtraHTTPHeaders({ Referer: refererUrl }).catch(() => {});
+            await listingPage.goto(productUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+            await antiDetection.randomDelay(1500, 2400);
+            ensureActive();
+            const detail = await scrapeHmProduct(browser, article, emitLog, ensureActive, listingPage, true);
+            refererUrl = productUrl;
+            result = {
+              ...result,
+              name: detail.name || result.name,
+              price: detail.price || result.price,
+              description: detail.description || '',
+              composition: detail.composition || '',
+              imageUrls: normalizeList(detail.imageUrls),
+            };
+          } catch (err) {
+            if (isCancellationError(err)) throw err;
+            emitLog(`    ⚠️ H&M ${article} product page failed (${err.message}); keeping listing data.`, 'warning');
           }
-        } catch (err) {
-          if (isCancellationError(err) || taskController?.cancelled) throw new TaskCancelledError();
-          // Blocked / failed product page → fall back to listing-card data.
-          const fb = cardFallback();
-          emitLog(`    ⚠️ H&M ${article} detail failed (${err.message}); using ${fb.imageUrls.length} listing-card images`, 'warning');
-          result = fb.imageUrls.length ? fb : null;
         }
 
-        if (result) {
-          const catHay = `${result.name || ''}`;
-          if (excludeApparel && excludeApparel.test(catHay)) {
-            skippedNonApparel += 1;
-            emitLog(`    🚫 Skipped non-apparel: ${result.name || article}`, 'info');
-          } else {
-            products.push(result);
-          }
+        // Apparel-only filter — H&M supplies an exact category slug per style,
+        // so that decides and the product name is only a fallback.
+        if (excludeApparelActive && isNonApparelBestseller(result.category, result.name)) {
+          skippedNonApparel += 1;
+          emitLog(`    🚫 Skipped non-apparel: ${result.name || article}`, 'info');
+        } else if (result.imageUrls.length) {
+          emitLog(`    ✅ H&M #${result.rank} ${article} · ${result.name || '(no name)'} · ${result.imageUrls.length} image(s)`, 'info');
+          products.push(result);
+        } else {
+          emitLog(`    ⚠️ H&M ${article}: no images available, skipped.`, 'warning');
         }
-        emitProgress(10 + Math.round(((i + 1) / articleLinks.length) * 40));
-        await antiDetection.randomDelay(1200, 2200);
+
+        emitProgress(10 + Math.round(((i + 1) / Math.min(articleLinks.length, limit || articleLinks.length)) * 40));
+        await antiDetection.randomDelay(150, 400);
       }
 
       // Done with the shared listing/detail tab.
@@ -18325,8 +18757,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           const scraped = await scrapeNewYorkerProduct(ref, emitLog, ensureActive, { allVariants: allColors });
           const results = Array.isArray(scraped) ? scraped : [scraped];
           for (const result of results) {
-            const catHay = `${result.category || ''} ${result.name || ''}`;
-            if (excludeApparel && excludeApparel.test(catHay)) {
+            if (excludeApparelActive && isNonApparelBestseller(result.category, result.name)) {
               skippedNonApparel += 1;
               emitLog(`    🚫 Skipped non-apparel: ${result.name || ref}`, 'info');
             } else {

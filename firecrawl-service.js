@@ -136,6 +136,9 @@ async function scrapePage(url, options = {}) {
           const responseData = result.data || {};
           resolve({
             html: responseData.html || '',
+            // rawHtml = untouched server response; H&M's __NEXT_DATA__ payload
+            // lives in a <script> tag that the cleaned "html" format may strip.
+            rawHtml: responseData.rawHtml || '',
             markdown: responseData.markdown || '',
             links: responseData.links || [],
             metadata: responseData.metadata || {},
