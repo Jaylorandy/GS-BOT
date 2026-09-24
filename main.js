@@ -3162,8 +3162,17 @@ function normalizeUniqloApiComposition(raw) {
 async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
   const ensureActive = () => taskController?.throwIfCancelled?.();
   const gender = String(config?.gender || 'female').trim();
-  const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
-  const genderParam = resolveUniqloGenderParam(gender);
+  // "all" mode = harvest BOTH gender rankings (men + women), merge by productId,
+  // then bucket every style by the API's own genderName (UNISEX / MEN / WOMEN).
+  // Rationale (verified 2026-09-24): the endpoint has no genders=unisex value —
+  // passing it returns the mixed ranking — and each single-gender ranking mixes
+  // UNISEX styles in (men list: 58 UNISEX + 42 MEN; women list: 44 UNISEX + 56
+  // WOMEN). Merging both lists is the only way to cover all three buckets.
+  const isAllMode = /^(all|全部)$/i.test(gender);
+  const genderLabel = isAllMode
+    ? 'All'
+    : (/male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women');
+  const genderParam = isAllMode ? 'men' : resolveUniqloGenderParam(gender);
   let { outputDir, downloadConcurrency } = config;
 
   const rawLimit = Number(config?.productCount ?? config?.imagesPerStyle);
@@ -3239,14 +3248,7 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
       }
       await antiDetection.randomDelay(1800, 3000);
 
-      const apiUrl = `${UNIQLO_API_BASE}/recommendations/ranked-products`
-        + `?schema=general${genderParam ? `&genders=${genderParam}` : ''}`
-        + `&isAreaAvailable=false&limit=${UNIQLO_RANKING_MAX}&temperatureSensitive=false&httpFailure=true`;
-
-      // One call is enough: the endpoint caps out at `UNIQLO_RANKING_MAX` and
-      // ignores `offset`. We always pull the full ranking, then stop the detail
-      // loop once `limit` apparel styles are in hand.
-      const response = await page.evaluate(async (url) => {
+      const fetchRanking = async (genders) => page.evaluate(async (url) => {
         try {
           const res = await fetch(url, {
             credentials: 'include',
@@ -3258,13 +3260,60 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
         } catch (e) {
           return { error: String(e && e.message || e) };
         }
-      }, apiUrl);
+      }, `${UNIQLO_API_BASE}/recommendations/ranked-products`
+        + `?schema=general${genders ? `&genders=${genders}` : ''}`
+        + `&isAreaAvailable=false&limit=${UNIQLO_RANKING_MAX}&temperatureSensitive=false&httpFailure=true`);
 
-      if (response && response.error) {
-        emitLog(`    ❌ Ranking API returned ${response.error}`, 'error');
-        ranked = [];
+      if (isAllMode) {
+        // All mode: harvest the men AND women rankings, merge by productId
+        // (keeping the better rank), and let the genderName bucketing below
+        // split the result into UNISEX / MEN / WOMEN. A single call can't do
+        // this — the endpoint has no genders=unisex value, and each
+        // single-gender list hides the other gender's exclusive styles.
+        const menRes = await fetchRanking('men');
+        await antiDetection.randomDelay(1200, 2400);
+        const womenRes = await fetchRanking('women');
+
+        const errors = [menRes?.error, womenRes?.error].filter(Boolean);
+        if (errors.length === 2) {
+          emitLog(`    ❌ Ranking API failed for both lists: ${errors.join(' / ')}`, 'error');
+          ranked = [];
+        } else {
+          if (menRes?.error) emitLog(`    ⚠️ Men ranking failed (${menRes.error}); merging with the women list only.`, 'warning');
+          if (womenRes?.error) emitLog(`    ⚠️ Women ranking failed (${womenRes.error}); merging with the men list only.`, 'warning');
+          const seen = new Map();
+          const feed = (res, src) => {
+            (Array.isArray(res?.items) ? res.items : []).forEach((it, i) => {
+              const id = String(it?.productId || '').trim();
+              if (!id) return;
+              const rank = i + 1;
+              if (seen.has(id)) {
+                const entry = seen.get(id);
+                if (rank < entry.bestRank) entry.bestRank = rank;
+                entry.src.push(src);
+              } else {
+                seen.set(id, { item: it, bestRank: rank, src: [src] });
+              }
+            });
+          };
+          feed(menRes, 'men');
+          feed(womenRes, 'women');
+          ranked = [...seen.values()].map((e) => ({ ...e.item, _bestRank: e.bestRank, _src: e.src.join('+') }));
+          const crossListed = [...seen.values()].filter((e) => e.src.length === 2).length;
+          emitLog(`    🔀 Merged men + women rankings: ${ranked.length} unique style(s) (${crossListed} cross-listed).`, 'success');
+        }
       } else {
-        ranked = Array.isArray(response?.items) ? response.items : [];
+        // One call is enough: the endpoint caps out at `UNIQLO_RANKING_MAX` and
+        // ignores `offset`. We always pull the full ranking, then stop the detail
+        // loop once `limit` apparel styles are in hand.
+        const response = await fetchRanking(genderParam);
+
+        if (response && response.error) {
+          emitLog(`    ❌ Ranking API returned ${response.error}`, 'error');
+          ranked = [];
+        } else {
+          ranked = Array.isArray(response?.items) ? response.items : [];
+        }
       }
     } finally {
       await page.close().catch(() => {});
@@ -3273,6 +3322,16 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     if (!ranked.length) {
       throw new Error('No bestseller styles were returned by the UNIQLO ranking API. The ranking may be unavailable for this region, or the session was blocked.');
     }
+
+    // All mode: order the merge as UNISEX → MEN → WOMEN, each bucket by its
+    // best (merged) rank, so the per-gender quota below fills bucket by bucket.
+    if (isAllMode) {
+      const bucketOrder = { UNISEX: 0, MEN: 1, WOMEN: 2 };
+      ranked.sort((a, b) => ((bucketOrder[String(a?.genderName || '').toUpperCase()] ?? 9)
+        - (bucketOrder[String(b?.genderName || '').toUpperCase()] ?? 9)
+        || (Number(a?._bestRank) || 9999) - (Number(b?._bestRank) || 9999)));
+    }
+
     emitLog(`    📋 Ranking returned ${ranked.length} candidate style(s) (array order = rank).`, 'success');
     emitProgress(10);
 
@@ -3283,13 +3342,24 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
 
     const products = [];
     let skippedNonApparel = 0;
+    // All mode applies `limit` PER gender bucket (user decision 2026-09-24:
+    // "20" means UNISEX 20 + MEN 20 + WOMEN 20), not across the whole merge.
+    const perBucket = isAllMode ? { UNISEX: 0, MEN: 0, WOMEN: 0 } : null;
+    const bucketCap = limit;
+    const bucketOf = (item) => String(item?.genderName || '').toUpperCase() || 'UNISEX';
     emitLog(`🚀 Step 2/2: fetching ${ranked.length} UNIQLO style detail(s)…`, 'warning');
 
     for (let i = 0; i < ranked.length; i += 1) {
       ensureActive();
       // Hard ceiling: stop as soon as we have `limit` apparel styles so the
       // over-fetched tail is never turned into downloads.
-      if (products.length >= limit) {
+      if (isAllMode) {
+        const bucketsFull = Object.values(perBucket).every((n) => n >= bucketCap);
+        if (bucketsFull) {
+          emitLog(`    ✋ Every gender bucket reached the requested ${bucketCap} style(s).`, 'info');
+          break;
+        }
+      } else if (products.length >= limit) {
         if (!wantsAll) {
           emitLog(`    ✋ Reached the requested ${limit} apparel style(s); ${ranked.length - i} candidate(s) left unprocessed.`, 'info');
         }
@@ -3298,7 +3368,12 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
       const item = ranked[i];
       const productId = String(item?.productId || '').trim();
       if (!productId) continue;
-      const rank = i + 1;
+      const genderBucket = isAllMode ? bucketOf(item) : '';
+      if (isAllMode) {
+        // Skip (without burning a detail call) once this bucket is full.
+        if ((perBucket[genderBucket] ?? bucketCap) >= bucketCap) continue;
+      }
+      const rank = isAllMode ? (Number(item?._bestRank) || i + 1) : i + 1;
 
       try {
         // Prefer the official detail API (composition / long description).
@@ -3384,6 +3459,7 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
           brand: 'UNIQLO',
           name,
           category: detail?.genderName || item?.genderName || '',
+          genderName: String(detail?.genderName || item?.genderName || '').trim() || genderBucket || genderLabel,
           price,
           rating: ratingAvg != null ? `${ratingAvg}${ratingCount ? ` (${ratingCount})` : ''}` : '',
           colorRef: colorName,
@@ -3393,10 +3469,12 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
           url: detailUrl,
           imageUrls: capped,
         });
+        if (isAllMode) perBucket[genderBucket] = (perBucket[genderBucket] || 0) + 1;
       } catch (error) {
         if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
         emitLog(`    ⚠️ UNIQLO ${productId} failed: ${error.message}`, 'warning');
-        products.push({ styleNumber: productId, productId, url: '', error: error.message, imageUrls: [] });
+        products.push({ styleNumber: productId, productId, rank, genderName: genderBucket || genderLabel, url: '', error: error.message, imageUrls: [] });
+        if (isAllMode) perBucket[genderBucket] = (perBucket[genderBucket] || 0) + 1;
       }
 
       emitProgress(Math.min(50, 10 + Math.round(((i + 1) / ranked.length) * 40)));
@@ -3412,7 +3490,17 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     const failed = products.filter((p) => !p.imageUrls?.length);
     const requestedLabel = wantsAll ? `all (cap ${UNIQLO_RANKING_MAX})` : String(limit);
     emitLog(`📊 Bestseller summary: requested ${requestedLabel}, ${success.length} styles ok, ${failed.length} failed, ${success.reduce((s, p) => s + p.imageUrls.length, 0)} images total.`, 'info');
-    if (success.length < limit) {
+    if (isAllMode) {
+      // The merge is UNISEX/MEN/WOMEN bucketed — show the composition so the
+      // cross-listed UNISEX overlap between the two source rankings is visible.
+      const dist = {};
+      success.forEach((p) => { const g = p.genderName || 'UNKNOWN'; dist[g] = (dist[g] || 0) + 1; });
+      emitLog(`📊 Gender composition: ${Object.entries(dist).map(([g, n]) => `${g} ${n}`).join(' + ')}`, 'info');
+      const shortBuckets = Object.entries(perBucket).filter(([, n]) => n < bucketCap);
+      if (shortBuckets.length) {
+        emitLog(`    ℹ️ Buckets under quota: ${shortBuckets.map(([g, n]) => `${g} ${n}/${bucketCap}`).join(', ')} — candidates exhausted.`, 'warning');
+      }
+    } else if (success.length < limit) {
       emitLog(`    ℹ️ Only ${success.length} of the requested ${requestedLabel} style(s) were available after filtering; ${ranked.length} candidate(s) were examined.`, 'warning');
     }
 
@@ -3420,7 +3508,8 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     for (const product of success) {
       ensureActive();
       const cleanSku = sanitizeFileSegment(String(product.productId || product.styleNumber || '').replace(/[./]/g, '-'), 'bestseller-item');
-      const styleDir = path.join(targetDir, cleanSku);
+      // All mode lands each style under its gender bucket: <target>/UNISEX|MEN|WOMEN/<sku>/
+      const styleDir = path.join(targetDir, isAllMode ? (String(product.genderName || '').toUpperCase() || 'UNISEX') : '', cleanSku);
       fs.mkdirSync(styleDir, { recursive: true });
       const classified = buildUniqloImageMap(product.imageUrls);
       for (const [label, imgUrl] of Object.entries(classified)) {
@@ -3438,7 +3527,7 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
         styleNumber: product.productId || product.styleNumber,
         rank: product.rank || null,
         brand: 'UNIQLO',
-        gender: genderLabel,
+        gender: product.genderName || genderLabel,
         name: product.name,
         category: product.category || '',
         price: product.price,
@@ -3460,13 +3549,16 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     fs.writeFileSync(path.join(targetDir, 'bestseller_manifest.json'), JSON.stringify({
       brand: 'UNIQLO',
       gender: genderLabel,
-      listingUrl: UNIQLO_RANKING_PAGE[genderParam === 'men' ? 'male' : 'female'],
-      source: 'ranked-products API',
+      listingUrl: isAllMode
+        ? `${UNIQLO_RANKING_PAGE.male} + ${UNIQLO_RANKING_PAGE.female}`
+        : UNIQLO_RANKING_PAGE[genderParam === 'men' ? 'male' : 'female'],
+      source: isAllMode ? 'ranked-products API (men + women rankings merged, bucketed by genderName)' : 'ranked-products API',
       generatedAt: new Date().toISOString(),
       styleCount: success.length,
       styles: products.map((p) => ({
         styleNumber: p.productId || p.styleNumber,
         rank: p.rank || null,
+        gender: p.genderName || genderLabel,
         name: p.name,
         price: p.price,
         rating: p.rating || '',

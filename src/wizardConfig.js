@@ -262,6 +262,7 @@ export const WIZARD_CONFIG = {
             options: [
               { value: 'female', label: { en: "Women's", zh: '女装' } },
               { value: 'male', label: { en: "Men's", zh: '男装' } },
+              { value: 'all', label: { en: 'All (UNISEX / MEN / WOMEN folders)', zh: '全部（按 UNISEX/MEN/WOMEN 分目录）' } },
             ],
           },
           {
