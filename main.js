@@ -2910,6 +2910,384 @@ async function searchUniqloResults(browser, sku, emitLog, ensureActive) {
   }
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// UNIQLO Bestseller (ranking) — official ranked-products API.
+//   Listing: GET /us/api/commerce/v5/en/recommendations/ranked-products
+//              ?schema=general&genders=men&limit=30&...
+//   Detail:  GET /us/api/commerce/v5/en/products/{productId}
+// This endpoint returns items ALREADY ORDERED by popularity — array index is
+// the rank, so no sales figure has to be derived. It also carries data the
+// listing HTML does not expose: rating (average + review count), promo price,
+// every colourway, sizes, and ready-made CDN image URLs.
+//
+// IMPORTANT: the endpoint 403s on a cold out-of-browser request (Akamai), so
+// the fetch MUST run inside the live browser session — same-origin, with the
+// session's cookies. See fetchRankedUniqloProducts().
+// ════════════════════════════════════════════════════════════════════════════
+
+const UNIQLO_API_BASE = 'https://www.uniqlo.com/us/api/commerce/v5/en';
+const UNIQLO_RANKING_PAGE = {
+  male: 'https://www.uniqlo.com/us/en/spl/ranking/men',
+  female: 'https://www.uniqlo.com/us/en/spl/ranking/women',
+};
+
+// Map the wizard's gender value onto the API's gender filter. Empty string
+// means "no filter" (all genders), which is what the ALL tab shows.
+function resolveUniqloGenderParam(gender) {
+  const g = String(gender || '').trim().toLowerCase();
+  if (/^(m|male|men|man|男|男装)$/.test(g)) return 'men';
+  if (/^(f|female|women|woman|w|女|女装)$/.test(g)) return 'women';
+  return '';
+}
+
+// Fallback detail fetch kept separate from the browser path: the products
+// endpoint 302s to a RELATIVE location, so the redirect resolver must be
+// called with the request URL as base — otherwise new URL() throws
+// ERR_INVALID_URL on "/us/api/...".
+async function fetchUniqloProductDetail(productId, emitLog = () => {}) {
+  const clean = String(productId || '').trim();
+  if (!clean) return null;
+  const url = `${UNIQLO_API_BASE}/products/${encodeURIComponent(clean)}?httpFailure=true`;
+  try {
+    const data = await fetchJson(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Accept: 'application/json, text/plain, */*',
+        Referer: UNIQLO_RANKING_PAGE.male,
+      },
+      timeoutMs: 30000,
+    });
+    return data?.result || null;
+  } catch (error) {
+    emitLog(`    ⚠️ UNIQLO detail API failed for ${clean}: ${error.message}`, 'warning');
+    return null;
+  }
+}
+
+// Normalise the detail API's composition string ("53% Cotton, 47% Polyester
+// ( 30% Uses Recycled Polyester Fiber )<br><br>Imported") into the plain text
+// shape the report expects.
+function normalizeUniqloApiComposition(raw) {
+  const text = String(raw || '').replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '');
+  const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
+  return lines.join('\n') || '';
+}
+
+async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
+  const ensureActive = () => taskController?.throwIfCancelled?.();
+  const gender = String(config?.gender || 'female').trim();
+  const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
+  const genderParam = resolveUniqloGenderParam(gender);
+  let { outputDir, downloadConcurrency } = config;
+
+  const rawLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+  // The ranked-products endpoint ignores `offset` (verified: offset=100 returns
+  // the exact same ids as offset=0), so the whole ranking is at most 100 styles
+  // in a single call. Treat 100 as the hard ceiling for every mode.
+  const UNIQLO_RANKING_MAX = 100;
+  // 0 is the "All" option — take the whole ranking.
+  const wantsAll = !Number.isFinite(rawLimit) || rawLimit === 0;
+  const limit = rawLimit > 0 ? Math.min(Math.floor(rawLimit), UNIQLO_RANKING_MAX) : UNIQLO_RANKING_MAX;
+  const rawImagesPerStyle = Number(config?.imagesPerStyle);
+  const imagesPerStyle = Number.isFinite(rawImagesPerStyle) && rawImagesPerStyle > 0 ? Math.floor(rawImagesPerStyle) : 0;
+
+  const targetDir = !outputDir || outputDir === '未选择'
+    ? path.join(app.getPath('desktop'), `Bestseller UNIQLO ${genderLabel}`)
+    : outputDir;
+  fs.mkdirSync(targetDir, { recursive: true });
+  emitLog(`📁 Output directory: ${targetDir}`, 'info');
+  emitLog(`🌐 Bestseller Analysis · UNIQLO · ${genderLabel}`, 'info');
+
+  let executablePath = findChromePath();
+  if (!executablePath) {
+    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
+    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
+    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
+    executablePath = chromeInstall.executablePath;
+  }
+
+  let browser = null;
+  try {
+    // Reuse the regular UNIQLO session: it already carries the storefront
+    // cookies Akamai expects, which is what lets the same-origin API call pass.
+    browser = await puppeteer.launch({
+      executablePath,
+      headless: false,
+      userDataDir: getUniqloSessionDir(),
+      args: antiDetection.getRetailLaunchArgs(),
+      ignoreDefaultArgs: ['--enable-automation'],
+      defaultViewport: null,
+    });
+    previewBridge?.attachToBrowser(browser);
+    taskController?.onCancel(() => { if (browser && browser.isConnected()) browser.close().catch(() => {}); });
+
+    emitProgress(3);
+    emitLog('🚀 Step 1/2: harvesting the UNIQLO bestseller ranking…', 'warning');
+
+    const page = await browser.newPage();
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+
+    let ranked = [];
+    try {
+      // Land on the ranking page first so the session looks like a real
+      // visitor that then calls the API from the same origin.
+      const referer = UNIQLO_RANKING_PAGE[genderParam === 'men' ? 'male' : 'female'] || UNIQLO_RANKING_PAGE.female;
+      try {
+        await page.goto(referer, { waitUntil: 'domcontentloaded', timeout: 60000 });
+      } catch (navError) {
+        emitLog(`    ⚠️ Ranking page navigation: ${navError.message}`, 'warning');
+      }
+      await antiDetection.randomDelay(1800, 3000);
+
+      const apiUrl = `${UNIQLO_API_BASE}/recommendations/ranked-products`
+        + `?schema=general${genderParam ? `&genders=${genderParam}` : ''}`
+        + `&isAreaAvailable=false&limit=${UNIQLO_RANKING_MAX}&temperatureSensitive=false&httpFailure=true`;
+
+      // One call is enough: the endpoint caps out at `UNIQLO_RANKING_MAX` and
+      // ignores `offset`. We always pull the full ranking, then stop the detail
+      // loop once `limit` apparel styles are in hand.
+      const response = await page.evaluate(async (url) => {
+        try {
+          const res = await fetch(url, {
+            credentials: 'include',
+            headers: { Accept: 'application/json, text/plain, */*' },
+          });
+          if (!res.ok) return { error: `HTTP ${res.status}` };
+          const data = await res.json();
+          return { items: data?.result?.items || [] };
+        } catch (e) {
+          return { error: String(e && e.message || e) };
+        }
+      }, apiUrl);
+
+      if (response && response.error) {
+        emitLog(`    ❌ Ranking API returned ${response.error}`, 'error');
+        ranked = [];
+      } else {
+        ranked = Array.isArray(response?.items) ? response.items : [];
+      }
+    } finally {
+      await page.close().catch(() => {});
+    }
+
+    if (!ranked.length) {
+      throw new Error('No bestseller styles were returned by the UNIQLO ranking API. The ranking may be unavailable for this region, or the session was blocked.');
+    }
+    emitLog(`    📋 Ranking returned ${ranked.length} candidate style(s) (array order = rank).`, 'success');
+    emitProgress(10);
+
+    // Apparel-only filter, shared with the other bestseller scrapers — see
+    // isNonApparelBestseller() for why the taxonomy category outranks the name.
+    // The UNIQLO ranking API returns no category slug, so this stays name-based.
+    const excludeApparel = config?.includeAccessories === true ? false : true;
+
+    const products = [];
+    let skippedNonApparel = 0;
+    emitLog(`🚀 Step 2/2: fetching ${ranked.length} UNIQLO style detail(s)…`, 'warning');
+
+    for (let i = 0; i < ranked.length; i += 1) {
+      ensureActive();
+      // Hard ceiling: stop as soon as we have `limit` apparel styles so the
+      // over-fetched tail is never turned into downloads.
+      if (products.length >= limit) {
+        if (!wantsAll) {
+          emitLog(`    ✋ Reached the requested ${limit} apparel style(s); ${ranked.length - i} candidate(s) left unprocessed.`, 'info');
+        }
+        break;
+      }
+      const item = ranked[i];
+      const productId = String(item?.productId || '').trim();
+      if (!productId) continue;
+      const rank = i + 1;
+
+      try {
+        // Prefer the official detail API (composition / long description).
+        const detail = await fetchUniqloProductDetail(productId, emitLog);
+
+        const name = String(detail?.name || item?.name || `UNIQLO ${productId}`).trim();
+        if (excludeApparel && isNonApparelBestseller('', name)) {
+          skippedNonApparel += 1;
+          emitLog(`    🚫 Skipped non-apparel: ${name}`, 'info');
+          emitProgress(10 + Math.round(((i + 1) / ranked.length) * 40));
+          await antiDetection.randomDelay(150, 400);
+          continue;
+        }
+
+        // Price: promo wins when present; the ranking item nests them under prices.
+        const priceNode = detail?.prices || item?.prices || {};
+        const basePrice = priceNode?.base?.value;
+        const promoPrice = priceNode?.promo?.value;
+        const currencySymbol = priceNode?.base?.currency?.symbol || '$';
+        const priceValue = promoPrice ?? basePrice;
+        const price = priceValue != null ? `${currencySymbol}${priceValue}` : '';
+
+        const ratingAvg = item?.rating?.average ?? detail?.rating?.average;
+        const ratingCount = item?.rating?.count ?? detail?.rating?.count;
+
+        // Images: the ranking payload ships ready-made CDN URLs keyed by colour.
+        // Harvest them straight out of images.main so we do not depend on DOM
+        // scraping for the common case.
+        const imageUrls = [];
+        const imgSeen = new Set();
+        const pushImg = (u) => {
+          const clean = String(u || '').trim();
+          if (!clean || imgSeen.has(clean)) return;
+          if (!/^https?:\/\/image\.uniqlo\.com\//i.test(clean)) return;
+          imgSeen.add(clean);
+          imageUrls.push(clean);
+        };
+
+        const mainImages = detail?.images?.main || item?.images?.main;
+        if (mainImages && typeof mainImages === 'object') {
+          // Order by the representative colour first, then the rest.
+          const repCode = detail?.representativeColorDisplayCode
+            || item?.representativeColorDisplayCode
+            || (detail?.representative?.color?.displayCode)
+            || (item?.representative?.color?.displayCode)
+            || '';
+          const codes = Object.keys(mainImages);
+          const ordered = repCode && codes.includes(repCode)
+            ? [repCode, ...codes.filter((c) => c !== repCode)]
+            : codes;
+          for (const code of ordered) {
+            const entry = mainImages[code];
+            if (!entry) continue;
+            if (typeof entry === 'string') pushImg(entry);
+            else if (entry.image) pushImg(entry.image);
+            if (Array.isArray(entry?.sub)) entry.sub.forEach(pushImg);
+          }
+        }
+        // Let the shared helper top up from the CDN if the payload was thin.
+        if (imageUrls.length < 2) {
+          const probed = await findExistingUniqloCdnImages(productId.replace(/-\d+$/, ''), imageUrls, emitLog);
+          probed.forEach(pushImg);
+        }
+
+        const capped = imagesPerStyle > 0 ? imageUrls.slice(0, imagesPerStyle) : imageUrls;
+        const compositionText = normalizeUniqloApiComposition(detail?.composition);
+
+        const colorName = item?.representative?.color?.name
+          || detail?.representative?.color?.name
+          || '';
+        const colorCodes = (item?.colors || detail?.colors || [])
+          .map((c) => String(c?.name || '').trim())
+          .filter(Boolean);
+
+        const detailUrl = `https://www.uniqlo.com/us/en/products/${encodeURIComponent(productId)}/00`;
+
+        emitLog(`✅ #${rank} UNIQLO ${productId} captured | ${name} | ${capped.length} images${compositionText ? ' | composition ✓' : ''}`, capped.length ? 'success' : 'warning');
+
+        products.push({
+          styleNumber: productId,
+          productId,
+          rank,
+          brand: 'UNIQLO',
+          name,
+          category: detail?.genderName || item?.genderName || '',
+          price,
+          rating: ratingAvg != null ? `${ratingAvg}${ratingCount ? ` (${ratingCount})` : ''}` : '',
+          colorRef: colorName,
+          colors: colorCodes,
+          description: String(detail?.longDescription || detail?.shortDescription || '').replace(/<[^>]+>/g, '').trim(),
+          composition: compositionText ? { outerShell: null, lining: null, other: compositionText } : null,
+          url: detailUrl,
+          imageUrls: capped,
+        });
+      } catch (error) {
+        if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
+        emitLog(`    ⚠️ UNIQLO ${productId} failed: ${error.message}`, 'warning');
+        products.push({ styleNumber: productId, productId, url: '', error: error.message, imageUrls: [] });
+      }
+
+      emitProgress(Math.min(50, 10 + Math.round(((i + 1) / ranked.length) * 40)));
+      await antiDetection.randomDelay(250, 650);
+    }
+
+    if (skippedNonApparel > 0) {
+      emitLog(`    🚫 Excluded ${skippedNonApparel} non-apparel item(s) (footwear / fragrance / luggage / accessories…).`, 'info');
+    }
+
+    emitProgress(50);
+    const success = products.filter((p) => p.imageUrls?.length > 0);
+    const failed = products.filter((p) => !p.imageUrls?.length);
+    const requestedLabel = wantsAll ? `all (cap ${UNIQLO_RANKING_MAX})` : String(limit);
+    emitLog(`📊 Bestseller summary: requested ${requestedLabel}, ${success.length} styles ok, ${failed.length} failed, ${success.reduce((s, p) => s + p.imageUrls.length, 0)} images total.`, 'info');
+    if (success.length < limit) {
+      emitLog(`    ℹ️ Only ${success.length} of the requested ${requestedLabel} style(s) were available after filtering; ${ranked.length} candidate(s) were examined.`, 'warning');
+    }
+
+    const allTasks = [];
+    for (const product of success) {
+      ensureActive();
+      const cleanSku = sanitizeFileSegment(String(product.productId || product.styleNumber || '').replace(/[./]/g, '-'), 'bestseller-item');
+      const styleDir = path.join(targetDir, cleanSku);
+      fs.mkdirSync(styleDir, { recursive: true });
+      const classified = buildUniqloImageMap(product.imageUrls);
+      for (const [label, imgUrl] of Object.entries(classified)) {
+        const ext = getUrlExtension(imgUrl, '.jpg');
+        const filename = `${cleanSku}_${label}${ext}`;
+        const filePath = path.join(styleDir, filename);
+        allTasks.push(() => {
+          ensureActive();
+          return downloadFile(imgUrl, filePath, { headers: { Referer: UNIQLO_RANKING_PAGE.male, 'User-Agent': 'Mozilla/5.0' }, timeoutMs: 60000 })
+            .then((size) => { if (size) emitLog(`    ⬇️ [saved] ${filename} (${size.toFixed(1)} KB)`); })
+            .catch((error) => { emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error'); });
+        });
+      }
+      const infoData = {
+        styleNumber: product.productId || product.styleNumber,
+        rank: product.rank || null,
+        brand: 'UNIQLO',
+        gender: genderLabel,
+        name: product.name,
+        category: product.category || '',
+        price: product.price,
+        rating: product.rating || '',
+        colorRef: product.colorRef || '',
+        colors: product.colors || [],
+        description: product.description || '',
+        composition: product.composition || null,
+        url: product.url,
+        images: classified,
+      };
+      fs.writeFileSync(path.join(styleDir, `${cleanSku}_info.json`), JSON.stringify(infoData, null, 2), 'utf-8');
+    }
+
+    emitLog(`📦 Downloading ${allTasks.length} bestseller images with ${downloadConcurrency || 6} worker(s)...`, 'info');
+    let done = 0;
+    await parallelLimit(allTasks.map((t) => async () => { ensureActive(); await t(); done += 1; emitProgress(50 + Math.round((done / Math.max(allTasks.length, 1)) * 40)); }), downloadConcurrency || 6);
+
+    fs.writeFileSync(path.join(targetDir, 'bestseller_manifest.json'), JSON.stringify({
+      brand: 'UNIQLO',
+      gender: genderLabel,
+      listingUrl: UNIQLO_RANKING_PAGE[genderParam === 'men' ? 'male' : 'female'],
+      source: 'ranked-products API',
+      generatedAt: new Date().toISOString(),
+      styleCount: success.length,
+      styles: products.map((p) => ({
+        styleNumber: p.productId || p.styleNumber,
+        rank: p.rank || null,
+        name: p.name,
+        price: p.price,
+        rating: p.rating || '',
+        colorRef: p.colorRef || '',
+        composition: p.composition || null,
+        images: p.imageUrls?.length || 0,
+        error: p.error || null,
+      })),
+    }, null, 2), 'utf-8');
+    emitLog('📊 Saved bestseller_manifest.json', 'success');
+
+    emitProgress(100);
+    emitLog(`🎉 Bestseller scraping finished. Files saved to: ${targetDir}`, 'success');
+    return { success: true, outputPath: targetDir, styleCount: success.length, failedCount: failed.length };
+  } finally {
+    if (browser && browser.isConnected()) await browser.close().catch(() => {});
+  }
+}
+
 async function runUniqloScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
 
   let { styleNumbers, excelPath, outputDir, tabConcurrency, downloadConcurrency } = config;
@@ -17651,6 +18029,41 @@ async function scrapeIntersportProduct(handle, emitLog, ensureActive) {
   };
 }
 
+// ── Shared bestseller apparel filter ─────────────────────────────────────────
+// Deciding "is this real apparel?" from the product NAME alone is unreliable:
+// `cap` matches "Cap-Sleeved Top", `belt` matches "Tie-Belt Tunic Dress" and
+// `leggings` matches genuine leggings — all real apparel that was being
+// silently dropped on the H&M women's list.
+//
+// So the taxonomy CATEGORY wins whenever it is recognisable, and the name
+// regex is only a fallback. H&M publishes a category slug per style
+// (e.g. `ladies_tops_knitted`, `men_underwear_multipack`), which is exact.
+//
+//   non-apparel category  -> exclude
+//   apparel category      -> keep   (the name is NOT consulted)
+//   unknown category      -> fall back to the name regex
+//
+// Word boundaries in the name regex matter: without them `bag` matches
+// "Baggy Jeans" and `boot` matches "Bootcut Jeans".
+const BESTSELLER_APPAREL_CATEGORY_RE = /(?:^|_)(?:tops|shirts|t-?shirts|blouses|jumpers|cardigans|sweatshirts|hoodies|dresses|skirts|trousers|jeans|shorts|jackets|coats|blazers|suits|bodysuits|jumpsuits|playsuits|knitwear|bottoms|maternity|sportswear|basics|apparel|outerwear|underwear_?(?:none)?)(?:_|$)/i;
+const BESTSELLER_NON_APPAREL_CATEGORY_RE = /(?:^|_)(?:underwear|lingerie|bras|socks|hosiery|nightwear|sleepwear|accessories|bags|shoes|footwear|beauty|cosmetics|fragrance|swimwear|multipack)(?:_|$)/i;
+const BESTSELLER_NON_APPAREL_NAME_RE = /\b(?:sandals?|slides?|slippers?|shoes?|sneakers?|boots?|booties|footwear|flip[\s-]?flops?|espadrilles?|loafers?|trainers?|accessories|accessory|bags?|handbags?|backpacks?|jewell?ery|jewels?|socks?|hats?|beanies?|scarves|scarf|sunglasses|eyeglasses|glasses|watches|watch|wallets?|purses?|perfumes?|fragrances?|colognes?|eau de|beauty|cosmetics?|makeup|make-up|skincare|lipsticks?|lip care|nail|nails|luggage|suitcases?|trolleys?|cabin case|umbrellas?|underwear|boxers?|briefs?|bras?|bralettes?|panties|panty|thongs?|knickers|lingerie|pantyhose|hosiery|tasche|taschen|gürtel|schuhe?|schuh|parfüm|parfum)\b/i;
+
+/**
+ * Decide whether a bestseller product is non-apparel (and should be skipped).
+ * @param {string} category  taxonomy slug from the listing, when available
+ * @param {string} name      product name / title
+ * @returns {boolean}
+ */
+function isNonApparelBestseller(category, name) {
+  const cat = String(category || '').trim();
+  if (cat) {
+    if (BESTSELLER_NON_APPAREL_CATEGORY_RE.test(cat)) return true;
+    if (BESTSELLER_APPAREL_CATEGORY_RE.test(cat)) return false;
+  }
+  return BESTSELLER_NON_APPAREL_NAME_RE.test(String(name || ''));
+}
+
 async function runBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
   const ensureActive = () => taskController?.throwIfCancelled?.();
   const brand = String(config?.brand || 'newyorker').trim();
@@ -17663,6 +18076,15 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
 
   const brandKey = String(brand || '').trim().toLowerCase().replace(/\s+/g, '');
   const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
+
+  // UNIQLO needs a different shape of work: the ranking comes from the official
+  // ranked-products JSON API (invoked in-session, since Akamai 403s cold hits)
+  // and each style's images come from that payload rather than from the listing
+  // DOM. That is a wholly separate flow, so hand off before the shared
+  // browser-listing path below builds its own session.
+  if (brandKey === 'uniqlo') {
+    return runUniqloBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge);
+  }
 
   let listingUrl;
   let intersportCategory = '';

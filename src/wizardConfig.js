@@ -246,6 +246,8 @@ export const WIZARD_CONFIG = {
             key: 'brand', type: 'select', label: { en: 'Brand', zh: '品牌' }, required: true,
             options: [
               { value: 'newyorker', label: { en: 'New Yorker', zh: 'New Yorker' } },
+              { value: 'uniqlo', label: { en: 'UNIQLO (US)', zh: 'UNIQLO（美国站）' } },
+              { value: 'hm', label: { en: 'H&M (US)', zh: 'H&M（美国站）' } },
               { value: 'intersport', label: { en: 'Intersport', zh: 'Intersport' } },
             ],
           },
@@ -282,13 +284,14 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'productCount', type: 'select', label: { en: 'Product Count', zh: '下载数量' },
-            showWhen: (p) => p.brand === 'intersport',
+            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm',
             options: [
               { value: 10, label: { en: '10', zh: '10款' } },
               { value: 20, label: { en: '20', zh: '20款' } },
+              { value: 30, label: { en: '30', zh: '30款' } },
               { value: 50, label: { en: '50', zh: '50款' } },
               { value: 100, label: { en: '100', zh: '100款' } },
-              { value: 0, label: { en: 'All', zh: '全部' } },
+              { value: 0, label: { en: 'All (full ranking)', zh: '全部（完整榜单）' } },
             ],
           },
         ],
