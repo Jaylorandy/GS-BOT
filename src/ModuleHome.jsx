@@ -187,6 +187,206 @@ function colLetter(col) {
 }
 
 
+// ── H&M pre-flight panel ──────────────────────────────────
+// Runs the main-process diagnosis (browser brand / running processes / saved
+// identity) and renders it as a checklist. Exposed to the parent through
+// `onResult` so the wizard can warn before the run starts. This is a
+// diagnosis, never a gate: the user stays in control.
+function HmPreflightPanel({ field, value, onChange, t, tx, accentRgb, allParams }) {
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const runRef = useRef(null);
+
+  const runCheck = useCallback(async () => {
+    const api = window.electronAPI;
+    if (!api?.hmPreflightCheck) {
+      setError(tx('Pre-flight check is unavailable in this build.', '此版本不支持跑前检测。'));
+      return null;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await api.hmPreflightCheck({ preference: allParams?.scraperBrowser });
+      if (res?.success) {
+        setResult(res.result);
+        onChange?.(res.result);
+        return res.result;
+      }
+      setError(res?.error || tx('Pre-flight check failed.', '跑前检测失败。'));
+      return null;
+    } catch (err) {
+      setError(err?.message || tx('Pre-flight check failed.', '跑前检测失败。'));
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [allParams?.scraperBrowser, onChange, tx]);
+
+  // Auto-run once when the step is shown (and whenever the picked browser
+  // changes) so the user never has to guess that a check exists.
+  useEffect(() => {
+    runRef.current = runCheck;
+  }, [runCheck]);
+
+  useEffect(() => {
+    runCheck();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allParams?.scraperBrowser]);
+
+  const warnings = result?.warnings || [];
+  const errors = warnings.filter((w) => w.severity === 'error');
+  const running = result?.runningProcesses || [];
+
+  const okStyle = { color: '#4ade80' };
+  const warnStyle = { color: '#fbbf24' };
+  const errStyle = { color: '#f87171' };
+  const rowStyle = { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.86em', lineHeight: 1.5, marginBottom: 6 };
+
+  return (
+    <div className="wizard-field wizard-field--hm-preflight">
+      <label className="wizard-field__label">{t(field.label)}</label>
+
+      {loading && !result && (
+        <div className="hm-preflight__loading">{tx('Checking…', '检测中…')}</div>
+      )}
+
+      {result && (
+        <div className="hm-preflight">
+          <div style={rowStyle}>
+            <span style={result.browser?.isBundled ? errStyle : okStyle}>
+              {result.browser?.isBundled ? '✕' : '✓'}
+            </span>
+            <span>
+              {tx('Browser', '浏览器')}: <strong>
+                {result.browser?.brand === 'edge' ? 'Microsoft Edge'
+                  : result.browser?.brand === 'chrome' ? 'Google Chrome'
+                    : tx('Bundled Chromium', '内置 Chromium')}
+              </strong>
+              {result.browser?.isBundled
+                ? tx(' — H&M blocks the bundled browser.', ' — H&M 会拦截内置浏览器。')
+                : ''}
+            </span>
+          </div>
+
+          <div style={rowStyle}>
+            {(() => {
+              const chromeRunning = running.includes('chrome');
+              const edgeRunning = running.includes('edge');
+              const pickedEdge = allParams?.scraperBrowser === 'edge';
+              // Relevance mirrors main's preflight: Chrome processes block the
+              // identity clone (the clone reads Chrome's cookie store); Edge
+              // only matters when Edge itself is the scraping browser.
+              if (chromeRunning && edgeRunning) {
+                return (
+                  <>
+                    <span style={warnStyle}>!</span>
+                    <span>
+                      {tx(
+                        'Chrome and Edge are running (possibly hidden background processes). Chrome locks its cookie store, which the identity clone needs — fully quit Chrome before scraping.',
+                        'Chrome 和 Edge 正在运行（可能只是无窗口的后台进程）。Chrome 会锁住身份克隆要读的 cookie 库 —— 抓取前请完全退出 Chrome。'
+                      )}
+                    </span>
+                  </>
+                );
+              }
+              if (chromeRunning) {
+                return (
+                  <>
+                    <span style={warnStyle}>!</span>
+                    <span>
+                      {tx(
+                        'Chrome is running (possibly hidden background processes — Edge-style "startup boost"). It locks the cookie store the identity clone reads — fully quit Chrome, then check Task Manager for leftover chrome.exe.',
+                        'Chrome 正在运行（可能只是"启动加速"留下的无窗口后台进程）。它锁住了身份克隆要读的 cookie 库 —— 请完全退出 Chrome，并在任务管理器确认没有残留的 chrome.exe。'
+                      )}
+                    </span>
+                  </>
+                );
+              }
+              if (edgeRunning && pickedEdge) {
+                return (
+                  <>
+                    <span style={warnStyle}>!</span>
+                    <span>
+                      {tx(
+                        'Edge is running (possibly hidden background processes from Edge\'s "startup boost" — no visible window needed). Fully quit Edge before scraping with Edge.',
+                        'Edge 正在运行（可能只是"启动加速"留下的无窗口后台进程）。用 Edge 抓取前请完全退出 Edge。'
+                      )}
+                    </span>
+                  </>
+                );
+              }
+              if (edgeRunning) {
+                return (
+                  <>
+                    <span style={okStyle}>✓</span>
+                    <span>
+                      {tx(
+                        'Chrome is not running — the cookie store is readable. (Edge has background processes, but they do not affect this scrape.)',
+                        'Chrome 未运行 —— cookie 库可读。（Edge 有后台进程，但不影响本次抓取。）'
+                      )}
+                    </span>
+                  </>
+                );
+              }
+              return (
+                <>
+                  <span style={okStyle}>✓</span>
+                  <span>
+                    {tx(
+                      'No Chrome / Edge process is running — the cookie store is readable.',
+                      '未检测到 Chrome / Edge 进程 —— cookie 库可读。'
+                    )}
+                  </span>
+                </>
+              );
+            })()}
+          </div>
+
+          <div style={rowStyle}>
+            <span style={result.identity?.has ? okStyle : warnStyle}>{result.identity?.has ? '✓' : '!'}</span>
+            <span>
+              {result.identity?.has
+                ? tx(
+                  `Saved identity found (${result.identity.cookieCount} cookies, cloned ${result.identity.clonedAt || 'unknown'}).`,
+                  `已找到保存的身份（${result.identity.cookieCount} 条 cookie，克隆于 ${result.identity.clonedAt || '未知'}）。`
+                )
+                : tx(
+                  'No saved identity yet — on a cold start it is cloned from your browser, so that browser must be fully quit.',
+                  '尚无保存的身份 —— 冷启动时会从你的浏览器克隆，因此该浏览器必须完全退出。'
+                )}
+            </span>
+          </div>
+
+          {errors.length > 0 && (
+            <div className="hm-preflight__blocking">
+              {errors.map((w) => (
+                <div key={w.code} style={{ ...rowStyle, marginBottom: 4 }}>
+                  <span style={errStyle}>✕</span>
+                  <span>{w.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <button
+            type="button"
+            className="wizard-action-btn"
+            style={{ '--accent-rgb': accentRgb, marginTop: 8 }}
+            onClick={runCheck}
+            disabled={loading}
+          >
+            {loading ? tx('Checking…', '检测中…') : tx('Re-check', '重新检测')}
+          </button>
+        </div>
+      )}
+
+      {error && <span className="wizard-field__hint" style={{ color: '#f87171' }}>{error}</span>}
+      {field.hint && <span className="wizard-field__hint">{t(field.hint)}</span>}
+    </div>
+  );
+}
+
 // ── Field renderer ────────────────────────────────────────
 // `t` handles {en, zh} objects from wizardConfig; `tx` handles (en, zh) inline strings.
 function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) {
@@ -254,6 +454,20 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
 
   if (field.type === 'hidden') {
     return null;
+  }
+
+  if (field.type === 'hm-preflight') {
+    return (
+      <HmPreflightPanel
+        field={field}
+        value={value}
+        onChange={onChange}
+        t={t}
+        tx={tx}
+        accentRgb={accentRgb}
+        allParams={allParams}
+      />
+    );
   }
 
   if (field.type === 'divider') {
@@ -1195,6 +1409,29 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     const api = window.electronAPI;
     if (!api) return;
 
+    // H&M bestseller: run the pre-flight diagnosis immediately before the run.
+    // The wizard shows it on the browser step, but the user may have opened
+    // Chrome again since. A blocking finding is surfaced as a confirm dialog —
+    // Akamai is intermittent and a saved identity often still carries a run, so
+    // this must be an informed decision rather than a hard stop.
+    if (tab.id === 'bestseller' && params.brand === 'hm' && api.hmPreflightCheck) {
+      try {
+        const pre = await api.hmPreflightCheck({ preference: params.scraperBrowser });
+        const blocking = pre?.result?.blocking || [];
+        if (blocking.length > 0) {
+          const proceed = window.confirm(
+            tx(
+              'H&M pre-run check found problems that will likely make this run fail:\n\n',
+              'H&M 跑前检测发现问题，本次抓取很可能会失败：\n\n'
+            )
+            + blocking.map((w) => `• ${w.message}`).join('\n')
+            + tx('\n\nStart anyway?', '\n\n仍要开始吗？')
+          );
+          if (!proceed) return;
+        }
+      } catch { /* a failed check must never block the run */ }
+    }
+
     setRunning(true);
     setDone(false);
     setError(null);
@@ -1315,9 +1552,27 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         payload.downloadConcurrency = 6;
         payload.brandLabel = params.brand === 'newyorker' ? 'New Yorker' : (params.brand === 'intersport' ? 'Intersport' : (params.brand || 'Brand'));
         payload.genderLabel = params.gender === 'female' ? 'Women' : 'Men';
+        // The wizard's browser choice for H&M. Passed through so the run uses
+        // exactly what the pre-flight check validated — pickDefault here would
+        // otherwise diverge from what the user saw on the check step.
+        if (params.brand === 'hm' && params.scraperBrowser) {
+          payload.scraperBrowser = params.scraperBrowser;
+        }
+        // The listing-limit and apparel-filter knobs shared by every ranked-
+        // listing brand. (Before 2026-09-29 these were only sent for Intersport,
+        // which silently made the wizard's Product Count / Include Accessories
+        // choices no-ops for UNIQLO / H&M / Free People.)
+        if (['intersport', 'uniqlo', 'hm', 'freepeople'].includes(params.brand)) {
+          payload.productCount = Number(params.productCount) || 0;
+          payload.includeAccessories = params.includeAccessories === true;
+        }
         if (params.brand === 'intersport') {
           payload.intersportCategory = params.intersportCategory || 'funktionsjacken';
-          payload.productCount = Number(params.productCount) || 0;
+        }
+        if (params.brand === 'freepeople') {
+          // The wizard hides the gender step for Free People (their list has no
+          // gender split); the URL table still needs a bucket, so default it.
+          payload.gender = params.gender || 'female';
         }
         // doAnalyze defaults to true (matching wizardConfig default);
         // the toggle's default is only used at render time so params may be

@@ -1011,6 +1011,11 @@
   color: #4dd0c0;
 }
 
+.setup-module-card__icon--browser {
+  background: linear-gradient(135deg,#7cb8f733,#7cb8f714);
+  color: #7cb8f7;
+}
+
 .setup-module-card__icon--models {
   background: linear-gradient(135deg,#ab7df833,#ab7df814);
   color: #ab7df8;
@@ -2094,6 +2099,28 @@
   font-size: clamp(.7rem,.75vw,.76rem);
   color: var(--text-secondary);
   line-height: 1.35;
+}
+
+/* H&M pre-flight panel (wizard step, H&M bestseller only) */
+.hm-preflight {
+  margin-top: 6px;
+  padding: clamp(10px,1vw,14px) clamp(12px,1.1vw,18px);
+  border-radius: clamp(10px,1vw,14px);
+  border: 1px solid rgba(255,255,255,.08);
+  background: #ffffff08;
+}
+
+.hm-preflight__loading {
+  font-size: clamp(.78rem,.85vw,.84rem);
+  color: var(--text-secondary);
+  padding: 8px 0;
+}
+
+.hm-preflight__blocking {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(248,113,113,.25);
+  color: #f87171;
 }
 
 .wizard-toggle {

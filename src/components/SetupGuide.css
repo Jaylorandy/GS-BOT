@@ -1114,6 +1114,11 @@
   color: rgba(77, 208, 192, 1);
 }
 
+.setup-module-card__icon--browser {
+  background: linear-gradient(135deg, rgba(124, 184, 247, 0.2), rgba(124, 184, 247, 0.08));
+  color: rgba(124, 184, 247, 1);
+}
+
 .setup-module-card__icon--models {
   background: linear-gradient(135deg, rgba(171, 125, 248, 0.2), rgba(171, 125, 248, 0.08));
   color: rgba(171, 125, 248, 1);

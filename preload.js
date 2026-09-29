@@ -187,6 +187,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   firecrawlGetMode: () => ipcRenderer.invoke('firecrawl-get-mode'),
   firecrawlSetMode: (mode) => ipcRenderer.invoke('firecrawl-set-mode', mode),
 
+  // Scraper Browser Configuration (Chrome / Edge / custom executable)
+  browserGetConfig: () => ipcRenderer.invoke('browser-get-config'),
+  browserSaveConfig: (patch) => ipcRenderer.invoke('browser-save-config', patch),
+  browserPickExecutable: (which) => ipcRenderer.invoke('browser-pick-executable', which),
+  // Pre-run diagnosis for H&M (browser brand / running processes / saved identity)
+  hmPreflightCheck: (options) => ipcRenderer.invoke('hm-preflight-check', options),
+
   // PaddleOCR API Configuration
   paddleOcrGetConfig: () => ipcRenderer.invoke('paddleOcrGetConfig'),
   paddleOcrSaveConfig: (token, options) => ipcRenderer.invoke('paddleOcrSaveConfig', token, options),

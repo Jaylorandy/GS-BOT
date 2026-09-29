@@ -647,20 +647,207 @@ function getSystemChromeCandidates() {
   }
 
   if (process.platform === 'win32') {
-    return [
+    return [...new Set([
       'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
       'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
       path.join(process.env.LOCALAPPDATA || '', 'Google\\Chrome\\Application\\chrome.exe'),
       path.join(process.env.PROGRAMFILES || '', 'Google\\Chrome\\Application\\chrome.exe'),
       path.join(process.env['PROGRAMFILES(X86)'] || '', 'Google\\Chrome\\Application\\chrome.exe'),
-    ];
+    ])].filter(Boolean);
   }
 
   return [
     '/usr/bin/google-chrome',
-    '/usr/bin/chromium-browser',
     '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium-browser',
+    '/usr/bin/chromium',
   ];
+}
+
+// ── Microsoft Edge ───────────────────────────────────────────────────────────
+// Edge 与 Chrome 同为 Chromium 内核，puppeteer-core 可直接驱动，
+// 且 msedge.exe 的 ProductVersion 格式与 chrome.exe 一致 ——
+// 所以 main.js 的 getChromeMajorVersion() / session 目录版本化对它同样适用。
+//
+// ⚠️ Edge 的真实 User-Agent 带 `Edg/<ver>` 后缀。这本身不是问题（真实 Edge
+// 用户也能访问目标站点），但绝不能再由 UA 池覆写 —— 「Edge 二进制 + Chrome UA」
+// 自相矛盾会被 Akamai 直接拦。现有 antiDetection.applyRetailBrowsingProfile()
+// 只 patch webdriver/chrome/langs/permissions、不碰 UA，所以这条约束已满足。
+function getSystemEdgeCandidates() {
+  if (process.platform === 'darwin') {
+    return [
+      '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+    ];
+  }
+
+  if (process.platform === 'win32') {
+    return [...new Set([
+      'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe',
+      'C:\\Program Files\\Microsoft\\Edge\\Application\\msedge.exe',
+      path.join(process.env.LOCALAPPDATA || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      path.join(process.env.PROGRAMFILES || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      path.join(process.env['PROGRAMFILES(X86)'] || '', 'Microsoft\\Edge\\Application\\msedge.exe'),
+    ])].filter(Boolean);
+  }
+
+  return [
+    '/usr/bin/microsoft-edge',
+    '/usr/bin/microsoft-edge-stable',
+    '/opt/microsoft/msedge/msedge',
+  ];
+}
+
+/**
+ * 统一浏览器可执行文件解析入口（Chrome / Edge / 内置 Chromium）。
+ *
+ * 优先级（前面的先赢）：
+ *   1. 用户手填绝对路径（按 preference 取对应字段；手填路径不参与缓存）
+ *   2. 按 preference 指定的来源：chrome → Edge 兜底 / edge → Chrome 兜底 / bundled
+ *   3. auto：downloaded → bundled(win) → 系统 Chrome → 系统 Edge
+ *
+ * 与 findChromeExecutable() 的关系：后者保留原语义（只认 Chrome，
+ * 供既有调用点在不改行为的前提下继续使用）；本函数是新增的、
+ * 感知浏览器品牌与用户配置的入口。
+ *
+ * @param {object} options
+ * @param {'auto'|'chrome'|'edge'|'bundled'} [options.preference]
+ * @param {string} [options.customPath]   用户手填路径（优先于 preference 探测）
+ * @param {boolean} [options.forceRefresh] 忽略缓存
+ * @returns {string|null}
+ */
+function findBrowserExecutable(options = {}) {
+  const preference = options.preference || 'auto';
+
+  // 1) 用户手填路径最优先 —— 支持绿色版/便携版/非标准安装位置。
+  //    不写入缓存：用户改配置后应立即生效。
+  const customPath = String(options.customPath || '').trim();
+  if (customPath && fileExists(customPath)) {
+    return customPath;
+  }
+
+  const cacheKey = process.platform + '|' + preference;
+  if (!options.forceRefresh && chromeCache.has(cacheKey)) {
+    return chromeCache.get(cacheKey);
+  }
+
+  const chromeInstalled = () => {
+    for (const candidate of getSystemChromeCandidates()) {
+      if (fileExists(candidate)) return candidate;
+    }
+    return null;
+  };
+
+  const edgeInstalled = () => {
+    for (const candidate of getSystemEdgeCandidates()) {
+      if (fileExists(candidate)) return candidate;
+    }
+    return null;
+  };
+
+  const bundled = () => {
+    const downloaded = getDownloadedChromeExecutable();
+    if (downloaded) return downloaded;
+    if (process.platform === 'win32') return getBundledChromeExecutable();
+    return null;
+  };
+
+  let executablePath = null;
+  // Track WHICH branch produced the winner. Brand alone cannot answer "is this
+  // the browser we ship?" — the bundled Chromium is literally named chrome.exe,
+  // so name-matching would misreport the app's own browser as a real Chrome.
+  // "bundled" must be known by provenance, not by filename.
+  let source = 'none';
+
+  if (preference === 'chrome') {
+    // 用户明确要 Chrome：先找 Chrome，找不到再退到内置包，最后才考虑 Edge
+    // （退到 Edge 而不是直接失败 —— 否则只装 Edge 的机器会彻底不可用）。
+    executablePath = chromeInstalled();
+    if (executablePath) source = 'system-chrome';
+    else {
+      executablePath = bundled();
+      if (executablePath) source = 'bundled';
+      else {
+        executablePath = edgeInstalled();
+        if (executablePath) source = 'system-edge';
+      }
+    }
+  } else if (preference === 'edge') {
+    executablePath = edgeInstalled();
+    if (executablePath) source = 'system-edge';
+    else {
+      executablePath = chromeInstalled();
+      if (executablePath) source = 'system-chrome';
+      else {
+        executablePath = bundled();
+        if (executablePath) source = 'bundled';
+      }
+    }
+  } else if (preference === 'bundled') {
+    executablePath = bundled();
+    if (executablePath) source = 'bundled';
+    else {
+      executablePath = chromeInstalled();
+      if (executablePath) source = 'system-chrome';
+      else {
+        executablePath = edgeInstalled();
+        if (executablePath) source = 'system-edge';
+      }
+    }
+  } else {
+    // auto：内置包优先（版本可控、行为最可预期），其次系统 Chrome，最后 Edge
+    executablePath = bundled();
+    if (executablePath) source = 'bundled';
+    else {
+      executablePath = chromeInstalled();
+      if (executablePath) source = 'system-chrome';
+      else {
+        executablePath = edgeInstalled();
+        if (executablePath) source = 'system-edge';
+      }
+    }
+  }
+
+  chromeCache.set(cacheKey, executablePath || null);
+  chromeCache.set(cacheKey + '|source', executablePath ? source : 'none');
+  return executablePath || null;
+}
+
+/**
+ * 报告当前解析到的浏览器信息，供设置页展示。
+ */
+function describeResolvedBrowser(options = {}) {
+  const preference = options.preference || 'auto';
+  const customPath = String(options.customPath || '').trim();
+  const executablePath = findBrowserExecutable(options);
+
+  let brand = 'unknown';
+  if (executablePath) {
+    const lower = executablePath.toLowerCase();
+    if (/msedge/.test(lower)) brand = 'edge';
+    else if (/chrome/.test(lower)) brand = 'chrome';
+    else brand = 'chromium';
+  }
+
+  // Provenance, not filename. `source` is 'bundled' only when the winner came
+  // out of the app's own runtime tree; a user-supplied path counts as custom.
+  const cacheKey = process.platform + '|' + preference;
+  let source = options.customPath && fileExists(customPath)
+    ? 'custom'
+    : (chromeCache.get(cacheKey + '|source') || 'none');
+
+  return {
+    preference,
+    customPathUsed: !!(customPath && fileExists(customPath)),
+    executablePath: executablePath || '',
+    brand,
+    source,
+    // The browser H&M actually rejects. Derived from provenance so the app's
+    // own Chromium (which ships as chrome.exe) is never mistaken for Chrome.
+    isBundled: source === 'bundled',
+    available: !!executablePath,
+    chromeCandidates: getSystemChromeCandidates().filter(fileExists),
+    edgeCandidates: getSystemEdgeCandidates().filter(fileExists),
+  };
 }
 
 function findChromeExecutable(options = {}) {
@@ -707,6 +894,10 @@ module.exports = {
   getRmbgRuntimeStatus,
   describeRuntime,
   findChromeExecutable,
+  getSystemChromeCandidates,
+  getSystemEdgeCandidates,
+  findBrowserExecutable,
+  describeResolvedBrowser,
   findPythonRuntime,
   getPythonSpawnEnv,
 };

@@ -30,6 +30,7 @@ const { execFile, exec: execCmd, execSync, spawnSync } = require('child_process'
 const antiDetection = require('./anti-detection');
 const imageUrlGenerator = require('./image-url-generator');
 const runtimeResolver = require('./runtime-resolver');
+const browserConfig = require('./browser-config');
 const ocrModelRegistry = require('./ocr-model-registry');
 const licenseService = require('./license-service');
 const skillPackManager = require('./skill-pack-manager');
@@ -1424,8 +1425,66 @@ function getPullAndBearSessionDir() {
   return path.join(app.getPath('userData'), 'pullandbear-browser-session');
 }
 
-function getUniqloSessionDir() {
-  return path.join(app.getPath('userData'), 'uniqlo-browser-session');
+// A Chrome profile is version-sensitive: when the browser starts and finds
+// cache/snapshot directories written by a *different* major version, it tries
+// to migrate them (downgrade_utils.cc) and aborts with "Code: 33" if any of
+// those renames fail (EPERM / ENOENT). That is exactly what happened to
+// uniqlo-browser-session, which was shared between two GS Bot copies bundling
+// Chromium 147 and 148 (see 踩坑日志.md, 2026-09-24).
+//
+// The fix is to give every Chromium major version its own profile directory, so
+// a profile is never opened across versions and no migration is ever attempted.
+// The version is read from the *real executable* ProductVersion — profile files
+// like "Last Version" are unreliable (bestseller-browser-session reports 148
+// while its Snapshots only contain 147).
+// Reading ProductVersion spawns a PowerShell process (~300ms), so cache per
+// executable path. The result never changes within a session.
+const chromeMajorVersionCache = new Map();
+
+function getChromeMajorVersion(executablePath) {
+  if (!executablePath || process.platform !== 'win32') {
+    return null;
+  }
+  if (chromeMajorVersionCache.has(executablePath)) {
+    return chromeMajorVersionCache.get(executablePath);
+  }
+  let major = null;
+  try {
+    const { execFileSync } = require('child_process');
+    const probe = execFileSync(
+      'powershell',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-Command',
+        `(Get-Item -LiteralPath '${String(executablePath).replace(/'/g, "''")}').VersionInfo.ProductVersion`,
+      ],
+      { encoding: 'utf8', timeout: 8000, windowsHide: true },
+    );
+    const match = String(probe || '').trim().match(/^(\d+)\./);
+    major = match ? match[1] : null;
+  } catch {
+    major = null;
+  }
+  chromeMajorVersionCache.set(executablePath, major);
+  return major;
+}
+
+// Build a version-scoped profile directory. `baseName` keeps the existing
+// on-disk name so old profiles remain discoverable; the "-c<major>" suffix is
+// added only when the version is known. Falling back to the plain name keeps
+// behaviour unchanged on platforms/runtimes where the probe fails.
+function resolveVersionedSessionDir(baseName, executablePath) {
+  const plain = path.join(app.getPath('userData'), baseName);
+  const major = getChromeMajorVersion(executablePath);
+  if (!major) {
+    return plain;
+  }
+  return path.join(app.getPath('userData'), `${baseName}-c${major}`);
+}
+
+function getUniqloSessionDir(executablePath = null) {
+  return resolveVersionedSessionDir('uniqlo-browser-session', executablePath);
 }
 
 function getGuSessionDir() {
@@ -1456,22 +1515,106 @@ function getHmSessionDir() {
   return path.join(app.getPath('userData'), 'hm-browser-session');
 }
 
+// H&M keeps using the plain (unversioned) directory: prepareHmChromeProfile
+// rewrites it from the user's real Chrome on every run, and that identity is
+// what gets past Akamai. Version-scoping it would just create a second stale
+// copy. The bestseller scraper also *reads* this same directory for H&M runs,
+// so getBestsellerSessionDir() must stay consistent with it.
+function getHmSessionBaseName() {
+  return 'hm-browser-session';
+}
+
 function getAbercrombieSessionDir() {
   return path.join(app.getPath('userData'), 'aberchrombie-browser-session');
 }
 
-// Locate the user's real system Chrome user-data dir (NOT the profile subfolder).
-function findSystemChromeUserDataDir() {
+// Locate the user's real browser user-data dir (NOT the profile subfolder).
+//
+// Chrome first, then Edge: the identity we clone does not have to come from the
+// same browser that will drive the scrape. What matters is having a real,
+// recently-used browsing identity with an H&M session in it. A machine with
+// only Edge installed has exactly that under Edge's user-data dir, and its
+// profile layout (`Default/Network/Cookies`, `Local State`, …) is identical
+// because both are Chromium. So Edge is a legitimate fallback, not a downgrade.
+function findSystemBrowserUserDataDir() {
   const home = os.homedir();
   const candidates = process.platform === 'darwin'
-    ? [path.join(home, 'Library', 'Application Support', 'Google', 'Chrome')]
+    ? [
+      path.join(home, 'Library', 'Application Support', 'Google', 'Chrome'),
+      path.join(home, 'Library', 'Application Support', 'Microsoft Edge'),
+    ]
     : process.platform === 'win32'
-      ? [path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data')]
-      : [path.join(home, '.config', 'google-chrome'), path.join(home, '.config', 'chromium')];
+      ? [
+        path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data'),
+        path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Edge', 'User Data'),
+      ]
+      : [
+        path.join(home, '.config', 'google-chrome'),
+        path.join(home, '.config', 'chromium'),
+        path.join(home, '.config', 'microsoft-edge'),
+      ];
   for (const c of candidates) {
     try { if (c && fs.existsSync(path.join(c, 'Default'))) return c; } catch { /* noop */ }
   }
   return null;
+}
+
+// Kept as an alias so existing call sites keep working unchanged.
+function findSystemChromeUserDataDir() {
+  return findSystemBrowserUserDataDir();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Scraper browser resolution (user-configurable Chrome / Edge / bundled)
+//
+// The H&M work established that the browser is part of the identity: it must be
+// a real, headed Chromium with a real profile. Which *brand* of Chromium is far
+// less important — so the user picks (Settings → 抓取浏览器) and we resolve it
+// through runtime-resolver.findBrowserExecutable(), which already knows about
+// per-brand install locations and falls back sensibly when the chosen brand is
+// missing.
+//
+// Every place that needs a browser for scraping must go through
+// resolveScraperBrowserExecutable(): it applies the user's preference, then
+// keeps the historical "download a Chrome runtime" fallback when nothing at all
+// is installed. Callers keep their existing `if (!executablePath)` download
+// branch untouched — this only changes *which* path wins when one exists.
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getBrowserPreferenceConfig() {
+  try {
+    const config = browserConfig.loadConfig();
+    return {
+      preference: config.preference,
+      customPath: config.preference === 'edge' ? config.edgePath : config.chromePath,
+    };
+  } catch {
+    return { preference: browserConfig.DEFAULT_PREFERENCE, customPath: '' };
+  }
+}
+
+function resolveScraperBrowserExecutable(overridePreference = '') {
+  const base = getBrowserPreferenceConfig();
+  // A per-run preference (from the H&M wizard step) wins over the saved one but
+  // is never persisted: the wizard validates exactly this browser beforehand.
+  const preference = overridePreference || base.preference;
+  const saved = (() => {
+    try { return browserConfig.loadConfig(); } catch { return {}; }
+  })();
+  const customPath = preference === 'edge' ? saved.edgePath : saved.chromePath;
+  let resolved = null;
+  try {
+    resolved = runtimeResolver.findBrowserExecutable({ preference, customPath });
+  } catch {
+    resolved = null;
+  }
+  // A user-supplied path that no longer exists must not silently become
+  // "no browser installed" — that would trigger a pointless Chrome download.
+  // Fall back to the legacy resolver, which honours bundle/system Chrome.
+  if (!resolved) {
+    try { resolved = findChromePath(); } catch { resolved = null; }
+  }
+  return resolved;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1674,7 +1817,15 @@ function prepareHmChromeProfile(emitLog = () => {}) {
   try { cookieBytes = fs.statSync(path.join(dstNet, 'Cookies')).size; } catch { /* absent */ }
 
   // ── Failure: Chrome is holding the source ─────────────────────────────────
-  if (cookieLocked && cookieBytes === 0) {
+  // The gate must fire whenever the copy was BLOCKED this run — NOT only when
+  // the destination is empty. A leftover Cookies file from an earlier run
+  // makes cookieBytes > 0 even though nothing was copied, and letting that
+  // fall through produced a fake "identity copied" log plus a refreshed
+  // clonedAt on a stale identity (observed 2026-09-29 08:40: two runs logged
+  // success while Chrome held the lock). Behaviour stays the same as before —
+  // the caller carries on with the previously saved identity — but now it says
+  // so honestly, and the freshness metadata is no longer corrupted.
+  if (cookieLocked) {
     const meta = readHmIdentityMeta();
     return {
       ok: false,
@@ -1711,6 +1862,131 @@ function describeHmIdentityProblem(result) {
   return result.message || '';
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// H&M pre-flight check
+//
+// WHY: the H&M scraper can only inherit a usable identity when it can read the
+// user's real browser cookie store, and that store is EXCLUSIVELY locked while
+// the browser is running (learned the hard way — see prepareHmChromeProfile).
+// The failure modes used to surface as a mystery "Access Denied" minutes later.
+// This check moves the diagnosis *before* the run: it reports which browser
+// will actually be driven, whether it is currently running (which both blocks
+// the cookie copy AND is the single most common cause of a failed run), and
+// whether a previously saved identity exists to fall back on.
+//
+// Deliberately non-fatal: the wizard shows the findings and asks the user to
+// decide. It is a diagnosis, not a gate.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Which of chrome.exe / msedge.exe are running right now. Cheap on Windows
+// (tasklist) and honest: an empty list means the lock is released.
+function listBrowserProcesses() {
+  const imageNames = { chrome: 'chrome.exe', edge: 'msedge.exe' };
+  const running = [];
+  if (process.platform !== 'win32') {
+    // Best-effort on POSIX; tasklist is Windows-only.
+    try {
+      const out = spawnSync('ps', ['-A', '-o', 'comm='], { encoding: 'utf8', timeout: 5000, windowsHide: true });
+      const text = String(out.stdout || '').toLowerCase();
+      if (text.includes('chrome')) running.push('chrome');
+      if (text.includes('msedge') || text.includes('microsoft edge')) running.push('edge');
+    } catch { /* noop */ }
+    return running;
+  }
+  try {
+    const out = spawnSync('tasklist', ['/FO', 'CSV', '/NH'], {
+      encoding: 'utf8',
+      timeout: 8000,
+      windowsHide: true,
+    });
+    const text = String(out.stdout || '').toLowerCase();
+    for (const [brand, image] of Object.entries(imageNames)) {
+      if (text.includes(image)) running.push(brand);
+    }
+  } catch { /* noop */ }
+  return running;
+}
+
+function buildHmPreflight(overrideConfig = null) {
+  const config = overrideConfig || browserConfig.loadConfig();
+  const browser = describeScraperBrowserStatus(config);
+  // Trust the resolver's provenance flag. Inferring "bundled" from the brand
+  // name is wrong: the app ships its Chromium as chrome.exe, so a filename
+  // check would report the blocked browser as a real Chrome.
+  const isBundled = browser.isBundled === true;
+  const runningProcesses = listBrowserProcesses();
+  const meta = readHmIdentityMeta();
+  const hasIdentity = !!(meta && meta.cookieCount > 0);
+
+  const warnings = [];
+  if (isBundled) {
+    warnings.push({
+      code: 'bundled-browser',
+      severity: 'error',
+      message: `The scraper would drive the bundled Chromium (${browser.executablePath || 'not found'}), not an installed Chrome or Edge. H&M blocks the bundled browser — pick Chrome or Edge.`,
+    });
+  }
+  // Only Chrome can block the clone: the identity is always cloned from the
+  // system Chrome cookie store, which Chrome locks exclusively while any
+  // chrome.exe process (even a windowless "startup boost" leftover) is alive.
+  // Edge processes neither lock that store nor conflict with the scraper (the
+  // scraper drives its own isolated user-data-dir), so Edge is only worth
+  // mentioning when the user actually picked Edge as the scraping browser.
+  const chromeRunning = runningProcesses.includes('chrome');
+  const edgeRunning = runningProcesses.includes('edge');
+  const pickedPreference = String(config?.preference || 'auto');
+  if (chromeRunning) {
+    warnings.push({
+      code: 'chrome-running',
+      severity: hasIdentity ? 'warning' : 'error',
+      message: 'Google Chrome is running — this includes hidden background processes left by Chrome\'s "startup boost" (they exist even with no visible window). The H&M identity clone reads Chrome\'s cookie store, which Chrome locks exclusively, so the clone would fail. Fully quit Chrome, then check Task Manager for leftover chrome.exe processes.',
+    });
+  }
+  if (edgeRunning && pickedPreference === 'edge') {
+    warnings.push({
+      code: 'edge-running',
+      severity: 'warning',
+      message: 'Microsoft Edge is running — likely as hidden background processes from Edge\'s "startup boost" (no visible window needed). Quit Edge completely before scraping with Edge.',
+    });
+  }
+  if (!browser.available) {
+    warnings.push({
+      code: 'no-browser',
+      severity: 'error',
+      message: 'No browser executable could be resolved. Install Chrome or Edge, or set the path in Settings → 抓取浏览器.',
+    });
+  }
+  if (!hasIdentity) {
+    warnings.push({
+      code: 'no-identity',
+      severity: chromeRunning ? 'warning' : 'info',
+      message: 'No previously saved H&M identity was found. On a cold start the identity is cloned from your system Chrome, so Chrome must be able to read its cookie store: open H&M once in Chrome, then fully quit Chrome before scraping.',
+    });
+  }
+
+  // `blocking` = conditions that make a successful run very unlikely. The
+  // wizard still lets the user proceed (Akamai is intermittent and an
+  // existing identity often carries a run), but it must be an informed choice.
+  const blocking = warnings.filter((w) => w.severity === 'error');
+  return {
+    ok: blocking.length === 0,
+    browser: {
+      brand: browser.brand,
+      executablePath: browser.executablePath || '',
+      available: !!browser.available,
+      isBundled,
+    },
+    runningProcesses,
+    identity: {
+      has: hasIdentity,
+      cookieCount: meta?.cookieCount ?? null,
+      clonedAt: meta?.clonedAt || '',
+    },
+    warnings,
+    blocking,
+  };
+}
+
 function normalizeScraperBrand(value = '') {
   const raw = String(value || '').replace(/\u00a0/g, ' ').trim().toLowerCase();
   if (!raw) {
@@ -1731,6 +2007,7 @@ function normalizeScraperBrand(value = '') {
   if (raw === 'urbanrevivo' || raw === 'urban revivo' || raw === 'ur' || raw === 'urevivo') return 'urbanrevivo';
   if (raw === 'newyorker' || raw === 'new yorker' || raw === 'ny' || raw === 'nyk') return 'newyorker';
   if (raw === 'hm' || raw === 'h&m' || raw === 'h & m' || raw === 'h and m' || raw === 'handm') return 'hm';
+  if (raw === 'freepeople' || raw === 'free people' || raw === 'fp' || raw === 'free-people') return 'freepeople';
   if (raw === 'abercrombie' || raw === 'a&f' || raw === 'anf' || raw === 'abercrombie & fitch' || raw === 'aberchrombie') return 'abercrombie';
   return '';
 }
@@ -1749,6 +2026,7 @@ function getScraperOutputFolderName(brand = '') {
   if (normalizedBrand === 'urbanrevivo') return 'Urban Revivo';
   if (normalizedBrand === 'newyorker') return 'New Yorker';
   if (normalizedBrand === 'hm') return 'H&M';
+  if (normalizedBrand === 'freepeople') return 'Free People';
   if (normalizedBrand === 'abercrombie') return 'Abercrombie';
   if (normalizedBrand === 'mixed') return 'Mixed Brands';
   return 'Zara';
@@ -3208,7 +3486,7 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
     browser = await puppeteer.launch({
       executablePath,
       headless: false,
-      userDataDir: getUniqloSessionDir(),
+      userDataDir: getUniqloSessionDir(executablePath),
       args: antiDetection.getRetailLaunchArgs(),
       ignoreDefaultArgs: ['--enable-automation'],
       defaultViewport: null,
@@ -3641,7 +3919,7 @@ async function runUniqloScraper(config, emitLog, emitProgress, taskController, p
     browser = await puppeteer.launch({
       executablePath,
       headless: false,
-      userDataDir: getUniqloSessionDir(),
+      userDataDir: getUniqloSessionDir(executablePath),
       args: antiDetection.getRetailLaunchArgs(),
       ignoreDefaultArgs: ['--enable-automation'],
       defaultViewport: null,
@@ -17147,7 +17425,7 @@ async function runHmScraper(config, emitLog, emitProgress, taskController, previ
   emitLog(`📁 Output directory: ${targetDir}`, 'info');
   emitLog('🌐 Launching the H&M scraper session...', 'info');
 
-  let executablePath = findChromePath();
+  let executablePath = resolveScraperBrowserExecutable();
   if (!executablePath) {
     emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
     const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
@@ -17563,8 +17841,8 @@ async function runNewYorkerScraper(config, emitLog, emitProgress, taskController
 //   scrapeNewYorkerProduct() per id for detail + images + composition.
 // ════════════════════════════════════════════════════════════════════════════
 
-function getBestsellerSessionDir() {
-  return path.join(app.getPath('userData'), 'bestseller-browser-session');
+function getBestsellerSessionDir(executablePath = null) {
+  return resolveVersionedSessionDir('bestseller-browser-session', executablePath);
 }
 
 // Bestseller source table (mirrors the Bestseller.xlsx the user provided).
@@ -17584,6 +17862,18 @@ const BESTSELLER_SOURCES = {
   // pages return 200 even without a cloned Chrome profile.
   'hm|male': 'https://www2.hm.com/en_us/men/seasonal-trending/best-sellers.html',
   'hm|female': 'https://www2.hm.com/en_us/women/seasonal-trending/best-sellers.html',
+  // Free People. The /best-sellers/ index is a single aggregated ranking (no
+  // gender split), so both genders point at the same URL. Verified 2026-09-29:
+  // it is a Nuxt 3 SSR page — the whole ranked grid is in the first HTML
+  // response (70 tiles seen), each as a `[data-qa-product-tile]` block.
+  //
+  // GUARD: DataDome (captcha-delivery.com), which is stricter than H&M's
+  // Akamai. Measured behaviour: a brand-new profile gets 200; the SAME profile
+  // on a second visit gets 403 3/3 times — even after a successful homepage
+  // warm-up. So the scrape uses a throwaway profile per run (see
+  // collectFreePeopleBestSellerLinks) instead of a persisted session.
+  'freepeople|male': 'https://www.freepeople.com/best-sellers/',
+  'freepeople|female': 'https://www.freepeople.com/best-sellers/',
 };
 
 function resolveBestsellerSource(brand, gender) {
@@ -17844,6 +18134,363 @@ async function collectZaraBestsellerLinks(browser, listingUrl, emitLog, ensureAc
   } finally {
     await page.close().catch(() => {});
   }
+}
+
+// ── Free People listing collector ──────────────────────────────────────────
+// Free People sits behind DataDome (captcha-delivery.com), which is stricter
+// than H&M's Akamai. Measured behaviour on 2026-09-29 (4 rounds):
+//   • brand-new profile  → HTTP 200, full ranked grid in the first response
+//   • same profile again  → HTTP 403, 3/3 times, warm-up or not
+// So there is no point persisting a session: the caller hands us a THROWAWAY
+// userDataDir per run (see runBestsellerScraper). A 403 here is expected on a
+// reused profile and must surface as its own actionable message rather than a
+// generic "no products found".
+//
+// The page is Nuxt 3 SSR, so every ranked tile is already in the DOM as
+// `[data-qa-product-tile]`:
+//   <div data-qa-product-tile>
+//     <a href="/shop/<slug>/?color=NNN">
+//       <picture data-qa-tile-image>
+//         <img src="https://images.urbndata.com/is/image/FreePeople/<style>_<color>_e?$cat-tile-preset$" alt="<name>">
+//       </picture>
+//       <h2 class="o-pwa-product-tile__heading">Name</h2>
+//     </a>
+//     <p class="o-pwa-product-price ...">$128.00</p>
+//   </div>
+// The style+color pair lives in the image URL ("96774302_060_e"), which we use
+// as the style number — it is the most stable identifier on the tile.
+function normalizeFreePeopleImageUrl(url = '') {
+  let u = String(url || '').trim();
+  if (!u) return '';
+  if (u.startsWith('//')) u = `https:${u}`;
+  if (!/^https?:/i.test(u)) return '';
+  // The tile hands us a sized variant; drop the preset params so the download
+  // step can request the full-resolution source instead of a 698px thumbnail.
+  u = u.split('?')[0];
+  // `is/image/FreePeople/<id>_<color>_e` — keep the srcset-free canonical form.
+  return u;
+}
+
+function extractFreePeopleStyleKey(url = '') {
+  // .../is/image/FreePeople/96774302_060_e  →  96774302_060
+  // Also accepts the sized/suffixed variants the tile emits:
+  //   .../96774302_060_e?$cat-tile-preset$   .../96774302_060_e/?...&fmt=webp
+  // Anchored on the path segment only, so query strings never interfere.
+  const m = String(url || '').match(/FreePeople\/(\d+)_([0-9A-Za-z]+?)(?:_[a-z])?(?=[/?#]|$)/);
+  if (!m) return '';
+  return `${m[1]}_${m[2]}`;
+}
+
+async function collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, ensureActive, opts = {}) {
+  const page = await browser.newPage();
+  // Set when the caller asked to keep the tab (opts.keepPage) AND the harvest
+  // succeeded — the finally below closes it on every other path.
+  let handedOff = false;
+  // Shared per-page routine: scroll the whole grid, wait for the lazy skeleton
+  // tiles to swap, then parse. Measured 2026-09-29 after a full-page scroll:
+  // skeletons 667→0 and withImg 4→70 within one settle tick.
+  const harvestCurrentPage = async (pageIndex) => {
+    await antiDetection.humanScroll(page);
+    // Confirm BOTH that the skeletons are gone and that every tile owns an
+    // <img>; give the client-side swap up to ~7s across 6 ticks.
+    for (let settle = 0; settle < 6; settle += 1) {
+      ensureActive();
+      // eslint-disable-next-line no-await-in-loop
+      const state = await page.evaluate(() => {
+        const tiles = [...document.querySelectorAll('[data-qa-product-tile]')];
+        return {
+          skeletons: document.querySelectorAll('[data-qa-product-tile] [class*="skeleton"]').length,
+          missingImg: tiles.filter((t) => !t.querySelector('img')).length,
+        };
+      }).catch(() => ({ skeletons: 1, missingImg: 1 }));
+      if (state.skeletons === 0 && state.missingImg === 0) break;
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise((r) => setTimeout(r, 1200));
+    }
+    // eslint-disable-next-line no-await-in-loop
+    return page.evaluate(() => {
+      const pickImage = (img) => {
+        if (!img) return '';
+        const direct = img.getAttribute('src');
+        if (direct && !/^data:/.test(direct)) return direct;
+        // Lazy tiles keep the real URL in srcset (first candidate) or data-*.
+        const srcset = img.getAttribute('srcset') || '';
+        const fromSrcset = srcset.split(',')[0]?.trim().split(/\s+/)[0];
+        if (fromSrcset) return fromSrcset;
+        for (const attr of ['data-src', 'data-lazy', 'data-original', 'data-image']) {
+          const v = img.getAttribute(attr);
+          if (v) return v;
+        }
+        return '';
+      };
+      const out = [];
+      const tiles = document.querySelectorAll('[data-qa-product-tile]');
+      for (const tile of tiles) {
+        const link = tile.querySelector('a[href*="/shop/"]');
+        if (!link) continue;
+        const href = link.getAttribute('href') || '';
+        if (!href.includes('/shop/')) continue;
+        // `source` carries the same URL in some variants; fall back to it.
+        const img = tile.querySelector('img') || tile.querySelector('source');
+        const heading = tile.querySelector('h2, [class*="product-tile__heading"]');
+        const priceEl = tile.querySelector('[class*="product-price"]');
+        out.push({
+          href,
+          // Best identifier: the tile carries it as a data attribute, so we never
+          // have to parse it back out of an image URL.
+          styleNumber: tile.getAttribute('data-style-number') || '',
+          slug: tile.getAttribute('data-product-slug') || '',
+          name: (heading?.textContent || tile.querySelector('img')?.getAttribute('alt') || '').trim(),
+          image: pickImage(tile.querySelector('img')),
+          srcsetFallback: (tile.querySelector('source')?.getAttribute('srcset') || '').split(',')[0]?.trim().split(/\s+/)[0] || '',
+          price: (priceEl?.textContent || '').replace(/\s+/g, ' ').trim(),
+        });
+      }
+      return out;
+    }).then((entries) => ({ pageIndex, entries }));
+  };
+
+  try {
+    // Same rule as H&M: patch only webdriver/chrome/langs. Overriding the UA
+    // makes the browser's own identity inconsistent, which is exactly the kind
+    // of tell DataDome scores on.
+    await antiDetection.applyRetailBrowsingProfile(page);
+    emitLog(`    🌐 Opening Free People bestseller listing: ${listingUrl}`, 'info');
+
+    const response = await page.goto(listingUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    const status = response ? response.status() : 0;
+    if (status === 403 || status === 429) {
+      // Measured 2026-09-29: the first 403 on a brand-new profile is NOT the
+      // "seen before" rule — a fresh one-off profile got 403 six minutes after
+      // a run that used an equally fresh profile and passed. DataDome refusal
+      // here is intermittent and IP/rate driven, so it can outlast a minute.
+      // The advice therefore escalates as consecutive blocks accumulate,
+      // because "wait a minute" repeatedly failed even though the message
+      // claimed it would fix it, which reads as the app being broken.
+      const blockCount = (globalThis.__fpBlockStreak = (globalThis.__fpBlockStreak || 0) + 1);
+      const firstHint = blockCount === 1
+        ? 'This is usually a temporary refusal, not a problem with your setup — the profile was rebuilt automatically. Wait 3–5 minutes and retry.'
+        : `Blocked ${blockCount} times in a row. A fresh profile is NOT the issue — Free People is refusing this connection pattern for now. Wait 10–15 minutes before retrying, and avoid starting several runs back to back.`;
+      throw new Error(`Free People blocked this visit (HTTP ${status}, DataDome). ${firstHint}`);
+    }
+    if (status >= 400) throw new Error(`Free People listing returned HTTP ${status}.`);
+    // A clean page proves the block has lifted, so the next failure starts over.
+    globalThis.__fpBlockStreak = 0;
+
+    // The listing is PAGINATED (`o-pwa-pagination`, measured 2026-09-29:
+    // page 1 = 70 tiles, page 2 = 70, page 3 = 11 → ~151 ranked styles).
+    // One-shot scrolling only ever yields page 1's lazily-loaded chunk, so
+    // follow ?page=N INSIDE the same session — same-session navigation passed
+    // DataDome on every probe, while re-opening a used profile gets 403.
+    const seen = new Set();
+    const links = [];
+    let totalPages = 1;
+    const collectFromEntries = (entries) => {
+      for (const raw of entries) {
+        const href = String(raw.href || '').split('#')[0];
+        if (!href.includes('/shop/')) continue;
+        const url = href.startsWith('http') ? href : `https://www.freepeople.com${href}`;
+        const image = normalizeFreePeopleImageUrl(raw.image) || normalizeFreePeopleImageUrl(raw.srcsetFallback);
+        // The tile's own data-style-number is authoritative; if it is missing fall
+        // back to the image URL, then to the slug, so a tile without an image still
+        // yields a usable, deduped record.
+        const styleKey = String(raw.styleNumber || '').trim()
+          || extractFreePeopleStyleKey(image)
+          || String(raw.slug || '').trim()
+          || href.replace(/^.*\/shop\//, '').replace(/\/.*$/, '');
+        if (!styleKey || seen.has(styleKey)) continue;
+        seen.add(styleKey);
+        // The tile image carries its colour as `<style>_<code>_<view>` — this
+        // is the colour the PDP will open on, and the anchor for the
+        // all-colors expansion later.
+        const tileColor = (String(raw.image || '').match(/FreePeople\/\d+_([0-9a-zA-Z]{2,4})_/i) || [])[1] || '';
+        links.push({
+          styleKey,
+          colorCode: tileColor,
+          url,
+          name: String(raw.name || '').trim(),
+          price: String(raw.price || '').trim(),
+          imageUrls: image ? [image] : [],
+        });
+      }
+    };
+
+    const first = await harvestCurrentPage(1);
+    collectFromEntries(first.entries);
+    emitLog(`    📄 Page 1/${totalPages}: ${first.entries.length} tile(s), ${links.length} unique style(s) so far.`);
+
+    // Read the pager's total (`.o-pwa-pagination__page-total`, text "3").
+    totalPages = await page.evaluate(() => {
+      const el = document.querySelector('.o-pwa-pagination__page-total');
+      const n = Number((el?.textContent || '').replace(/\D/g, ''));
+      return Number.isFinite(n) && n >= 1 ? n : 1;
+    }).catch(() => 1);
+    // Defensive ceiling: the site showed 3; never chase more than 8.
+    const maxPages = Math.min(totalPages, 8);
+    const base = listingUrl.replace(/\/+$/, '');
+    for (let p = 2; p <= maxPages; p += 1) {
+      ensureActive();
+      // eslint-disable-next-line no-await-in-loop
+      const resp = await page.goto(`${base}/?page=${p}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+      const st = resp ? resp.status() : 0;
+      if (st === 403 || st === 429) {
+        emitLog(`    ⚠️ Page ${p} was blocked (HTTP ${st}); keeping the ${links.length} style(s) harvested so far.`, 'warning');
+        break;
+      }
+      if (st >= 400) {
+        emitLog(`    ⚠️ Page ${p} returned HTTP ${st}; stopping pagination there.`, 'warning');
+        break;
+      }
+      // eslint-disable-next-line no-await-in-loop
+      const next = await harvestCurrentPage(p);
+      const before = links.length;
+      collectFromEntries(next.entries);
+      emitLog(`    📄 Page ${p}/${maxPages}: ${next.entries.length} tile(s), +${links.length - before} new.`);
+      if (next.entries.length === 0) break;
+    }
+
+    emitLog(`    ✅ Free People listing harvested ${links.length} ranked style(s) across ${maxPages} page(s).`, links.length ? 'success' : 'warning');
+    if (!links.length) {
+      throw new Error('The Free People listing loaded but no product tiles were found — the page layout may have changed.');
+    }
+    // PDP detail passes hand this tab back: it is the one session DataDome
+    // already approved, and a second tab would look like a new visitor. The
+    // caller owns closing it from here on.
+    handedOff = opts.keepPage === true;
+    return { links, page };
+  } finally {
+    if (!handedOff) await page.close().catch(() => {});
+  }
+}
+
+// ── Free People PDP detail helpers ──────────────────────────────────────────
+// Listing tiles carry neither description nor composition; both live on the
+// product page inside two accordions ("Details" and "Contents"). Probed
+// 2026-09-29: an in-session listing→PDP navigation passes DataDome (200), the
+// Details body is rendered server-side, and the Contents body ("100% Cotton")
+// is an ASYNC accordion whose text lands in the DOM a beat after load — so we
+// poll briefly and click it open as a fallback. Any failure throws; the
+// caller keeps the listing data and the run continues (same degrade rule as
+// H&M/Zara: give up on metadata, never kill the run over it).
+function cleanFreePeopleDescription(raw) {
+  let t = String(raw || '');
+  t = t.replace(/^\s*Details\b\s*/i, '');
+  // The card text starts "Style No. 96774302; Color Code: 060Chill out…" —
+  // the color code is glued to the first body word, so strip the metadata
+  // first, then a leading color code directly followed by a capital letter.
+  t = t.replace(/^Style No\.\s*[^;]*;\s*Color Code:\s*/i, '');
+  t = t.replace(/^\d{3}(?=[A-Z])/, '');
+  // One line per marketing bullet ("…slouchyFeatures: …").
+  t = t.replace(/\s*(Fit:)/g, '\n$1').replace(/\s*(Features:)/g, '\n$1').replace(/\s*(Why We\s*[❤♥]\s*It:)/g, '\n$1');
+  // Drop the trailing sub-brand blurb ("We The Free is an in-house label.").
+  t = t.replace(/\s*[A-Za-z][A-Za-z\s'’-]{0,48}?is an in-house label\.?\s*$/i, '');
+  // Keep everything up to and including the FIRST sentence of the "Why We ❤
+  // It" bullet; whatever follows it is sub-brand boilerplate ("We The
+  // FreeHeritage inspired and lived-in staples…").
+  const why = t.match(/Why We\s*[❤♥]\s*It:\s*/);
+  if (why) {
+    const head = t.slice(0, why.index).trim();
+    const firstSentence = t.slice(why.index + why[0].length).match(/^[^.]*\./);
+    t = `${head} Why We ❤ It: ${firstSentence ? firstSentence[0].trim() : ''}`.trim();
+  }
+  return t.replace(/\s+/g, ' ').trim();
+}
+
+function cleanFreePeopleComposition(raw) {
+  // Card text arrives as e.g. "Contents CareMachine Wash ColdContents100%
+  // CottonOriginImport" — everything is glued together (textContent keeps no
+  // spaces), so regex \b word boundaries do NOT exist around the labels
+  // ("Contents100%", "OriginImport"). Anchor on the LAST literal "Contents"
+  // instead (that skips the Care line and the card heading itself).
+  const text = String(raw || '');
+  const marker = text.lastIndexOf('Contents');
+  const body = marker >= 0 ? text.slice(marker + 'Contents'.length) : text;
+  const m = body.match(/\d+(?:\.\d+)?\s*%\s*[\s\S]*?(?=\s*Origin|$)/);
+  if (!m) return '';
+  // Multi-fiber blends are glued ("58% Cotton38% Modal4% Elastane") — put a
+  // space between a fiber word and the next percentage block.
+  return m[0].replace(/([a-zA-Z])\s*(\d+(?:\.\d+)?\s*%)/g, '$1 $2').replace(/\s+/g, ' ').trim();
+}
+
+async function scrapeFreePeopleProductDetail(page, entry, refererUrl, emitLog, ensureActive) {
+  const response = await page.goto(entry.url, { waitUntil: 'domcontentloaded', timeout: 60000, referer: refererUrl }).catch(() => null);
+  const status = response ? response.status() : 0;
+  if (status === 403 || status === 429) throw new Error(`blocked (HTTP ${status}, DataDome)`);
+  if (status >= 400) throw new Error(`HTTP ${status}`);
+  await antiDetection.randomDelay(1200, 2000);
+  ensureActive();
+
+  // Poll the two accordion cards; on tick 2, click the (async) Contents card
+  // open if its body still has not arrived.
+  let cards = null;
+  for (let tick = 0; tick < 6; tick += 1) {
+    ensureActive();
+    // eslint-disable-next-line no-await-in-loop
+    cards = await page.evaluate(() => {
+      // NOTE: closest('[class*="accordion"]') would stop at
+      // `o-pwa-accordion__headings` (the heading wrapper ALSO contains the
+      // substring), so anchor on the exact `.o-pwa-accordion` card class.
+      const findCard = (labelRe) => {
+        for (const h of document.querySelectorAll('.o-pwa-accordion__heading')) {
+          if (!labelRe.test(String(h.textContent || '').trim())) continue;
+          const card = h.closest('.o-pwa-accordion');
+          return card ? String(card.textContent || '') : '';
+        }
+        return '';
+      };
+      const html = String(document.documentElement.innerHTML || '');
+      const blocked = /captcha-delivery\.com/i.test(html) || /access denied/i.test(String(document.title || ''));
+      // Swatch thumbnails render as `<style>_<code>_swatch` assets (the
+      // suffix is SIX letters — a `_s` regex silently missed every swatch,
+      // and a loose `_s` probe mis-truncated `_swatch` to `_s` and faked a
+      // pass). Trailing separator includes the space that srcset adds.
+      const codes = new Set();
+      for (const img of document.querySelectorAll('img, source, [style*="background"]')) {
+        const all = `${img.getAttribute('src') || ''} ${img.getAttribute('srcset') || ''} ${img.getAttribute('style') || ''}`;
+        for (const m of all.matchAll(/FreePeople\/\d+_([0-9a-zA-Z]{2,4})_swatch(?:[\/?&"' ]|$)/g)) codes.add(m[1]);
+      }
+      return { blocked, details: findCard(/^details$/i), contents: findCard(/^contents$/i), codes: [...codes] };
+    }).catch(() => null);
+    if (!cards || cards.blocked) throw new Error('DataDome challenge page');
+    const descriptionReady = cards.details.length > 80;
+    const compositionReady = /\d+(?:\.\d+)?\s*%\s*[A-Za-z]/.test(cards.contents);
+    const swatchesReady = cards.codes.length >= 1;
+    if (descriptionReady && compositionReady && swatchesReady) break;
+    if (tick === 1) {
+      // eslint-disable-next-line no-await-in-loop
+      await page.evaluate(() => {
+        for (const h of document.querySelectorAll('.o-pwa-accordion__heading')) {
+          if (!/^contents$/i.test(String(h.textContent || '').trim())) continue;
+          const toggle = h.closest('.o-pwa-accordion')?.querySelector('button[aria-expanded="false"]');
+          if (toggle) { try { toggle.click(); } catch { /* ignore */ } }
+        }
+      }).catch(() => {});
+    }
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  const description = cleanFreePeopleDescription(cards?.details || '');
+  const composition = cleanFreePeopleComposition(cards?.contents || '');
+
+  // Gallery + sibling colours. Every swatch thumbnail sits in the DOM as a
+  // `<style>_<code>_s` asset (probed 2026-09-29: a 15-colour pullover exposed
+  // all 15 codes this way — no API call, no clicks). The gallery is the fixed
+  // a–h view set per colour; the CDN answers 403 for a missing view instead
+  // of serving a fallback, so absent shots just fail the download and are
+  // skipped, never mis-saved.
+  const styleId = String(entry.styleKey || '');
+  const tileColorCode = String(entry.colorCode || '');
+  const gallery = styleId && tileColorCode
+    ? ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'].map((v) => `https://images.urbndata.com/is/image/FreePeople/${styleId}_${tileColorCode}_${v}?wid=1200`)
+    : [];
+  let colorCodes = Array.isArray(cards?.codes) ? cards.codes : [];
+  if (!colorCodes.length && tileColorCode) colorCodes = [tileColorCode];
+
+  if (emitLog && !composition) {
+    emitLog(`    ℹ️ ${entry.name || entry.styleKey}: no composition found on the product page.`, 'info');
+  }
+  return { description, composition, gallery, colorCodes };
 }
 
 // ── Parse a raw H&M listing HTML (server response) into the SAME shape the
@@ -18205,15 +18852,20 @@ async function collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActi
       if (blockReason) {
         // Tailor the advice to what can actually help. Firecrawl is known-dead
         // for H&M (see HM_FIRECRAWL_KNOWN_DEAD), so we do NOT promise it as a
-        // fix — we point at the two things that do work: retry later, or make
-        // sure the real Chrome profile still has a live H&M session.
+        // fix. Measured reality (踩坑日志 2026-09-28/29): the identity copy is
+        // verified fresh before launch (entry count is logged), and Akamai's
+        // guard still intermittently flags the automated browser — the SAME
+        // setup has passed minutes later on retry. So "stale session" is a
+        // false diagnosis; "wait and retry" is the one reliably-working action,
+        // and comparing with the user's own Chrome separates an IP/time-window
+        // block from the automation-flag case.
         const fcHint = HM_FIRECRAWL_KNOWN_DEAD
-          ? 'Note: the Firecrawl cloud fallback cannot help here — H&M also blocks Firecrawl\'s servers, so this is not a setting you can fix in the app. Make sure Chrome itself can still open the H&M bestseller page (the scraper reuses your Chrome profile), then retry.'
+          ? 'Note: the Firecrawl cloud fallback cannot help here — H&M also blocks Firecrawl\'s servers, so this is not a setting you can fix in the app.'
           : (firecrawlService.isConfigured()
             ? 'A Firecrawl rescue was attempted and also returned a guard page — the block is wider than this machine\'s IP; wait longer or switch networks.'
             : 'Tip: adding a Firecrawl API Key in Settings lets the app finish the run from the cloud automatically when this happens.');
         throw new Error(
-          `H&M blocked the bestseller request (${blockReason}). H&M's bot guard (Akamai) served an "Access Denied" page instead of the ranking. Usually this means the cloned Chrome session has gone stale — open the H&M bestseller page in Chrome once, then retry. If that still fails, wait a few minutes or switch networks/VPN. ${fcHint}`,
+          `H&M blocked the bestseller request (${blockReason}). H&M's bot guard (Akamai) intermittently flags automated browsers. The Chrome identity was copied and verified fresh right before launch (see the "identity copied" log line), so this is NOT a broken or stale session — the same setup has succeeded on a retry minutes later. What to do: wait 3-5 minutes and simply retry. If it keeps failing, open the same page in your own Chrome: if Chrome is blocked too, it is your IP / time window — wait longer or switch networks/VPN. ${fcHint}`,
         );
       }
       if (lastReadError) {
@@ -18538,10 +19190,16 @@ async function scrapeIntersportProduct(handle, emitLog, ensureActive) {
 //   unknown category      -> fall back to the name regex
 //
 // Word boundaries in the name regex matter: without them `bag` matches
-// "Baggy Jeans" and `boot` matches "Bootcut Jeans".
+// "Baggy Jeans" and `boot` matches "Bootcut Jeans". Same for the inverse:
+// bare `cap`/`flat`/`oxford`/`ring`/`slide`/`belt(ed)` collide with real
+// apparel ("Cap-Sleeved Top", "Belted Trench"), so the risky ones stay OUT and
+// only the safe compound forms go in (`ballet flats?`, `slip[- ]ons?`,
+// `baseball caps?`). Free People additions 2026-09-29 cover the shoe/accessory
+// tail of their bestseller pages: mules, clogs, pumps, heels, slingbacks,
+// slip-ons, totes, clutches, belts, necklaces, earrings, hair accessories…
 const BESTSELLER_APPAREL_CATEGORY_RE = /(?:^|_)(?:tops|shirts|t-?shirts|blouses|jumpers|cardigans|sweatshirts|hoodies|dresses|skirts|trousers|jeans|shorts|jackets|coats|blazers|suits|bodysuits|jumpsuits|playsuits|knitwear|bottoms|maternity|sportswear|basics|apparel|outerwear|underwear_?(?:none)?)(?:_|$)/i;
 const BESTSELLER_NON_APPAREL_CATEGORY_RE = /(?:^|_)(?:underwear|lingerie|bras|socks|hosiery|nightwear|sleepwear|accessories|bags|shoes|footwear|beauty|cosmetics|fragrance|swimwear|multipack)(?:_|$)/i;
-const BESTSELLER_NON_APPAREL_NAME_RE = /\b(?:sandals?|slides?|slippers?|shoes?|sneakers?|boots?|booties|footwear|flip[\s-]?flops?|espadrilles?|loafers?|trainers?|accessories|accessory|bags?|handbags?|backpacks?|jewell?ery|jewels?|socks?|hats?|beanies?|scarves|scarf|sunglasses|eyeglasses|glasses|watches|watch|wallets?|purses?|perfumes?|fragrances?|colognes?|eau de|beauty|cosmetics?|makeup|make-up|skincare|lipsticks?|lip care|nail|nails|luggage|suitcases?|trolleys?|cabin case|umbrellas?|underwear|boxers?|briefs?|bras?|bralettes?|panties|panty|thongs?|knickers|lingerie|pantyhose|hosiery|tasche|taschen|gürtel|schuhe?|schuh|parfüm|parfum)\b/i;
+const BESTSELLER_NON_APPAREL_NAME_RE = /\b(?:sandals?|slides?|slippers?|shoes?|sneakers?|boots?|booties|footwear|flip[\s-]?flops?|espadrilles?|loafers?|trainers?|mules?|clogs?|pumps?|heels?|slingbacks?|mary[\s-]?janes?|ballet[\s-]?flats?|slip[\s-]?ons?|wellies|accessories|accessory|bags?|handbags?|backpacks?|totes?|clutch(?:es)?|pouch(?:es)?|crossbody bags?|jewell?ery|jewels?|necklaces?|earrings?|bracelets?|anklets?|pendants?|brooch(?:es)?|socks?|hats?|beanies?|baseball caps?|scarves|scarf|bandanas?|gloves?|mittens?|headbands?|ear[\s-]?warmers?|scrunchies?|hair[\s-]?(?:claws?|clips?|ties?|bands?|pins?|barrettes?)|sunglasses|eyeglasses|glasses|watches|watch|wallets?|purses?|card[\s-]?cases?|keychains?|phone[\s-]?cases?|luggage|suitcases?|trolleys?|cabin case|umbrellas?|belts?|suspenders?|underwear|boxers?|briefs?|bras?|bralettes?|panties|panty|thongs?|knickers|lingerie|pantyhose|hosiery|tights|perfumes?|fragrances?|colognes?|eau de|beauty|cosmetics?|makeup|make-up|skincare|lipsticks?|lip care|nail|nails|tasche|taschen|gürtel|schuhe?|schuh|parfüm|parfum)\b/i;
 
 /**
  * Decide whether a bestseller product is non-apparel (and should be skipped).
@@ -18567,6 +19225,8 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   const rawImagesPerStyle = Number(config?.imagesPerStyle);
   const imagesPerStyle = Number.isFinite(rawImagesPerStyle) && rawImagesPerStyle > 0 ? Math.floor(rawImagesPerStyle) : 0;
   let browser = null;
+  // Declared here (not inside the try) because the `finally` block cleans it up.
+  let freePeopleProfileDir = '';
 
   const brandKey = String(brand || '').trim().toLowerCase().replace(/\s+/g, '');
   const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
@@ -18590,7 +19250,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   } else {
     listingUrl = resolveBestsellerSource(brand, gender);
   }
-  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker (male/female), Intersport (male/female + category).`);
+  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker, UNIQLO, H&M, Free People (male/female), Intersport (male/female + category).`);
 
   const brandLabel = brandKey === 'intersport' ? 'Intersport' : (getScraperOutputFolderName(brand) || 'New Yorker');
   const targetDir = !outputDir || outputDir === '未选择'
@@ -18600,7 +19260,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   emitLog(`📁 Output directory: ${targetDir}`, 'info');
   emitLog(`🌐 Bestseller Analysis · ${brandLabel} · ${genderLabel}`, 'info');
 
-  let executablePath = findChromePath();
+  let executablePath = resolveScraperBrowserExecutable(config?.scraperBrowser);
   if (!executablePath) {
     emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
     const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
@@ -18612,7 +19272,23 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     // H&M product pages are heavily bot-guarded; sharing the regular H&M
     // scraper session (with its established cookies/auth) makes bestseller
     // scraping far more reliable than a fresh bestseller-only session.
-    const sessionDir = brandKey === 'hm' ? getHmSessionDir() : getBestsellerSessionDir();
+    // Version-scoped profile: keeps Chromium 147/148 from sharing one directory,
+    // which is what triggered downgrade_utils "Code: 33" (see 踩坑日志.md).
+    const sessionDir = brandKey === 'hm' ? getHmSessionDir() : getBestsellerSessionDir(executablePath);
+    // Free People (DataDome) only serves a fresh browser profile. A reused
+    // profile 403s on every subsequent visit, so we hand this run a throwaway
+    // user-data dir and delete it afterwards. Measured 2026-09-29: fresh=200,
+    // reused=403 3/3. Nothing here is reusable across runs by design, so a
+    // persistent directory would only guarantee failure.
+    const freePeopleProfileDirLocal = brandKey === 'freepeople'
+      ? path.join(app.getPath('temp'), `gsbot-fp-profile-${Date.now()}-${process.pid}`)
+      : '';
+    if (freePeopleProfileDirLocal) {
+      freePeopleProfileDir = freePeopleProfileDirLocal;
+      fs.mkdirSync(freePeopleProfileDir, { recursive: true });
+      emitLog('    🆕 Using a one-off browser profile (Free People blocks reused profiles).', 'info');
+    }
+    const effectiveSessionDir = freePeopleProfileDir || sessionDir;
     // H&M's Akamai guard flags the default automation browser (verified: direct
     // nav 403s while the user's own Chrome works). Copy the user's real Chrome
     // identity into the H&M session so product pages load.
@@ -18638,13 +19314,19 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     browser = await puppeteer.launch({
       executablePath,
       headless: false,
-      userDataDir: sessionDir,
+      userDataDir: effectiveSessionDir,
       args: antiDetection.getRetailLaunchArgs(),
       ignoreDefaultArgs: ['--enable-automation'],
       defaultViewport: null,
     });
     previewBridge?.attachToBrowser(browser);
     taskController?.onCancel(() => { if (browser && browser.isConnected()) browser.close().catch(() => {}); });
+
+    // The one-off Free People profile is useless once the run ends (and
+    // keeping it would poison the next run), so remove it on the way out.
+    if (freePeopleProfileDir) {
+      taskController?.onCancel(() => { try { fs.rmSync(freePeopleProfileDir, { recursive: true, force: true }); } catch { /* locked; harmless */ } });
+    }
 
     emitProgress(3);
     emitLog('🚀 Step 1/2: harvesting bestseller style list…', 'warning');
@@ -18708,6 +19390,153 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         }
         emitProgress(10 + Math.round(((i + 1) / links.length) * 40));
         await antiDetection.randomDelay(400, 900);
+      }
+    } else if (brandKey === 'freepeople') {
+      // ── Free People: the Nuxt SSR grid carries name, price, image and the
+      // style+color key per ranked tile, but NOT the description or the
+      // fabric composition — those live only on the product page (Details /
+      // Contents accordions). So, unlike H&M, every kept style pays ONE
+      // in-session PDP visit, reusing the very tab the listing was approved
+      // on (DataDome passed same-session navigation on every probe). A PDP
+      // failure degrades to the listing data, and three consecutive failures
+      // suspend PDP visits entirely — at that point the session is almost
+      // certainly dead and further attempts would just burn time.
+      //
+      // The ranking is one aggregated list (no gender split) spread across
+      // 3 paginated pages (~151 styles); collectFreePeopleBestsellerLinks
+      // follows the pager inside the same session.
+      const rawLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+      const wantsAll = !Number.isFinite(rawLimit) || rawLimit === 0;
+      const FP_RANKING_MAX = 200;
+
+      const { links: fpLinks, page: fpPage } = await collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, ensureActive, { keepPage: true });
+      emitProgress(10);
+
+      const fpLimit = rawLimit > 0 ? Math.min(Math.floor(rawLimit), FP_RANKING_MAX) : FP_RANKING_MAX;
+      const fpLabel = wantsAll ? `all (cap ${FP_RANKING_MAX})` : String(fpLimit);
+      emitLog(`    🚀 Step 2/2: collecting ${fpLabel} Free People style(s) (listing + product-page details)…`, 'warning');
+
+      let fpReferer = listingUrl;
+      let fpDetailFails = 0;
+      let fpDetailSuspended = false;
+      // Number of distinct styles fully processed — the unit the user's
+      // "Product Count" refers to. Kept separate from `products.length`
+      // because all-colours expansion makes one style yield many records.
+      let fpStyleCount = 0;
+      try {
+        for (let i = 0; i < fpLinks.length; i += 1) {
+          ensureActive();
+          // The budget counts DISTINCT STYLES, never records. With "all
+          // colours" on, one style expands into ~15 records, so counting
+          // `products.length` would let a single style eat the whole budget
+          // (measured 2026-09-29: "10" produced 1 style + 14 colours). That is
+          // the bug this counter fixes.
+          if (fpStyleCount >= fpLimit) {
+            if (!wantsAll) {
+              emitLog(`    ✋ Reached the requested ${fpLimit} apparel style(s); ${fpLinks.length - i} candidate(s) left unprocessed.`, 'info');
+            }
+            break;
+          }
+
+          const entry = fpLinks[i];
+          const product = {
+            styleNumber: entry.styleKey,
+            productId: entry.styleKey,
+            brand: 'Free People',
+            name: entry.name,
+            price: entry.price,
+            url: entry.url,
+            imageUrls: entry.imageUrls,
+            description: '',
+            composition: null,
+          };
+
+          if (excludeApparelActive && isNonApparelBestseller('', product.name)) {
+            skippedNonApparel += 1;
+            emitLog(`    🚫 Skipped non-apparel: ${product.name || product.styleNumber}`, 'info');
+          } else {
+            // ONE record PER COLOUR — there is no colour-less record. The tile
+            // image carries a colour (e.g. `_060_`), so the tile colour is just
+            // the first entry of the colour list. This replaces the old shape
+            // that emitted a bare `96774302` record whose folder name carried
+            // no colour while its images were the tile colour's — a mismatch
+            // that made the deliverable confusing (and, with allColors on,
+            // double-counted that colour).
+            //
+            // PDP gives us description + composition + the full a–h gallery,
+            // all of which are colour-independent except the code in the URL.
+            let detail = null;
+            if (!fpDetailSuspended) {
+              try {
+                detail = await scrapeFreePeopleProductDetail(fpPage, entry, fpReferer, emitLog, ensureActive);
+                fpReferer = entry.url;
+                fpDetailFails = 0;
+              } catch (err) {
+                if (isCancellationError(err) || taskController?.cancelled) throw new TaskCancelledError();
+                fpDetailFails += 1;
+                emitLog(`    ⚠️ ${product.name || product.styleNumber}: product page failed (${err.message}); keeping listing data.`, 'warning');
+                if (fpDetailFails >= 3) {
+                  fpDetailSuspended = true;
+                  emitLog('    ⚠️ Three product pages failed in a row — suspending PDP visits; remaining styles keep listing data only.', 'warning');
+                }
+              }
+            }
+
+            product.description = detail?.description || '';
+            product.composition = detail?.composition
+              ? { outerShell: null, lining: null, other: detail.composition }
+              : null;
+
+            // Colour list. The tile colour always leads (it is the one the
+            // ranking actually points at). With "all colours" off we keep ONLY
+            // that colour, so the count stays "1 folder per style"; with it on
+            // we append every other swatch the PDP exposed. Codes are used
+            // verbatim as the folder suffix.
+            const tileCode = String(entry.colorCode || '');
+            const swatchCodes = Array.isArray(detail?.colorCodes) ? detail.colorCodes : [];
+            const colourList = [];
+            const colourSeen = new Set();
+            const pushColour = (code) => {
+              const c = String(code || '').trim();
+              if (!c || colourSeen.has(c)) return;
+              colourSeen.add(c);
+              colourList.push(c);
+            };
+            pushColour(tileCode);
+            if (config?.allColors === true) swatchCodes.forEach(pushColour);
+
+            if (!colourList.length) {
+              // No colour could be determined at all — fall back to the old
+              // colour-less record rather than dropping the style entirely.
+              product.imageUrls = detail?.gallery?.length ? detail.gallery : entry.imageUrls;
+              products.push(product);
+            } else {
+              for (const code of colourList) {
+                const gallery = detail?.gallery?.length
+                  ? detail.gallery.map((u) => u.replace(`_${tileCode}_`, `_${code}_`))
+                  : entry.imageUrls;
+                products.push({
+                  ...product,
+                  productId: `${product.styleNumber}_${code}`,
+                  colorRef: code,
+                  name: `${product.name || product.styleNumber} · ${code}`,
+                  imageUrls: gallery,
+                });
+              }
+              if (colourList.length > 1) {
+                emitLog(`    🎨 ${product.name || product.styleNumber}: ${colourList.length} colour(s) → ${colourList.map((c) => `${product.styleNumber}_${c}`).join(', ')}`, 'info');
+              }
+            }
+            // One more distinct style done — this, not the record count, is
+            // what the Product Count budget is measured in.
+            fpStyleCount += 1;
+          }
+
+          emitProgress(10 + Math.round(((i + 1) / Math.max(fpLinks.length, 1)) * 40));
+          await antiDetection.randomDelay(300, 700);
+        }
+      } finally {
+        await fpPage.close().catch(() => {});
       }
     } else if (brandKey === 'hm') {
       // ── H&M: the listing's own Next.js payload already carries, per ranked
@@ -18899,7 +19728,8 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         ? buildIntersportImageMap(capped)
         : buildNewYorkerImageMap(capped);
       const referer = brandKey === 'intersport' ? 'https://www.intersport.ch/'
-        : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
+        : brandKey === 'freepeople' ? 'https://www.freepeople.com/'
+          : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
       for (const [label, imgUrl] of Object.entries(classified)) {
         const ext = getUrlExtension(imgUrl, '.jpg');
         const filename = `${cleanSku}_${label}${ext}`;
@@ -18943,6 +19773,13 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     return { success: true, outputPath: targetDir, styleCount: success.length, failedCount: failed.length };
   } finally {
     if (browser && browser.isConnected()) await browser.close().catch(() => {});
+    // Always drop the throwaway Free People profile, success or failure — a
+    // kept profile would be flagged and break the very next run.
+    if (freePeopleProfileDir) {
+      await new Promise((r) => setTimeout(r, 800));
+      try { fs.rmSync(freePeopleProfileDir, { recursive: true, force: true }); }
+      catch { /* handle still held by Chromium; harmless leftover */ }
+    }
   }
 }
 
@@ -21420,6 +22257,85 @@ ipcMain.handle('firecrawl-set-mode', async (_event, mode) => {
   try {
     const result = firecrawlService.setMode(mode);
     return result;
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// ── Scraper Browser IPC (Chrome / Edge / custom path) ────────────────────────
+function describeScraperBrowserStatus(config) {
+  try {
+    // forceRefresh: the user just changed the config, so any cached resolution
+    // is stale by definition.
+    return runtimeResolver.describeResolvedBrowser({
+      preference: config.preference,
+      customPath: config.preference === 'edge' ? config.edgePath : config.chromePath,
+      forceRefresh: true,
+    });
+  } catch (error) {
+    return { available: false, executablePath: '', brand: 'unknown', error: error.message };
+  }
+}
+
+ipcMain.handle('browser-get-config', async () => {
+  try {
+    const config = browserConfig.loadConfig();
+    return { success: true, config, status: describeScraperBrowserStatus(config) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('browser-save-config', async (_event, patch) => {
+  try {
+    const result = browserConfig.saveConfig(patch || {});
+    if (!result.success) return result;
+    return { success: true, config: result.config, status: describeScraperBrowserStatus(result.config) };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Pre-run diagnosis for the H&M scraper / bestseller wizard step. Reports the
+// browser that will really be driven, whether Chrome/Edge are running (the
+// cookie-store lock) and whether a saved identity exists. Non-fatal by design.
+ipcMain.handle('hm-preflight-check', async (_event, options = {}) => {
+  try {
+    // A preference passed from the wizard is transient: it must influence THIS
+    // check without being persisted (the user may just be exploring options).
+    const { preference } = options || {};
+    if (preference && browserConfig.VALID_PREFERENCES.includes(String(preference))) {
+      const current = browserConfig.loadConfig({ forceRefresh: true });
+      return { success: true, result: buildHmPreflight({ ...current, preference }) };
+    }
+    return { success: true, result: buildHmPreflight() };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Native file picker for portable / non-standard installs. Returns the chosen
+// path but does NOT save it — the renderer decides, so a mis-click is harmless.
+ipcMain.handle('browser-pick-executable', async (_event, which) => {
+  try {
+    const isEdge = String(which || '') === 'edge';
+    const result = await dialog.showOpenDialog({
+      title: isEdge
+        ? 'Select msedge.exe'
+        : 'Select chrome.exe',
+      properties: ['openFile'],
+      filters: process.platform === 'win32'
+        ? [{ name: 'Executable', extensions: ['exe'] }]
+        : [{ name: 'All Files', extensions: ['*'] }],
+    });
+    if (result.canceled || !result.filePaths?.length) {
+      return { success: false, canceled: true };
+    }
+    const picked = result.filePaths[0];
+    if (!browserConfig.fileExists(picked)) {
+      return { success: false, error: 'The selected file could not be read.' };
+    }
+    return { success: true, path: picked };
   } catch (error) {
     return { success: false, error: error.message };
   }

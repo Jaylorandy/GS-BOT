@@ -67,9 +67,12 @@ function AppIcon({ name, className = '' }) {
     case 'bestseller':
       return (
         <svg {...sharedProps}>
-          <path d="M3 6.5h18M5 6.5v13a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-13" />
-          <path d="M9 11h6M9 14.5h4" />
-          <path d="M9 3h6v3.5H9z" />
+          <path d="M4 8V5.5a1.5 1.5 0 0 1 1.5-1.5H8" />
+          <path d="M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8" />
+          <path d="M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16" />
+          <path d="M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" />
+          <path d="M7.5 14.5 10.75 11.25l2.25 2.25 3.75-4" />
+          <path d="M14.25 9.5h2.5v2.5" />
         </svg>
       );
     case 'tasks':
@@ -169,7 +172,7 @@ function createTabItems(tx) {
       label: tx('Scraper', '抓取器'),
       navMeta: tx('Capture', '抓取'),
       badge: 'Web',
-      description: tx('Batch Zara, Bershka, or Stradivarius assets.', '批量抓取 Zara、Bershka 或 Stradivarius 资料。'),
+      description: tx('Grab style images and info by style number.', '根据款号，抓取款式图片和信息资料。'),
     },
     {
       id: 'slides',
@@ -466,6 +469,27 @@ function AppContent() {
   useEffect(() => {
     document.documentElement.dataset.theme = 'dark';
     document.body.dataset.theme = 'dark';
+  }, []);
+
+  // Buttons whose label is clipped get a native tooltip with the full text —
+  // hovered via event delegation so EVERY button in the app (including the
+  // wizard and setup screens) is covered without touching each call site.
+  // The title is added only while the text actually overflows, and removed
+  // again when it does not, so re-rendered buttons never keep stale titles.
+  useEffect(() => {
+    const onOver = (e) => {
+      const btn = e.target?.closest?.('button, [role="button"]');
+      if (!btn) return;
+      const truncated = btn.scrollWidth > btn.clientWidth + 1 || btn.scrollHeight > btn.clientHeight + 1;
+      if (truncated) {
+        const full = (btn.getAttribute('aria-label') || btn.textContent || '').replace(/\s+/g, ' ').trim();
+        if (full && btn.title !== full) btn.title = full;
+      } else if (btn.title) {
+        btn.removeAttribute('title');
+      }
+    };
+    document.addEventListener('mouseover', onOver, { passive: true });
+    return () => document.removeEventListener('mouseover', onOver);
   }, []);
 
   useEffect(() => {

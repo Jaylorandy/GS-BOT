@@ -243,6 +243,286 @@ function FirecrawlConfigPanel() {
 }
 
 // ═══════════════════════════════════════════════════
+// Scraper Browser Panel (Chrome / Edge / custom path)
+// ═══════════════════════════════════════════════════
+//
+// Why this exists: H&M and similar Akamai-guarded sites treat the browser as
+// part of the client identity, so the scraper must drive a *real*, headed
+// Chromium with a real profile. Which brand of Chromium is much less important
+// — many Windows machines ship only Edge, and Chrome is sometimes installed in
+// a non-standard (portable) location. This panel lets the user choose, and
+// shows what was actually resolved so a wrong choice is visible immediately
+// instead of surfacing later as a mysterious 403.
+function ScraperBrowserPanel() {
+  const { tx } = useI18n();
+  const [preference, setPreference] = React.useState('auto');
+  const [chromePath, setChromePath] = React.useState('');
+  const [edgePath, setEdgePath] = React.useState('');
+  const [status, setStatus] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [message, setMessage] = React.useState(null);
+
+  const OPTIONS = [
+    {
+      value: 'auto',
+      label: tx('Automatic', '自动'),
+      desc: tx('Bundled Chromium first, then Chrome, then Edge.', '优先内置 Chromium，其次 Chrome，最后 Edge。'),
+    },
+    {
+      value: 'chrome',
+      label: 'Chrome',
+      desc: tx('Prefer the installed Google Chrome.', '优先使用已安装的 Google Chrome。'),
+    },
+    {
+      value: 'edge',
+      label: 'Edge',
+      desc: tx('Prefer the installed Microsoft Edge.', '优先使用已安装的 Microsoft Edge。'),
+    },
+    {
+      value: 'bundled',
+      label: tx('Bundled', '内置'),
+      desc: tx('Only the Chromium that ships with GS Bot.', '只用 GS Bot 自带的内置 Chromium。'),
+    },
+  ];
+
+  React.useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function refresh() {
+    setLoading(true);
+    try {
+      const result = await window.electronAPI?.browserGetConfig?.();
+      if (result?.success) {
+        setPreference(result.config?.preference || 'auto');
+        setChromePath(result.config?.chromePath || '');
+        setEdgePath(result.config?.edgePath || '');
+        setStatus(result.status || null);
+      } else {
+        setMessage({ type: 'error', text: result?.error || tx('Failed to read configuration', '读取配置失败') });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || tx('Read error', '读取出错') });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function persist(patch, successText) {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const result = await window.electronAPI?.browserSaveConfig?.(patch);
+      if (result?.success) {
+        setPreference(result.config?.preference || 'auto');
+        setChromePath(result.config?.chromePath || '');
+        setEdgePath(result.config?.edgePath || '');
+        setStatus(result.status || null);
+        if (successText) setMessage({ type: 'success', text: successText });
+      } else {
+        setMessage({ type: 'error', text: result?.error || tx('Save failed', '保存失败') });
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || tx('Save error', '保存出错') });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handlePick(which) {
+    setMessage(null);
+    try {
+      const result = await window.electronAPI?.browserPickExecutable?.(which);
+      // User cancelled the dialog — not an error, just do nothing.
+      if (!result || result.canceled) return;
+      if (!result.success) {
+        setMessage({ type: 'error', text: result.error || tx('Could not use that file', '无法使用该文件') });
+        return;
+      }
+      const next = which === 'edge' ? { edgePath: result.path } : { chromePath: result.path };
+      await persist(next, tx('Executable path saved.', '可执行文件路径已保存。'));
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || tx('File picker error', '选择文件出错') });
+    }
+  }
+
+  const resolved = status || {};
+  // Provenance beats the filename: the bundled Chromium ships as chrome.exe, so
+  // brand alone would label the app's own browser "Google Chrome" and hide the
+  // fact that H&M will reject it.
+  const brandLabel = resolved.isBundled
+    ? tx('Bundled Chromium', '内置 Chromium')
+    : resolved.brand === 'edge'
+      ? 'Microsoft Edge'
+      : resolved.brand === 'chrome'
+        ? 'Google Chrome'
+        : resolved.brand === 'chromium'
+          ? tx('Bundled Chromium', '内置 Chromium')
+          : tx('Not found', '未找到');
+
+  const inputStyle = {
+    flex: 1,
+    minWidth: 0,
+    padding: '0.6em 0.8em',
+    borderRadius: '6px',
+    border: '1px solid var(--border-color)',
+    background: 'var(--bg-input)',
+    color: 'var(--text-primary)',
+    fontSize: '0.9em',
+    boxSizing: 'border-box',
+  };
+
+  const btnStyle = {
+    padding: '0.6em 1em',
+    borderRadius: '6px',
+    border: '1px solid var(--border-color)',
+    background: 'transparent',
+    color: 'var(--text-primary)',
+    cursor: saving ? 'not-allowed' : 'pointer',
+    fontSize: '0.9em',
+    whiteSpace: 'nowrap',
+    opacity: saving ? 0.6 : 1,
+  };
+
+  return (
+    <section className="setup-panel">
+      <h3 style={{ marginTop: 0 }}>{tx('Scraper Browser', '抓取浏览器')}</h3>
+
+      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9em', marginBottom: '1.5em' }}>
+        {tx(
+          'Sites such as H&M verify the browser itself, so scraping must run through a real installed browser. Chrome and Edge are both supported; pick whichever you have.',
+          'H&M 等站点会校验浏览器本身，因此抓取必须通过真实安装的浏览器进行。Chrome 与 Edge 均受支持，请选择你已安装的那个。'
+        )}
+      </p>
+
+      {/* Preference selector */}
+      <div style={{ marginBottom: '2em' }}>
+        <label style={{ display: 'block', marginBottom: '0.8em', fontWeight: 600, fontSize: '0.95em' }}>
+          {tx('Preferred Browser', '优先使用的浏览器')}
+        </label>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.8em' }}>
+          {OPTIONS.map((opt) => {
+            const active = preference === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => persist({ preference: opt.value }, tx('Browser preference saved.', '浏览器偏好已保存。'))}
+                disabled={saving || loading}
+                style={{
+                  padding: '0.7em 1em',
+                  borderRadius: '6px',
+                  border: active ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
+                  background: active ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
+                  color: 'var(--text-primary)',
+                  cursor: saving || loading ? 'not-allowed' : 'pointer',
+                  textAlign: 'left',
+                  opacity: saving || loading ? 0.6 : 1,
+                }}
+              >
+                <div style={{ fontWeight: 600, marginBottom: '0.3em', fontSize: '0.9em' }}>{opt.label}</div>
+                <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{opt.desc}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Custom executable paths */}
+      <div style={{ marginBottom: '1.5em' }}>
+        <label style={{ display: 'block', marginBottom: '0.5em', fontWeight: 600, fontSize: '0.95em' }}>
+          {tx('Custom Executable Paths (optional)', '自定义可执行文件路径（可选）')}
+        </label>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.82em', margin: '0 0 0.9em', lineHeight: 1.5 }}>
+          {tx(
+            'Only needed for portable or non-standard installs. A valid path here overrides everything else.',
+            '仅便携版或非标准安装位置需要填写。此处路径有效时将覆盖其他所有设置。'
+          )}
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7em', marginBottom: '0.7em' }}>
+          <span style={{ width: '5.5em', fontSize: '0.88em', color: 'var(--text-secondary)' }}>Chrome</span>
+          <input
+            type="text"
+            value={chromePath}
+            onChange={(e) => setChromePath(e.target.value)}
+            onBlur={() => { if (chromePath !== (status?.chromePath || '')) persist({ chromePath }); }}
+            placeholder={tx('Auto-detect (chrome.exe)', '自动探测（chrome.exe）')}
+            disabled={saving}
+            style={inputStyle}
+          />
+          <button onClick={() => handlePick('chrome')} disabled={saving} style={btnStyle}>
+            {tx('Browse', '浏览')}
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.7em' }}>
+          <span style={{ width: '5.5em', fontSize: '0.88em', color: 'var(--text-secondary)' }}>Edge</span>
+          <input
+            type="text"
+            value={edgePath}
+            onChange={(e) => setEdgePath(e.target.value)}
+            onBlur={() => { if (edgePath !== (status?.edgePath || '')) persist({ edgePath }); }}
+            placeholder={tx('Auto-detect (msedge.exe)', '自动探测（msedge.exe）')}
+            disabled={saving}
+            style={inputStyle}
+          />
+          <button onClick={() => handlePick('edge')} disabled={saving} style={btnStyle}>
+            {tx('Browse', '浏览')}
+          </button>
+        </div>
+      </div>
+
+      {/* Resolved status */}
+      <div
+        style={{
+          padding: '0.9em 1em',
+          borderRadius: '6px',
+          background: 'var(--bg-secondary, rgba(148, 163, 184, 0.08))',
+          fontSize: '0.85em',
+          lineHeight: 1.6,
+          marginBottom: '1.5em',
+          wordBreak: 'break-all',
+        }}
+      >
+        <div style={{ fontWeight: 600, marginBottom: '0.4em' }}>
+          {loading
+            ? tx('Checking…', '检测中…')
+            : resolved.available
+              ? '✅ ' + tx('In use: ', '当前使用：') + brandLabel
+              : '⚠️ ' + tx('No browser resolved — scraping will download a runtime.', '未解析到浏览器 —— 抓取时将下载运行时。')}
+        </div>
+        {!loading && resolved.executablePath && (
+          <div style={{ color: 'var(--text-secondary)' }}>{resolved.executablePath}</div>
+        )}
+        {!loading && (
+          <div style={{ color: 'var(--text-secondary)', marginTop: '0.4em' }}>
+            {tx('Detected — Chrome: ', '已检测到 —— Chrome：')}
+            {resolved.chromeCandidates?.length || 0}
+            {tx(', Edge: ', '，Edge：')}
+            {resolved.edgeCandidates?.length || 0}
+            {resolved.customPathUsed ? tx(' · custom path in effect', ' · 自定义路径生效中') : ''}
+          </div>
+        )}
+      </div>
+
+      {message && (
+        <div style={{
+          padding: '0.8em 1em',
+          borderRadius: '6px',
+          background: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          color: message.type === 'success' ? '#16a34a' : '#dc2626',
+          fontSize: '0.9em',
+        }}>
+          {message.text}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ═══════════════════════════════════════════════════
 // PaddleOCR Configuration Panel
 // ═══════════════════════════════════════════════════
 function PaddleOcrConfigPanel() {
@@ -2464,6 +2744,26 @@ function SetupGuide({
             <button className="setup-secondary-btn" onClick={() => window.electronAPI?.openExternalUrl?.('https://www.firecrawl.dev/')}>
               {tx('Get API Key', '获取 API Key')} ↗
             </button>
+          </div>
+        </div>
+
+        {/* Module 2.5: Scraper Browser (Chrome / Edge) */}
+        <div className="setup-module-card setup-module-card--wide">
+          <div className="setup-module-card__head">
+            <div className="setup-module-card__icon setup-module-card__icon--browser">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" style={{ width: 22, height: 22 }}>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M3 12h18" />
+                <path d="M12 3a15 15 0 0 1 0 18a15 15 0 0 1 0-18Z" />
+              </svg>
+            </div>
+            <div className="setup-module-card__title-wrap">
+              <h2>{tx('Scraper Browser', '抓取浏览器')}</h2>
+              <p>{tx('Choose Chrome, Edge, or a custom executable for scraping.', '选择用于抓取的 Chrome、Edge 或自定义可执行文件。')}</p>
+            </div>
+          </div>
+          <div className="setup-module-card__body">
+            <ScraperBrowserPanel />
           </div>
         </div>
 

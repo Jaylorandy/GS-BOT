@@ -239,6 +239,38 @@ export const WIZARD_CONFIG = {
     adaptive: true,
     steps: [
       {
+        title: { en: 'Scraper Browser (H&M only)', zh: '抓取浏览器（仅 H&M）' },
+        desc: {
+          en: 'H&M verifies the browser itself. It must run through an installed Chrome or Edge — the Chromium bundled with GS Bot gets blocked by H&M. Fully quit the browser you pick before scraping.',
+          zh: 'H&M 会校验浏览器本身，必须使用本机自带（真实安装）的 Chrome 或 Edge —— 软件自带的浏览器会被 H&M 拦截。抓取开始前请完全退出你选择的浏览器。',
+        },
+        showWhen: (p) => p.brand === 'hm',
+        fields: [
+          {
+            key: 'scraperBrowser', type: 'select', label: { en: 'Browser to use for H&M', zh: 'H&M 使用的浏览器' },
+            default: 'chrome',
+            options: [
+              { value: 'chrome', label: { en: 'Google Chrome', zh: 'Google Chrome（本机自带）' } },
+              { value: 'edge', label: { en: 'Microsoft Edge', zh: 'Microsoft Edge（本机自带）' } },
+            ],
+          },
+          {
+            key: 'scraperBrowserNotice', type: 'toggle', label: { en: 'I have completely quit Chrome', zh: '我已完全退出 Chrome' },
+            desc: {
+              en: 'Required: the H&M identity is cloned from Chrome\'s cookie store, which Chrome locks exclusively while running (even hidden "startup boost" processes). Check Task Manager for leftover chrome.exe.',
+              zh: '必须确认：H&M 身份从 Chrome 的 cookie 库克隆，Chrome 运行时（包括"启动加速"留下的无窗口后台进程）会独占锁定该库。请在任务管理器中确认没有残留的 chrome.exe。',
+            },
+          },
+          {
+            key: 'hmPreflight', type: 'hm-preflight', label: { en: 'Pre-run check', zh: '跑前检测' },
+            hint: {
+              en: 'Verifies the resolved browser, whether Chrome/Edge processes are running (including hidden background ones), and whether a saved identity exists.',
+              zh: '检测实际使用的浏览器、Chrome/Edge 进程（包括无窗口的后台进程）是否在运行，以及是否已有可用的身份。',
+            },
+          },
+        ],
+      },
+      {
         title: { en: 'Brand', zh: '品牌' },
         desc: { en: 'Choose which brand bestsellers to scrape.', zh: '选择要抓取的品牌畅销榜。' },
         fields: [
@@ -248,6 +280,7 @@ export const WIZARD_CONFIG = {
               { value: 'newyorker', label: { en: 'New Yorker', zh: 'New Yorker' } },
               { value: 'uniqlo', label: { en: 'UNIQLO (US)', zh: 'UNIQLO（美国站）' } },
               { value: 'hm', label: { en: 'H&M (US)', zh: 'H&M（美国站）' } },
+              { value: 'freepeople', label: { en: 'Free People (US)', zh: 'Free People（美国站）' } },
               { value: 'intersport', label: { en: 'Intersport', zh: 'Intersport' } },
             ],
           },
@@ -259,6 +292,9 @@ export const WIZARD_CONFIG = {
         fields: [
           {
             key: 'gender', type: 'select', label: { en: 'Gender', zh: '性别' }, required: true,
+            // Free People publishes ONE aggregated bestseller list (no gender
+            // split), so the choice would be meaningless there.
+            showWhen: (p) => p.brand !== 'freepeople',
             options: [
               { value: 'female', label: { en: "Women's", zh: '女装' } },
               { value: 'male', label: { en: "Men's", zh: '男装' } },
@@ -285,7 +321,7 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'productCount', type: 'select', label: { en: 'Product Count', zh: '下载数量' },
-            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm',
+            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm' || p.brand === 'freepeople',
             options: [
               { value: 10, label: { en: '10', zh: '10款' } },
               { value: 20, label: { en: '20', zh: '20款' } },
@@ -309,7 +345,14 @@ export const WIZARD_CONFIG = {
             ],
           },
           { key: 'allColors', type: 'toggle', label: { en: 'All Colors', zh: '全部颜色' } },
-          { key: 'includeAccessories', type: 'toggle', label: { en: 'Include Accessories', zh: '包含配饰' } },
+          {
+            key: 'includeAccessories', type: 'toggle', label: { en: 'Include Accessories & Shoes', zh: '包含配饰和鞋子' },
+            default: false,
+            desc: {
+              en: 'Off (default): shoes and accessories are filtered out, keeping apparel only. On: keep every ranked style, including shoes, bags and jewellery.',
+              zh: '关闭（默认）：去除配饰和鞋子，只保留服装款式。开启：保留榜单全部款式，包括鞋、包和首饰。',
+            },
+          },
         ],
       },
       {
