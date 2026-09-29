@@ -8,6 +8,7 @@ import TaskCenterPanel from './components/TaskCenterPanel';
 import { subscribeLLMConfigUpdate } from './utils/llmConfigSync';
 import { LanguageProvider, useI18n } from './utils/i18n';
 import './App.css';
+import { initDynamic3D } from './ui3d';
 
 function AppIcon({ name, className = '' }) {
   const sharedProps = {
@@ -227,23 +228,6 @@ function createTabItems(tx) {
   ];
 }
 
-function createWorkspaceGroups(tx) {
-  return [
-    {
-      label: tx('Create', '创作'),
-      tabs: ['slides'],
-    },
-    {
-      label: tx('Capture & Analyze', '抓取与分析'),
-      tabs: ['scraper', 'bestseller'],
-    },
-    {
-      label: tx('Data', '数据'),
-      tabs: ['organizer', 'labelocr', 'pdfsqueezer'],
-    },
-  ];
-}
-
 function hasConfiguredSetup(config) {
   if (!config) return false;
   const hasLocalSetup = Boolean(config.local?.model);
@@ -279,7 +263,6 @@ function AppContent() {
   const { language, setLanguage, tx } = useI18n();
   const TAB_ITEMS = createTabItems(tx);
   const ALL_TABS = TAB_ITEMS;
-  const WORKSPACE_GROUPS = createWorkspaceGroups(tx);
   const [activeTab, setActiveTab] = useState('slides');
   const [theme] = useState('dark');
   const [appReady, setAppReady] = useState(false);
@@ -303,6 +286,18 @@ function AppContent() {
   const [cacheCenterBusy, setCacheCenterBusy] = useState(false);
   const [clearingNamespace, setClearingNamespace] = useState('');
   const shellRef = useRef(null);
+  const d3dCleanupRef = useRef(null);
+  // 背景 3D 引擎：canvas 挂载即初始化（rAF 延迟一帧，等外壳 ref 就绪）；卸载即清理
+  const attachBgCanvas = useCallback((el) => {
+    if (d3dCleanupRef.current) {
+      d3dCleanupRef.current();
+      d3dCleanupRef.current = null;
+    }
+    if (!el) return;
+    requestAnimationFrame(() => {
+      if (el.isConnected) d3dCleanupRef.current = initDynamic3D(el);
+    });
+  }, []);
   const platform = setupDiagnostics?.platform || 'unknown';
   const currentTab = ALL_TABS.find((tab) => tab.id === activeTab) ?? TAB_ITEMS[0];
 
@@ -321,8 +316,31 @@ function AppContent() {
     : '';
 
   const selectTab = (id) => {
-    setActiveTab(id);
-    setLogs([]);
+    const apply = () => {
+      setActiveTab(id);
+      setLogs([]);
+    };
+    // View Transitions：模块切换带 3D 翻转（不支持或减动效时直接切换）。
+    // 窗口被遮挡/渲染被抑制时 Chromium 会中止过渡并让 finished 拒绝
+    //（InvalidStateError）——必须吞掉，且若 DOM 更新没跑过则兜底直接切换。
+    const reduceMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (typeof document.startViewTransition === 'function' && !reduceMotion) {
+      let applied = false;
+      try {
+        const vt = document.startViewTransition(() => {
+          applied = true;
+          apply();
+        });
+        vt?.updateCallbackDone?.catch(() => {});
+        vt?.finished?.catch(() => {
+          if (!applied) apply();
+        });
+        return;
+      } catch {
+        // startViewTransition 同步抛错 → 落到下方直接切换
+      }
+    }
+    apply();
   };
 
   const handleLog = useCallback((entry) => {
@@ -574,6 +592,7 @@ function AppContent() {
         <div className="app-background" aria-hidden="true">
           <span className="bg-orb bg-orb-a" />
           <span className="bg-orb bg-orb-b" />
+          <canvas ref={attachBgCanvas} className="d3d-canvas" aria-hidden="true" />
         </div>
         <div className="app-startup-screen" aria-hidden="true" />
       </div>
@@ -586,6 +605,7 @@ function AppContent() {
         <div className="app-background" aria-hidden="true">
           <span className="bg-orb bg-orb-a" />
           <span className="bg-orb bg-orb-b" />
+          <canvas ref={attachBgCanvas} className="d3d-canvas" aria-hidden="true" />
         </div>
         <LicenseGate
           blocking
@@ -602,6 +622,7 @@ function AppContent() {
         <div className="app-background" aria-hidden="true">
           <span className="bg-orb bg-orb-a" />
           <span className="bg-orb bg-orb-b" />
+          <canvas ref={attachBgCanvas} className="d3d-canvas" aria-hidden="true" />
         </div>
         <SetupGuide
           initialConfig={setupConfig}
@@ -619,62 +640,21 @@ function AppContent() {
       <div className="app-background" aria-hidden="true">
         <span className="bg-orb bg-orb-a" />
         <span className="bg-orb bg-orb-b" />
+        <canvas ref={attachBgCanvas} className="d3d-canvas" aria-hidden="true" />
       </div>
-
-      <aside className="app-sidebar">
-        <button
-          type="button"
-          className={`brand-panel ${activeTab === 'slides' ? 'active' : ''}`}
-          onClick={() => selectTab('slides')}
-        >
-          <div className="brand-copy">
-            <BrandLogo className="brand-logo-icon" />
-            <h1 style={{ fontSize: '1.35rem' }}>GS Bot</h1>
-          </div>
-        </button>
-
-        <div className="sidebar-group">
-          <span className="sidebar-label">{tx('Workspaces', '工作区')}</span>
-          {WORKSPACE_GROUPS.map((group) => (
-            <div key={group.label} className="sidebar-subgroup">
-              <span className="sidebar-section-title">{group.label}</span>
-              <nav className="app-nav" aria-label={group.label}>
-                {group.tabs.map((tabId) => {
-                  const tab = TAB_ITEMS.find((item) => item.id === tabId);
-                  if (!tab) return null;
-                  return (
-                    <button
-                      key={tab.id}
-                      className={`nav-button ${activeTab === tab.id ? 'active' : ''}`}
-                      onClick={() => selectTab(tab.id)}
-                      style={{
-                        '--tab-accent-rgb': tab.accentRgb || '168, 199, 250',
-                        '--tab-accent-ink': tab.accentInk || 'var(--accent-ink)',
-                      }}
-                    >
-                      <span className="nav-icon-shell" aria-hidden="true">
-                        <AppIcon name={tab.icon} className="nav-icon" />
-                      </span>
-                      <span className="nav-copy">
-                        <span className="nav-title">{tab.label}</span>
-                        <span className="nav-meta">{tab.navMeta}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
-          ))}
-        </div>
-
-        <div className="sidebar-footer-copyright">
-          <p>Copyright © 2026</p>
-          <p>Jaylor Andy. All rights reserved.</p>
-        </div>
-      </aside>
 
       <section className="app-workspace">
         <div className="workspace-toolbar-top">
+          <button
+            type="button"
+            className="workspace-brand"
+            onClick={() => selectTab('slides')}
+            aria-label="GS Bot"
+          >
+            <BrandLogo className="brand-logo-icon" />
+            <span className="workspace-brand-name">GS Bot</span>
+          </button>
+
           <div className="workspace-toolbar-cluster">
             <button type="button" className="workspace-tool-button" onClick={() => setShowLogDrawer(true)} aria-label={tx('Logs', '日志')} title={tx('Logs', '日志')}>
               <span className="workspace-tool-icon-shell" aria-hidden="true">
@@ -775,6 +755,27 @@ function AppContent() {
           <div id="workspace-overlay-root" className="workspace-overlay-root" />
         </main>
       </section>
+
+      <nav className="app-dock" aria-label={tx('Workspaces', '工作区')}>
+        {ALL_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            className={`dock-item ${activeTab === tab.id ? 'active' : ''}`}
+            onClick={() => selectTab(tab.id)}
+            style={{
+              '--tab-accent-rgb': tab.accentRgb || '168, 199, 250',
+              '--tab-accent-ink': tab.accentInk || '#08101d',
+            }}
+            title={tab.description}
+          >
+            <span className="dock-tile" data-tilt="nav" aria-hidden="true">
+              <AppIcon name={tab.icon} className="dock-icon" />
+            </span>
+            <span className="dock-label">{tab.label}</span>
+          </button>
+        ))}
+      </nav>
 
       <LogDrawer
         open={showLogDrawer}

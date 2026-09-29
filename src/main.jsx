@@ -25,16 +25,33 @@ window.addEventListener('error', (event) => {
   showFatalStartupError(event.error || event.message);
 });
 
+// 未处理的 Promise 拒绝：仅启动阶段（应用尚未渲染成功）视为致命；
+// 运行期的零散 rejection 只记 console，不能把整个 UI 炸成错误屏
+//（实例：View Transition 被窗口遮挡中止 → InvalidStateError → 全屏崩溃）。
+// 注意「已渲染」判定不能依赖 rAF —— 窗口被遮挡时 rAF 暂停，永远不触发；
+// 用 root 是否已有子节点（React 真实提交）来判定。
 window.addEventListener('unhandledrejection', (event) => {
-  showFatalStartupError(event.reason || 'Unhandled promise rejection');
+  console.error('[GS Bot] Unhandled rejection:', event.reason);
+  const root = document.getElementById('root');
+  const mounted = appRendered || Boolean(root && root.childElementCount > 0);
+  if (!mounted) {
+    showFatalStartupError(event.reason || 'Unhandled promise rejection');
+  }
 });
 
+let appRendered = false;
 try {
   createRoot(document.getElementById('root')).render(
     <StrictMode>
       <App />
     </StrictMode>,
   )
+  // React render() 异步提交：两帧后补充标记（正常可见窗口的快速路径）
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      appRendered = true;
+    });
+  });
 } catch (error) {
   showFatalStartupError(error);
 }

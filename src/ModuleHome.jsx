@@ -1726,6 +1726,28 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
 
   if (!config) return null;
 
+  // ── 启动按钮（wizard 末页「已就绪」位置；分步与单页共用）──
+  const runButtonNode = (
+    <button
+      type="button"
+      className={`wizard-nav__run ${running ? 'is-running' : ''}`}
+      onClick={running ? handleCancel : handleRun}
+      disabled={!canRun && !running}
+      style={{ '--accent-rgb': accentRgb, '--home-accent-rgb': accentRgb, '--home-accent-ink': accentInk }}
+      title={running ? tx('Cancel', '取消') : tx('Ready — click to run', '已就绪 — 点击启动')}
+    >
+      <span className="wizard-nav__run-icon" aria-hidden="true">
+        {running ? '✕' : fabIconNode}
+      </span>
+      <span className="wizard-nav__run-label">
+        {running ? tx('Cancel', '取消') : tx('Run', '启动')}
+      </span>
+      {running ? (
+        <span className="wizard-nav__run-pulse" style={{ '--accent-rgb': accentRgb }} aria-hidden="true" />
+      ) : null}
+    </button>
+  );
+
   // ── Custom render (e.g. Label OCR settings) ──
   if (config.customRender === 'labelocr') {
     return (
@@ -1736,7 +1758,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         <div className="module-home__scroll-wrap">
           <div className="module-home__content module-home__content--wide">
             <div className="module-home__header">
-              <div className="module-home__badge">{iconNode}</div>
+              <div className="module-home__badge" data-tilt="hero">{iconNode}</div>
               <h1 className="module-home__title">{tab.label}</h1>
               <p className="module-home__subtitle">{tab.description}</p>
             </div>
@@ -1761,7 +1783,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       <div className="module-home__scroll-wrap">
         <div className="module-home__content">
         <div className="module-home__header">
-          <div className="module-home__badge">{iconNode}</div>
+          <div className="module-home__badge" data-tilt="hero">{iconNode}</div>
           <h1 className="module-home__title">{tab.label}</h1>
           <p className="module-home__subtitle">{tab.description}</p>
         </div>
@@ -1798,6 +1820,13 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
                 </div>
               </div>
             ))}
+          </div>
+        ) : null}
+
+        {/* 单页模块：整页即末页，启动按钮放在底部（原右下角 FAB 已移除） */}
+        {!reviewData && isSinglePage ? (
+          <div className="wizard-nav wizard-nav--single">
+            {runButtonNode}
           </div>
         ) : null}
 
@@ -1862,9 +1891,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
                   {tx('Next', '下一步')} →
                 </button>
               ) : (
-                <span className="wizard-nav__ready" style={{ '--accent-rgb': accentRgb }}>
-                  ✓ {tx('Ready', '已就绪')}
-                </span>
+                runButtonNode
               )}
             </div>
           </div>
@@ -2124,23 +2151,6 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       </div>
       </div>
 
-      <button
-        type="button"
-        className={`module-home__fab ${running ? 'is-running' : ''} ${!canRun && !running ? 'is-disabled' : ''}`}
-        onClick={running ? handleCancel : handleRun}
-        disabled={!canRun && !running}
-        aria-label={running ? tx('Cancel', '取消') : tx('Run', '运行')}
-      >
-        {running ? (
-          <span className="module-home__fab-icon module-home__fab-icon--cancel">✕</span>
-        ) : (
-          <span className="module-home__fab-icon">{fabIconNode}</span>
-        )}
-        <span className="module-home__fab-pulse" style={{ '--accent-rgb': accentRgb }} />
-        <span className="module-home__fab-tip">
-          {running ? tx('Cancel', '取消') : tx('Run', '运行')}
-        </span>
-      </button>
     </section>
   );
 }

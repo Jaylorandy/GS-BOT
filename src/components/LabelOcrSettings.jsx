@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import './LabelOcrSettings.css';
 import {
   LABEL_OCR_FIELD_META,
   createLabelOcrProfileDraft,

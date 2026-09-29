@@ -1743,6 +1743,10 @@
   filter: blur(44px);
   opacity: .92;
   animation: moduleHomeDrift 30s ease-in-out infinite;
+  /* 请求 P 追加（2026-09-29 18:0x）：与 .app-shell:before 同款的角落光斑层，
+     被 .app-main 22px 圆角裁切后读成「操作区域光晕边框」→ 整体停用；
+     规则保留，删掉 display:none 即可回滚。 */
+  display: none;
 }
 
 @keyframes moduleHomeDrift {
@@ -3110,7 +3114,10 @@
   padding: 0;
   color: var(--text-primary);
   font-family: var(--font);
-  background: radial-gradient(circle at 12% 8%,var(--page-glow-primary),transparent 28%),radial-gradient(circle at 88% 92%,var(--page-glow-secondary),transparent 28%),var(--shell-tint);
+  /* 请求（2026-09-29）：去掉烘焙在左上/右下角落的径向光斑 ——
+     它们沿内容区 22px 圆角读成一圈「光晕边框」，用户要求移除；
+     保留平坦底色，氛围粒子/blob 由 d3d 引擎与 .bg-orb 继续提供。 */
+  background: var(--shell-tint);
   backdrop-filter: var(--glass-base-frost);
   -webkit-backdrop-filter: var(--glass-base-frost);
   overflow: hidden;
@@ -3126,6 +3133,8 @@
   filter: blur(44px);
   opacity: .9;
   animation: shellDrift 32s ease-in-out infinite,shellPulse 18s ease-in-out infinite;
+  /* 同上：角落光晕层整体停用（规则保留，便于回滚） */
+  display: none;
 }
 
 .app-shell:after {
@@ -3151,7 +3160,11 @@
   overflow: hidden;
 }
 
+/* 请求 P（2026-09-29）：逐层开关实验 + PIL 亮度采样实证 —— .bg-orb 光球在
+   右下内角贡献 +13.6 亮度、左上内角 +6.8，被内容区 22px 圆角裁切后读成
+   「光晕边框」→ 整体停用；规则保留，删掉 display:none 即可回滚。 */
 .bg-orb {
+  display: none;
   position: absolute;
   border-radius: 999px;
   filter: blur(50px);
@@ -4019,7 +4032,9 @@
 
 .app-shell:not(.setup-shell) {
   grid-template-columns: clamp(180px,18vw,260px) minmax(0,1fr);
-  background: linear-gradient(135deg,rgba(var(--accent-rgb),.08),transparent 28%),var(--shell-tint);
+  /* 请求（2026-09-29）：斜向 accent 光斑与角落光斑都会沿内容区圆角
+     读成「光晕边框」，统一撤掉，仅保留平坦底色。 */
+  background: var(--shell-tint);
   backdrop-filter: var(--glass-base-frost);
   -webkit-backdrop-filter: var(--glass-base-frost);
 }
@@ -4876,7 +4891,9 @@ button:focus-visible,input[type=radio]:focus-visible,input[type=checkbox]:focus-
 }
 
 .app-shell:not(.setup-shell) {
-  background: radial-gradient(circle at 14% 8%,rgba(var(--gemini-blue-rgb),.08),transparent 24%),radial-gradient(circle at 92% 12%,rgba(var(--gemini-coral-rgb),.08),transparent 20%),var(--shell-tint);
+  /* 请求（2026-09-29）：撤掉左上/右上角落径向光斑（用户报告的
+     「操作区域光晕边框」的最后来源），仅保留平坦底色。 */
+  background: var(--shell-tint);
 }
 
 .app-sidebar {
@@ -5808,4 +5825,423 @@ button:focus-visible,input[type=radio]:focus-visible,input[type=checkbox]:focus-
   background: linear-gradient(90deg, var(--accent, #a8c7fa), rgba(var(--accent-rgb,168,199,250), .55));
   transition: width .25s ease-out;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   Dynamic Pro 3D port（d3d- 前缀，零冲突）— 2026-09-24
+   背景粒子层 / 大图标随鼠标 3D / 模块切换翻转过渡
+   引擎本体在 src/ui3d.js；本区段只负责定位、光斑与降级。
+   ════════════════════════════════════════════════════════════════ */
+
+.d3d-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: block;
+}
+
+/* 引擎逐帧写 inline transform，必须中和既有 transform 过渡，否则双重平滑发黏 */
+[data-tilt] {
+  transition-property: none;
+  will-change: transform;
+}
+
+/* hero 大图标：呼吸动画让位给 3D 引擎（CSS 动画优先级高于 inline transform） */
+.module-home__badge[data-tilt="hero"] {
+  animation: none;
+}
+
+.d3d-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    130px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(255, 255, 255, 0.30),
+    transparent 62%
+  );
+  mix-blend-mode: screen;
+}
+
+/* 模块切换：View Transitions 自然过渡（引擎在 App.jsx selectTab 包裹）
+   请求 J：rotateY 翻转观感生硬 → 改为「旧页轻飘出、新页浅升入」的
+   垂直交叉淡变；时长错开（0.20s 出 / 0.32s 入）让衔接有呼吸感。 */
+.module-home {
+  view-transition-name: d3d-module;
+}
+
+::view-transition-old(d3d-module) {
+  animation: d3dModuleOut 0.2s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(d3d-module) {
+  animation: d3dModuleIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes d3dModuleOut {
+  to {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.994);
+  }
+}
+
+@keyframes d3dModuleIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.994);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .d3d-canvas {
+    display: none;
+  }
+
+  .module-home {
+    view-transition-name: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   App Dock（底部居中模块启动器）— 2026-09-24
+   左侧边栏移除后：品牌 → 顶部左侧；模块 → 底部居中 dock；
+   内容居中；dock 磁贴挂 data-tilt="nav" 享受同一 3D 引擎。
+   ════════════════════════════════════════════════════════════════ */
+
+/* 侧边栏移除：单列布局（覆盖上方两处 grid-template-columns） */
+.app-shell,
+.app-shell:not(.setup-shell) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* 给底部 dock 让位 */
+.app-workspace {
+  padding-bottom: 132px;
+}
+
+/* 顶部：品牌居左（margin-right:auto 把工具簇推到右侧，同参考图） */
+.workspace-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: auto;
+  padding: 2px 8px 2px 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  -webkit-app-region: drag;
+}
+
+.workspace-brand .brand-logo-icon {
+  width: 26px;
+  height: 26px;
+}
+
+.workspace-brand-name {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 680;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ── Dock 本体 ── */
+.app-dock {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 10px 14px 9px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  backdrop-filter: blur(22px) saturate(140%);
+  -webkit-backdrop-filter: blur(22px) saturate(140%);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+}
+
+.dock-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 78px;
+  padding: 4px 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+  color: inherit;
+}
+
+.dock-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  color: #c9d2ef;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+  transition: background 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.dock-icon {
+  width: 21px;
+  height: 21px;
+}
+
+.dock-label {
+  max-width: 78px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  transition: color 0.25s ease;
+}
+
+.dock-item:hover .dock-label {
+  color: var(--text-secondary);
+}
+
+/* 激活态：模块色渐变磁贴 + 光晕（卡片式，同参考图） */
+.dock-item.active .dock-tile {
+  color: var(--tab-accent-ink);
+  background: linear-gradient(140deg, rgba(var(--tab-accent-rgb), 0.95), rgba(var(--tab-accent-rgb), 0.55));
+  border-color: rgba(var(--tab-accent-rgb), 0.5);
+  box-shadow: 0 10px 26px rgba(var(--tab-accent-rgb), 0.38), inset 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.dock-item.active .dock-label {
+  color: rgb(var(--tab-accent-rgb));
+}
+
+.dock-item:focus-visible {
+  outline: none;
+}
+
+.dock-item:focus-visible .dock-tile {
+  box-shadow: 0 0 0 2px rgba(var(--tab-accent-rgb), 0.6);
+}
+
+.dock-tile .d3d-glare {
+  border-radius: inherit;
+}
+
+/* ── 内容居中：模块头（徽章/标题/副标题）居中，同参考图 ── */
+.module-home__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* ── hero 大图标立体化放大 + 标题收敛 ── */
+.module-home__badge {
+  width: clamp(88px, 11vw, 120px);
+  height: clamp(88px, 11vw, 120px);
+  border-radius: clamp(22px, 3vw, 30px);
+  margin-bottom: clamp(16px, 2.4vw, 24px);
+}
+
+.module-home__badge svg {
+  width: clamp(44px, 6vw, 62px);
+  height: clamp(44px, 6vw, 62px);
+}
+
+.module-home__title {
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dock {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════
+   请求 C/D 收尾 + J 回滚 — 2026-09-24 / 09-29
+   C1 消除四角绿色描边；D  启动按钮移入 wizard 末页「已就绪」位置；
+   J(09-29) hero 图标回归「白色标志」版并去掉明显边界框（见 C2→J），
+   dock/位图图标已回滚为线性 SVG。
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── C1：角落绿色描边 ───────────────────────────────────────────
+   屏幕四角会被拉长 6.4x 的那道边即 x 或 y 恰为 0 的边：
+   上边 y=0 → 左上/右上角；左边 x=0 → 左上/左下角。理论四角皆可能。
+   用户看到的「左上 + 右下」应是同一圈描边在对角处的显影（径向/对角
+   渐变 + 150% DPI 缩放）。此处按「整圈描边」一并消除，不做单角猜测。 */
+
+/* 1) 顶部工具条容器（玻璃 sheen 渐变）去掉边框 */
+.workspace-toolbar-cluster {
+  border-color: transparent;
+}
+
+/* 2) 工具按钮/图标壳 的悬停高亮描边：原本 --accent 是蓝，
+   但 hero 的 --home-accent 在部分模块是 109,214,153（绿），
+   而 .module-home 及其后代同样解析到该变量 → 悬停时出现绿边。 */
+.workspace-tool-icon-shell {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.workspace-tool-button:hover {
+  border-color: rgba(var(--accent-rgb), 0.14);
+}
+
+.workspace-tool-button:hover .workspace-tool-icon-shell {
+  border-color: rgba(var(--accent-rgb), 0.22);
+}
+
+/* 3) 全局兜底：窗口内任何位置都不出现「整圈实色描边」的角落。
+   只中和 border-color，不动 background / box-shadow（避免影响卡片质感）。 */
+.app-shell,
+.app-shell * {
+  --d3d-corner-guard: 0;
+}
+
+.app-background {
+  border: 0;
+}
+
+.app-shell:before,
+.app-shell:after {
+  border: 0;
+}
+
+/* ── C2→J：hero 图标回归「白色标志」版 ──────────────────────────
+   请求 J（2026-09-29）：去掉 C2 的描边 + 多层内阴影（即用户截图里
+   红箭头所指的「明显边界框」），徽章回到简洁渐变色块 + 柔和外投影；
+   标志按请求 F/J 为白色并加粗笔画（stroke-width 覆盖 SVG 属性 1.7），
+   双层投影给足厚度感。3D 引擎 tilt/glare 照常生效。 */
+
+.module-home__badge {
+  position: relative;
+  color: #ffffff;
+  background: linear-gradient(140deg, rgba(var(--home-accent-rgb), 0.88), rgba(var(--home-accent-rgb), 0.46));
+  box-shadow:
+    0 16px 48px rgba(var(--home-accent-rgb), 0.14),
+    0 2px 6px rgba(0, 0, 0, 0.16),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* 标志：白色 + 加粗 + 浮雕厚度（亮下缘托底 + 暗投影下沉） */
+.module-home__badge svg {
+  position: relative;
+  z-index: 1;
+  stroke-width: 2.1;
+  filter:
+    drop-shadow(0 2px 1.5px rgba(0, 0, 0, 0.38))
+    drop-shadow(0 6px 12px rgba(0, 0, 0, 0.26));
+}
+
+/* 3D 引擎注入的高光层贴合圆角与层级 */
+.module-home__badge .d3d-glare {
+  border-radius: inherit;
+  z-index: 2;
+}
+
+/* ── D：wizard 末页「已就绪」位置的启动按钮 ────────────────────────
+   取代原右下角 .module-home__fab（该类保留在下方 CSS 中但已无渲染点，
+   如需彻底清理可一并删除）。 */
+.wizard-nav__run {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 20px 10px 14px;
+  border-radius: clamp(10px, 1vw, 14px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.26), rgba(255, 255, 255, 0) 48%),
+    linear-gradient(140deg, rgba(var(--home-accent-rgb), 0.92), rgba(var(--home-accent-rgb), 0.52));
+  color: var(--home-accent-ink, #0a1020);
+  font-size: clamp(0.78rem, 0.88vw, 0.86rem);
+  font-weight: 680;
+  cursor: pointer;
+  overflow: hidden;
+  box-shadow:
+    0 12px 30px rgba(var(--home-accent-rgb), 0.34),
+    inset 0 2px 0 rgba(255, 255, 255, 0.46),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.28);
+  transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.22s ease;
+}
+
+.wizard-nav__run:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow:
+    0 18px 40px rgba(var(--home-accent-rgb), 0.46),
+    inset 0 2px 0 rgba(255, 255, 255, 0.52),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.3);
+}
+
+.wizard-nav__run:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.wizard-nav__run-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+.wizard-nav__run-icon svg {
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.34)) drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.32));
+}
+
+.wizard-nav__run.is-running .wizard-nav__run-icon {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.wizard-nav__run-label {
+  white-space: nowrap;
+}
+
+.wizard-nav__run-pulse {
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 2px solid rgba(var(--accent-rgb), 0.5);
+  animation: fabRing 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wizard-nav__run-pulse {
+    animation: none;
+    opacity: 0;
+  }
+}
+
+/* 单页模块：启动按钮对齐「已就绪」位置（右侧） */
+.wizard-nav--single {
+  justify-content: flex-end;
+}
+
+/* Windows：顶部工具条右侧让出系统窗口控制按钮安全区
+  （titleBarOverlay 高 40px、宽约 138px；不避让会压住 EN/中 按钮） */
+.app-shell[data-platform="win32"] .workspace-toolbar-top {
+  padding-right: 148px;
+}
+
 

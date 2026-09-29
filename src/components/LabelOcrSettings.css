@@ -1,0 +1,308 @@
+/* LabelOcrSettings 专属样式
+   历史坑（2026-09-29）：这些规则原放在 SlidesMaker.css，但该文件只被
+   SlidesMaker.jsx / ImageOrganizer.jsx（当前无挂载点）引入 → 标签规则页
+   面板整块裸样式、行距全塌。现随组件自带，任何挂载点都生效。 */
+
+.label-ocr-settings {
+  margin-top: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  overflow: visible;
+}
+
+.label-ocr-settings-body {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.label-ocr-section-label {
+  display: block;
+  margin-bottom: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  line-height: 1.6;
+}
+
+.label-ocr-settings-expanded {
+  padding: 0;
+}
+
+.label-ocr-settings-compact {
+  height: auto;
+}
+
+.label-ocr-settings-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: flex-start;
+  margin-bottom: 0.95rem;
+}
+
+.label-ocr-settings-header h4 {
+  margin: 0 0 0.35rem;
+  color: var(--text-primary);
+}
+
+.label-ocr-preset-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.55rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.label-ocr-preset-section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.label-ocr-preset-create-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  margin-top: 0.3rem;
+}
+
+.label-ocr-preset-action-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.3rem;
+}
+
+.label-ocr-preset-create-row input {
+  width: 100%;
+}
+
+.label-ocr-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.label-ocr-textarea {
+  width: 100%;
+  min-height: 76px;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-primary);
+  font-family: var(--font);
+  padding: 10px 12px;
+  line-height: 1.6;
+}
+
+.label-ocr-help {
+  margin-left: 0;
+  line-height: 1.6;
+}
+
+.label-ocr-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.label-ocr-settings-compact .label-ocr-settings-header {
+  display: none;
+}
+
+.label-ocr-settings-compact .label-ocr-settings-body {
+  gap: 0.8rem;
+}
+
+.label-ocr-settings-compact .label-ocr-preset-bar {
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.label-ocr-settings-compact .label-ocr-preset-create-row input,
+.label-ocr-settings-compact .label-ocr-preset-create-row button {
+  min-height: 32px;
+  font-size: 0.65rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.label-ocr-settings-compact .label-ocr-preset-action-row .secondary-button {
+  min-height: 32px;
+  font-size: 0.65rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.label-ocr-settings-compact .label-ocr-textarea {
+  min-height: 54px;
+  padding: 0.6rem 0.72rem;
+}
+
+.label-ocr-settings-compact .label-ocr-field-list {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 1rem;
+  column-gap: 0.8rem;
+}
+
+.label-ocr-settings-compact .label-ocr-field-card {
+  padding: 0.6rem 0.7rem;
+  gap: 0.4rem;
+}
+
+.label-ocr-settings-compact .label-ocr-field-card label {
+  font-size: 0.58rem;
+  line-height: 1.7;
+}
+
+.label-ocr-settings-compact .label-ocr-tag-row {
+  min-height: 28px;
+  gap: 10px;
+}
+
+.label-ocr-settings-compact .label-ocr-tag {
+  padding: 0.24rem 0.44rem;
+  font-size: 0.58rem;
+}
+
+.label-ocr-settings-compact .label-ocr-tag strong {
+  font-size: 0.62rem;
+}
+
+.label-ocr-settings-compact .label-ocr-add-row {
+  gap: 0.45rem;
+}
+
+.label-ocr-settings-compact .label-ocr-add-row input {
+  font-size: 0.58rem;
+}
+
+.label-ocr-settings-compact .label-ocr-add-row input,
+.label-ocr-settings-compact .label-ocr-add-row button,
+.label-ocr-settings-compact .label-ocr-preset-bar .secondary-button,
+.label-ocr-settings-compact .label-ocr-preset-bar .sort-select,
+.label-ocr-settings-compact .label-ocr-actions .secondary-button {
+  min-height: 32px;
+  font-size: 0.65rem;
+  padding: 0.3rem 0.7rem;
+}
+
+.label-ocr-field-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: 36px;
+  column-gap: 24px;
+}
+
+.label-ocr-field-card {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 16px 18px;
+  background: rgba(255, 255, 255, 0.025);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  transition: border-color 200ms ease;
+}
+
+.label-ocr-field-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.label-ocr-field-card label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-secondary, #c4c8e0);
+  line-height: 1.7;
+}
+
+.label-ocr-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  min-height: 32px;
+}
+
+.label-ocr-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 5px 11px 5px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(168, 199, 250, 0.3);
+  background: linear-gradient(135deg, rgba(168, 199, 250, 0.14), rgba(171, 125, 248, 0.08));
+  color: rgba(168, 199, 250, 1);
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 550;
+  transition: all 180ms ease;
+}
+
+.label-ocr-tag:hover {
+  border-color: rgba(168, 199, 250, 0.5);
+  background: linear-gradient(135deg, rgba(168, 199, 250, 0.2), rgba(171, 125, 248, 0.12));
+  transform: translateY(-1px);
+}
+
+.label-ocr-tag strong {
+  font-size: 0.74rem;
+  color: rgba(224, 128, 128, 0.8);
+  transition: color 180ms ease;
+}
+
+.label-ocr-tag:hover strong {
+  color: rgba(224, 128, 128, 1);
+}
+
+.label-ocr-empty-tag {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+}
+
+.label-ocr-add-row {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.label-ocr-add-row input {
+  flex: 1;
+}
+
+.label-ocr-preset-bar .sort-select {
+  min-width: 0;
+}
+
+@media (max-width: 1024px) {
+  .label-ocr-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .label-ocr-field-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .label-ocr-settings-compact .label-ocr-field-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .label-ocr-settings-header {
+    flex-direction: column;
+  }
+
+  .label-ocr-preset-bar {
+    grid-template-columns: 1fr;
+    min-width: 100%;
+  }
+
+  .label-ocr-preset-create-row {
+    grid-template-columns: 1fr;
+  }
+
+  .label-ocr-add-row {
+    flex-direction: column;
+  }
+
+  .label-ocr-settings-compact .label-ocr-field-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
