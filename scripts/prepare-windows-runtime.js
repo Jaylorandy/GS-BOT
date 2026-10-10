@@ -117,8 +117,19 @@ const LABEL_DETECTOR_ONNX_SOURCE = process.env.GSBOT_WINDOWS_LABEL_DETECTOR_ONNX
     'best.onnx',
   );
 
-function ensureDir(targetPath) {
-  fs.mkdirSync(targetPath, { recursive: true });
+function ensureDir(targetPath, attempt = 0) {
+  try {
+    fs.mkdirSync(targetPath, { recursive: true });
+  } catch (error) {
+    // Windows keeps a just-removed directory name in a pending-delete state for
+    // a moment; mkdir right after removeDir can fail with EPERM (reproduced on
+    // paddleocr-vl during v2.2.0 packaging). Retry briefly before giving up.
+    if (error && error.code === 'EPERM' && attempt < 10) {
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200 * (attempt + 1));
+      return ensureDir(targetPath, attempt + 1);
+    }
+    throw error;
+  }
 }
 
 function removeDir(targetPath) {
