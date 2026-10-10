@@ -239,38 +239,6 @@ export const WIZARD_CONFIG = {
     adaptive: true,
     steps: [
       {
-        title: { en: 'Scraper Browser (H&M only)', zh: '抓取浏览器（仅 H&M）' },
-        desc: {
-          en: 'H&M verifies the browser itself. It must run through an installed Chrome or Edge — the Chromium bundled with GS Bot gets blocked by H&M. Fully quit the browser you pick before scraping.',
-          zh: 'H&M 会校验浏览器本身，必须使用本机自带（真实安装）的 Chrome 或 Edge —— 软件自带的浏览器会被 H&M 拦截。抓取开始前请完全退出你选择的浏览器。',
-        },
-        showWhen: (p) => p.brand === 'hm',
-        fields: [
-          {
-            key: 'scraperBrowser', type: 'select', label: { en: 'Browser to use for H&M', zh: 'H&M 使用的浏览器' },
-            default: 'chrome',
-            options: [
-              { value: 'chrome', label: { en: 'Google Chrome', zh: 'Google Chrome（本机自带）' } },
-              { value: 'edge', label: { en: 'Microsoft Edge', zh: 'Microsoft Edge（本机自带）' } },
-            ],
-          },
-          {
-            key: 'scraperBrowserNotice', type: 'toggle', label: { en: 'I have completely quit Chrome', zh: '我已完全退出 Chrome' },
-            desc: {
-              en: 'Required: the H&M identity is cloned from Chrome\'s cookie store, which Chrome locks exclusively while running (even hidden "startup boost" processes). Check Task Manager for leftover chrome.exe.',
-              zh: '必须确认：H&M 身份从 Chrome 的 cookie 库克隆，Chrome 运行时（包括"启动加速"留下的无窗口后台进程）会独占锁定该库。请在任务管理器中确认没有残留的 chrome.exe。',
-            },
-          },
-          {
-            key: 'hmPreflight', type: 'hm-preflight', label: { en: 'Pre-run check', zh: '跑前检测' },
-            hint: {
-              en: 'Verifies the resolved browser, whether Chrome/Edge processes are running (including hidden background ones), and whether a saved identity exists.',
-              zh: '检测实际使用的浏览器、Chrome/Edge 进程（包括无窗口的后台进程）是否在运行，以及是否已有可用的身份。',
-            },
-          },
-        ],
-      },
-      {
         title: { en: 'Brand', zh: '品牌' },
         desc: { en: 'Choose which brand bestsellers to scrape.', zh: '选择要抓取的品牌畅销榜。' },
         fields: [
@@ -283,6 +251,34 @@ export const WIZARD_CONFIG = {
               { value: 'freepeople', label: { en: 'Free People (US)', zh: 'Free People（美国站）' } },
               { value: 'intersport', label: { en: 'Intersport', zh: 'Intersport' } },
             ],
+          },
+        ],
+      },
+      // MUST sit AFTER the Brand step. This step is conditional on brand === 'hm',
+      // and visibleSteps is index-based — a conditional step placed BEFORE the
+      // field that controls it gets inserted at index 0 the instant H&M is picked,
+      // pushing the brand step down so that "Next" landed straight back on it (the
+      // jump-back loop users reported). Forward-only dependency avoids that.
+      {
+        title: { en: 'Scraper Browser', zh: '抓取浏览器' },
+        desc: { en: 'Pick the browser for H&M, then run the check.', zh: '选择用于 H&M 的浏览器，然后运行检测。' },
+        showWhen: (p) => p.brand === 'hm',
+        fields: [
+          {
+            key: 'scraperBrowser', type: 'select', label: { en: 'Browser', zh: '浏览器' },
+            default: 'chrome',
+            options: [
+              { value: 'chrome', label: { en: 'Google Chrome', zh: 'Google Chrome' } },
+              { value: 'edge', label: { en: 'Microsoft Edge', zh: 'Microsoft Edge' } },
+            ],
+          },
+          {
+            // `required` gates "Next": the check must report a viable run — the
+            // picked browser is quit, or a saved identity can carry the scrape.
+            // It replaces the old manual "I have quit Chrome" toggle: verifying
+            // the condition beats asking the user to assert it.
+            key: 'hmPreflight', type: 'hm-preflight', required: true,
+            label: { en: 'Check', zh: '检测' },
           },
         ],
       },

@@ -888,6 +888,17 @@ async function resolveChromeDownloadInfo() {
   };
 }
 
+/**
+ * Download a managed Chrome runtime into the app's own directory.
+ *
+ * ⚠️ NO LONGER CALLED AUTOMATICALLY. 15 scraper launch sites used to fall back
+ * to this whenever no local browser was found, which meant a hidden ~300 MB
+ * download could start mid-scrape. That is gone by design (2026-10-10):
+ *   · a downloaded Chromium carries NO user identity — nothing to clone, so it
+ *     can never pass H&M's Akamai check;
+ *   · users asked for an explicit, predictable failure instead.
+ * The only remaining caller is the Settings button (browser-install-chrome-runtime).
+ */
 async function ensureChromeRuntimeAvailable(emitProgress = () => {}, options = {}) {
   const existing = findChromePath();
   if (existing && !options.forceDownload) {
@@ -1516,10 +1527,11 @@ function getHmSessionDir() {
 }
 
 // H&M keeps using the plain (unversioned) directory: prepareHmChromeProfile
-// rewrites it from the user's real Chrome on every run, and that identity is
-// what gets past Akamai. Version-scoping it would just create a second stale
-// copy. The bestseller scraper also *reads* this same directory for H&M runs,
-// so getBestsellerSessionDir() must stay consistent with it.
+// rewrites it from the user's real browser (Chrome or Edge — whichever one
+// drives the run) on every run, and that identity is what gets past Akamai.
+// Version-scoping it would just create a second stale copy. The bestseller
+// scraper also *reads* this same directory for H&M runs, so
+// getBestsellerSessionDir() must stay consistent with it.
 function getHmSessionBaseName() {
   return 'hm-browser-session';
 }
@@ -1528,44 +1540,59 @@ function getAbercrombieSessionDir() {
   return path.join(app.getPath('userData'), 'aberchrombie-browser-session');
 }
 
-// Locate the user's real browser user-data dir (NOT the profile subfolder).
+// Per-brand locations of the user's real browser profile root (NOT the
+// `Default` subfolder).
 //
-// Chrome first, then Edge: the identity we clone does not have to come from the
-// same browser that will drive the scrape. What matters is having a real,
-// recently-used browsing identity with an H&M session in it. A machine with
-// only Edge installed has exactly that under Edge's user-data dir, and its
-// profile layout (`Default/Network/Cookies`, `Local State`, …) is identical
-// because both are Chromium. So Edge is a legitimate fallback, not a downgrade.
-function findSystemBrowserUserDataDir() {
+// The on-disk layout is identical across Chromium browsers (`Default/Network/
+// Cookies`, `Local State`, …), which is what makes a profile cloned from either
+// brand structurally valid — Edge is a legitimate fallback, not a downgrade.
+function getBrowserIdentityCandidates() {
   const home = os.homedir();
-  const candidates = process.platform === 'darwin'
-    ? [
-      path.join(home, 'Library', 'Application Support', 'Google', 'Chrome'),
-      path.join(home, 'Library', 'Application Support', 'Microsoft Edge'),
-    ]
-    : process.platform === 'win32'
-      ? [
-        path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data'),
-        path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Edge', 'User Data'),
-      ]
-      : [
-        path.join(home, '.config', 'google-chrome'),
-        path.join(home, '.config', 'chromium'),
-        path.join(home, '.config', 'microsoft-edge'),
-      ];
-  for (const c of candidates) {
-    try { if (c && fs.existsSync(path.join(c, 'Default'))) return c; } catch { /* noop */ }
+  if (process.platform === 'darwin') {
+    return {
+      chrome: [path.join(home, 'Library', 'Application Support', 'Google', 'Chrome')],
+      edge: [path.join(home, 'Library', 'Application Support', 'Microsoft Edge')],
+    };
+  }
+  if (process.platform === 'win32') {
+    return {
+      chrome: [path.join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'User Data')],
+      edge: [path.join(process.env.LOCALAPPDATA || '', 'Microsoft', 'Edge', 'User Data')],
+    };
+  }
+  return {
+    chrome: [path.join(home, '.config', 'google-chrome'), path.join(home, '.config', 'chromium')],
+    edge: [path.join(home, '.config', 'microsoft-edge')],
+  };
+}
+
+// Locate the user's real browser profile root, matching the brand that will
+// actually drive the scrape.
+//
+// WHY the brand matters (changed 2026-10-10): the browser is part of the client
+// identity — Akamai signs `_abck` against the fingerprints of whichever
+// Chromium built the request. Cloning a Chrome profile and then feeding it to
+// Edge (or the reverse) hands Akamai an identity that disagrees with the
+// browser presenting it, which is precisely the mismatch we chase whenever a
+// scrape is blocked. So prefer the brand being driven; fall back to the other
+// brand only when the preferred one has never been used on this machine
+// (a matching-brand profile with no history still beats no profile at all).
+//
+// @param {'auto'|'chrome'|'edge'} preference
+// @returns {{dir: string, brand: 'chrome'|'edge'}|null}
+function findSystemBrowserIdentity(preference = 'auto') {
+  const candidates = getBrowserIdentityCandidates();
+  const order = preference === 'edge' ? ['edge', 'chrome'] : ['chrome', 'edge'];
+  for (const brand of order) {
+    for (const dir of candidates[brand] || []) {
+      try { if (dir && fs.existsSync(path.join(dir, 'Default'))) return { dir, brand }; } catch { /* noop */ }
+    }
   }
   return null;
 }
 
-// Kept as an alias so existing call sites keep working unchanged.
-function findSystemChromeUserDataDir() {
-  return findSystemBrowserUserDataDir();
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// Scraper browser resolution (user-configurable Chrome / Edge / bundled)
+// Scraper browser resolution (user-configurable: local Chrome / local Edge)
 //
 // The H&M work established that the browser is part of the identity: it must be
 // a real, headed Chromium with a real profile. Which *brand* of Chromium is far
@@ -1608,13 +1635,26 @@ function resolveScraperBrowserExecutable(overridePreference = '') {
   } catch {
     resolved = null;
   }
-  // A user-supplied path that no longer exists must not silently become
-  // "no browser installed" — that would trigger a pointless Chrome download.
-  // Fall back to the legacy resolver, which honours bundle/system Chrome.
-  if (!resolved) {
-    try { resolved = findChromePath(); } catch { resolved = null; }
-  }
+  // No browser found → null, and the caller must fail loudly (see
+  // describeMissingBrowserError). This used to fall back to findChromePath(),
+  // which on Windows could still resolve the *bundled* Chromium — silently
+  // undoing the user's choice and handing the scraper the one browser H&M
+  // always blocks (wizardConfig.js says so in so many words).
   return resolved;
+}
+
+/**
+ * The message every scraper shows when no local browser could be resolved.
+ *
+ * Kept in one place so the 15 call sites cannot drift apart. macOS only ever
+ * gets Chrome (Safari cannot be driven: it speaks WebDriver, not CDP, and its
+ * cookies live in a binary store that needs Full Disk Access — cloning an H&M
+ * identity out of it would be a rewrite, not a setting).
+ */
+function describeMissingBrowserError() {
+  return process.platform === 'darwin'
+    ? '未找到 Google Chrome。请先安装 Google Chrome（https://www.google.com/chrome/），或在「设置 → 抓取浏览器」中手动指定浏览器路径，然后重试。'
+    : '未找到可用的浏览器。请先安装 Google Chrome 或 Microsoft Edge，或在「设置 → 抓取浏览器」中手动指定浏览器路径，然后重试。';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1734,6 +1774,10 @@ function writeHmIdentityMeta(info = {}) {
         cookieBytes: info.cookieBytes || 0,
         cookieCount: typeof info.cookieCount === 'number' ? info.cookieCount : null,
         source: info.source || '',
+        // Which browser the profile was cloned from ('chrome' | 'edge'). Used to
+        // detect a brand switch so two identities never get blended — see the
+        // wipe-on-switch note in prepareHmChromeProfile.
+        sourceBrand: info.sourceBrand || '',
         files: info.files || 0,
         skipped: info.skipped || [],
       }, null, 2),
@@ -1742,17 +1786,24 @@ function writeHmIdentityMeta(info = {}) {
   } catch { /* metadata is a convenience, never a hard dependency */ }
 }
 
-function prepareHmChromeProfile(emitLog = () => {}) {
+function prepareHmChromeProfile(emitLog = () => {}, preference = 'auto') {
   const sessionDir = getHmSessionDir();
-  const srcRoot = findSystemChromeUserDataDir();
-  if (!srcRoot) {
+  // Clone from the SAME brand that is about to drive the scrape (see
+  // findSystemBrowserIdentity). `preference` is the brand actually being
+  // driven, resolved by the caller from the executable path it picked.
+  const source = findSystemBrowserIdentity(preference);
+  if (!source) {
+    const wanted = preference === 'edge' ? 'Edge' : preference === 'chrome' ? 'Chrome' : 'Chrome or Edge';
     return {
       ok: false,
-      reason: 'no-chrome',
-      message: 'No system Chrome profile was found, so the H&M browser cannot inherit your browsing identity.',
+      reason: 'no-browser',
+      brandLabel: wanted,
+      message: `No ${wanted} profile was found, so the H&M browser cannot inherit your browsing identity.`,
     };
   }
 
+  const brandLabel = source.brand === 'edge' ? 'Edge' : 'Chrome';
+  const srcRoot = source.dir;
   const srcDefault = path.join(srcRoot, 'Default');
   const srcCookies = path.join(srcDefault, 'Network', 'Cookies');
 
@@ -1760,12 +1811,28 @@ function prepareHmChromeProfile(emitLog = () => {}) {
     return {
       ok: false,
       reason: 'no-cookies',
-      message: `No Chrome cookie store was found at ${srcCookies}. Open H&M once in Chrome, then retry.`,
+      brandLabel,
+      message: `No ${brandLabel} cookie store was found at ${srcCookies}. Open H&M once in ${brandLabel}, then retry.`,
     };
   }
 
   const dstDefault = path.join(sessionDir, 'Default');
   const dstNet = path.join(dstDefault, 'Network');
+
+  // A brand switch must not blend two identities: the copy below only
+  // overwrites files present on both sides, so anything unique to the previous
+  // brand would linger and muddy the profile. Wipe the cloned profile — never
+  // the session directory itself, whose path is shared with the H&M product
+  // scraper — when the source brand changed since the last clone.
+  const previousMeta = readHmIdentityMeta();
+  const previousBrand = String(previousMeta?.sourceBrand || '').toLowerCase();
+  if (previousBrand && previousBrand !== source.brand && fs.existsSync(dstDefault)) {
+    try {
+      fs.rmSync(dstDefault, { recursive: true, force: true });
+      emitLog(`    🧹 Cleared the previous ${previousBrand === 'edge' ? 'Edge' : 'Chrome'} profile (the H&M identity now comes from ${brandLabel}).`, 'info');
+    } catch { /* a locked leftover only costs extra noise, never correctness */ }
+  }
+
   fs.mkdirSync(dstNet, { recursive: true });
 
   const skipped = [];
@@ -1830,8 +1897,9 @@ function prepareHmChromeProfile(emitLog = () => {}) {
     return {
       ok: false,
       reason: 'chrome-locked',
+      brandLabel,
       hasUsableSession: !!(meta && meta.cookieCount > 0),
-      message: 'Chrome is running and has the cookie store locked, so the H&M browser cannot inherit your login. Fully quit Chrome (check the tray / task manager — every chrome.exe must be gone), then retry.',
+      message: `${brandLabel} is running and has the cookie store locked, so the H&M browser cannot inherit your login. Fully quit ${brandLabel} (check the tray / task manager — every ${source.brand === 'edge' ? 'msedge.exe' : 'chrome.exe'} must be gone), then retry.`,
     };
   }
 
@@ -1839,25 +1907,28 @@ function prepareHmChromeProfile(emitLog = () => {}) {
     return {
       ok: false,
       reason: 'copy-failed',
+      brandLabel,
       hasUsableSession: false,
-      message: `The Chrome cookie store could not be copied (${skipped[0] || 'unknown reason'}). Open H&M in Chrome once, fully quit Chrome, then retry.`,
+      message: `The ${brandLabel} cookie store could not be copied (${skipped[0] || 'unknown reason'}). Open H&M in ${brandLabel} once, fully quit ${brandLabel}, then retry.`,
     };
   }
 
   // ── Success ───────────────────────────────────────────────────────────────
   const cookieCount = countHmSessionCookies();
-  writeHmIdentityMeta({ cookieBytes, cookieCount, source: srcRoot, files: copied, skipped });
+  writeHmIdentityMeta({ cookieBytes, cookieCount, source: srcRoot, sourceBrand: source.brand, files: copied, skipped });
 
   const skipNote = skipped.length ? `, ${skipped.length} optional file(s) skipped` : '';
-  emitLog(`    🔐 Chrome identity copied for H&M (cookies ${Math.round(cookieBytes / 1024)} KB, ${cookieCount >= 0 ? `${cookieCount} entries` : 'count unavailable'}${skipNote}).`, 'info');
-  return { ok: true, reason: 'refreshed', cookieBytes, cookieCount, skipped };
+  emitLog(`    🔐 ${brandLabel} identity copied for H&M (cookies ${Math.round(cookieBytes / 1024)} KB, ${cookieCount >= 0 ? `${cookieCount} entries` : 'count unavailable'}${skipNote}).`, 'info');
+  return { ok: true, reason: 'refreshed', brandLabel, cookieBytes, cookieCount, skipped };
 }
 
 // Human-readable guidance for the failure the user is most likely to hit.
 function describeHmIdentityProblem(result) {
   if (!result || result.ok) return '';
+  const brandLabel = result.brandLabel || 'Chrome';
+  const image = brandLabel === 'Edge' ? 'msedge.exe' : 'chrome.exe';
   if (result.reason === 'chrome-locked') {
-    return 'To fix this: fully quit Chrome (make sure no chrome.exe remains in Task Manager), then start the H&M scrape again. A previously successful identity keeps working, so this is only required on a cold start.';
+    return `To fix this: fully quit ${brandLabel} (make sure no ${image} remains in Task Manager), then start the H&M scrape again. A previously successful identity keeps working, so this is only required on a cold start.`;
   }
   return result.message || '';
 }
@@ -1910,57 +1981,56 @@ function listBrowserProcesses() {
 function buildHmPreflight(overrideConfig = null) {
   const config = overrideConfig || browserConfig.loadConfig();
   const browser = describeScraperBrowserStatus(config);
-  // Trust the resolver's provenance flag. Inferring "bundled" from the brand
-  // name is wrong: the app ships its Chromium as chrome.exe, so a filename
-  // check would report the blocked browser as a real Chrome.
-  const isBundled = browser.isBundled === true;
   const runningProcesses = listBrowserProcesses();
   const meta = readHmIdentityMeta();
   const hasIdentity = !!(meta && meta.cookieCount > 0);
 
   const warnings = [];
-  if (isBundled) {
+  // The brand that gets driven is also the brand the identity is cloned from
+  // (see prepareHmChromeProfile), and that browser locks its own cookie store
+  // exclusively while running — so IT is the one that must be fully quit. The
+  // other brand is harmless: the scraper drives its own isolated user-data-dir.
+  const sourceBrand = browser.brand === 'edge' ? 'edge' : 'chrome';
+  const sourceLabel = sourceBrand === 'edge' ? 'Microsoft Edge' : 'Google Chrome';
+  const sourceImage = sourceBrand === 'edge' ? 'msedge.exe' : 'chrome.exe';
+
+  // Clone viability, exposed for the wizard's simplified two-line check.
+  //
+  // This adds NO new probe. Only the source browser can hold its cookie store,
+  // so "source not running" already answers readability, and the file's
+  // existence answers the rest — a copy attempt is the only other way to detect
+  // a lock (see the copyOne note in prepareHmChromeProfile), which would be too
+  // heavy to run on every wizard step. `hasIdentity` covers the fallback the run
+  // itself uses when the clone is blocked.
+  const sourceRunning = runningProcesses.includes(sourceBrand);
+  const sourceProfile = findSystemBrowserIdentity(sourceBrand);
+  let sourceCookiesPresent = false;
+  try {
+    sourceCookiesPresent = !!sourceProfile
+      && fs.existsSync(path.join(sourceProfile.dir, 'Default', 'Network', 'Cookies'));
+  } catch { /* treat as absent */ }
+  const cloneReady = !sourceRunning && sourceCookiesPresent;
+  const identityUsable = hasIdentity || cloneReady;
+
+  if (runningProcesses.includes(sourceBrand)) {
     warnings.push({
-      code: 'bundled-browser',
-      severity: 'error',
-      message: `The scraper would drive the bundled Chromium (${browser.executablePath || 'not found'}), not an installed Chrome or Edge. H&M blocks the bundled browser — pick Chrome or Edge.`,
-    });
-  }
-  // Only Chrome can block the clone: the identity is always cloned from the
-  // system Chrome cookie store, which Chrome locks exclusively while any
-  // chrome.exe process (even a windowless "startup boost" leftover) is alive.
-  // Edge processes neither lock that store nor conflict with the scraper (the
-  // scraper drives its own isolated user-data-dir), so Edge is only worth
-  // mentioning when the user actually picked Edge as the scraping browser.
-  const chromeRunning = runningProcesses.includes('chrome');
-  const edgeRunning = runningProcesses.includes('edge');
-  const pickedPreference = String(config?.preference || 'auto');
-  if (chromeRunning) {
-    warnings.push({
-      code: 'chrome-running',
+      code: `${sourceBrand}-running`,
       severity: hasIdentity ? 'warning' : 'error',
-      message: 'Google Chrome is running — this includes hidden background processes left by Chrome\'s "startup boost" (they exist even with no visible window). The H&M identity clone reads Chrome\'s cookie store, which Chrome locks exclusively, so the clone would fail. Fully quit Chrome, then check Task Manager for leftover chrome.exe processes.',
-    });
-  }
-  if (edgeRunning && pickedPreference === 'edge') {
-    warnings.push({
-      code: 'edge-running',
-      severity: 'warning',
-      message: 'Microsoft Edge is running — likely as hidden background processes from Edge\'s "startup boost" (no visible window needed). Quit Edge completely before scraping with Edge.',
+      message: `${sourceLabel} is running — this includes hidden background processes left by its "startup boost" (they exist even with no visible window). The H&M identity clone reads the ${sourceLabel} cookie store, which locks exclusively while it runs, so the clone would fail. Fully quit ${sourceLabel}, then check Task Manager for leftover ${sourceImage} processes.`,
     });
   }
   if (!browser.available) {
     warnings.push({
       code: 'no-browser',
       severity: 'error',
-      message: 'No browser executable could be resolved. Install Chrome or Edge, or set the path in Settings → 抓取浏览器.',
+      message: describeMissingBrowserError(),
     });
   }
   if (!hasIdentity) {
     warnings.push({
       code: 'no-identity',
-      severity: chromeRunning ? 'warning' : 'info',
-      message: 'No previously saved H&M identity was found. On a cold start the identity is cloned from your system Chrome, so Chrome must be able to read its cookie store: open H&M once in Chrome, then fully quit Chrome before scraping.',
+      severity: sourceRunning ? 'warning' : 'info',
+      message: `No previously saved H&M identity was found. On a cold start the identity is cloned from ${sourceLabel}, so it must be able to read its cookie store: open H&M once in ${sourceLabel}, then fully quit ${sourceLabel} before scraping.`,
     });
   }
 
@@ -1970,13 +2040,23 @@ function buildHmPreflight(overrideConfig = null) {
   const blocking = warnings.filter((w) => w.severity === 'error');
   return {
     ok: blocking.length === 0,
+    // What the wizard gates its "Next" on: the picked browser can really be
+    // driven AND an identity is either saved or clonable right now.
+    ready: !!browser.available && identityUsable,
     browser: {
       brand: browser.brand,
       executablePath: browser.executablePath || '',
       available: !!browser.available,
-      isBundled,
     },
     runningProcesses,
+    // The brand that will be driven — and therefore the brand the identity is
+    // cloned from, so it is the one that must be quit.
+    sourceBrand,
+    sourceLabel,
+    sourceRunning,
+    sourceCookiesPresent,
+    cloneReady,
+    identityUsable,
     identity: {
       has: hasIdentity,
       cookieCount: meta?.cookieCount ?? null,
@@ -3473,10 +3553,7 @@ async function runUniqloBestsellerScraper(config, emitLog, emitProgress, taskCon
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   let browser = null;
@@ -3903,16 +3980,7 @@ async function runUniqloScraper(config, emitLog, emitProgress, taskController, p
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -4575,12 +4643,7 @@ async function runSingleBrandProductScraper(config, emitLog, emitProgress, taskC
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-    });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -8685,16 +8748,7 @@ async function runStradivariusScraper(config, emitLog, emitProgress, taskControl
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -9037,16 +9091,7 @@ async function runPullAndBearScraper(config, emitLog, emitProgress, taskControll
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -9620,16 +9665,7 @@ async function runBershkaScraper(config, emitLog, emitProgress, taskController, 
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -10854,16 +10890,7 @@ async function runLeftiesScraper(config, emitLog, emitProgress, taskController, 
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -12216,16 +12243,7 @@ async function runMangoScraper(config, emitLog, emitProgress, taskController, pr
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -14531,16 +14549,7 @@ async function runAbercrombieScraper(config, emitLog, emitProgress, taskControll
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -14807,16 +14816,7 @@ async function runReservedScraper(config, emitLog, emitProgress, taskController,
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome was found. Downloading a managed Chrome runtime for GS Bot...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -15734,10 +15734,7 @@ async function runSinsayScraper(config, emitLog, emitProgress, taskController, p
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -16687,10 +16684,7 @@ async function runUrbanRevivoScraper(config, emitLog, emitProgress, taskControll
 
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -17427,10 +17421,7 @@ async function runHmScraper(config, emitLog, emitProgress, taskController, previ
 
   let executablePath = resolveScraperBrowserExecutable();
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -19262,10 +19253,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
 
   let executablePath = resolveScraperBrowserExecutable(config?.scraperBrowser);
   if (!executablePath) {
-    emitLog('⬇️ No local Chrome found. Downloading Chrome runtime…', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((p) => { if (p?.status) emitLog(p.status, p.phase === 'complete' ? 'success' : 'info'); });
-    if (!chromeInstall?.success) throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
 
   try {
@@ -19290,10 +19278,10 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     }
     const effectiveSessionDir = freePeopleProfileDir || sessionDir;
     // H&M's Akamai guard flags the default automation browser (verified: direct
-    // nav 403s while the user's own Chrome works). Copy the user's real Chrome
-    // identity into the H&M session so product pages load.
+    // nav 403s while the user's own browser works). Copy the driving browser's
+    // real identity into the H&M session so product pages load.
     //
-    // This can legitimately fail when Chrome is running — Chrome holds an
+    // This can legitimately fail when that browser is running — it holds an
     // exclusive lock on its cookie store and nothing can read it (see the long
     // note on prepareHmChromeProfile). We surface that as an actionable message
     // instead of the silent "success" that previously produced unexplained
@@ -19301,11 +19289,15 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     // we carry on: a stale identity usually still works, and failing fast would
     // break a setup that is otherwise fine.
     if (brandKey === 'hm') {
-      const identity = prepareHmChromeProfile(emitLog);
+      // Clone from the brand we are actually about to drive — a cross-brand
+      // identity (Chrome cookies presented by Edge, or vice versa) is exactly
+      // the mismatch Akamai penalises. See findSystemBrowserIdentity.
+      const drivenBrand = /msedge/i.test(executablePath || '') ? 'edge' : 'chrome';
+      const identity = prepareHmChromeProfile(emitLog, drivenBrand);
       if (!identity.ok) {
         const hint = describeHmIdentityProblem(identity);
         if (identity.hasUsableSession) {
-          emitLog(`    ⚠️ Using the previously saved Chrome identity. ${hint}`, 'warning');
+          emitLog(`    ⚠️ Using the previously saved ${identity.brandLabel || 'Chrome'} identity. ${hint}`, 'warning');
         } else {
           emitLog(`    ⚠️ ${hint}`, 'warning');
         }
@@ -20265,16 +20257,7 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
   // 使用统一的 Chrome 检测函数
   let executablePath = findChromePath();
   if (!executablePath) {
-    emitLog('⬇️ 没有检测到本地 Chrome，正在为 GS Bot 自动下载浏览器运行时...', 'warning');
-    const chromeInstall = await ensureChromeRuntimeAvailable((payload) => {
-      if (payload?.status) {
-        emitLog(payload.status, payload.phase === 'complete' ? 'success' : 'info');
-      }
-    });
-    if (!chromeInstall?.success) {
-      throw new Error(chromeInstall?.error || 'Chrome download failed.');
-    }
-    executablePath = chromeInstall.executablePath;
+    throw new Error(describeMissingBrowserError());
   }
   emitLog(`🌐 使用浏览器: ${executablePath}`, 'info');
 
@@ -21259,11 +21242,11 @@ app.whenReady().then(async () => {
     writeStartupLog('app whenReady resolved');
     const chromePath = findChromePath();
     if (chromePath) {
-      console.log('Found Chrome at:', chromePath);
-      writeStartupLog(`chrome detected: ${chromePath}`);
+      console.log('Found browser at:', chromePath);
+      writeStartupLog(`browser detected: ${chromePath}`);
     } else {
-      console.warn('Chrome was not found at startup. The app will open and Setup Guide will surface the missing dependency.');
-      writeStartupLog('chrome missing at startup');
+      console.warn('No Chrome or Edge was found at startup. The app will open and Setup Guide will surface the missing dependency.');
+      writeStartupLog('browser missing at startup');
     }
     createWindow();
     // GitHub 自动更新：启动后延迟检查，弹窗提示新版，一键下载安装。
@@ -21279,8 +21262,12 @@ app.whenReady().then(async () => {
   }
 });
 
+// Single choke point for the scraper launch sites that only need "a browser".
+// It historically returned Chrome *only* — ignoring the user's Edge preference —
+// and on Windows it could resolve the bundled Chromium. It now delegates to the
+// preference-aware resolver, so every scraper honours 设置 → 抓取浏览器.
 function findChromePath() {
-  return runtimeResolver.findChromeExecutable();
+  return resolveScraperBrowserExecutable();
 }
 
 function getPythonEnvironmentStatus() {
@@ -21350,7 +21337,7 @@ async function getSystemStatus() {
     chrome: {
       installed: Boolean(chromePath),
       path: chromePath || '',
-      requiredBy: 'Zara Scraper',
+      requiredBy: 'Browser scrapers (Zara / H&M / UNIQLO / Free People / …)',
     },
     python: {
       ...python,
@@ -22336,6 +22323,49 @@ ipcMain.handle('browser-pick-executable', async (_event, which) => {
       return { success: false, error: 'The selected file could not be read.' };
     }
     return { success: true, path: picked };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Manual escape hatch for machines that have neither Chrome nor Edge.
+//
+// Every scraper used to auto-download a managed Chrome runtime when no local
+// browser was found. That is gone (see ensureChromeRuntimeAvailable): a hidden
+// ~300 MB download is not a substitute for an explicit choice, and it cannot
+// help H&M anyway because there is no user identity to clone. What is left is
+// this user-triggered action — it reports an already-installed browser if there
+// is one, otherwise installs Chrome for Testing into the app directory and pins
+// it as the custom Chrome path.
+ipcMain.handle('browser-install-chrome-runtime', async (event) => {
+  const send = (payload) => {
+    try { event.sender.send('browser-install-chrome-progress', payload); } catch { /* window closed */ }
+  };
+  try {
+    const result = await ensureChromeRuntimeAvailable((payload) => {
+      send({
+        status: payload?.status || '',
+        phase: payload?.phase || '',
+        progress: payload?.progress || 0,
+      });
+    });
+    if (!result?.success) {
+      return { success: false, error: result?.error || 'Chrome runtime download failed.' };
+    }
+    if (!result.alreadyAvailable) {
+      // Pin the freshly installed runtime: a valid custom path outranks brand
+      // detection in findBrowserExecutable(), so every scraper picks it up.
+      const saved = browserConfig.saveConfig({ chromePath: result.executablePath, preference: 'chrome' });
+      if (!saved.success) return { success: false, error: saved.error };
+    }
+    return {
+      success: true,
+      alreadyAvailable: !!result.alreadyAvailable,
+      executablePath: result.executablePath || '',
+      version: result.version || '',
+      config: browserConfig.loadConfig({ forceRefresh: true }),
+      status: describeScraperBrowserStatus(browserConfig.loadConfig({ forceRefresh: true })),
+    };
   } catch (error) {
     return { success: false, error: error.message };
   }

@@ -340,19 +340,11 @@ function getPythonSpawnEnv(runtime) {
   return env;
 }
 
-function getBundledChromeExecutable() {
-  const runtimeRoot = getWindowsRuntimeRoot();
-  if (!runtimeRoot) {
-    return null;
-  }
-
-  const manifest = readJsonIfExists(path.join(runtimeRoot, 'chromium', 'runtime-manifest.json'));
-  const relativeExecutable = manifest?.executable || path.join('chrome-win64', 'chrome.exe');
-  const executablePath = path.join(runtimeRoot, 'chromium', relativeExecutable);
-
-  return fileExists(executablePath) ? executablePath : null;
-}
-
+// ⚠️ The bundled-Chromium resolver that used to live here (reading
+// resources/runtime/windows/chromium/runtime-manifest.json) was deleted
+// 2026-10-10 together with the 407 MB runtime itself. Nothing in the app may
+// resolve that browser: H&M blocks it, and shipping it made "which browser am
+// I actually running?" unanswerable. See Spec-本地浏览器优先改造.md.
 function getDownloadedChromeHome() {
   return path.join(os.homedir(), '.gsbot', 'browser', 'chrome');
 }
@@ -698,19 +690,20 @@ function getSystemEdgeCandidates() {
 }
 
 /**
- * 统一浏览器可执行文件解析入口（Chrome / Edge / 内置 Chromium）。
+ * 统一浏览器可执行文件解析入口（Chrome / Edge）。
  *
  * 优先级（前面的先赢）：
  *   1. 用户手填绝对路径（按 preference 取对应字段；手填路径不参与缓存）
- *   2. 按 preference 指定的来源：chrome → Edge 兜底 / edge → Chrome 兜底 / bundled
- *   3. auto：downloaded → bundled(win) → 系统 Chrome → 系统 Edge
+ *   2. 按 preference 指定的来源：chrome → Edge 兜底 / edge → Chrome 兜底
+ *   3. auto：系统 Chrome → 系统 Edge
+ *   4. 全都没有 → null（调用方必须报错，绝不静默下载）
  *
- * 与 findChromeExecutable() 的关系：后者保留原语义（只认 Chrome，
- * 供既有调用点在不改行为的前提下继续使用）；本函数是新增的、
- * 感知浏览器品牌与用户配置的入口。
+ * 与 findChromeExecutable() 的关系：后者是遗留 API，现在只服务
+ * ensureChromeRuntimeAvailable()（设置页手动安装后确认产物）与启动自检日志。
+ * 所有抓取入口一律走本函数。
  *
  * @param {object} options
- * @param {'auto'|'chrome'|'edge'|'bundled'} [options.preference]
+ * @param {'auto'|'chrome'|'edge'} [options.preference]
  * @param {string} [options.customPath]   用户手填路径（优先于 preference 探测）
  * @param {boolean} [options.forceRefresh] 忽略缓存
  * @returns {string|null}
@@ -744,32 +737,22 @@ function findBrowserExecutable(options = {}) {
     return null;
   };
 
-  const bundled = () => {
-    const downloaded = getDownloadedChromeExecutable();
-    if (downloaded) return downloaded;
-    if (process.platform === 'win32') return getBundledChromeExecutable();
-    return null;
-  };
-
   let executablePath = null;
   // Track WHICH branch produced the winner. Brand alone cannot answer "is this
-  // the browser we ship?" — the bundled Chromium is literally named chrome.exe,
-  // so name-matching would misreport the app's own browser as a real Chrome.
-  // "bundled" must be known by provenance, not by filename.
+  // a browser we manage?" — Chrome for Testing resolves to a file literally
+  // named `chrome`, so name-matching would misreport it as the user's own
+  // Chrome. Provenance, not filename.
   let source = 'none';
 
   if (preference === 'chrome') {
-    // 用户明确要 Chrome：先找 Chrome，找不到再退到内置包，最后才考虑 Edge
-    // （退到 Edge 而不是直接失败 —— 否则只装 Edge 的机器会彻底不可用）。
+    // 用户明确要 Chrome：Chrome 优先，找不到退到 Edge。
+    // 绝不退到内置/托管运行时 —— H&M 会拦它（wizardConfig 已明说），而且
+    // 「用户选了 Chrome，实际却跑了别的浏览器」会让之后所有排查都失去意义。
     executablePath = chromeInstalled();
     if (executablePath) source = 'system-chrome';
     else {
-      executablePath = bundled();
-      if (executablePath) source = 'bundled';
-      else {
-        executablePath = edgeInstalled();
-        if (executablePath) source = 'system-edge';
-      }
+      executablePath = edgeInstalled();
+      if (executablePath) source = 'system-edge';
     }
   } else if (preference === 'edge') {
     executablePath = edgeInstalled();
@@ -777,33 +760,16 @@ function findBrowserExecutable(options = {}) {
     else {
       executablePath = chromeInstalled();
       if (executablePath) source = 'system-chrome';
-      else {
-        executablePath = bundled();
-        if (executablePath) source = 'bundled';
-      }
-    }
-  } else if (preference === 'bundled') {
-    executablePath = bundled();
-    if (executablePath) source = 'bundled';
-    else {
-      executablePath = chromeInstalled();
-      if (executablePath) source = 'system-chrome';
-      else {
-        executablePath = edgeInstalled();
-        if (executablePath) source = 'system-edge';
-      }
     }
   } else {
-    // auto：内置包优先（版本可控、行为最可预期），其次系统 Chrome，最后 Edge
-    executablePath = bundled();
-    if (executablePath) source = 'bundled';
+    // auto：本机 Chrome → 本机 Edge → null。
+    // null 是有意为之：调用方必须报错（describeMissingBrowserError），
+    // 而不是悄悄下载一个没有用户身份、H&M 必然拒绝的 Chromium。
+    executablePath = chromeInstalled();
+    if (executablePath) source = 'system-chrome';
     else {
-      executablePath = chromeInstalled();
-      if (executablePath) source = 'system-chrome';
-      else {
-        executablePath = edgeInstalled();
-        if (executablePath) source = 'system-edge';
-      }
+      executablePath = edgeInstalled();
+      if (executablePath) source = 'system-edge';
     }
   }
 
@@ -828,8 +794,9 @@ function describeResolvedBrowser(options = {}) {
     else brand = 'chromium';
   }
 
-  // Provenance, not filename. `source` is 'bundled' only when the winner came
-  // out of the app's own runtime tree; a user-supplied path counts as custom.
+  // Provenance, not filename: a custom path counts as 'custom', everything else
+  // comes from the system-install branches. `'bundled'` can no longer be a
+  // source — the bundled Chromium is gone (2026-10-10).
   const cacheKey = process.platform + '|' + preference;
   let source = options.customPath && fileExists(customPath)
     ? 'custom'
@@ -841,9 +808,9 @@ function describeResolvedBrowser(options = {}) {
     executablePath: executablePath || '',
     brand,
     source,
-    // The browser H&M actually rejects. Derived from provenance so the app's
-    // own Chromium (which ships as chrome.exe) is never mistaken for Chrome.
-    isBundled: source === 'bundled',
+    // Deprecated: always false since the bundled Chromium was removed. Kept so
+    // an older renderer bundle cannot render `undefined` in its place.
+    isBundled: false,
     available: !!executablePath,
     chromeCandidates: getSystemChromeCandidates().filter(fileExists),
     edgeCandidates: getSystemEdgeCandidates().filter(fileExists),
@@ -856,13 +823,11 @@ function findChromeExecutable(options = {}) {
     return chromeCache.get(cacheKey);
   }
 
-  let executablePath = null;
-
-  executablePath = getDownloadedChromeExecutable();
-
-  if (!executablePath && process.platform === 'win32' && !options.preferSystem) {
-    executablePath = getBundledChromeExecutable();
-  }
+  // Only two callers remain: ensureChromeRuntimeAvailable() confirming what the
+  // Settings install button just unpacked (hence the managed runtime first),
+  // and the startup presence log. The bundled-Chromium branches that used to
+  // sit here — including the `preferSystem` flip-flop — are gone.
+  let executablePath = getDownloadedChromeExecutable();
 
   if (!executablePath) {
     for (const candidate of getSystemChromeCandidates()) {
@@ -871,10 +836,6 @@ function findChromeExecutable(options = {}) {
         break;
       }
     }
-  }
-
-  if (!executablePath && process.platform === 'win32' && options.preferSystem) {
-    executablePath = getBundledChromeExecutable();
   }
 
   chromeCache.set(cacheKey, executablePath || null);

@@ -253,6 +253,12 @@ function FirecrawlConfigPanel() {
 // a non-standard (portable) location. This panel lets the user choose, and
 // shows what was actually resolved so a wrong choice is visible immediately
 // instead of surfacing later as a mysterious 403.
+//
+// The bundled Chromium is GONE (2026-10-10). It was always blocked by H&M and
+// its fixed version made the anti-bot behaviour unreproducible in the wrong
+// direction. Resolution is now strictly: custom path → Chrome → Edge → error
+// (see describeMissingBrowserError in main.js). The remaining "install runtime"
+// button is a manual-only escape hatch for machines with neither browser.
 function ScraperBrowserPanel() {
   const { tx } = useI18n();
   const [preference, setPreference] = React.useState('auto');
@@ -261,13 +267,15 @@ function ScraperBrowserPanel() {
   const [status, setStatus] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
+  const [installing, setInstalling] = React.useState(false);
+  const [installNote, setInstallNote] = React.useState('');
   const [message, setMessage] = React.useState(null);
 
   const OPTIONS = [
     {
       value: 'auto',
       label: tx('Automatic', '自动'),
-      desc: tx('Bundled Chromium first, then Chrome, then Edge.', '优先内置 Chromium，其次 Chrome，最后 Edge。'),
+      desc: tx('Google Chrome first, then Microsoft Edge.', '优先本机 Google Chrome，其次 Microsoft Edge。'),
     },
     {
       value: 'chrome',
@@ -278,11 +286,6 @@ function ScraperBrowserPanel() {
       value: 'edge',
       label: 'Edge',
       desc: tx('Prefer the installed Microsoft Edge.', '优先使用已安装的 Microsoft Edge。'),
-    },
-    {
-      value: 'bundled',
-      label: tx('Bundled', '内置'),
-      desc: tx('Only the Chromium that ships with GS Bot.', '只用 GS Bot 自带的内置 Chromium。'),
     },
   ];
 
@@ -348,19 +351,48 @@ function ScraperBrowserPanel() {
     }
   }
 
+  // Manual-only runtime install. The automatic fallback that used to run inside
+  // every scraper is gone; this button is what remains of it.
+  async function handleInstallRuntime() {
+    setMessage(null);
+    setInstalling(true);
+    setInstallNote('');
+    try {
+      const result = await window.electronAPI?.browserInstallChromeRuntime?.();
+      if (!result?.success) {
+        setMessage({ type: 'error', text: result?.error || tx('Install failed', '安装失败') });
+        return;
+      }
+      await refresh();
+      setMessage({
+        type: 'success',
+        text: result.alreadyAvailable
+          ? tx('A usable browser is already installed — nothing to download.', '已检测到可用浏览器，无需下载。')
+          : tx('Chrome runtime installed and selected.', 'Chrome 运行时已安装并已选用。'),
+      });
+    } catch (error) {
+      setMessage({ type: 'error', text: error.message || tx('Install error', '安装出错') });
+    } finally {
+      setInstalling(false);
+      setInstallNote('');
+    }
+  }
+
+  React.useEffect(() => {
+    window.electronAPI?.onBrowserInstallChromeProgress?.((payload) => {
+      if (payload?.status) setInstallNote(payload.status);
+    });
+    return () => {
+      window.electronAPI?.removeBrowserInstallChromeListener?.();
+    };
+  }, []);
+
   const resolved = status || {};
-  // Provenance beats the filename: the bundled Chromium ships as chrome.exe, so
-  // brand alone would label the app's own browser "Google Chrome" and hide the
-  // fact that H&M will reject it.
-  const brandLabel = resolved.isBundled
-    ? tx('Bundled Chromium', '内置 Chromium')
-    : resolved.brand === 'edge'
-      ? 'Microsoft Edge'
-      : resolved.brand === 'chrome'
-        ? 'Google Chrome'
-        : resolved.brand === 'chromium'
-          ? tx('Bundled Chromium', '内置 Chromium')
-          : tx('Not found', '未找到');
+  const brandLabel = resolved.brand === 'edge'
+    ? 'Microsoft Edge'
+    : resolved.brand === 'chrome'
+      ? 'Google Chrome'
+      : tx('Not found', '未找到');
 
   const inputStyle = {
     flex: 1,
@@ -491,7 +523,7 @@ function ScraperBrowserPanel() {
             ? tx('Checking…', '检测中…')
             : resolved.available
               ? '✅ ' + tx('In use: ', '当前使用：') + brandLabel
-              : '⚠️ ' + tx('No browser resolved — scraping will download a runtime.', '未解析到浏览器 —— 抓取时将下载运行时。')}
+              : '⚠️ ' + tx('No browser resolved — install Chrome or Edge to scrape.', '未解析到浏览器 —— 请安装 Chrome 或 Edge 后重试。')}
         </div>
         {!loading && resolved.executablePath && (
           <div style={{ color: 'var(--text-secondary)' }}>{resolved.executablePath}</div>
@@ -505,6 +537,23 @@ function ScraperBrowserPanel() {
             {resolved.customPathUsed ? tx(' · custom path in effect', ' · 自定义路径生效中') : ''}
           </div>
         )}
+      </div>
+
+      {/* Manual runtime install — the only path left for a machine that has
+          neither Chrome nor Edge. Never runs on its own. */}
+      <div style={{ marginBottom: '1.5em' }}>
+        <button onClick={handleInstallRuntime} disabled={saving || installing} style={btnStyle}>
+          {installing
+            ? tx('Installing…', '正在安装…')
+            : tx('Check / install browser runtime', '检查 / 安装浏览器运行时')}
+        </button>
+        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8em', margin: '0.6em 0 0', lineHeight: 1.5 }}>
+          {installNote
+            || tx(
+              'Only downloads the built-in Chrome runtime when neither Chrome nor Edge is installed. Good enough for scrapers that do not verify the browser (Zara, UNIQLO); H&M needs a real browser installed on this machine.',
+              '仅在未检测到 Chrome / Edge 时下载内置 Chrome 运行时。适用于不校验浏览器身份的站点（Zara、UNIQLO）；H&M 必须使用本机真实安装的浏览器。'
+            )}
+        </p>
       </div>
 
       {message && (
@@ -1024,7 +1073,7 @@ function normalizeSystemStatus(status) {
     chrome: {
       installed: Boolean(status?.chrome?.installed),
       path: status?.chrome?.path || '',
-      requiredBy: status?.chrome?.requiredBy || 'Zara Scraper',
+      requiredBy: status?.chrome?.requiredBy || 'Browser scrapers (Zara / H&M / UNIQLO / Free People / …)',
     },
     python: {
       available: Boolean(status?.python?.available),
@@ -2184,13 +2233,13 @@ function SetupGuide({
       <div className="setup-check-grid">
         <article className={`setup-check-card ${chromeReady ? 'ready' : 'warning'}`}>
           <div className="setup-check-topline">
-            <strong>Chrome</strong>
+            <strong>{tx('Browser', '浏览器')}</strong>
             <span className={`setup-check-badge ${chromeReady ? 'ready' : 'warning'}`}>
               {chromeReady ? tx('Installed', '已安装') : tx('Missing', '缺失')}
             </span>
           </div>
           <p>{environmentStatus.chrome.requiredBy}</p>
-          <em>{environmentStatus.chrome.path || tx('Google Chrome is required for Zara Scraper.', 'Zara 抓取需要安装 Google Chrome。')}</em>
+          <em>{environmentStatus.chrome.path || tx('Chrome or Edge is required for the scrapers.', '抓取功能需要安装 Chrome 或 Edge。')}</em>
           {!chromeReady && (
             <div className="setup-check-actions">
               <button
@@ -2198,6 +2247,12 @@ function SetupGuide({
                 onClick={() => openExternalLink('https://www.google.com/chrome/', 'Chrome download')}
               >
                 {tx('Download Chrome', '下载 Chrome')}
+              </button>
+              <button
+                className="setup-secondary-btn"
+                onClick={() => openExternalLink('https://www.microsoft.com/edge', 'Edge download')}
+              >
+                {tx('Download Edge', '下载 Edge')}
               </button>
             </div>
           )}

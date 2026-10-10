@@ -5,10 +5,39 @@ import './HelpManual.css';
 function buildManualSections(tx) {
   return [
     {
+      id: 'scraper',
+      title: tx('Scraper', '抓取器'),
+      summary: tx(
+        'Collects product assets and structured information from supported retail sites.',
+        '从支持的零售网站抓取商品素材和结构化信息。',
+      ),
+      scenarios: [
+        tx('You need to collect reference images or product pages from Zara, Bershka, Stradivarius, H&M, UNIQLO, and more.', '你需要从 Zara、Bershka、Stradivarius、H&M、UNIQLO 等站点收集参考图或产品页。'),
+        tx('You want to batch-save images and metadata for later analysis, naming, or deck generation.', '你想批量保存图片和资料，后续再做分析、命名或 PPT。'),
+      ],
+      options: [
+        {
+          name: tx('URL / SKU driven capture', 'URL / 款号驱动抓取'),
+          bestFor: tx('Use URLs when you already know the exact page. Use SKU when you need the app to find the page first.', '已知页面链接就直接用 URL；只有款号时用 SKU 让软件先找页面。'),
+          notes: tx('SKU lookup can be slower but is more scalable when you only have internal product lists. Style numbers can be typed in or imported from Excel.', 'SKU 查找会稍慢，但当你只有内部货号列表时更适合批量处理。款号可以手动输入，也可以从 Excel 导入。'),
+        },
+        {
+          name: tx('Local browser (Chrome preferred, then Edge)', '本地浏览器（优先 Chrome，其次 Edge）'),
+          bestFor: tx('All scraping now runs in your own installed browser. The app no longer ships a built-in browser.', '所有抓取现在都跑在你本机安装的浏览器里，软件不再内置浏览器。'),
+          notes: tx('Pick Chrome or Edge in Settings; Auto uses Chrome first and falls back to Edge. Some sites such as H&M check your real browsing identity, so they require a genuinely installed browser. If none is found, the app tells you what to install instead of downloading one silently.', '在设置里选择 Chrome 或 Edge（自动 = 先 Chrome 后 Edge）。H&M 等站点会校验真实浏览器身份，必须用本机安装的浏览器。找不到浏览器时软件会直接提示安装，不再静默下载。'),
+        },
+        {
+          name: tx('H&M browser identity', 'H&M 浏览器身份'),
+          bestFor: tx('Getting an H&M run through on the first try', '让 H&M 抓取第一次就能通过'),
+          notes: tx('Fully quit the browser before running so the app can copy your H&M cookies into a dedicated session. Browsing H&M in that browser beforehand makes the identity stronger.', '运行前先完全退出浏览器，软件才能把你的 H&M 身份克隆到专用会话。跑之前先在该浏览器里人肉逛过 H&M，身份会更扎实。'),
+        },
+      ],
+    },
+    {
       id: 'slides',
       title: tx('Slides Maker', 'PPT 生成'),
       summary: tx(
-        'Turns already-named folders or image groups into presentation-ready decks.',
+        'Turns organized folders or image groups into presentation-ready decks.',
         '把整理好的文件夹或图片分组直接做成可交付的演示文稿。',
       ),
       scenarios: [
@@ -17,24 +46,48 @@ function buildManualSections(tx) {
       ],
       options: [
         {
-          name: tx('Style images + label image', '款式图 + 标签图'),
+          name: tx('Style mode', '款式模式'),
           bestFor: tx('Front/back garment presentations with label details', '正反面款式展示并带标签信息'),
-          notes: tx('Best when each style has matching garment photos and a clear label image. Reuses organizer JSON when available.', '最适合每个款都有正反面图和清晰标签图的情况；如果已有整理 JSON，会优先复用。'),
+          notes: tx('Builds a deck from style folders (each folder = one style) or a single folder. Reads files named like STYLE_F / STYLE_B and reuses organizer JSON when available.', '从款式文件夹（一个文件夹 = 一个款式）或单文件夹生成画册。读取像 款号_F / 款号_B 这样的命名，已有整理 JSON 时会优先复用。'),
         },
         {
-          name: tx('Single fabric image with label', '单张面料图带标签'),
-          bestFor: tx('Fabric decks with one fabric per page', '一页一个面料的面料类 PPT'),
-          notes: tx('Fixed single-page layout. Good when each fabric already has one hero image and one label source.', '固定单页版式，适合每个面料已有主图和标签来源的情况。'),
+          name: tx('Fabric mode', '面料模式'),
+          bestFor: tx('Fabric lookbooks with one fabric per page', '一页一个面料的面料画册'),
+          notes: tx('Fixed single-page layout. Good when each fabric already has one hero image and a label source.', '固定单页版式，适合每个面料已有主图和标签来源的情况。'),
         },
         {
-          name: tx('Moondream2 + Gr3_Fabric', 'Moondream2 + Gr3_Fabric'),
-          bestFor: tx('Use for richer apparel-style descriptions in PPT fields', '适合在 PPT 描述字段里生成更专业的服装款式描述'),
-          notes: tx('Moondream2 reads garment category, silhouette, and details; Gr3_Fabric complements fabric appearance and finish clues. The two outputs are merged into one cleaner description.', 'Moondream2 负责服装品类、轮廓和细节，Gr3_Fabric 补充面料外观与后整理线索，最后会合并成更完整的描述。'),
+          name: tx('AI model source', 'AI 模型来源'),
+          bestFor: tx('AI-written style names and descriptions on each page', '让每页的款式名和描述由 AI 生成'),
+          notes: tx('Follow Settings, Ollama (Local), Ollama Cloud, or GLM / API Cloud. The concrete model is whatever you configured on the Settings page for that source. Fields the AI leaves blank stay editable for manual filling.', '可选：跟随设置页 / Ollama 本地 / Ollama 云端 / GLM 云端（API）。具体模型就是该来源在设置页配置的那个；AI 没写的字段会留空，方便后续人工补。'),
+        },
+      ],
+    },
+    {
+      id: 'bestseller',
+      title: tx('Bestseller Analysis', '热门款式分析'),
+      summary: tx(
+        'Pulls a brand\'s best-seller listing and turns it into an AI trend report.',
+        '抓取品牌的热门榜单，并生成 AI 趋势报告。',
+      ),
+      scenarios: [
+        tx('You want to know what is currently selling on New Yorker, UNIQLO, H&M, Free People, or Intersport.', '你想了解 New Yorker、UNIQLO、H&M、Free People 或 Intersport 当前什么好卖。'),
+        tx('You need trend evidence to back up style, pricing, or naming decisions.', '你需要热门趋势作为款式、价格或命名决策的参考依据。'),
+      ],
+      options: [
+        {
+          name: tx('Guided wizard (H&M)', '向导式设置（H&M）'),
+          bestFor: tx('First-time or occasional H&M runs', '第一次或偶尔跑 H&M'),
+          notes: tx('Pick the brand, pick the browser, then run the check. It only asks you to confirm two things: the browser is fully closed, and your H&M identity was copied successfully. The Next button unlocks once both pass.', '选品牌 → 选浏览器 → 运行检测。只需确认两件事：浏览器已完全退出、H&M 身份克隆成功。两项都通过后「下一步」才会解锁。'),
         },
         {
-          name: tx('Style images only', '仅款式图'),
-          bestFor: tx('Fast garment decks when no label data exists yet', '暂时没有标签信息时快速出款式 PPT'),
-          notes: tx('Reads files named like STYLE_F and STYLE_B. Optional blank fields can be kept in the slide for manual filling later.', '读取像 `款号_F`、`款号_B` 这样的命名。也可以保留空白字段，方便后续人工填写。'),
+          name: tx('AI trend report', 'AI 趋势报告'),
+          bestFor: tx('A written read on the ranking instead of just a folder of images', '不只是图片文件夹，还要一份对榜单的文字解读'),
+          notes: tx('Optional toggle after scraping. Choose the AI source (Follow Settings / Ollama Local / Ollama Cloud / GLM API Cloud) and the report language.', '抓取后的可选项。选择 AI 来源（跟随设置 / Ollama 本地 / Ollama 云端 / GLM API 云端）和报告语言。'),
+        },
+        {
+          name: tx('Occasional blocks are normal', '偶尔被拦是正常现象'),
+          bestFor: tx('Interpreting a failed run', '理解一次失败的运行'),
+          notes: tx('H&M\'s protection scores each visit, so identical runs can pass and fail minutes apart. Wait a few minutes and retry instead of changing settings right away; immediate retries usually make it worse.', 'H&M 的风控按访问打分，同样的运行几分钟内就可能一过一拦。失败后等几分钟再重试，不要急着改设置；连续立即重试通常只会更糟。'),
         },
       ],
     },
@@ -46,69 +99,49 @@ function buildManualSections(tx) {
         '根据标签证据重命名服装图或面料图，并保存可复用元数据。',
       ),
       scenarios: [
-        tx('You need consistent style codes before making a PPT.', '你想先把图片整理成统一款号，再去做 PPT。'),
+        tx('You need consistent style or fabric codes before making a PPT.', '你想先把图片整理成统一款号/面料号，再去做 PPT。'),
         tx('You want OCR results and matching metadata to be reused in later modules.', '你希望 OCR 结果和匹配元数据能被后续模块直接复用。'),
       ],
       options: [
         {
-          name: tx('Automatic grouping', '自动分组'),
-          bestFor: tx('Mixed folders where the app should infer which image is F/B/label', '文件夹内容较杂，需要软件自动判断 F/B/标签图'),
-          notes: tx('More flexible, but depends on OCR and layout clues. Best when image order is not guaranteed.', '更灵活，但更依赖 OCR 和版面线索。适合图片顺序不固定的情况。'),
+          name: tx('Naming: read from label vs group order', '命名：读标签 vs 按组内顺序'),
+          bestFor: tx('Label reading gives real style/fabric codes; group order just numbers images 1, 2, 3…', '读标签得到真实款号/面料号；按顺序只是 1, 2, 3 编号'),
+          notes: tx('Set how many images make one group and which position is the label. Then choose whether the code is a style number or a fabric code — this decides which OCR fields are prioritized and how Slides Maker reuses the metadata.', '设置几张图为一组、哪一张是标签图，再选择命名按款号还是面料号 —— 这会决定优先读取哪些 OCR 字段，也影响 PPT 生成如何复用元数据。'),
         },
         {
-          name: tx('Fixed grouping', '固定分组'),
-          bestFor: tx('Shot lists like 1,2,3 and 4,5,6 where the last image is always the label', '像 1,2,3 / 4,5,6 这种固定拍摄顺序，且最后一张总是标签图'),
-          notes: tx('Fastest and most stable when the shooting pattern is consistent.', '拍摄顺序稳定时，这种方式最快也最稳。'),
+          name: tx('Output mode', '输出方式'),
+          bestFor: tx('One folder per group, or everything in a single folder', '一组一个文件夹，或全部放同一文件夹'),
+          notes: tx('Grouped folders feed straight into Style mode in Slides Maker.', '分组文件夹可以直接喂给 PPT 生成的款式模式。'),
         },
         {
-          name: tx('Style code naming vs fabric code naming', '按款号命名 vs 按面料号命名'),
-          bestFor: tx('Choose style naming for garment decks; choose fabric naming for fabric libraries and fabric PPTs.', '做款式类文件夹和款式 PPT 选款号命名；做面料库和面料 PPT 选面料号命名。'),
-          notes: tx('The selected naming strategy determines which OCR fields are prioritized and how later PPT modules can reuse the metadata.', '命名策略会决定优先读取哪些 OCR 字段，也会影响后续 PPT 模块如何复用元数据。'),
-        },
-        {
-          name: tx('Local OCR / PaddleOCR-VL 1.5 vs DeepSeek OCR', '本机 OCR / PaddleOCR-VL 1.5 vs DeepSeek OCR'),
-          bestFor: tx('Local OCR is the faster default for daily organizing. DeepSeek OCR V2 is stronger but slower, and PaddleOCR-VL 1.5 is better for more complex labels.', '本机 OCR 是更快的默认路线，适合日常整理；DeepSeek OCR V2 更强但更慢；PaddleOCR-VL 1.5 更适合复杂标签。'),
-          notes: tx('The app uses one primary OCR engine at a time. OCR models that are not ready yet stay hidden from dropdowns to avoid confusion.', '当前 OCR 只使用一个主引擎。未就绪的 OCR 模型不会显示在下拉列表里，以避免误解。'),
+          name: tx('OCR engine', 'OCR 引擎'),
+          bestFor: tx('Guten OCR is the fast default; PaddleOCR-VL 1.6 handles complex labels; DeepSeek OCR is the strongest but slowest', 'Guten OCR 是最快的默认路线；PaddleOCR-VL 1.6 适合复杂标签；DeepSeek OCR 最强但最慢'),
+          notes: tx('One engine runs at a time, and engines that are not ready yet stay hidden from the dropdown. A cloud PaddleOCR option is also available.', '同一时间只用一个引擎，未就绪的引擎不会出现在下拉里。另有 PaddleOCR 云端可选。'),
         },
       ],
     },
     {
-      id: 'analysis',
-      title: tx('Product Analysis', '产品分析'),
+      id: 'labelocr',
+      title: tx('Label OCR', '标签规则'),
       summary: tx(
-        'Builds a product report from PDFs, PPTs, or folders by combining text extraction, visual dedupe, OCR, and optional AI analysis.',
-        '从 PDF、PPT 或文件夹生成产品分析报告，结合文字提取、视觉去重、OCR 和可选 AI 分析。',
+        'Sets the shared OCR label tags used by Slides Maker and Image Organizer.',
+        '统一设置 PPT 生成和图片整理共用的 OCR 标签规则。',
       ),
       scenarios: [
-        tx('You need a market-style report with category, materials, fit, design direction, and recommendations.', '你需要一份带品类、面料、版型、设计方向和建议的市场化分析报告。'),
-        tx('You are analyzing lookbooks, meeting-note PDFs, or mixed folder drops from buyers and vendors.', '你要分析 lookbook、会议 PDF，或买手/供应商给的一整包文件夹。'),
+        tx('You want both modules to read the same fields from labels, instead of configuring each one twice.', '你想让两个模块按同一套字段读标签，而不是各配一遍。'),
+        tx('The default tag set does not match the labels you shoot.', '默认标签集合和你们拍的标签对不上。'),
       ],
       options: [
         {
-          name: tx('PDF / PPT / folder source', 'PDF / PPT / 文件夹来源'),
-          bestFor: tx('Pick the source closest to the original material. Folder mode is strongest when image naming is already clean.', '尽量选最接近原始材料的来源；如果图片命名已经很干净，文件夹模式通常最稳。'),
-          notes: tx('PDF and PPT mode use text extraction plus visual fallback. Folder mode works best when product images and notes are already separated clearly.', 'PDF 和 PPT 模式会结合文本提取与视觉回退；文件夹模式最适合图片和说明已分得比较清楚的情况。'),
-        },
-        {
-          name: tx('AI enabled', '开启 AI'),
-          bestFor: tx('Detailed language, style clustering, fit interpretation, and strategic recommendations', '需要更细的语言描述、风格聚类、版型解读和策略建议'),
-          notes: tx('Use this when you want a client-facing or management-facing report. Without AI, the output stays more factual and list-like.', '如果你要交付给客户或管理层，建议开启；不开启时报告会更偏事实型和列表型。'),
-        },
-        {
-          name: tx('Moondream2 + Gr3_Fabric', 'Moondream2 + Gr3_Fabric'),
-          bestFor: tx('Sharper apparel reading when category, silhouette, and fabric story matter', '当你更在意品类、版型和面料故事时使用'),
-          notes: tx('Moondream2 emphasizes garment family, silhouette, and visible construction; Gr3_Fabric adds textile appearance, surface, and finish clues. Their outputs are merged before the final analysis prompt is written.', 'Moondream2 更擅长服装家族、轮廓和可见结构；Gr3_Fabric 会补充织物外观、表面和整理线索，两者会在进入最终分析提示词前先合并。'),
-        },
-        {
-          name: tx('Visual-first counting', '视觉优先计数'),
-          bestFor: tx('Lookbooks with repeated pages, contact sheets, or very small garment labels', '存在重复页、拼页或服装图上小吊牌很多的 lookbook'),
-          notes: tx('The app tries to ignore tiny attached labels on garments and counts visually distinct styles instead of every repeated page.', '软件会尽量忽略服装图上的小吊牌，并按视觉上不重复的款式来统计，而不是把重复页面都算进去。'),
+          name: tx('Shared tag rules', '共享标签规则'),
+          bestFor: tx('Consistent OCR reading across modules', '让各模块的 OCR 读取保持一致'),
+          notes: tx('Rules set here apply to both Slides Maker and Image Organizer. Reset to defaults restores the built-in tag set at any time.', '这里设置的规则同时作用于 PPT 生成和图片整理；「恢复默认标签」随时可以还原内置规则。'),
         },
       ],
     },
     {
       id: 'pdf',
-      title: tx('PDF压缩器', 'PDF压缩器'),
+      title: tx('PDF Squeezer', 'PDF压缩器'),
       summary: tx(
         'Compresses one or more PDFs and gives you a cleaner save workflow for sending or archiving.',
         '压缩一个或多个 PDF，并提供更适合发送邮件或归档的保存流程。',
@@ -132,25 +165,6 @@ function buildManualSections(tx) {
           name: tx('Strong', '强力'),
           bestFor: tx('Email targets and very large scanned PDFs', '邮件目标体积和特别大的扫描 PDF'),
           notes: tx('More aggressive and may soften images, but it gives the highest chance of reaching a strict file-size target.', '更激进，图片可能更软，但最有机会压到严格的体积目标。'),
-        },
-      ],
-    },
-    {
-      id: 'scraper',
-      title: tx('Scraper', '抓取器'),
-      summary: tx(
-        'Collects product assets and structured information from supported retail sites.',
-        '从支持的零售网站抓取商品素材和结构化信息。',
-      ),
-      scenarios: [
-        tx('You need to collect reference images or product pages from Zara, Bershka, or Stradivarius.', '你需要从 Zara、Bershka、Stradivarius 收集参考图或产品页。'),
-        tx('You want to batch-save images and metadata for later analysis, naming, or deck generation.', '你想批量保存图片和资料，后续再做分析、命名或 PPT。'),
-      ],
-      options: [
-        {
-          name: tx('URL / SKU driven capture', 'URL / 款号驱动抓取'),
-          bestFor: tx('Use URLs when you already know the exact page. Use SKU when you need the app to find the page first.', '已知页面链接就直接用 URL；只有款号时用 SKU 让软件先找页面。'),
-          notes: tx('SKU lookup can be slower but is more scalable when you only have internal product lists.', 'SKU 查找会稍慢，但当你只有内部货号列表时更适合批量处理。'),
         },
       ],
     },

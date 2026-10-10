@@ -891,12 +891,12 @@ def resolve_apparel_vision_settings():
                 print(f"  [vision] ignoring local-only model '{value}' in cloud mode — using {LLM_MODEL}")
                 config[key] = ''
 
-    if LLM_ENABLED and LLM_MODEL:
-        fabric_model = config.get('fabricModel') or LLM_MODEL
-        garment_model = config.get('garmentModel') or LLM_MODEL
-    else:
-        fabric_model = config.get('fabricModel') or 'gr3-fabric'
-        garment_model = config.get('garmentModel') or 'moondream:1.8b'
+    # 2026-10-10: 硬编码的本地专用回退模型（gr3-fabric / moondream:1.8b）彻底移除 ——
+    # 视觉模型只能来自当前 AI 模式下配置的模型（LLM_MODEL / OLLAMA_MODEL），
+    # 不再有任何 moondream/gr3 残留。
+    fallback_model = LLM_MODEL or OLLAMA_MODEL or ''
+    fabric_model = config.get('fabricModel') or fallback_model
+    garment_model = config.get('garmentModel') or fallback_model
 
     # When no explicit apparel vision config exists, fully inherit api_key and
     # provider from the main LLM so the API call format matches (OpenAI vs Ollama).
@@ -908,7 +908,7 @@ def resolve_apparel_vision_settings():
     if config.get('apiKey') and not _is_ollama_url(base_url):
         provider = 'openai'
     return {
-        'enabled': bool(config.get('enabled', True)),
+        'enabled': bool(config.get('enabled', True)) and bool(garment_model and fabric_model),
         'base_url': base_url,
         'garment_model': garment_model,
         'fabric_model': fabric_model,

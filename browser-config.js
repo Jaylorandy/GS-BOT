@@ -10,17 +10,22 @@
  *
  * 配置文件：<userData>/browser-config.json
  *   {
- *     "preference": "auto",   // 'auto' | 'chrome' | 'edge' | 'bundled'
+ *     "preference": "auto",   // 'auto' | 'chrome' | 'edge'
  *     "chromePath": "",       // 用户手填，空 = 自动探测
  *     "edgePath": ""          // 用户手填，空 = 自动探测
  *   }
+ *
+ * ⚠️ 2026-10-10：'bundled' 档已删除。内置 Chromium 恒被 H&M 拦截，且「版本固定」
+ * 的好处在此为负（固定在一个会被拦的版本 = 稳定失败）。老配置文件里残留的
+ * 'bundled' 会被 normalizePreference 自动落到 DEFAULT_PREFERENCE（'auto'），
+ * 无需迁移代码 —— 但不要把它当成合法值再加回来。
  */
 
 const path = require('path');
 const fs = require('fs');
 const { app } = require('electron');
 
-const VALID_PREFERENCES = ['auto', 'chrome', 'edge', 'bundled'];
+const VALID_PREFERENCES = ['auto', 'chrome', 'edge'];
 const DEFAULT_PREFERENCE = 'auto';
 
 // 模块级缓存，避免每次抓取都重读磁盘

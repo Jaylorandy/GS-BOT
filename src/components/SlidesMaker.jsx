@@ -764,13 +764,8 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
                                 labels={{ endpointLabel: tx('AI endpoint', 'AI 端点'), modelLabel: tx('Model name', '模型名称') }}
                               />
                             </div>
-                            {effectiveSlidesAiMode === 'local' && !aiModelOverride && (
-                              <div className="slides-ai-status slides-ai-status--muted">
-                                {tx('Recommended local stack:', '推荐本地栈：')} Moondream2 + GR3-Fabric
-                              </div>
-                            )}
-                          </>
-                        )}
+                           </>
+                         )}
                       </div>
                     )}
                   </div>

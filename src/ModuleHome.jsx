@@ -188,20 +188,24 @@ function colLetter(col) {
 
 
 // ── H&M pre-flight panel ──────────────────────────────────
-// Runs the main-process diagnosis (browser brand / running processes / saved
-// identity) and renders it as a checklist. Exposed to the parent through
-// `onResult` so the wizard can warn before the run starts. This is a
-// diagnosis, never a gate: the user stays in control.
-function HmPreflightPanel({ field, value, onChange, t, tx, accentRgb, allParams }) {
+// The wizard's browser step is now just two questions: which browser, and "will
+// this run actually work?". This panel answers the second with two compact rows
+// — browser ready, identity ready — and reports the verdict upward through
+// `onChange` as `result.ready`, which the step uses to gate its "Next" button.
+//
+// Still a diagnosis at heart (the run itself warns rather than stops), but a run
+// that cannot possibly obtain an identity is one the user should not be allowed
+// to walk into: `ready` is false only when the browser is missing, or when it is
+// both running AND no saved identity exists to carry the scrape.
+function HmPreflightPanel({ onChange, tx, accentRgb, allParams }) {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const runRef = useRef(null);
 
   const runCheck = useCallback(async () => {
     const api = window.electronAPI;
     if (!api?.hmPreflightCheck) {
-      setError(tx('Pre-flight check is unavailable in this build.', '此版本不支持跑前检测。'));
+      setError(tx('Check unavailable in this build.', '此版本不支持检测。'));
       return null;
     }
     setLoading(true);
@@ -213,40 +217,44 @@ function HmPreflightPanel({ field, value, onChange, t, tx, accentRgb, allParams 
         onChange?.(res.result);
         return res.result;
       }
-      setError(res?.error || tx('Pre-flight check failed.', '跑前检测失败。'));
+      setError(res?.error || tx('Check failed.', '检测失败。'));
       return null;
     } catch (err) {
-      setError(err?.message || tx('Pre-flight check failed.', '跑前检测失败。'));
+      setError(err?.message || tx('Check failed.', '检测失败。'));
       return null;
     } finally {
       setLoading(false);
     }
   }, [allParams?.scraperBrowser, onChange, tx]);
 
-  // Auto-run once when the step is shown (and whenever the picked browser
-  // changes) so the user never has to guess that a check exists.
-  useEffect(() => {
-    runRef.current = runCheck;
-  }, [runCheck]);
-
+  // Auto-run when the step appears, and again whenever the picked browser
+  // changes — the user should never have to guess that a check exists.
   useEffect(() => {
     runCheck();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allParams?.scraperBrowser]);
 
-  const warnings = result?.warnings || [];
-  const errors = warnings.filter((w) => w.severity === 'error');
-  const running = result?.runningProcesses || [];
-
+  const rowStyle = { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.86em', lineHeight: 1.5, marginBottom: 6 };
   const okStyle = { color: '#4ade80' };
   const warnStyle = { color: '#fbbf24' };
   const errStyle = { color: '#f87171' };
-  const rowStyle = { display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: '0.86em', lineHeight: 1.5, marginBottom: 6 };
+
+  // Every value below comes straight from the preflight payload — the same
+  // signals the main process used to decide `ready`, so the rows can never
+  // disagree with what the run will actually do.
+  const brandLabel = result?.sourceLabel
+    || (result?.sourceBrand === 'edge' ? 'Microsoft Edge' : 'Google Chrome');
+  const image = result?.sourceBrand === 'edge' ? 'msedge.exe' : 'chrome.exe';
+  const browserOk = result ? result.browser?.available !== false : null;
+  const quit = result ? result.sourceRunning !== true : null;
+  const idState = !result ? 'pending'
+    : result.identity?.has ? 'saved'
+      : result.cloneReady ? 'clone'
+        : 'missing';
+  const idOk = idState === 'saved' || idState === 'clone';
 
   return (
     <div className="wizard-field wizard-field--hm-preflight">
-      <label className="wizard-field__label">{t(field.label)}</label>
-
       {loading && !result && (
         <div className="hm-preflight__loading">{tx('Checking…', '检测中…')}</div>
       )}
@@ -254,120 +262,40 @@ function HmPreflightPanel({ field, value, onChange, t, tx, accentRgb, allParams 
       {result && (
         <div className="hm-preflight">
           <div style={rowStyle}>
-            <span style={result.browser?.isBundled ? errStyle : okStyle}>
-              {result.browser?.isBundled ? '✕' : '✓'}
+            <span style={browserOk === false ? errStyle : (quit ? okStyle : warnStyle)}>
+              {browserOk === false ? '✕' : (quit ? '✓' : '!')}
             </span>
-            <span>
-              {tx('Browser', '浏览器')}: <strong>
-                {result.browser?.brand === 'edge' ? 'Microsoft Edge'
-                  : result.browser?.brand === 'chrome' ? 'Google Chrome'
-                    : tx('Bundled Chromium', '内置 Chromium')}
-              </strong>
-              {result.browser?.isBundled
-                ? tx(' — H&M blocks the bundled browser.', ' — H&M 会拦截内置浏览器。')
-                : ''}
-            </span>
-          </div>
-
-          <div style={rowStyle}>
-            {(() => {
-              const chromeRunning = running.includes('chrome');
-              const edgeRunning = running.includes('edge');
-              const pickedEdge = allParams?.scraperBrowser === 'edge';
-              // Relevance mirrors main's preflight: Chrome processes block the
-              // identity clone (the clone reads Chrome's cookie store); Edge
-              // only matters when Edge itself is the scraping browser.
-              if (chromeRunning && edgeRunning) {
-                return (
-                  <>
-                    <span style={warnStyle}>!</span>
-                    <span>
-                      {tx(
-                        'Chrome and Edge are running (possibly hidden background processes). Chrome locks its cookie store, which the identity clone needs — fully quit Chrome before scraping.',
-                        'Chrome 和 Edge 正在运行（可能只是无窗口的后台进程）。Chrome 会锁住身份克隆要读的 cookie 库 —— 抓取前请完全退出 Chrome。'
-                      )}
-                    </span>
-                  </>
-                );
-              }
-              if (chromeRunning) {
-                return (
-                  <>
-                    <span style={warnStyle}>!</span>
-                    <span>
-                      {tx(
-                        'Chrome is running (possibly hidden background processes — Edge-style "startup boost"). It locks the cookie store the identity clone reads — fully quit Chrome, then check Task Manager for leftover chrome.exe.',
-                        'Chrome 正在运行（可能只是"启动加速"留下的无窗口后台进程）。它锁住了身份克隆要读的 cookie 库 —— 请完全退出 Chrome，并在任务管理器确认没有残留的 chrome.exe。'
-                      )}
-                    </span>
-                  </>
-                );
-              }
-              if (edgeRunning && pickedEdge) {
-                return (
-                  <>
-                    <span style={warnStyle}>!</span>
-                    <span>
-                      {tx(
-                        'Edge is running (possibly hidden background processes from Edge\'s "startup boost" — no visible window needed). Fully quit Edge before scraping with Edge.',
-                        'Edge 正在运行（可能只是"启动加速"留下的无窗口后台进程）。用 Edge 抓取前请完全退出 Edge。'
-                      )}
-                    </span>
-                  </>
-                );
-              }
-              if (edgeRunning) {
-                return (
-                  <>
-                    <span style={okStyle}>✓</span>
-                    <span>
-                      {tx(
-                        'Chrome is not running — the cookie store is readable. (Edge has background processes, but they do not affect this scrape.)',
-                        'Chrome 未运行 —— cookie 库可读。（Edge 有后台进程，但不影响本次抓取。）'
-                      )}
-                    </span>
-                  </>
-                );
-              }
-              return (
-                <>
-                  <span style={okStyle}>✓</span>
-                  <span>
-                    {tx(
-                      'No Chrome / Edge process is running — the cookie store is readable.',
-                      '未检测到 Chrome / Edge 进程 —— cookie 库可读。'
-                    )}
+            {browserOk === false ? (
+              <span>
+                {tx('No Chrome or Edge found — install one, then re-check.', '未找到 Chrome 或 Edge —— 请先安装，再检测。')}
+              </span>
+            ) : (
+              <span>
+                <strong>{brandLabel}</strong>
+                {quit
+                  ? tx(' is fully quit', ' 已完全退出')
+                  : tx(' is still running', ' 仍在运行')}
+                {!quit && (
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    {tx(` — quit it (no ${image} in Task Manager).`, ` —— 建议完全退出（任务管理器确认无 ${image}）。`)}
                   </span>
-                </>
-              );
-            })()}
+                )}
+              </span>
+            )}
           </div>
 
           <div style={rowStyle}>
-            <span style={result.identity?.has ? okStyle : warnStyle}>{result.identity?.has ? '✓' : '!'}</span>
+            <span style={idOk ? okStyle : errStyle}>{idOk ? '✓' : '✕'}</span>
             <span>
-              {result.identity?.has
-                ? tx(
-                  `Saved identity found (${result.identity.cookieCount} cookies, cloned ${result.identity.clonedAt || 'unknown'}).`,
-                  `已找到保存的身份（${result.identity.cookieCount} 条 cookie，克隆于 ${result.identity.clonedAt || '未知'}）。`
-                )
-                : tx(
-                  'No saved identity yet — on a cold start it is cloned from your browser, so that browser must be fully quit.',
-                  '尚无保存的身份 —— 冷启动时会从你的浏览器克隆，因此该浏览器必须完全退出。'
-                )}
+              {idState === 'saved'
+                ? tx(`Identity saved (${result.identity.cookieCount} cookies)`, `身份已保存（${result.identity.cookieCount} 条）`)
+                : idState === 'clone'
+                  ? tx(`Identity will be cloned from ${brandLabel}`, `身份将从 ${brandLabel} 克隆`)
+                  : idState === 'missing'
+                    ? tx(`No identity — open H&M once in ${brandLabel}, then quit it.`, `无可用身份 —— 先在 ${brandLabel} 打开一次 H&M，再退出。`)
+                    : tx('Checking…', '检测中…')}
             </span>
           </div>
-
-          {errors.length > 0 && (
-            <div className="hm-preflight__blocking">
-              {errors.map((w) => (
-                <div key={w.code} style={{ ...rowStyle, marginBottom: 4 }}>
-                  <span style={errStyle}>✕</span>
-                  <span>{w.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
 
           <button
             type="button"
@@ -376,13 +304,12 @@ function HmPreflightPanel({ field, value, onChange, t, tx, accentRgb, allParams 
             onClick={runCheck}
             disabled={loading}
           >
-            {loading ? tx('Checking…', '检测中…') : tx('Re-check', '重新检测')}
+            {loading ? tx('Checking…', '检测中…') : tx('Run check', '运行检测')}
           </button>
         </div>
       )}
 
       {error && <span className="wizard-field__hint" style={{ color: '#f87171' }}>{error}</span>}
-      {field.hint && <span className="wizard-field__hint">{t(field.hint)}</span>}
     </div>
   );
 }
@@ -459,10 +386,7 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
   if (field.type === 'hm-preflight') {
     return (
       <HmPreflightPanel
-        field={field}
-        value={value}
         onChange={onChange}
-        t={t}
         tx={tx}
         accentRgb={accentRgb}
         allParams={allParams}
@@ -1711,6 +1635,12 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     return step.fields.every(f => {
       if (!f.required) return true;
       if (f.showWhen && !f.showWhen(params)) return true;
+      // H&M pre-flight gate. The field's value is the whole diagnosis object,
+      // not a scalar — the generic non-empty check below would treat it as
+      // "filled" (and `v.path` does not apply), letting the user walk past a run
+      // that cannot possibly clone an identity. Satisfied only once the check has
+      // run AND reported the run is viable.
+      if (f.type === 'hm-preflight') return params[f.key]?.ready === true;
       const v = params[f.key];
       if (v === undefined || v === '' || v === null) return false;
       // Handle object values from source-or-file-picker

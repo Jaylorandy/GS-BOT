@@ -191,6 +191,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   browserGetConfig: () => ipcRenderer.invoke('browser-get-config'),
   browserSaveConfig: (patch) => ipcRenderer.invoke('browser-save-config', patch),
   browserPickExecutable: (which) => ipcRenderer.invoke('browser-pick-executable', which),
+  // Manual-only escape hatch for machines with neither Chrome nor Edge. Every
+  // scraper used to call this automatically; that fallback is gone (2026-10-10).
+  browserInstallChromeRuntime: () => ipcRenderer.invoke('browser-install-chrome-runtime'),
+  onBrowserInstallChromeProgress: (callback) => ipcRenderer.on('browser-install-chrome-progress', (_event, value) => callback(value)),
+  removeBrowserInstallChromeListener: () => {
+    ipcRenderer.removeAllListeners('browser-install-chrome-progress');
+  },
   // Pre-run diagnosis for H&M (browser brand / running processes / saved identity)
   hmPreflightCheck: (options) => ipcRenderer.invoke('hm-preflight-check', options),
 
