@@ -929,7 +929,14 @@ async function main() {
   await prepareBundledPython();
   await prepareBundledNode();
   await prepareWindowsVisualCppRuntime();
-  await prepareBundledChromium();
+  // Bundled Chromium is no longer shipped (2026-10-10, Spec-本地浏览器优先改造.md):
+  // the app resolves the user's locally installed Chrome/Edge only. Skip the
+  // ~400 MB download by default; escape hatch for rollback: GSBOT_PREPARE_CHROMIUM=1
+  if (process.env.GSBOT_PREPARE_CHROMIUM === '1') {
+    await prepareBundledChromium();
+  } else {
+    console.log('[runtime] Skipping bundled Chromium (no longer shipped). Set GSBOT_PREPARE_CHROMIUM=1 to prepare it.');
+  }
   prepareBundledPaddleVlRuntime();
   prepareBundledRmbgRuntime();
   prepareBundledLabelDetectorRuntime();
