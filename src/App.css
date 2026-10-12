@@ -960,6 +960,7 @@
 }
 
 .setup-module-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background: #ffffff06;
@@ -969,9 +970,27 @@
   transition: border-color .2s ease,background .2s ease;
 }
 
+/* 顶部渐变亮线：克制的科技感；hover 时点亮 */
+.setup-module-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg,transparent,rgba(var(--accent-rgb),.55),transparent);
+  opacity: .4;
+  transition: opacity .22s ease;
+  pointer-events: none;
+}
+
 .setup-module-card:hover {
-  border-color: #ffffff1f;
+  border-color: rgba(var(--accent-rgb),.2);
   background: #ffffff09;
+}
+
+.setup-module-card:hover::before {
+  opacity: .9;
 }
 
 .setup-module-card--wide {
@@ -979,11 +998,23 @@
 }
 
 .setup-module-card__head {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: clamp(14px,1.5vw,18px) clamp(16px,1.8vw,22px);
-  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+
+/* 表头与内容之间改用渐变细线（两端淡出），比实线更精致 */
+.setup-module-card__head::after {
+  content: "";
+  position: absolute;
+  left: clamp(16px,1.8vw,22px);
+  right: clamp(16px,1.8vw,22px);
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg,rgba(255,255,255,.1),rgba(var(--accent-rgb),.26),rgba(255,255,255,.07));
+  pointer-events: none;
 }
 
 .setup-module-card__icon {
@@ -1115,7 +1146,7 @@
 
 .setup-module-card__body .setup-access-grid > .setup-section-block > .setup-inline-actions {
   margin-top: auto;
-  padding-top: 16px;
+  padding-top: 20px;
 }
 
 /* 状态胶囊并入小标题行，右侧对齐，省掉一整行高度 */
@@ -1144,11 +1175,23 @@
 }
 
 .setup-module-card__foot {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: clamp(10px,1vw,14px) clamp(16px,1.8vw,22px);
-  border-top: 1px solid rgba(255,255,255,.05);
+}
+
+/* 卡片底部操作区与正文之间同样渐变分隔 */
+.setup-module-card__foot::before {
+  content: "";
+  position: absolute;
+  left: clamp(16px,1.8vw,22px);
+  right: clamp(16px,1.8vw,22px);
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg,rgba(var(--accent-rgb),.22),rgba(255,255,255,.08),transparent);
+  pointer-events: none;
 }
 
 .setup-module-sub {
@@ -1208,9 +1251,18 @@
   font-size: .82rem;
 }
 
+/* 技术型字段（URL / API key / 模型名）用等宽字体，信息层次更清楚 */
+.setup-module-card__body .setup-field input {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  letter-spacing: .01em;
+}
+
 .setup-module-card__body .setup-inline-actions {
   gap: 6px;
   flex-wrap: wrap;
+  /* 用户反馈：按钮与上方字段/说明贴得太近，留出一行呼吸感 */
+  margin-top: 20px;
 }
 
 .setup-module-card__body .setup-inline-actions button {
@@ -1229,7 +1281,7 @@
 }
 
 .setup-module-card__body .setup-form-grid {
-  gap: 8px;
+  gap: 12px;
 }
 
 .setup-module-card__body .setup-field-note,.setup-module-card__body .setup-inline-hint {
@@ -6242,6 +6294,99 @@ button:focus-visible,input[type=radio]:focus-visible,input[type=checkbox]:focus-
   （titleBarOverlay 高 40px、宽约 138px；不避让会压住 EN/中 按钮） */
 .app-shell[data-platform="win32"] .workspace-toolbar-top {
   padding-right: 148px;
+}
+
+/* ── Slider switch (on/off with a green "light") ─────────────────────────── */
+.setup-switch-row {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--card-surface-border);
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--card-surface-start), var(--card-surface-end));
+  box-shadow: inset 0 1px 0 var(--card-surface-inset);
+}
+
+.setup-switch-row strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+.setup-switch-row .setup-switch-note {
+  display: block;
+  margin-top: 4px;
+  color: var(--text-muted);
+  font-size: 0.74rem;
+  line-height: 1.45;
+}
+
+.setup-switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 26px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--soft-button-border);
+  background: var(--soft-button-bg);
+  cursor: pointer;
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.setup-switch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--text-muted);
+  transition:
+    left 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.setup-switch.on {
+  border-color: rgba(34, 197, 94, 0.5);
+  background: rgba(34, 197, 94, 0.22);
+}
+
+.setup-switch.on::after {
+  left: 23px;
+  background: #22c55e;
+  box-shadow: 0 0 10px rgba(34, 197, 94, 0.85);
+}
+
+.setup-switch:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Native <select> popup readability ──────────────────────────────
+   Windows 上 Chromium 的下拉弹出层按系统浅色渲染（白底浅字不可读）。
+   给 option / optgroup 显式上深色，选中项用主题色高亮，并加大行距。 */
+select option,
+select optgroup {
+  background-color: var(--surface-1, #181a30);
+  color: var(--text-primary, #f0f1fb);
+}
+
+select option {
+  padding: 7px 12px;
+}
+
+/* 选中 / 悬停项用深色高亮 + 纯白字（系统默认的浅蓝/浅绿高亮在深色主题下不可读） */
+select option:checked,
+select option:hover {
+  background-color: rgba(var(--accent-rgb, 168, 199, 250), 0.32);
+  color: #ffffff;
 }
 
 

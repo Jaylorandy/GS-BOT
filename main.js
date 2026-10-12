@@ -3,6 +3,13 @@ const path = require('path');
 const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 
+// App UI is dark-only: force Chromium's native widgets (select popups, context
+// menus, scrollbars) to render dark even when Windows itself is in light mode.
+// Without this, a <select> dropdown opens with the system's white background
+// and unreadable light-gray option text.
+nativeTheme.themeSource = 'dark';
+
+
 // ── Ensure sharp native DLLs are discoverable in packaged builds ──
 // On Windows, sharp's .node file needs libvips-42.dll / libvips-cpp.dll from
 // @img/sharp-win32-x64/lib, which lives in app.asar.unpacked. Add it to PATH

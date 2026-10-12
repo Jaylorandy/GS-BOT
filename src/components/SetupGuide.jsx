@@ -10,6 +10,17 @@ import { splitModelsByVision, pickDefaultModel } from '../utils/modelCapabilitie
 import OcrModelStore from './OcrModelStore';
 import './SetupGuide.css';
 
+// Settings tab bar — one tab per integration card. The old single "Core
+// Services" tab bundled API Cloud + Firecrawl + Scraper Browser + OCR and
+// forced users to scroll past unrelated cards.
+const SETTINGS_TABS = [
+  { id: 'ollama', en: 'Ollama', zh: 'Ollama' },
+  { id: 'apicloud', en: 'API Cloud', zh: 'API 云端' },
+  { id: 'ocr', en: 'OCR', zh: 'OCR' },
+  { id: 'firecrawl', en: 'Firecrawl', zh: 'Firecrawl' },
+  { id: 'browser', en: 'Local Browser', zh: '本地浏览器' },
+];
+
 // ═══════════════════════════════════════════════════
 // Firecrawl Configuration Panel
 // ═══════════════════════════════════════════════════
@@ -57,7 +68,9 @@ const FirecrawlConfigPanel = React.forwardRef(function FirecrawlConfigPanel(_pro
       if (result?.success) {
         setIsConfigured(true);
         setMessage({ type: 'success', text: tx('Firecrawl API Key saved successfully!', 'Firecrawl API Key 已保存!') });
-        setApiKey(''); // Clear input after save
+        // Keep the key in the field so the masked dots signal "filled" (the
+        // backend never returns the key, so clearing here left the panel
+        // looking unconfigured after a successful save).
       } else {
         setMessage({ type: 'error', text: result?.error || tx('Save failed', '保存失败') });
       }
@@ -107,149 +120,78 @@ const FirecrawlConfigPanel = React.forwardRef(function FirecrawlConfigPanel(_pro
       const result = await window.electronAPI?.firecrawlSaveConfig?.(draft);
       if (result?.success) {
         setIsConfigured(true);
-        setApiKey('');
+        // Keep the dots in the field — same rationale as handleSave().
       }
     },
   }), [apiKey]);
 
   return (
     <section className="setup-panel">
-      <h3 style={{ marginTop: 0 }}>Firecrawl {tx('Backup Scraper Engine', '备用抓取引擎')}</h3>
-      
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9em', marginBottom: '1.5em' }}>
-        {tx(
-          'When your local IP is blocked by target websites, GS Bot automatically falls back to Firecrawl cloud proxy pool to continue scraping.',
-          '当本地 IP 被目标网站封禁时，GS Bot 会自动切换到 Firecrawl 云端代理池继续抓取。'
-        )}
-      </p>
+      {/* State summary — same pill style as the LLM/API-cloud card */}
+      <div className="setup-mini-summary" style={{ marginTop: 0 }}>
+        <span className={`setup-runtime-pill ${isConfigured ? 'ready' : ''}`}>
+          {isConfigured ? tx('API key added', '已填写 API key') : tx('API key missing', '未填写 API key')}
+        </span>
+        <span className={`setup-runtime-pill ${isEnabled ? 'ready' : ''}`}>
+          {isEnabled ? tx('Cloud fallback on', '云端代理已启用') : tx('Cloud fallback off', '云端代理未启用')}
+        </span>
+      </div>
 
-      {/* Scrape Mode Selector */}
-      <div style={{ marginBottom: '2em' }}>
-        <label style={{ display: 'block', marginBottom: '0.8em', fontWeight: 600, fontSize: '0.95em' }}>
-          {tx('Firecrawl Status', 'Firecrawl 状态')}
+      <div className="setup-form-grid">
+        <label className="setup-field">
+          <span>{tx('API key', 'API 密钥')}</span>
+          <input
+            type="password"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder={isConfigured ? '••••••••••••••••' : 'fc-xxxxxxxxxxxxxxxx'}
+            disabled={saving}
+          />
         </label>
-        <div style={{ display: 'flex', gap: '0.8em' }}>
-          <button
-            onClick={() => handleToggle(true)}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: '0.7em 1em',
-              borderRadius: '6px',
-              border: isEnabled ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-              background: isEnabled ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
-              color: 'var(--text-primary)',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              textAlign: 'left',
-              opacity: saving ? 0.6 : 1,
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: '0.3em', fontSize: '0.9em' }}>
-              {tx('Enabled', '已启用')}
-            </div>
-            <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {tx('All scraping requests use Firecrawl.', '所有抓取请求都使用 Firecrawl。')}
-            </div>
-          </button>
-          
-          <button
-            onClick={() => handleToggle(false)}
-            disabled={saving}
-            style={{
-              flex: 1,
-              padding: '0.7em 1em',
-              borderRadius: '6px',
-              border: !isEnabled ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-              background: !isEnabled ? 'rgba(239, 68, 68, 0.08)' : 'transparent',
-              color: 'var(--text-primary)',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              textAlign: 'left',
-              opacity: saving ? 0.6 : 1,
-            }}
-          >
-            <div style={{ fontWeight: 600, marginBottom: '0.3em', fontSize: '0.9em' }}>
-               {tx('Disabled', '已禁用')}
-            </div>
-            <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', lineHeight: 1.4 }}>
-              {tx('Using local Puppeteer only.', '仅使用本地 Puppeteer。')}
-            </div>
-          </button>
+      </div>
+      <span className="setup-field-note">
+        {isConfigured
+          ? tx('A key is saved — type a new one to replace it.', '已保存 Key，输入新 Key 可覆盖。')
+          : tx('Paste your firecrawl.dev key (fc-...).', '粘贴 firecrawl.dev 的 Key（fc- 开头）。')}
+      </span>
+
+      <div className="setup-inline-actions">
+        <button className="setup-primary-btn" onClick={handleSave} disabled={saving || !apiKey.trim()}>
+          {saving ? tx('Saving...', '保存中...') : tx('Save', '保存')}
+        </button>
+      </div>
+
+      {/* On/off slider — the green light shows the enabled state at a glance */}
+      <div className="setup-switch-row">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={isEnabled}
+          className={`setup-switch ${isEnabled ? 'on' : ''}`}
+          onClick={() => handleToggle(!isEnabled)}
+          disabled={saving}
+        />
+        <div>
+          <strong>{tx('Use Firecrawl cloud proxy', '启用 Firecrawl 云端代理')}</strong>
+          <span className="setup-switch-note">
+            {isEnabled
+              ? tx('All scraping requests go through Firecrawl.', '所有抓取请求都经过 Firecrawl。')
+              : tx('Off — scraping uses the local browser only.', '已关闭 —— 抓取只使用本地浏览器。')}
+          </span>
         </div>
       </div>
 
-      {/* API Key Input */}
-      <div style={{ marginBottom: '1.5em' }}>
-        <label style={{ display: 'block', marginBottom: '0.5em', fontWeight: 500 }}>
-          {tx('API Key', 'API 密钥')}:
-        </label>
-        <input
-          type="password"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          placeholder={tx('Enter Firecrawl API Key (fc-xxx...)', '输入 Firecrawl API Key (fc-xxx...)')}
-          disabled={saving}
+      {message && (
+        <div
           style={{
-            width: '100%',
-            padding: '0.6em 0.8em',
+            marginTop: '1em',
+            padding: '0.8em 1em',
             borderRadius: '6px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-input)',
-            color: 'var(--text-primary)',
-            fontSize: '0.95em',
-            boxSizing: 'border-box',
-          }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1em', marginBottom: '1.5em' }}>
-        <button
-          onClick={handleSave}
-          disabled={saving || !apiKey.trim()}
-          style={{
-            padding: '0.6em 1.5em',
-            borderRadius: '6px',
-            border: 'none',
-            background: saving || !apiKey.trim() ? 'var(--btn-disabled-bg)' : 'var(--primary-color)',
-            color: saving || !apiKey.trim() ? 'var(--btn-disabled-text)' : 'var(--accent-ink)',
-            cursor: saving || !apiKey.trim() ? 'not-allowed' : 'pointer',
-            fontWeight: 500,
-            fontSize: '0.95em',
+            background: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            color: message.type === 'success' ? '#16a34a' : '#dc2626',
+            fontSize: '0.9em',
           }}
         >
-          {saving ? tx('Saving...', '保存中...') : tx('Save Configuration', '保存配置')}
-        </button>
-
-        <span style={{
-          padding: '0.3em 0.8em',
-          borderRadius: '4px',
-          fontSize: '0.85em',
-          background: isConfigured ? 'rgba(34, 197, 94, 0.1)' : 'rgba(251, 191, 36, 0.1)',
-          color: isConfigured ? '#16a34a' : '#d97706',
-        }}>
-          {isConfigured ? '✅ ' + tx('Configured', '已配置') : '⚠️ ' + tx('Not configured', '未配置')}
-        </span>
-        
-        <span style={{
-          padding: '0.3em 0.8em',
-          borderRadius: '4px',
-          fontSize: '0.85em',
-          background: isEnabled ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          color: isEnabled ? '#16a34a' : '#dc2626',
-          fontWeight: 500,
-        }}>
-          {isEnabled ? '✅ Enabled' : '❌ Disabled'}
-        </span>
-      </div>
-
-      {message && (
-        <div style={{
-          padding: '0.8em 1em',
-          borderRadius: '6px',
-          marginBottom: '1.5em',
-          background: message.type === 'success' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-          color: message.type === 'success' ? '#16a34a' : '#dc2626',
-          fontSize: '0.9em',
-        }}>
           {message.text}
         </div>
       )}
@@ -290,17 +232,17 @@ function ScraperBrowserPanel() {
     {
       value: 'auto',
       label: tx('Automatic', '自动'),
-      desc: tx('Google Chrome first, then Microsoft Edge.', '优先本机 Google Chrome，其次 Microsoft Edge。'),
+      desc: tx('Chrome first, then Edge.', 'Chrome 优先，其次 Edge。'),
     },
     {
       value: 'chrome',
       label: 'Chrome',
-      desc: tx('Prefer the installed Google Chrome.', '优先使用已安装的 Google Chrome。'),
+      desc: tx('Use Chrome only.', '只使用 Chrome。'),
     },
     {
       value: 'edge',
       label: 'Edge',
-      desc: tx('Prefer the installed Microsoft Edge.', '优先使用已安装的 Microsoft Edge。'),
+      desc: tx('Use Edge only.', '只使用 Edge。'),
     },
   ];
 
@@ -417,76 +359,61 @@ function ScraperBrowserPanel() {
     border: '1px solid var(--border-color)',
     background: 'var(--bg-input)',
     color: 'var(--text-primary)',
-    fontSize: '0.9em',
+    // Executable paths are technical data — mono reads clearer here.
+    fontFamily: 'var(--font-mono)',
+    fontSize: '0.82em',
     boxSizing: 'border-box',
-  };
-
-  const btnStyle = {
-    padding: '0.6em 1em',
-    borderRadius: '6px',
-    border: '1px solid var(--border-color)',
-    background: 'transparent',
-    color: 'var(--text-primary)',
-    cursor: saving ? 'not-allowed' : 'pointer',
-    fontSize: '0.9em',
-    whiteSpace: 'nowrap',
-    opacity: saving ? 0.6 : 1,
   };
 
   return (
     <section className="setup-panel">
-      <h3 style={{ marginTop: 0 }}>{tx('Scraper Browser', '抓取浏览器')}</h3>
-
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9em', marginBottom: '1.5em' }}>
-        {tx(
-          'Sites such as H&M verify the browser itself, so scraping must run through a real installed browser. Chrome and Edge are both supported; pick whichever you have.',
-          'H&M 等站点会校验浏览器本身，因此抓取必须通过真实安装的浏览器进行。Chrome 与 Edge 均受支持，请选择你已安装的那个。'
+      {/* Resolved status — pills, same language as the other cards */}
+      <div className="setup-mini-summary" style={{ marginTop: 0 }}>
+        <span className={`setup-runtime-pill ${resolved.available ? 'ready' : ''}`}>
+          {loading
+            ? tx('Checking…', '检测中…')
+            : resolved.available
+              ? tx('Using: ', '当前使用：') + brandLabel
+              : tx('No browser found', '未找到浏览器')}
+        </span>
+        {!loading && resolved.customPathUsed && (
+          <span className="setup-runtime-pill ready">{tx('Custom path', '自定义路径')}</span>
         )}
-      </p>
+      </div>
+      {!loading && !resolved.available && (
+        <span className="setup-field-note">
+          {tx('Install Chrome or Edge, or pick the executable below.', '请安装 Chrome 或 Edge，或在下方手动指定程序路径。')}
+        </span>
+      )}
+      {!loading && resolved.executablePath && (
+        <span className="setup-field-note" style={{ wordBreak: 'break-all', fontFamily: 'var(--font-mono)' }}>
+          {resolved.executablePath}
+        </span>
+      )}
 
-      {/* Preference selector */}
-      <div style={{ marginBottom: '2em' }}>
-        <label style={{ display: 'block', marginBottom: '0.8em', fontWeight: 600, fontSize: '0.95em' }}>
-          {tx('Preferred Browser', '优先使用的浏览器')}
+      {/* Preference — one compact select, same field style as the LLM card */}
+      <div className="setup-form-grid" style={{ marginTop: 18 }}>
+        <label className="setup-field">
+          <span>{tx('Preferred Browser', '优先使用的浏览器')}</span>
+          <select
+            value={preference}
+            onChange={(e) => persist({ preference: e.target.value }, tx('Browser preference saved.', '浏览器偏好已保存。'))}
+            disabled={saving || loading}
+          >
+            {OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label} — {opt.desc}
+              </option>
+            ))}
+          </select>
         </label>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '0.8em' }}>
-          {OPTIONS.map((opt) => {
-            const active = preference === opt.value;
-            return (
-              <button
-                key={opt.value}
-                onClick={() => persist({ preference: opt.value }, tx('Browser preference saved.', '浏览器偏好已保存。'))}
-                disabled={saving || loading}
-                style={{
-                  padding: '0.7em 1em',
-                  borderRadius: '6px',
-                  border: active ? '2px solid var(--primary-color)' : '1px solid var(--border-color)',
-                  background: active ? 'rgba(34, 197, 94, 0.08)' : 'transparent',
-                  color: 'var(--text-primary)',
-                  cursor: saving || loading ? 'not-allowed' : 'pointer',
-                  textAlign: 'left',
-                  opacity: saving || loading ? 0.6 : 1,
-                }}
-              >
-                <div style={{ fontWeight: 600, marginBottom: '0.3em', fontSize: '0.9em' }}>{opt.label}</div>
-                <div style={{ fontSize: '0.8em', color: 'var(--text-secondary)', lineHeight: 1.4 }}>{opt.desc}</div>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {/* Custom executable paths */}
-      <div style={{ marginBottom: '1.5em' }}>
-        <label style={{ display: 'block', marginBottom: '0.5em', fontWeight: 600, fontSize: '0.95em' }}>
-          {tx('Custom Executable Paths (optional)', '自定义可执行文件路径（可选）')}
+      <div style={{ marginTop: '1.25em', marginBottom: '1.5em' }}>
+        <label style={{ display: 'block', marginBottom: '0.8em', fontWeight: 600, fontSize: '0.95em' }}>
+          {tx('Custom executable paths (optional)', '自定义可执行文件路径（可选）')}
         </label>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.82em', margin: '0 0 0.9em', lineHeight: 1.5 }}>
-          {tx(
-            'Only needed for portable or non-standard installs. A valid path here overrides everything else.',
-            '仅便携版或非标准安装位置需要填写。此处路径有效时将覆盖其他所有设置。'
-          )}
-        </p>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.7em', marginBottom: '0.7em' }}>
           <span style={{ width: '5.5em', fontSize: '0.88em', color: 'var(--text-secondary)' }}>Chrome</span>
@@ -499,7 +426,7 @@ function ScraperBrowserPanel() {
             disabled={saving}
             style={inputStyle}
           />
-          <button onClick={() => handlePick('chrome')} disabled={saving} style={btnStyle}>
+          <button onClick={() => handlePick('chrome')} disabled={saving} className="setup-secondary-btn">
             {tx('Browse', '浏览')}
           </button>
         </div>
@@ -515,60 +442,25 @@ function ScraperBrowserPanel() {
             disabled={saving}
             style={inputStyle}
           />
-          <button onClick={() => handlePick('edge')} disabled={saving} style={btnStyle}>
+          <button onClick={() => handlePick('edge')} disabled={saving} className="setup-secondary-btn">
             {tx('Browse', '浏览')}
           </button>
         </div>
       </div>
 
-      {/* Resolved status */}
-      <div
-        style={{
-          padding: '0.9em 1em',
-          borderRadius: '6px',
-          background: 'var(--bg-secondary, rgba(148, 163, 184, 0.08))',
-          fontSize: '0.85em',
-          lineHeight: 1.6,
-          marginBottom: '1.5em',
-          wordBreak: 'break-all',
-        }}
-      >
-        <div style={{ fontWeight: 600, marginBottom: '0.4em' }}>
-          {loading
-            ? tx('Checking…', '检测中…')
-            : resolved.available
-              ? '✅ ' + tx('In use: ', '当前使用：') + brandLabel
-              : '⚠️ ' + tx('No browser resolved — install Chrome or Edge to scrape.', '未解析到浏览器 —— 请安装 Chrome 或 Edge 后重试。')}
-        </div>
-        {!loading && resolved.executablePath && (
-          <div style={{ color: 'var(--text-secondary)' }}>{resolved.executablePath}</div>
-        )}
-        {!loading && (
-          <div style={{ color: 'var(--text-secondary)', marginTop: '0.4em' }}>
-            {tx('Detected — Chrome: ', '已检测到 —— Chrome：')}
-            {resolved.chromeCandidates?.length || 0}
-            {tx(', Edge: ', '，Edge：')}
-            {resolved.edgeCandidates?.length || 0}
-            {resolved.customPathUsed ? tx(' · custom path in effect', ' · 自定义路径生效中') : ''}
-          </div>
-        )}
-      </div>
-
       {/* Manual runtime install — the only path left for a machine that has
           neither Chrome nor Edge. Never runs on its own. */}
       <div style={{ marginBottom: '1.5em' }}>
-        <button onClick={handleInstallRuntime} disabled={saving || installing} style={btnStyle}>
+        <button onClick={handleInstallRuntime} disabled={saving || installing} className="setup-secondary-btn">
           {installing
             ? tx('Installing…', '正在安装…')
             : tx('Check / install browser runtime', '检查 / 安装浏览器运行时')}
         </button>
-        <p style={{ color: 'var(--text-secondary)', fontSize: '0.8em', margin: '0.6em 0 0', lineHeight: 1.5 }}>
-          {installNote
-            || tx(
-              'Only downloads the built-in Chrome runtime when neither Chrome nor Edge is installed. Good enough for scrapers that do not verify the browser (Zara, UNIQLO); H&M needs a real browser installed on this machine.',
-              '仅在未检测到 Chrome / Edge 时下载内置 Chrome 运行时。适用于不校验浏览器身份的站点（Zara、UNIQLO）；H&M 必须使用本机真实安装的浏览器。'
-            )}
-        </p>
+        {installNote && (
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.8em', margin: '0.6em 0 0', lineHeight: 1.5 }}>
+            {installNote}
+          </p>
+        )}
       </div>
 
       {message && (
@@ -674,96 +566,73 @@ function PaddleOcrConfigPanel() {
 
   return (
     <section className="setup-panel">
-      <h3 style={{ marginTop: 0 }}>PaddleOCR-VL-1.6 {tx('API Configuration', 'API 配置')}</h3>
-      
-      <p style={{ color: 'var(--text-secondary)', fontSize: '0.9em', marginBottom: '1.5em' }}>
-        {tx(
-          'Configure Baidu AI Studio PaddleOCR API for high-accuracy document OCR processing.',
-          '配置百度 AI Studio PaddleOCR API，用于高精度文档 OCR 处理。'
-        )}
-      </p>
-
-      {/* Token Input */}
-      <div style={{ marginBottom: '2em' }}>
-        <label style={{ display: 'block', marginBottom: '0.5em', fontWeight: 600, fontSize: '0.95em' }}>
-          {tx('Access Token', '访问令牌')}
-        </label>
-        <input
-          type="password"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          placeholder={tx('Enter your PaddleOCR Access Token', '请输入您的 PaddleOCR Access Token')}
-          style={{
-            width: '100%',
-            padding: '0.7em 1em',
-            borderRadius: '6px',
-            border: '1px solid var(--border-color)',
-            background: 'var(--bg-secondary)',
-            color: 'var(--text-primary)',
-            fontSize: '0.95em',
-            fontFamily: 'monospace',
-          }}
-        />
+      <div className="setup-mini-summary" style={{ marginTop: 0 }}>
+        <span className={`setup-runtime-pill ${isConfigured ? 'ready' : ''}`}>
+          {isConfigured ? tx('Token added', '已填写 Token') : tx('Token missing', '未填写 Token')}
+        </span>
       </div>
 
-      {/* Optional Settings */}
-      <div style={{ marginBottom: '2em' }}>
-        <label style={{ display: 'block', marginBottom: '0.8em', fontWeight: 600, fontSize: '0.95em' }}>
-          {tx('Optional Features', '可选功能')}
+      <div className="setup-form-grid">
+        <label className="setup-field">
+          <span>{tx('Access token', '访问令牌')}</span>
+          <input
+            type="password"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+            placeholder={isConfigured ? '••••••••••••••••' : tx('Baidu AI Studio token', '百度 AI Studio Token')}
+            disabled={saving}
+          />
         </label>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8em' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6em', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useDocOrientationClassify}
-              onChange={(e) => setUseDocOrientationClassify(e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '0.9em' }}>
-              {tx('Document Orientation Classification', '文档方向分类')}
-            </span>
-          </label>
-          
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6em', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useDocUnwarping}
-              onChange={(e) => setUseDocUnwarping(e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '0.9em' }}>
-              {tx('Document Unwarping', '文档去扭曲')}
-            </span>
-          </label>
-          
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.6em', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={useChartRecognition}
-              onChange={(e) => setUseChartRecognition(e.target.checked)}
-              style={{ width: '16px', height: '16px', cursor: 'pointer' }}
-            />
-            <span style={{ fontSize: '0.9em' }}>
-              {tx('Chart Recognition', '图表识别')}
-            </span>
-          </label>
+      </div>
+      <span className="setup-field-note">
+        {isConfigured
+          ? tx('A token is saved — type a new one to replace it.', '已保存 Token，输入新 Token 可覆盖。')
+          : tx('Paste the token from aistudio.baidu.com.', '粘贴 aistudio.baidu.com 的 Token。')}
+      </span>
+
+      {/* Optional features — compact switches */}
+      <div
+        style={{
+          marginTop: '14px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+          gap: '10px',
+        }}
+      >
+        <div className="setup-switch-row" style={{ marginTop: 0 }}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useDocOrientationClassify}
+            className={`setup-switch ${useDocOrientationClassify ? 'on' : ''}`}
+            onClick={() => setUseDocOrientationClassify((v) => !v)}
+            disabled={saving}
+          />
+          <strong>{tx('Doc orientation', '文档方向分类')}</strong>
+        </div>
+        <div className="setup-switch-row" style={{ marginTop: 0 }}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useDocUnwarping}
+            className={`setup-switch ${useDocUnwarping ? 'on' : ''}`}
+            onClick={() => setUseDocUnwarping((v) => !v)}
+            disabled={saving}
+          />
+          <strong>{tx('Doc unwarping', '文档去扭曲')}</strong>
+        </div>
+        <div className="setup-switch-row" style={{ marginTop: 0 }}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={useChartRecognition}
+            className={`setup-switch ${useChartRecognition ? 'on' : ''}`}
+            onClick={() => setUseChartRecognition((v) => !v)}
+            disabled={saving}
+          />
+          <strong>{tx('Chart recognition', '图表识别')}</strong>
         </div>
       </div>
-
-      {/* Status Indicator */}
-      {isConfigured && (
-        <div style={{ 
-          marginBottom: '1.5em', 
-          padding: '0.8em 1em', 
-          borderRadius: '6px', 
-          background: 'rgba(34, 197, 94, 0.08)',
-          border: '1px solid rgba(34, 197, 94, 0.2)',
-          fontSize: '0.9em',
-        }}>
-          ✓ {tx('PaddleOCR API is configured and ready to use.', 'PaddleOCR API 已配置并可使用。')}
-        </div>
-      )}
 
       {/* Message Display */}
       {message && (
@@ -781,42 +650,12 @@ function PaddleOcrConfigPanel() {
       )}
 
       {/* Action Buttons */}
-      <div style={{ display: 'flex', gap: '0.8em' }}>
-        <button
-          onClick={handleSave}
-          disabled={!token.trim() || saving}
-          style={{
-            flex: 1,
-            padding: '0.7em 1.2em',
-            borderRadius: '6px',
-            border: 'none',
-            background: !token.trim() || saving ? 'var(--btn-disabled-bg)' : 'var(--primary-color)',
-            color: 'var(--accent-ink)',
-            cursor: !token.trim() || saving ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
-            fontSize: '0.9em',
-            opacity: saving ? 0.6 : 1,
-          }}
-        >
-          {saving ? tx('Saving...', '保存中...') : tx('Save Configuration', '保存配置')}
+      <div className="setup-inline-actions">
+        <button className="setup-primary-btn" onClick={handleSave} disabled={saving || !token.trim()}>
+          {saving ? tx('Saving...', '保存中...') : tx('Save', '保存')}
         </button>
-        
-        <button
-          onClick={handleTestConnection}
-          disabled={!token.trim() || saving}
-          style={{
-            padding: '0.7em 1.2em',
-            borderRadius: '6px',
-            border: '1px solid var(--border-color)',
-            background: 'transparent',
-            color: 'var(--text-primary)',
-            cursor: !token.trim() || saving ? 'not-allowed' : 'pointer',
-            fontWeight: 600,
-            fontSize: '0.9em',
-            opacity: saving ? 0.6 : 1,
-          }}
-        >
-          {tx('Test Connection', '测试连接')}
+        <button className="setup-secondary-btn" onClick={handleTestConnection} disabled={saving || !token.trim()}>
+          {tx('Test connection', '测试连接')}
         </button>
       </div>
     </section>
@@ -1136,7 +975,7 @@ function SetupGuide({
   const [surfaceMode, setSurfaceMode] = useState(isOnboarding ? 'guide' : 'status');
   const [guideStep, setGuideStep] = useState(0);
   const [setupView, setSetupView] = useState('basic');
-  const [settingsTab, setSettingsTab] = useState('basic');
+  const [settingsTab, setSettingsTab] = useState('ollama');
   const [setupAccessMode, setSetupAccessMode] = useState(
     initialConfig?.mode === 'cloud' ? 'cloud' : initialConfig?.mode === 'apiCloud' ? 'apiCloud' : 'local'
   );
@@ -2752,28 +2591,22 @@ function SetupGuide({
       </header>
 
       <nav className="setup-tab-bar" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={settingsTab === 'basic'}
-          className={`setup-tab ${settingsTab === 'basic' ? 'active' : ''}`}
-          onClick={() => setSettingsTab('basic')}
-        >
-          {tx('Core Services', '基础服务')}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          aria-selected={settingsTab === 'ollama'}
-          className={`setup-tab ${settingsTab === 'ollama' ? 'active' : ''}`}
-          onClick={() => setSettingsTab('ollama')}
-        >
-          {tx('Ollama Configuration & Models', 'Ollama 配置与模型')}
-        </button>
+        {SETTINGS_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={settingsTab === tab.id}
+            className={`setup-tab ${settingsTab === tab.id ? 'active' : ''}`}
+            onClick={() => setSettingsTab(tab.id)}
+          >
+            {tx(tab.en, tab.zh)}
+          </button>
+        ))}
       </nav>
 
       <div className="setup-module-grid">
-        {settingsTab === 'basic' && (
+        {settingsTab === 'apicloud' && (
           <>
         {/* Module 1: API Cloud */}
         <div className="setup-module-card">
@@ -2799,7 +2632,13 @@ function SetupGuide({
           </div>
         </div>
 
-        {/* Module 2: Firecrawl */}
+          </>
+        )}
+
+        {/* Module 2: Firecrawl — kept mounted (hidden, not unmounted) so a
+            typed-but-unsaved key survives tab switches and the footer's
+            flush() fallback can still reach it. */}
+        <div style={{ display: settingsTab === 'firecrawl' ? 'block' : 'none' }}>
         <div className="setup-module-card">
           <div className="setup-module-card__head">
             <div className="setup-module-card__icon setup-module-card__icon--firecrawl">
@@ -2821,7 +2660,10 @@ function SetupGuide({
             </button>
           </div>
         </div>
+        </div>
 
+        {settingsTab === 'browser' && (
+          <>
         {/* Module 2.5: Scraper Browser (Chrome / Edge) */}
         <div className="setup-module-card setup-module-card--wide">
           <div className="setup-module-card__head">
@@ -2842,6 +2684,11 @@ function SetupGuide({
           </div>
         </div>
 
+          </>
+        )}
+
+        {settingsTab === 'ocr' && (
+          <>
         {/* Module 3: PaddleOCR */}
         <div className="setup-module-card">
           <div className="setup-module-card__head">
