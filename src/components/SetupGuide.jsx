@@ -13,7 +13,7 @@ import './SetupGuide.css';
 // ═══════════════════════════════════════════════════
 // Firecrawl Configuration Panel
 // ═══════════════════════════════════════════════════
-function FirecrawlConfigPanel() {
+const FirecrawlConfigPanel = React.forwardRef(function FirecrawlConfigPanel(_props, ref) {
   const { tx } = useI18n();
   const [apiKey, setApiKey] = React.useState('');
   const [isConfigured, setIsConfigured] = React.useState(false);
@@ -96,6 +96,21 @@ function FirecrawlConfigPanel() {
       setSaving(false);
     }
   }
+
+  // Expose flush() so the parent's "Save & Close" can persist a key the user
+  // typed but never explicitly saved. Without it, a draft key was silently
+  // dropped the moment Settings closed (see 踩坑日志 2026-10-12).
+  React.useImperativeHandle(ref, () => ({
+    flush: async () => {
+      const draft = apiKey.trim();
+      if (!draft) return;
+      const result = await window.electronAPI?.firecrawlSaveConfig?.(draft);
+      if (result?.success) {
+        setIsConfigured(true);
+        setApiKey('');
+      }
+    },
+  }), [apiKey]);
 
   return (
     <section className="setup-panel">
@@ -240,7 +255,7 @@ function FirecrawlConfigPanel() {
       )}
     </section>
   );
-}
+});
 
 // ═══════════════════════════════════════════════════
 // Scraper Browser Panel (Chrome / Edge / custom path)
@@ -1146,6 +1161,8 @@ function SetupGuide({
   const [downloadProgress, setDownloadProgress] = useState({});
   const [removingModels, setRemovingModels] = useState({});
   const [installingPaddleVl, setInstallingPaddleVl] = useState(false);
+  // Handle to the Firecrawl panel so "Save & Close" can flush an unsaved key draft.
+  const firecrawlPanelRef = React.useRef(null);
 
   useEffect(() => {
     setConfig(normalizeConfig(initialConfig, { preferGuideDefaults: variant === 'onboarding' }));
@@ -1738,6 +1755,9 @@ function SetupGuide({
     };
 
     try {
+      // Persist any Firecrawl key the user typed but did not explicitly save,
+      // so "Save & Close" cannot silently drop it (see 踩坑日志 2026-10-12).
+      await firecrawlPanelRef.current?.flush?.();
       const result = await window.electronAPI?.saveLLMConfig?.(nextConfig);
       if (result?.success) {
         dispatchLLMConfigUpdate(nextConfig);
@@ -2793,7 +2813,7 @@ function SetupGuide({
             </div>
           </div>
           <div className="setup-module-card__body">
-            <FirecrawlConfigPanel />
+            <FirecrawlConfigPanel ref={firecrawlPanelRef} />
           </div>
           <div className="setup-module-card__foot">
             <button className="setup-secondary-btn" onClick={() => window.electronAPI?.openExternalUrl?.('https://www.firecrawl.dev/')}>

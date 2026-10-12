@@ -228,27 +228,28 @@ async function applyAntiDetection(page) {
   });
 }
 
+// 2026-10-12: this used to patch navigator.webdriver / navigator.languages and
+// replace window.navigator.permissions.query. Measured on Chrome 154 (same
+// machine, same launch args, patch ON vs OFF) every one of those patches left a
+// fingerprint that a genuine browser never exposes:
+//   • Object.getOwnPropertyDescriptor(navigator, 'webdriver') returned a
+//     function `() => false`, while a real Chrome returns undefined (the
+//     property lives on Navigator.prototype as a native getter);
+//   • navigator.languages was forced to ['en-US','en'] on a zh-CN system,
+//     contradicting the UA / timezone;
+//   • permissions.query.toString() became `(parameters) => …` instead of
+//     `function query() { [native code] }`.
+// `--disable-blink-features=AutomationControlled` already makes
+// navigator.webdriver === false, so the webdriver patch was redundant as well as
+// detectable. Leaving the browser's own identity untouched is both cleaner and
+// closer to the self-consistent identity these probes are meant to pass.
 async function applyRetailBrowsingProfile(page) {
   await page.evaluateOnNewDocument(() => {
-    Object.defineProperty(navigator, 'webdriver', {
-      get: () => false,
-    });
-
+    // Only ever fill a *gap*: a genuine Chrome already exposes window.chrome, so
+    // this branch is a no-op there and never replaces a populated object with an
+    // empty shell.
     if (!window.chrome) {
       window.chrome = { runtime: {} };
-    }
-
-    Object.defineProperty(navigator, 'languages', {
-      get: () => ['en-US', 'en'],
-    });
-
-    const originalQuery = window.navigator.permissions?.query;
-    if (originalQuery) {
-      window.navigator.permissions.query = (parameters) => (
-        parameters.name === 'notifications'
-          ? Promise.resolve({ state: Notification.permission })
-          : originalQuery(parameters)
-      );
     }
   });
 }

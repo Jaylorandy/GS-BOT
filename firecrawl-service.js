@@ -37,7 +37,20 @@ function loadConfig() {
 function saveConfig(apiKey) {
   try {
     const configPath = path.join(app.getPath('userData'), 'firecrawl-config.json');
-    fs.writeFileSync(configPath, JSON.stringify({ apiKey }, null, 2), 'utf8');
+    // Read-modify-write. A bare JSON.stringify({ apiKey }) used to overwrite the
+    // whole file and silently drop the sibling `mode` field, so saving the key
+    // after enabling Firecrawl flipped the mode back to 'auto' on the next
+    // load (see 踩坑日志 2026-10-12). Merge instead of rebuild.
+    let config = {};
+    if (fs.existsSync(configPath)) {
+      try {
+        config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      } catch {
+        config = {};
+      }
+    }
+    config.apiKey = apiKey;
+    fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     FIRECRAWL_API_KEY = apiKey;
     return { success: true };
   } catch (error) {
