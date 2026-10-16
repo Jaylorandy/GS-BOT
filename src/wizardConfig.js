@@ -102,10 +102,13 @@ export const WIZARD_CONFIG = {
       {
         title: { en: 'Fabric Fields', zh: '面料字段' },
         desc: { en: 'Choose which fabric details to display on each slide.', zh: '选择每页要显示的面料信息。' },
-        // 只属于面料画册。这一条原先漏了 showWhen，导致「面料字段」在款式画册
-        // 和趋势前瞻画册下也会出现 —— 选了趋势前瞻画册还能勾门幅/克重，而那条
-        // 链路根本不渲染文字。
-        showWhen: (p) => p.sourceMode === 'fabric-images',
+        // 除趋势前瞻画册外都要可选：款式画册的渲染链路同样输出面料信息 ——
+        // generate_slides.py 的 add_style_mode_text 会渲染 FABRIC CODE /
+        // COMPOSITION / WIDTH / CUTTABLE / WEIGHT 五项（见 3391-3409 行）。
+        // 🔴 这里曾写成 `=== 'fabric-images'`（只想把趋势画册那条链路关掉），
+        // 结果把款式画册的面料字段一起砍了 —— 判据收得过窄，已回退为「非趋势画册」。
+        // 趋势画册那条链路确实不渲染任何文字，所以排除它是对的。
+        showWhen: (p) => p.sourceMode !== 'trend-images',
         fields: [
           {
             key: 'fabricInfoGroup', type: 'group', label: { en: 'Fabric Information', zh: '面料信息' },
