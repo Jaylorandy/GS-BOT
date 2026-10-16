@@ -1098,8 +1098,12 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
           value={val}
           min={field.min}
           max={field.max}
+          placeholder={field.placeholder != null ? String(field.placeholder) : undefined}
           onChange={(e) => onChange(Number(e.target.value))}
         />
+        {/* number 分支原先不渲染 hint，于是 maxLooks 那条「0 = 全抓」的说明
+            写在 config 里却从不显示 —— 用户只能猜 0 是什么行为。 */}
+        {field.hint && <span className="wizard-field__hint">{t(field.hint)}</span>}
       </div>
     );
   }

@@ -607,7 +607,8 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'maxLooks', type: 'number', label: { en: 'Looks per Brand', zh: '每品牌张数' }, default: 0, min: 0,
-            hint: { en: '0 = download every look in the show.', zh: '0 = 下载该场秀的全部 look。' },
+            placeholder: 0,
+            hint: { en: '0 (default) = download every look of the show. Any number above 0 takes only the first N looks.', zh: '0（默认）= 全抓该场秀的所有 look，不限张数。填大于 0 的数字则只取前 N 张。' },
           },
           {
             key: 'includeDetails', type: 'toggle', label: { en: 'Include Detail Shots', zh: '包含细节特写' }, default: false,

@@ -2546,6 +2546,66 @@ def add_trend_gallery_slide(prs, images):
     return slide
 
 
+def add_trend_brand_slide(prs, brand_name, count, index, total, season=''):
+    """
+    趋势前瞻画册的品牌分隔页（**只在多品牌时插入**）。
+
+    一份画册里放了多个品牌时，光靠封面分不出哪几张图属于谁 —— 这一页把
+    各家的图片段隔开。单品牌画册的封面已经写着这个品牌，再插一页纯属冗余，
+    所以调用方按 `len(entries) > 1` 判断。
+
+    页面上只出现品牌名 + 张数 + 季节/序号，**不渲染任何款式字段**（款号、
+    名称、价格、描述全无），与 add_trend_gallery_slide 的「纯图」口径一致。
+    """
+    global ACTIVE_THEME
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+
+    # 主题背景
+    bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, 0, 0, PAGE_WIDTH, PAGE_HEIGHT)
+    bg.fill.solid()
+    bg.fill.fore_color.rgb = ACTIVE_THEME['category_bg']
+    bg.line.fill.background()
+
+    # 左侧强调条
+    bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(0.3), PAGE_HEIGHT)
+    bar.fill.solid()
+    bar.fill.fore_color.rgb = ACTIVE_THEME['cover_bg']
+    bar.line.fill.background()
+
+    # 品牌名
+    tb = slide.shapes.add_textbox(Inches(1.2), Inches(2.5), Inches(10.5), Inches(1.2))
+    tf = tb.text_frame
+    tf.text = str(brand_name or '')
+    p = tf.paragraphs[0]
+    p.font.name = FONT_NAME
+    p.font.size = Pt(44)
+    p.font.bold = True
+    p.font.color.rgb = ACTIVE_THEME['category_text']
+
+    # 张数
+    b2 = slide.shapes.add_textbox(Inches(1.2), Inches(3.8), Inches(10.5), Inches(0.4))
+    f2 = b2.text_frame
+    f2.text = f"{count} Looks"
+    p2 = f2.paragraphs[0]
+    p2.font.name = FONT_NAME
+    p2.font.size = Pt(16)
+    p2.font.color.rgb = ACTIVE_THEME['label_color']
+
+    # 季节 + 序号（两者都可能缺，缺了就不画这一行）
+    meta = '  ·  '.join(
+        part for part in (str(season or '').strip(), f'Brand {index} / {total}') if part
+    )
+    if meta:
+        b3 = slide.shapes.add_textbox(Inches(1.2), Inches(6.5), Inches(10.5), Inches(0.3))
+        f3 = b3.text_frame
+        f3.text = meta
+        p3 = f3.paragraphs[0]
+        p3.font.name = FONT_NAME
+        p3.font.size = Pt(10)
+        p3.font.color.rgb = ACTIVE_THEME['label_color']
+    return slide
+
+
 def add_fabric_info_line(slide, prefix, value, cfg):
     add_custom_text(slide, f"{prefix}:  {blank_if_empty(value)}", cfg)
 
@@ -4068,22 +4128,35 @@ def generate_ppt(config):
                 print(f"  [{i+1}/{len(cat_styles)}] {sn}")
                 add_product_slide(prs, sn, folder, settings, brand, info=info)
     elif source_mode == 'trend-images':
-        # 趋势前瞻画册：封面 + 每页 N 张秀场图，无任何文字。
+        # 趋势前瞻画册：封面 +（多品牌时）每品牌一页分隔页 + 每页 N 张秀场图。
         # 每个子文件夹（=一个品牌）里的图按 N 张切片，文件夹之间不混排 ——
         # 这样一份画册里每个品牌的图是连续的一整段，不会跨品牌拼页。
         per_page = max(1, int(settings.get('trendPageImageCount', 3) or 3))
-        trend_slide_count = 0
+        # 先把没图的品牌剔掉，再决定要不要插分隔页：否则「Brand 2 / 5」会按
+        # 含空文件夹的总数报，序号和实际出现的品牌对不上。
+        entries = []
         for i, (sn, folder, info) in enumerate(styles):
             imgs = list_gallery_images(folder)
             if not imgs:
                 print(f"\n[{i+1}/{len(styles)}] {sn} — 无图片，跳过")
                 continue
+            entries.append((sn, imgs))
+        multi_brand = len(entries) > 1
+        trend_slide_count = 0
+        for idx, (sn, imgs) in enumerate(entries):
+            if multi_brand:
+                # 单品牌不插：封面就是品牌名，再插一页是重复的。
+                add_trend_brand_slide(prs, sn, len(imgs), idx + 1, len(entries), season=brand)
+                trend_slide_count += 1
             pages = (len(imgs) + per_page - 1) // per_page
-            print(f"\n[{i+1}/{len(styles)}] {sn}  {len(imgs)} 张 → {pages} 页")
+            print(f"\n[{idx+1}/{len(entries)}] {sn}  {len(imgs)} 张 → {pages} 页")
             for start in range(0, len(imgs), per_page):
                 add_trend_gallery_slide(prs, imgs[start:start + per_page])
                 trend_slide_count += 1
-        print(f"\n趋势前瞻画册：{trend_slide_count} 页 / {len(styles)} 个文件夹（每页 {per_page} 张）")
+        print(
+            f"\n趋势前瞻画册：{trend_slide_count} 页 / {len(entries)} 个品牌"
+            f"（每页 {per_page} 张，{'每品牌前置一页品牌页' if multi_brand else '单品牌无品牌页'}）"
+        )
     elif source_mode == 'fabric-images':
         fabric_layout = settings.get('imageLayout', 'fabric-single')
         if fabric_layout == 'fabric-pair':
