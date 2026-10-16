@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { dispatchLLMConfigUpdate } from '../utils/llmConfigSync';
 import { useI18n } from '../utils/i18n';
 import {
@@ -1026,11 +1026,11 @@ function SetupGuide({
     setInstallingPaddleVl(false);
   }, [initialConfig, systemStatus, variant]);
 
-  const addLog = (msg, type = 'info') => {
+  const addLog = useCallback((msg, type = 'info') => {
     setLogs((prev) => [...prev.slice(-11), { msg, type, time: new Date().toLocaleTimeString() }]);
-  };
+  }, []);
 
-  const updateLocalStateFromStatus = (status) => {
+  const updateLocalStateFromStatus = useCallback((status) => {
     const installedModels = status?.models || [];
     const preferredInstalled = pickPreferredInstalledModel(installedModels);
 
@@ -1047,9 +1047,9 @@ function SetupGuide({
           : (preferredInstalled || (variant === 'onboarding' ? PREFERRED_LOCAL_MODEL : '')),
       },
     }));
-  };
+  }, [variant]);
 
-  const refreshOllamaStatus = async ({ silent = false } = {}) => {
+  const refreshOllamaStatus = useCallback(async ({ silent = false } = {}) => {
     setLoading(true);
     setSystemLoading(true);
 
@@ -1099,11 +1099,11 @@ function SetupGuide({
       setLoading(false);
       setSystemLoading(false);
     }
-  };
+  }, [addLog, updateLocalStateFromStatus]);
 
   useEffect(() => {
     refreshOllamaStatus({ silent: true });
-  }, []);
+  }, [refreshOllamaStatus]);
 
   useEffect(() => {
     const systemReady =
@@ -1135,6 +1135,7 @@ function SetupGuide({
     return () => window.clearTimeout(timer);
   }, [
     autoAdvanceGuide,
+    addLog,
     config.local.installed,
     environmentStatus.chrome.installed,
     environmentStatus.python.available,
@@ -1449,7 +1450,7 @@ function SetupGuide({
       ? config.local.installedModels
       : config.local.availableModels || [];
   const dualLocalModelsReady = areDualLocalModelsReady(localModelList);
-  const cloudModelList = config.cloud.availableModels || [];
+  const cloudModelList = useMemo(() => config.cloud.availableModels || [], [config.cloud.availableModels]);
   const recommendedLocalModel = resolveInstalledModelName(PREFERRED_LOCAL_MODEL, localModelList)
     || pickPreferredInstalledModel(localModelList)
     || PREFERRED_LOCAL_MODEL;

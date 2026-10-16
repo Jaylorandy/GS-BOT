@@ -15,4 +15,34 @@ export default defineConfig({
     loader: 'jsx',
     jsx: 'automatic',
   },
+  // 开发版「一直黑屏」的根因（2026-10-15 实测定位）：
+  // 项目根堆着 10+ 个历史打包目录（release-build / release-build-207…212 等，
+  // 合计 9 万+ 文件）。Vite 默认只忽略 node_modules/.git，chokidar 在 exFAT 上
+  // 退化成疯狂轮询 → 主线程 100% 占用 → 连 `/` 都要 30s 才响应，Electron 等不到
+  // 页面就停在 `[vite] connected.`（= 黑屏）。判据是「空闲也烧 CPU」：
+  // 隔离实验 原配置 13.48s / watch:null 0.14s / 本配置 0.12s（12s 空闲窗口）。
+  // 这些目录都是构建产物或参考素材，不含任何 HMR 需要的源码。
+  server: {
+    watch: {
+      ignored: [
+        '**/node_modules/**',
+        '**/.git/**',
+        '**/release/**',
+        '**/release-build/**',
+        '**/release-build-*/**',
+        '**/build/**',
+        '**/build-logs/**',
+        '**/dist/**',
+        '**/tmp/**',
+        '**/docs/**',
+        '**/python_vendor/**',
+        '**/models/**',
+        '**/vendor/**',
+        '**/tools/**',
+        '**/ref/**',
+        '**/license-keys/**',
+        '**/__pycache__/**',
+      ],
+    },
+  },
 })

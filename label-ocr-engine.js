@@ -1577,6 +1577,20 @@ function resolveWorkerRuntime() {
     return resolvedWorkerRuntime;
   }
 
+  // Inside Electron, run the worker on the Electron binary itself in Node mode
+  // (ELECTRON_RUN_AS_NODE, set by createWorkerEnv). This is always available at
+  // process.execPath, so we no longer ship a separate ~87 MB node.exe.
+  // Verified 2026-10-14: onnxruntime-node's N-API binding loads the label
+  // detector model identically under Electron-as-Node and under plain Node.
+  if (process.versions?.electron) {
+    resolvedWorkerRuntime = {
+      command: process.execPath,
+      env: createWorkerEnv(),
+      kind: 'electron',
+    };
+    return resolvedWorkerRuntime;
+  }
+
   const bundled = resolveBundledNodeCandidates().find((candidate) => commandExists(candidate));
   if (bundled) {
     resolvedWorkerRuntime = {

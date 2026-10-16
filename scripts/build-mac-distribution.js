@@ -114,6 +114,9 @@ function prepareStage(appPath) {
 
 function buildMacApp() {
   run('node', ['scripts/build-frontend.js']);
+  // Fail fast if a packaged module or runtime dependency is missing from build.files
+  // / dependencies — this class of bug only shows up after install, never in dev.
+  run('node', ['scripts/verify-packaged-modules.js']);
   const localElectronDist = path.join(projectRoot, 'node_modules', 'electron', 'dist');
   const builderArgs = ['--mac', '--dir', '-c.mac.identity=null'];
   if (fs.existsSync(path.join(localElectronDist, 'Electron.app'))) {

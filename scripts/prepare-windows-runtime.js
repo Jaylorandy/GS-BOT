@@ -938,7 +938,15 @@ async function main() {
   ensureDir(DOWNLOAD_ROOT);
 
   await prepareBundledPython();
-  await prepareBundledNode();
+  // Bundled Node is no longer shipped (2026-10-14): the OCR worker runs on
+  // process.execPath with ELECTRON_RUN_AS_NODE=1, which is always present and
+  // verified to load the onnxruntime-node N-API binding. Saves ~87 MB.
+  // Escape hatch for rollback: GSBOT_PREPARE_NODE=1
+  if (process.env.GSBOT_PREPARE_NODE === '1') {
+    await prepareBundledNode();
+  } else {
+    console.log('[runtime] Skipping bundled Node (no longer shipped). Set GSBOT_PREPARE_NODE=1 to prepare it.');
+  }
   await prepareWindowsVisualCppRuntime();
   // Bundled Chromium is no longer shipped (2026-10-10, Spec-本地浏览器优先改造.md):
   // the app resolves the user's locally installed Chrome/Edge only. Skip the

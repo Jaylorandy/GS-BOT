@@ -135,7 +135,6 @@ async function ensureOne(target) {
 async function main() {
   console.log(`[ensure-sharp-win] sharp@${SHARP_VERSION}, libvips@${LIBVIPS_VERSION} — ensuring win32-x64 prebuilds`);
   for (const t of TARGETS) {
-    // eslint-disable-next-line no-await-in-loop
     await ensureOne(t);
   }
   console.log('[ensure-sharp-win] done.');

@@ -56,6 +56,9 @@ export default function OcrModelStore({ onModelStatusChange }) {
   const [downloadStatus, setDownloadStatus] = useState({});
   const [deleting, setDeleting] = useState({});
   const cleanupRef = useRef({});
+  // Mirrors `catalog` so loadCatalog can read the latest value without taking a
+  // dependency on it (which would make the mount-time effect re-run forever).
+  const catalogRef = useRef(catalog);
 
   // Ollama related state
   const [ollamaStatus, setOllamaStatus] = useState({ installed: false, running: false, models: [] });
@@ -144,7 +147,7 @@ export default function OcrModelStore({ onModelStatusChange }) {
     }
 
     // Always fall back to local if sync failed
-    if (!catalog || online === false) {
+    if (!catalogRef.current || online === false) {
       try {
         const localResult = await api.ocrListCatalog();
         if (localResult?.success && localResult.models) {
@@ -152,11 +155,15 @@ export default function OcrModelStore({ onModelStatusChange }) {
         }
       } catch { /* ignore */ }
     }
-  }, [api, catalog]);
+  }, [api]);
+
+  useEffect(() => {
+    catalogRef.current = catalog;
+  }, [catalog]);
 
   useEffect(() => {
     loadCatalog(false);
-  }, []);
+  }, [loadCatalog]);
 
   // Download a model
   const handleDownload = useCallback(async (modelId) => {
@@ -227,8 +234,10 @@ export default function OcrModelStore({ onModelStatusChange }) {
 
   // Cleanup on unmount
   useEffect(() => {
+    // Snapshot the ref so the cleanup closes over the same object the effect saw.
+    const cleanups = cleanupRef.current;
     return () => {
-      Object.values(cleanupRef.current).forEach((fn) => {
+      Object.values(cleanups).forEach((fn) => {
         try { fn(); } catch { /* ignore */ }
       });
     };

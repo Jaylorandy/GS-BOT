@@ -51,7 +51,6 @@ export default function BestsellerAnalysis({ homeFeature }) {
       default:
         break;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeFeature]);
 
   const [logs, setLogs] = useState([]);

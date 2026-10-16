@@ -50,6 +50,7 @@ const fnToBrand = {
   runHmScraper: 'hm',
   runBestsellerScraper: 'freepeople',
   runNewYorkerScraper: 'newyorker',
+  runAritziaScraper: 'aritzia',
   runScraper: 'zara',
   // runGuScraper delegates to runSingleBrandProductScraper({defaultFolder:'GU'}).
   runSingleBrandProductScraper: 'gu',
@@ -98,7 +99,7 @@ if (mixedRoot !== table.mixed) {
 const wizardBrands = [
   'zara', 'bershka', 'stradivarius', 'pullandbear', 'lefties', 'mango', 'reserved',
   'sinsay', 'urbanrevivo', 'newyorker', 'hm', 'uniqlo', 'gu', 'abercrombie', 'mixed',
-  'freepeople', 'intersport',
+  'freepeople', 'intersport', 'aritzia',
 ];
 for (const brand of wizardBrands) {
   const resolved = table[brand] || fallback.default;

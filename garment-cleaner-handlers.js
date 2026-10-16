@@ -211,183 +211,187 @@ function registerGarmentCleanerHandlers({
       throw error;
     }
 
-    return runManagedTask(event, 'garment-cleaner', async (taskController) => new Promise(async (resolve) => {
-      try {
-        let cleanerMode = normalizeCleanerMode(payload?.options?.cleanerMode);
-        const bundledRmbgRuntime = runtimeResolver.getBundledRmbgRuntimeStatus?.();
-        if (cleanerMode === 'hd' && process.platform === 'win32' && !bundledRmbgRuntime?.ready) {
-          cleanerMode = 'lite';
-          emitLog(event, 'HD full cutout runtime is not bundled in this light build. Falling back to Lite ONNX mode.', 'warning');
-        }
-        updateTaskSnapshot(event.sender, 'garment-cleaner', {
-          inputPath: String(payload?.sourceFolder || payload?.inputPath || payload?.sourcePath || '').trim(),
-          outputPath: String(payload?.outputFolder || '').trim(),
-          summary: `Garment cleaner · ${cleanerMode === 'lite' ? 'light ONNX' : 'hybrid HD'}`,
-          cacheMode: 'live-run',
-        });
-        if (cleanerMode === 'lite') {
-          const liteModelPath = getBundledLiteModelPath(runtimeResolver);
-          if (!liteModelPath) {
+    return runManagedTask(event, 'garment-cleaner', async (taskController) => new Promise((resolve) => {
+      (async () => {
+        try {
+          let cleanerMode = normalizeCleanerMode(payload?.options?.cleanerMode);
+          const bundledRmbgRuntime = runtimeResolver.getBundledRmbgRuntimeStatus?.();
+          if (cleanerMode === 'hd' && process.platform === 'win32' && !bundledRmbgRuntime?.ready) {
+            cleanerMode = 'lite';
+            emitLog(event, 'HD full cutout runtime is not bundled in this light build. Falling back to Lite ONNX mode.', 'warning');
+          }
+          updateTaskSnapshot(event.sender, 'garment-cleaner', {
+            inputPath: String(payload?.sourceFolder || payload?.inputPath || payload?.sourcePath || '').trim(),
+            outputPath: String(payload?.outputFolder || '').trim(),
+            summary: `Garment cleaner · ${cleanerMode === 'lite' ? 'light ONNX' : 'hybrid HD'}`,
+            cacheMode: 'live-run',
+          });
+          if (cleanerMode === 'lite') {
+            const liteModelPath = getBundledLiteModelPath(runtimeResolver);
+            if (!liteModelPath) {
+              resolve({
+                success: false,
+                error: '轻量版本 ONNX 模型未内置成功，请先重新打包后再试。',
+              });
+              return;
+            }
+
+            const result = await runLiteOnnxWorker({
+              app,
+              event,
+              payload: {
+                ...payload,
+                liteModelPath,
+              },
+              taskController,
+            });
+            resolve(result);
+            return;
+          }
+
+          const scriptPath = app.isPackaged
+            ? path.join(process.resourcesPath, 'app.asar.unpacked', 'rmbg_python.py')
+            : path.join(__dirname, 'rmbg_python.py');
+
+          const pythonRuntime = getPythonRuntime();
+          if (!pythonRuntime) {
             resolve({
               success: false,
-              error: '轻量版本 ONNX 模型未内置成功，请先重新打包后再试。',
+              error: 'Python 3 was not found. Please install Python 3 before using 挂拍净图.',
             });
             return;
           }
 
-          const result = await runLiteOnnxWorker({
-            app,
-            event,
-            payload: {
-              ...payload,
-              liteModelPath,
+          if (!fs.existsSync(scriptPath)) {
+            resolve({
+              success: false,
+              error: `Missing script: ${scriptPath}`,
+            });
+            return;
+          }
+
+          const localRmbgModelSource = getLocalRmbgModelSource();
+          const hfRuntimeHome = path.join(os.tmpdir(), 'gsbot-hf-runtime');
+          const pythonEnv = {
+            ...runtimeResolver.getPythonSpawnEnv(pythonRuntime),
+            HF_HOME: hfRuntimeHome,
+            HUGGINGFACE_HUB_CACHE: path.join(hfRuntimeHome, 'hub'),
+            TRANSFORMERS_CACHE: path.join(hfRuntimeHome, 'transformers'),
+            HF_MODULES_CACHE: path.join(hfRuntimeHome, 'modules'),
+          };
+
+          let pythonProcess = null;
+          let outputData = '';
+          let errorData = '';
+          let finalResult = null;
+
+          taskController.onCancel(() => {
+            emitLog(event, 'Cancellation requested. Stopping garment cleaner...', 'warning');
+            if (pythonProcess && !pythonProcess.killed) {
+              pythonProcess.kill('SIGTERM');
+              setTimeout(() => {
+                if (pythonProcess && !pythonProcess.killed) {
+                  pythonProcess.kill('SIGKILL');
+                }
+              }, 1500);
+            }
+          });
+
+          pythonProcess = spawn(
+            pythonRuntime.command,
+            [...pythonRuntime.args, scriptPath],
+            {
+              windowsHide: true,
+              env: pythonEnv,
             },
-            taskController,
-          });
-          resolve(result);
-          return;
-        }
+          );
 
-        const scriptPath = app.isPackaged
-          ? path.join(process.resourcesPath, 'app.asar.unpacked', 'rmbg_python.py')
-          : path.join(__dirname, 'rmbg_python.py');
+          pythonProcess.stdin.setDefaultEncoding('utf8');
+          pythonProcess.stdin.write(JSON.stringify({
+            ...payload,
+            options: {
+              ...(payload.options || {}),
+              cleanerMode: 'hd',
+            },
+            rmbgModelSource: bundledRmbgRuntime?.ready
+              ? bundledRmbgRuntime.home
+              : (fs.existsSync(localRmbgModelSource) ? localRmbgModelSource : 'briaai/RMBG-2.0'),
+          }), 'utf8');
+          pythonProcess.stdin.end();
 
-        const pythonRuntime = getPythonRuntime();
-        if (!pythonRuntime) {
-          resolve({
-            success: false,
-            error: 'Python 3 was not found. Please install Python 3 before using 挂拍净图.',
-          });
-          return;
-        }
-
-        if (!fs.existsSync(scriptPath)) {
-          resolve({
-            success: false,
-            error: `Missing script: ${scriptPath}`,
-          });
-          return;
-        }
-
-        const localRmbgModelSource = getLocalRmbgModelSource();
-        const hfRuntimeHome = path.join(os.tmpdir(), 'gsbot-hf-runtime');
-        const pythonEnv = {
-          ...runtimeResolver.getPythonSpawnEnv(pythonRuntime),
-          HF_HOME: hfRuntimeHome,
-          HUGGINGFACE_HUB_CACHE: path.join(hfRuntimeHome, 'hub'),
-          TRANSFORMERS_CACHE: path.join(hfRuntimeHome, 'transformers'),
-          HF_MODULES_CACHE: path.join(hfRuntimeHome, 'modules'),
-        };
-
-        let pythonProcess = null;
-        let outputData = '';
-        let errorData = '';
-        let finalResult = null;
-
-        taskController.onCancel(() => {
-          emitLog(event, 'Cancellation requested. Stopping garment cleaner...', 'warning');
-          if (pythonProcess && !pythonProcess.killed) {
-            pythonProcess.kill('SIGTERM');
-            setTimeout(() => {
-              if (pythonProcess && !pythonProcess.killed) {
-                pythonProcess.kill('SIGKILL');
+          pythonProcess.stdout.on('data', (data) => {
+            const text = data.toString();
+            outputData += text;
+            text.split('\n').forEach((line) => {
+              const progressPayload = tryParsePrefixedJson(line, 'GS_PROGRESS:');
+              if (progressPayload && typeof progressPayload.value !== 'undefined') {
+                emitProgress(event, progressPayload.value);
+                return;
               }
-            }, 1500);
-          }
-        });
 
-        pythonProcess = spawn(
-          pythonRuntime.command,
-          [...pythonRuntime.args, scriptPath],
-          {
-            windowsHide: true,
-            env: pythonEnv,
-          },
-        );
+              const resultPayload = tryParsePrefixedJson(line, 'GS_RESULT:');
+              if (resultPayload) {
+                finalResult = resultPayload;
+                return;
+              }
 
-        pythonProcess.stdin.setDefaultEncoding('utf8');
-        pythonProcess.stdin.write(JSON.stringify({
-          ...payload,
-          options: {
-            ...(payload.options || {}),
-            cleanerMode: 'hd',
-          },
-          rmbgModelSource: bundledRmbgRuntime?.ready
-            ? bundledRmbgRuntime.home
-            : (fs.existsSync(localRmbgModelSource) ? localRmbgModelSource : 'briaai/RMBG-2.0'),
-        }), 'utf8');
-        pythonProcess.stdin.end();
+              const logPayload = tryParsePrefixedJson(line, 'GS_LOG:');
+              if (logPayload?.message) {
+                emitLog(event, logPayload.message, logPayload.type || 'info');
+                return;
+              }
 
-        pythonProcess.stdout.on('data', (data) => {
-          const text = data.toString();
-          outputData += text;
-          text.split('\n').forEach((line) => {
-            const progressPayload = tryParsePrefixedJson(line, 'GS_PROGRESS:');
-            if (progressPayload && typeof progressPayload.value !== 'undefined') {
-              emitProgress(event, progressPayload.value);
-              return;
-            }
-
-            const resultPayload = tryParsePrefixedJson(line, 'GS_RESULT:');
-            if (resultPayload) {
-              finalResult = resultPayload;
-              return;
-            }
-
-            const logPayload = tryParsePrefixedJson(line, 'GS_LOG:');
-            if (logPayload?.message) {
-              emitLog(event, logPayload.message, logPayload.type || 'info');
-              return;
-            }
-
-            const trimmed = line.trim();
-            if (trimmed) {
-              emitLog(event, trimmed, 'info');
-            }
+              const trimmed = line.trim();
+              if (trimmed) {
+                emitLog(event, trimmed, 'info');
+              }
+            });
           });
-        });
 
-        pythonProcess.stderr.on('data', (data) => {
-          errorData += data.toString();
-        });
+          pythonProcess.stderr.on('data', (data) => {
+            errorData += data.toString();
+          });
 
-        pythonProcess.on('close', (code) => {
-          if (taskController.cancelled) {
+          pythonProcess.on('close', (code) => {
+            if (taskController.cancelled) {
+              resolve({
+                success: false,
+                cancelled: true,
+                error: 'Garment cleaning cancelled by user.',
+              });
+              return;
+            }
+
+            if (code === 0) {
+              resolve(finalResult || {
+                success: true,
+                outputPath: payload.outputFolder || '',
+                rawOutput: outputData,
+              });
+              return;
+            }
+
             resolve({
               success: false,
-              cancelled: true,
-              error: 'Garment cleaning cancelled by user.',
+              error: errorData || `Python script exited with code ${code}`,
             });
-            return;
-          }
+          });
 
-          if (code === 0) {
-            resolve(finalResult || {
-              success: true,
-              outputPath: payload.outputFolder || '',
-              rawOutput: outputData,
+          pythonProcess.on('error', (error) => {
+            resolve({
+              success: false,
+              error: `Failed to start Python: ${error.message}. Please install Python 3.`,
             });
-            return;
-          }
-
+          });
+        } catch (error) {
           resolve({
             success: false,
-            error: errorData || `Python script exited with code ${code}`,
+            error: error?.message || String(error),
           });
-        });
-
-        pythonProcess.on('error', (error) => {
-          resolve({
-            success: false,
-            error: `Failed to start Python: ${error.message}. Please install Python 3.`,
-          });
-        });
-      } catch (error) {
-        resolve({
-          success: false,
-          error: error?.message || String(error),
-        });
-      }
+        }
+      })().catch((error) => {
+        resolve({ success: false, error: error?.message || String(error) });
+      });
     }), activeTaskControllers);
   });
 }

@@ -2499,6 +2499,53 @@ def add_style_gallery_layout(slide, images, image_count):
       )
 
 
+def list_gallery_images(folder):
+    """
+    列出文件夹内所有图片（按文件名排序）。
+
+    趋势前瞻的抓取产物是 `<季节>/<品牌>/look-001.jpg, look-002.jpg …`，
+    字典序天然等于 look 序（3 位补零）。`_manifest.json` 不是图片扩展名，
+    会在下面被过滤掉。
+    """
+    exts = ('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif')
+    try:
+        names = sorted(os.listdir(folder))
+    except OSError:
+        return []
+    out = []
+    for name in names:
+        if not name.lower().endswith(exts):
+            continue
+        full = os.path.join(folder, name)
+        if os.path.isfile(full):
+            out.append(full)
+    return out
+
+
+def add_trend_gallery_slide(prs, images):
+    """
+    趋势前瞻画册的一页：横排 N 张秀场图，**不渲染任何文字**（无款号/名称/
+    描述/logo/页脚）。
+
+    与 add_style_gallery_layout 的区别：那个是「一页固定 N 张、超出的丢弃」，
+    由页数决定内容；这个只负责把给定的一批图画到一页上，切页由调用方做，
+    所以品牌有多少张图都不会被丢掉。
+    """
+    slide = prs.slides.add_slide(prs.slide_layouts[6])
+    imgs = [p for p in (images or []) if p and os.path.exists(p)]
+    if not imgs:
+        return slide
+
+    margin = Inches(0.42)
+    gap = Inches(0.3)
+    top = Inches(0.3)
+    cell_h = PAGE_HEIGHT - Inches(0.6)
+    cell_w = (PAGE_WIDTH - margin * 2 - gap * (len(imgs) - 1)) // len(imgs)
+    for idx, img in enumerate(imgs):
+        add_image_fit(slide, img, margin + idx * (cell_w + gap), top, cell_w, cell_h)
+    return slide
+
+
 def add_fabric_info_line(slide, prefix, value, cfg):
     add_custom_text(slide, f"{prefix}:  {blank_if_empty(value)}", cfg)
 
@@ -2724,8 +2771,8 @@ def parse_composition_string(text):
 
 # ── 页面生成 ─────────────────────────────────────────
 
-def add_cover(prs, title, count, brand='BRAND'):
-    """封面页"""
+def add_cover(prs, title, count, brand='BRAND', unit='Styles'):
+    """封面页（unit 决定数量行的量词：款式用 Styles、秀场画册用 Looks）"""
     global ACTIVE_THEME
     slide = prs.slides.add_slide(prs.slide_layouts[6])
 
@@ -2759,7 +2806,7 @@ def add_cover(prs, title, count, brand='BRAND'):
     # 数量信息
     b3 = slide.shapes.add_textbox(0, Inches(4.6), PAGE_WIDTH, Inches(0.3))
     f3 = b3.text_frame
-    f3.text = f"{count} Styles"
+    f3.text = f"{count} {unit}"
     p3 = f3.paragraphs[0]
     p3.font.name = FONT_NAME
     p3.font.size = Pt(14)
@@ -3949,7 +3996,14 @@ def generate_ppt(config):
     prs.slide_height = PAGE_HEIGHT
 
     # 封面
-    add_cover(prs, settings.get('title'), len(styles), brand)
+    # 趋势前瞻画册的数量行按「张」算而不是文件夹数 —— 一份画册里真正的内容
+    # 是 look 图，写 "2 Styles" 会让人以为只有两款。
+    cover_count = len(styles)
+    cover_unit = 'Styles'
+    if source_mode == 'trend-images':
+        cover_count = sum(len(list_gallery_images(f)) for _, f, _ in styles)
+        cover_unit = 'Looks'
+    add_cover(prs, settings.get('title'), cover_count, brand, cover_unit)
 
     # 目录页 + 分类分隔页（仅款式模式且用户启用时）
     enable_toc = settings.get('enableToc', False)
@@ -3959,25 +4013,29 @@ def generate_ppt(config):
     category_groups = {}
     category_order = []
     unclassified = []
-    for sn, folder, info in styles:
-        # 解析图片路径用于 AI 分类
-        image_paths = {}
-        try:
-            image_paths = resolve_display_images(folder, sn, info, source_mode, settings)
-        except Exception:
-            pass
+    # 趋势前瞻画册不生成目录/分隔/汇总页，整段分类可以跳过。
+    # 不跳的话 ensure_category 的第 3 步会对**每个品牌文件夹**各发一次 AI
+    # 视觉分类请求 —— 一份几十个品牌的图册会白烧几十轮 AI，还毫无用处。
+    if source_mode != 'trend-images':
+        for sn, folder, info in styles:
+            # 解析图片路径用于 AI 分类
+            image_paths = {}
+            try:
+                image_paths = resolve_display_images(folder, sn, info, source_mode, settings)
+            except Exception:
+                pass
 
-        cat = ensure_category(sn, folder, info, image_paths)
-        if cat:
-            # 写回 info，供汇总页等后续统计复用（否则汇总页品类会全部落到 Other）
-            if not str(info.get('category', '') or '').strip():
-                info['category'] = cat
-            if cat not in category_groups:
-                category_groups[cat] = []
-                category_order.append(cat)
-            category_groups[cat].append((sn, folder, info))
-        else:
-            unclassified.append((sn, folder, info))
+            cat = ensure_category(sn, folder, info, image_paths)
+            if cat:
+                # 写回 info，供汇总页等后续统计复用（否则汇总页品类会全部落到 Other）
+                if not str(info.get('category', '') or '').strip():
+                    info['category'] = cat
+                if cat not in category_groups:
+                    category_groups[cat] = []
+                    category_order.append(cat)
+                category_groups[cat].append((sn, folder, info))
+            else:
+                unclassified.append((sn, folder, info))
 
     # 未分类的款式如果启用了目录但无法分类，归入 Uncategorized
     if unclassified:
@@ -4000,7 +4058,7 @@ def generate_ppt(config):
         print(f"Added TOC slide with {len(toc_data)} categories")
 
     # 产品页 / 面料页
-    if has_categories and source_mode != 'fabric-images':
+    if has_categories and source_mode not in ('fabric-images', 'trend-images'):
         total_cats = len(category_order)
         for cat_idx, cat_name in enumerate(category_order):
             cat_styles = category_groups[cat_name]
@@ -4009,6 +4067,23 @@ def generate_ppt(config):
             for i, (sn, folder, info) in enumerate(cat_styles):
                 print(f"  [{i+1}/{len(cat_styles)}] {sn}")
                 add_product_slide(prs, sn, folder, settings, brand, info=info)
+    elif source_mode == 'trend-images':
+        # 趋势前瞻画册：封面 + 每页 N 张秀场图，无任何文字。
+        # 每个子文件夹（=一个品牌）里的图按 N 张切片，文件夹之间不混排 ——
+        # 这样一份画册里每个品牌的图是连续的一整段，不会跨品牌拼页。
+        per_page = max(1, int(settings.get('trendPageImageCount', 3) or 3))
+        trend_slide_count = 0
+        for i, (sn, folder, info) in enumerate(styles):
+            imgs = list_gallery_images(folder)
+            if not imgs:
+                print(f"\n[{i+1}/{len(styles)}] {sn} — 无图片，跳过")
+                continue
+            pages = (len(imgs) + per_page - 1) // per_page
+            print(f"\n[{i+1}/{len(styles)}] {sn}  {len(imgs)} 张 → {pages} 页")
+            for start in range(0, len(imgs), per_page):
+                add_trend_gallery_slide(prs, imgs[start:start + per_page])
+                trend_slide_count += 1
+        print(f"\n趋势前瞻画册：{trend_slide_count} 页 / {len(styles)} 个文件夹（每页 {per_page} 张）")
     elif source_mode == 'fabric-images':
         fabric_layout = settings.get('imageLayout', 'fabric-single')
         if fabric_layout == 'fabric-pair':
@@ -4073,6 +4148,9 @@ def generate_ppt(config):
     slide_count = len(styles)
     if source_mode == 'fabric-images' and settings.get('imageLayout') == 'fabric-pair':
         slide_count = (len(styles) + 1) // 2
+    elif source_mode == 'trend-images':
+        # 画册页数由图片总量决定（每个文件夹按 per_page 切页），不是文件夹数
+        slide_count = trend_slide_count
 
     result = {
         'success': True,

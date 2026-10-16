@@ -291,7 +291,6 @@ function ZaraScraper({ workspaceVisible = true, homeFeature }) {
       default:
         break;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeFeature]);
 
   // Trigger Excel picker after render if requested by the preset.

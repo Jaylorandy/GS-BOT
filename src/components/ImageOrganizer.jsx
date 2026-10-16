@@ -609,7 +609,6 @@ export default function ImageOrganizer({ onNavigate, workspaceVisible = true, ho
       default:
         break;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeFeature]);
 	  const [reviewZoomMode, setReviewZoomMode] = useState('fit');
 	  const [reviewZoomScale, setReviewZoomScale] = useState(1);

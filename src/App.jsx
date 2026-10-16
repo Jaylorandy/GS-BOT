@@ -84,6 +84,14 @@ function AppIcon({ name, className = '' }) {
           <path d="M8 16l2 2 6-6" />
         </svg>
       );
+    case 'trends':
+      return (
+        <svg {...sharedProps}>
+          <path d="M3.5 16.75 8.25 11.5l3.5 3.5L20.5 6.25" />
+          <path d="M15.25 6.25h5.25V11.5" />
+          <path d="M3.5 20.5h17" />
+        </svg>
+      );
     case 'license':
       return (
         <svg {...sharedProps}>
@@ -166,6 +174,26 @@ function BrandLogo({ className }) {
 function createTabItems(tx) {
   return [
     {
+      id: 'trends',
+      icon: 'trends',
+      accentRgb: '178, 148, 255',
+      accentInk: '#150733',
+      label: tx('Trend Lookahead', '趋势前瞻'),
+      navMeta: tx('Runway', '秀场'),
+      badge: 'RW',
+      description: tx('Pull the latest runway looks from Vogue, brand by brand.', '按品牌抓取 Vogue 最新秀场图。'),
+    },
+    {
+      id: 'bestseller',
+      icon: 'bestseller',
+      accentRgb: '240, 98, 146',
+      accentInk: '#2a0a1a',
+      label: tx('Brand DNA', '品牌DNA'),
+      navMeta: tx('DNA', '基因'),
+      badge: 'AI',
+      description: tx('Scrape bestseller listings and generate an AI trend report.', '抓取畅销榜款式并生成 AI 趋势报告。'),
+    },
+    {
       id: 'scraper',
       icon: 'scraper',
       accentRgb: '142, 214, 255',
@@ -184,16 +212,6 @@ function createTabItems(tx) {
       navMeta: tx('Decks', '演示文稿'),
       badge: 'PPT',
       description: tx('Build decks from folders.', '从文件夹生成演示文稿。'),
-    },
-    {
-      id: 'bestseller',
-      icon: 'bestseller',
-      accentRgb: '240, 98, 146',
-      accentInk: '#2a0a1a',
-      label: tx('Bestseller Analysis', '热门款式分析'),
-      navMeta: tx('Analyze', '分析'),
-      badge: 'AI',
-      description: tx('Scrape bestseller listings and generate an AI trend report.', '抓取畅销榜款式并生成 AI 趋势报告。'),
     },
     {
       id: 'organizer',
@@ -263,7 +281,7 @@ function AppContent() {
   const { language, setLanguage, tx } = useI18n();
   const TAB_ITEMS = createTabItems(tx);
   const ALL_TABS = TAB_ITEMS;
-  const [activeTab, setActiveTab] = useState('slides');
+  const [activeTab, setActiveTab] = useState('trends');
   const [theme] = useState('dark');
   const [appReady, setAppReady] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState(null);
@@ -648,7 +666,7 @@ function AppContent() {
           <button
             type="button"
             className="workspace-brand"
-            onClick={() => selectTab('slides')}
+            onClick={() => selectTab('trends')}
             aria-label="GS Bot"
           >
             <BrandLogo className="brand-logo-icon" />

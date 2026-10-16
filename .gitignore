@@ -51,3 +51,6 @@ license-keys/private.pem
 
 # ── corrupt .git pending deletion ──
 .broken-git-todelete/
+
+# ── rebrowser-patch applied-state（本机 node_modules 校验和，不共享） ──
+patches/.applied-state.json

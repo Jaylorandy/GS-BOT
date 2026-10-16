@@ -1,14 +1,14 @@
 {
   "name": "zara-scraper-pro",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.3.0",
   "main": "main.js",
   "description": "GS Bot - 本地服装净图、整理与工作流工具",
   "author": "Jaylor Andy",
   "scripts": {
     "dev": "vite",
     "lint": "eslint .",
-    "postinstall": "node scripts/patch-electron-builder.js",
+    "postinstall": "node scripts/patch-electron-builder.js && node scripts/apply-rebrowser-patches.js",
     "build": "node scripts/build-frontend.js",
     "dist": "node scripts/build-mac-distribution.js",
     "dist:mac": "node scripts/build-mac-distribution.js",
@@ -18,6 +18,7 @@
     "dist:win:light": "GSBOT_WINDOWS_CUTOUT_VARIANT=light node scripts/build-windows-installer.js",
     "repro:win-asar": "node scripts/repro-win-asar-integrity.js",
     "verify:onnx-load": "node scripts/verify-onnxruntime-model-load.js",
+    "verify:packaged-modules": "node scripts/verify-packaged-modules.js",
     "verify:scraper-folders": "node scripts/verify-scraper-folders.js",
     "verify:vision-preflight": "node scripts/verify-vision-preflight.js",
     "test:regression": "node scripts/run-regression-tests.js",
@@ -30,14 +31,12 @@
     "@gutenye/ocr-node": "^1.4.8",
     "docx": "^9.6.1",
     "electron-updater": "^6.8.9",
-    "exceljs": "^4.4.0",
+    "form-data": "^4.0.5",
     "jszip": "^3.10.1",
     "onnxruntime-node": "1.20.1",
     "pdf-parse": "^1.1.1",
     "puppeteer-core": "^24.39.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "smb2": "^0.2.11",
+    "sharp": "^0.33.5",
     "xlsx": "^0.18.5"
   },
   "build": {
@@ -72,6 +71,7 @@
       "license-service.js",
       "annotate_excel.js",
       "anti-detection.js",
+      "vogue-trends.js",
       "image-url-generator.js",
       "generate_slides.py",
       "pdf_squeezer.py",
@@ -84,6 +84,7 @@
       "ocr-engine-config.js",
       "templates/**/*",
       "label-ocr-engine.js",
+      "rag-service.js",
       "processing-cache.js",
       "slides-analysis-handlers.js",
       "slides-preprocessor.js",
@@ -129,7 +130,10 @@
       "node_modules/is-arrayish/**/*",
       "node_modules/@img/**/*",
       "node_modules/regenerator-runtime/**/*",
-      "node_modules/**/*.{json,js}"
+      "node_modules/**/*.{json,js}",
+      "!**/__pycache__/**",
+      "!**/*.pyc",
+      "!python_vendor/pymupdf/mupdf-devel/**"
     ],
     "asar": true,
     "asarUnpack": [
@@ -177,17 +181,15 @@
     "mac": {
       "target": "dmg",
       "icon": "icon.icns",
-      "darkModeSupport": true,
-      "extraResources": [
-        {
-          "from": "vendor/mac/node",
-          "to": "runtime/mac/node"
-        }
-      ]
+      "darkModeSupport": true
     },
     "win": {
       "signAndEditExecutable": true,
       "icon": "icon.ico",
+      "files": [
+        "!python_vendor/pymupdf/**",
+        "!python_vendor/fitz/**"
+      ],
       "target": [
         {
           "target": "nsis",
@@ -205,11 +207,12 @@
       "extraResources": [
         {
           "from": "vendor/windows/python",
-          "to": "runtime/windows/python"
-        },
-        {
-          "from": "vendor/windows/node",
-          "to": "runtime/windows/node"
+          "to": "runtime/windows/python",
+          "filter": [
+            "**/*",
+            "!**/__pycache__/**",
+            "!**/*.pyc"
+          ]
         },
         {
           "from": "vendor/windows/crt",
@@ -249,9 +252,12 @@
     "eslint-plugin-react": "^7.37.2",
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
+    "ghost-cursor": "^1.4.2",
     "globals": "^15.11.0",
     "postcss": "^8.5.8",
     "puppeteer": "^24.39.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "tailwindcss": "^4.2.1",
     "vite": "^6.2.6"
   }

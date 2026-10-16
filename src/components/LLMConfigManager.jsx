@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { dispatchLLMConfigUpdate } from '../utils/llmConfigSync';
 import { buildDefaultOcrConfig, isEmbeddedPaddleOcrEngine, mergeOcrConfig } from '../utils/ocrEngines';
 import './LLMConfigManager.css';
@@ -49,15 +49,11 @@ function LLMConfigManager() {
   const [downloadProgress, setDownloadProgress] = useState({});
   const [customOcrModel, setCustomOcrModel] = useState('');
 
-  useEffect(() => {
-    loadConfiguration();
+  const addLog = useCallback((msg, type = 'info') => {
+    setLogs(prev => [...prev.slice(-20), { time: new Date().toLocaleTimeString(), msg, type }]);
   }, []);
 
-  const addLog = (msg, type = 'info') => {
-    setLogs(prev => [...prev.slice(-20), { time: new Date().toLocaleTimeString(), msg, type }]);
-  };
-
-  const loadConfiguration = async () => {
+  const loadConfiguration = useCallback(async () => {
     setLoading(true);
     try {
       if (window.electronAPI?.loadLLMConfig) {
@@ -72,7 +68,11 @@ function LLMConfigManager() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [addLog]);
+
+  useEffect(() => {
+    loadConfiguration();
+  }, [loadConfiguration]);
 
   const saveConfiguration = async () => {
     setSaving(true);

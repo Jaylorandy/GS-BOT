@@ -257,6 +257,9 @@ prepareMakensis(nsisDir);
 
 cleanWindowsOutput();
 run('node', ['scripts/prepare-windows-runtime.js']);
+// Fail fast if a packaged module or runtime dependency is missing from build.files
+// / dependencies — this class of bug only shows up after install, never in dev.
+run('node', ['scripts/verify-packaged-modules.js']);
 // Cross-compiling on macOS only installs host (darwin) sharp binaries; fetch
 // the win32-x64 sharp prebuilds so the packaged app doesn't crash on launch.
 run('node', ['scripts/ensure-sharp-win.js']);

@@ -150,7 +150,6 @@ export default function SlidesMaker({ workspaceVisible = true, homeFeature }) {
       default:
         break;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [homeFeature]);
 
   useEffect(() => {

@@ -41,6 +41,10 @@ export const WIZARD_CONFIG = {
             options: [
               { value: 'style-images-only', label: { en: 'Style Deck', zh: '款式画册' }, desc: { en: 'Build a deck from style folders.', zh: '从款式文件夹生成演示文稿。' } },
               { value: 'fabric-images', label: { en: 'Fabric Deck', zh: '面料画册' }, desc: { en: 'Compose a fabric lookbook deck.', zh: '生成面料画册演示文稿。' } },
+              // 趋势前瞻画册：源目录 = 趋势前瞻的产物（<季节>/<品牌>/look-001.jpg…）。
+              // 版式固定「封面 + 每页 3 张图、零文字」——所有文字/目录/汇总开关都会隐藏，
+              // 主进程侧还会再压平一次（见 ModuleHome 的 isTrendDeck 分支）。
+              { value: 'trend-images', label: { en: 'Trend Deck', zh: '趋势前瞻画册' }, desc: { en: 'Cover + 3 runway looks per page. No text — images only.', zh: '封面 + 每页 3 张秀场图，纯图无文字。' } },
             ],
           },
         ],
@@ -98,6 +102,10 @@ export const WIZARD_CONFIG = {
       {
         title: { en: 'Fabric Fields', zh: '面料字段' },
         desc: { en: 'Choose which fabric details to display on each slide.', zh: '选择每页要显示的面料信息。' },
+        // 只属于面料画册。这一条原先漏了 showWhen，导致「面料字段」在款式画册
+        // 和趋势前瞻画册下也会出现 —— 选了趋势前瞻画册还能勾门幅/克重，而那条
+        // 链路根本不渲染文字。
+        showWhen: (p) => p.sourceMode === 'fabric-images',
         fields: [
           {
             key: 'fabricInfoGroup', type: 'group', label: { en: 'Fabric Information', zh: '面料信息' },
@@ -124,8 +132,14 @@ export const WIZARD_CONFIG = {
               { value: 'modern', label: { en: 'Modern (Minimal Gray)', zh: '现代（极简灰）' } },
             ],
           },
-          { key: 'enableToc', type: 'toggle', label: { en: 'Table of Contents', zh: '目录页' }, desc: { en: 'Add a TOC page and category dividers grouped by product category. Grouping uses AI category suggestions when AI is on, otherwise keyword matching.', zh: '添加目录页和按品类分组的分类分隔页。开启 AI 时分组采用 AI 品类建议，否则用关键词匹配。' } },
-          { key: 'enableSummary', type: 'toggle', label: { en: 'Summary Page', zh: '汇总页' }, desc: { en: 'AI summary: collection overview, category & composition distribution, and a per-style details table (every style listed, missing fields shown as N/A). Needs AI — ticking it switches AI on automatically.', zh: 'AI 汇总页：系列概述、品类/成分分布和逐款明细表（所有款式都会列出，缺失字段显示 N/A）。需要 AI，勾选本项会自动打开 AI。' } },
+          {
+            key: 'enableToc', type: 'toggle', label: { en: 'Table of Contents', zh: '目录页' },
+            showWhen: (p) => p.sourceMode !== 'trend-images',
+            desc: { en: 'Add a TOC page and category dividers grouped by product category. Grouping uses AI category suggestions when AI is on, otherwise keyword matching.', zh: '添加目录页和按品类分组的分类分隔页。开启 AI 时分组采用 AI 品类建议，否则用关键词匹配。' } },
+          {
+            key: 'enableSummary', type: 'toggle', label: { en: 'Summary Page', zh: '汇总页' },
+            showWhen: (p) => p.sourceMode !== 'trend-images',
+            desc: { en: 'AI summary: collection overview, category & composition distribution, and a per-style details table (every style listed, missing fields shown as N/A). Needs AI — ticking it switches AI on automatically.', zh: 'AI 汇总页：系列概述、品类/成分分布和逐款明细表（所有款式都会列出，缺失字段显示 N/A）。需要 AI，勾选本项会自动打开 AI。' } },
           { key: 'exportPdf', type: 'toggle', label: { en: 'Export PDF', zh: '导出 PDF' }, desc: { en: 'Also export a PDF version (requires LibreOffice or PowerPoint).', zh: '同时导出 PDF 版本（需安装 LibreOffice 或 PowerPoint）。' } },
         ],
       },
@@ -133,10 +147,14 @@ export const WIZARD_CONFIG = {
         title: { en: 'AI & Output', zh: 'AI 与输出' },
         desc: { en: 'Enable AI descriptions and set the output path.', zh: '启用 AI 描述并设置输出路径。' },
         fields: [
-          { key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' }, desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions. Pick the endpoint below; models are configured in Settings.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。在下方选择 AI 来源，具体模型在设置页配置。' } },
+          {
+            key: 'ollamaEnabled', type: 'toggle', label: { en: 'AI', zh: 'AI' },
+            // 趋势前瞻画册是纯图册，不跑描述/汇总/分类 → 连 AI 开关都不显示
+            showWhen: (p) => p.sourceMode !== 'trend-images',
+            desc: { en: 'AI only fills the checked fields that are still empty (name / description / colour) and shortens descriptions that are too long for the slide. Existing values, composition, fabric code, width and weight are never invented or overwritten. Required by the summary page and AI category suggestions. Pick the endpoint below; models are configured in Settings.', zh: 'AI 只补全「已勾选且仍为空」的字段（名称 / 描述 / 颜色），并精简过长的描述。已有值不会被覆盖，成分、面料代码、门幅、克重绝不臆造。汇总页与 AI 品类建议也依赖本开关。在下方选择 AI 来源，具体模型在设置页配置。' } },
           {
             key: 'llmMode', type: 'select', label: { en: 'AI Model Source', zh: 'AI 模型来源' },
-            showWhen: (p) => p.ollamaEnabled,
+            showWhen: (p) => p.ollamaEnabled && p.sourceMode !== 'trend-images',
             default: 'default',
             hint: { en: 'The concrete model comes from the Settings page for the chosen source.', zh: '具体模型取设置页中所选来源已配置的模型。' },
             options: [
@@ -182,6 +200,7 @@ export const WIZARD_CONFIG = {
               { value: 'uniqlo', label: { en: 'Uniqlo', zh: 'Uniqlo' } },
               { value: 'gu', label: { en: 'GU', zh: 'GU' } },
               { value: 'abercrombie', label: { en: 'Abercrombie', zh: 'Abercrombie' } },
+              { value: 'aritzia', label: { en: 'Aritzia (US)', zh: 'Aritzia（美国站）' } },
               { value: 'mixed', label: { en: 'Mixed Brands', zh: '多品牌混合' } },
             ],
           },
@@ -249,6 +268,7 @@ export const WIZARD_CONFIG = {
               { value: 'uniqlo', label: { en: 'UNIQLO (US)', zh: 'UNIQLO（美国站）' } },
               { value: 'hm', label: { en: 'H&M (US)', zh: 'H&M（美国站）' } },
               { value: 'freepeople', label: { en: 'Free People (US)', zh: 'Free People（美国站）' } },
+              { value: 'princesspolly', label: { en: 'Princess Polly (US)', zh: 'Princess Polly（美国站）' } },
               { value: 'intersport', label: { en: 'Intersport', zh: 'Intersport' } },
             ],
           },
@@ -286,15 +306,53 @@ export const WIZARD_CONFIG = {
         title: { en: 'Category', zh: '类别' },
         desc: { en: 'Choose which bestseller listing to scrape.', zh: '选择要抓取的畅销榜类别。' },
         fields: [
+          // Princess Polly publishes several ranked collections, and they are
+          // NOT interchangeable: best-selling / top-sellers / trending / new.
+          // Only handles verified to serve products via products.json are
+          // offered — the nav's "Best Sellers" link points at `best-sellers`
+          // (plural), which returns ZERO products, so the label cannot be
+          // trusted as a handle.
+          {
+            key: 'ppRanking', type: 'select', label: { en: 'Ranking', zh: '榜单' },
+            showWhen: (p) => p.brand === 'princesspolly',
+            default: 'best-selling',
+            // Measured sizes: best-selling 161, top-sellers 149, trending 161,
+            // new-arrivals 2000+. "All" is capped at 300 by the scraper, so the
+            // hint warns instead of quietly returning a fraction of New Arrivals.
+            hint: {
+              en: 'New Arrivals holds 2000+ styles; "All" is capped at 300.',
+              zh: '新品榜有 2000+ 款，「全部」上限为 300 款。',
+            },
+            options: [
+              { value: 'best-selling', label: { en: 'All Best Sellers', zh: '全部畅销榜' } },
+              { value: 'top-sellers', label: { en: 'Top Sellers', zh: '热卖榜' } },
+              { value: 'trending', label: { en: 'Trending', zh: '趋势榜' } },
+              { value: 'new-arrivals', label: { en: 'New Arrivals', zh: '新品榜' } },
+            ],
+          },
           {
             key: 'gender', type: 'select', label: { en: 'Gender', zh: '性别' }, required: true,
             // Free People publishes ONE aggregated bestseller list (no gender
-            // split), so the choice would be meaningless there.
-            showWhen: (p) => p.brand !== 'freepeople',
+            // split), so the choice would be meaningless there. Princess Polly
+            // is the same: its /collections/best-selling is a single ranking.
+            showWhen: (p) => !['freepeople', 'princesspolly'].includes(p.brand),
             options: [
               { value: 'female', label: { en: "Women's", zh: '女装' } },
               { value: 'male', label: { en: "Men's", zh: '男装' } },
-              { value: 'all', label: { en: 'All (UNISEX / MEN / WOMEN folders)', zh: '全部（按 UNISEX/MEN/WOMEN 分目录）' } },
+              {
+                value: 'all',
+                label: { en: 'All (UNISEX / MEN / WOMEN folders)', zh: '全部（按 UNISEX/MEN/WOMEN 分目录）' },
+                // UNIQLO-only. Its ranked-products API returns a single list
+                // tagged UNISEX/MEN/WOMEN and runUniqloBestsellerScraper merges
+                // the men + women rankings to cover all three buckets. Every
+                // other brand has exactly ONE listing URL per gender, so "All"
+                // has no source for them: New Yorker / H&M threw "No bestseller
+                // source URL for <brand> / all", and Intersport silently resolved
+                // to the women's collection (buildIntersportUrl maps every
+                // non-male value to Damen). Verified against main.js
+                // BESTSELLER_SOURCES (no `|all` key) and buildIntersportUrl.
+                showWhen: (p) => p.brand === 'uniqlo',
+              },
             ],
           },
           {
@@ -317,7 +375,7 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'productCount', type: 'select', label: { en: 'Product Count', zh: '下载数量' },
-            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm' || p.brand === 'freepeople',
+            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm' || p.brand === 'freepeople' || p.brand === 'princesspolly',
             options: [
               { value: 10, label: { en: '10', zh: '10款' } },
               { value: 20, label: { en: '20', zh: '20款' } },
@@ -335,12 +393,28 @@ export const WIZARD_CONFIG = {
         fields: [
           {
             key: 'imagesPerStyle', type: 'select', label: { en: 'Images per Style', zh: '每款图片数' },
+            hint: { en: 'Applies to every brand.', zh: '对所有品牌生效。' },
             options: [
               { value: 0, label: { en: 'All', zh: '全部' } },
               ...[1, 2, 3, 4, 5, 6].map(n => ({ value: n, label: { en: `${n}`, zh: `${n}` } })),
             ],
           },
-          { key: 'allColors', type: 'toggle', label: { en: 'All Colors', zh: '全部颜色' } },
+          {
+            key: 'allColors', type: 'toggle', label: { en: 'All Colors', zh: '全部颜色' },
+            // Only three branches read this flag:
+            //   New Yorker  → scrapeNewYorkerProduct({ allVariants })
+            //   H&M         → collectHmBestsellerLinks({ allColors })
+            //   Free People → PDP swatch list expands one record per colour
+            // UNIQLO ignores it — its ranked-products payload already carries every
+            // colour's images, so the switch cannot turn anything off — and
+            // Intersport's Shopify images carry no colour dimension at all.
+            // Offering it there promised something the run could not deliver.
+            showWhen: (p) => ['newyorker', 'hm', 'freepeople'].includes(p.brand),
+            desc: {
+              en: 'Off: one representative colour per style. On: one record per colourway.',
+              zh: '关闭：每款取代表色一条记录。开启：每个颜色一条记录。',
+            },
+          },
           {
             key: 'includeAccessories', type: 'toggle', label: { en: 'Include Accessories & Shoes', zh: '包含配饰和鞋子' },
             default: false,
@@ -473,6 +547,73 @@ export const WIZARD_CONFIG = {
             hint: { en: 'Which image in each group has the label (1-based). That image gets no suffix.', zh: '每组中第几张图是标签图（从1开始）。该图不加后缀。' },
             default: 4, min: 1,
           },
+        ],
+      },
+    ],
+  },
+
+  // ── 趋势前瞻 ──────────────────────────────────────────────
+  // 三步引导式（季节 → 品牌 → 输出），与其他模块的分步 wizard 风格一致。
+  // Vogue Runway 三层数据：季节档案 → 每季品牌列表 → 秀场图。
+  // 品牌列表每季随官网变动（新品牌进、旧品牌退出），所以 season-picker
+  // 字段自带「更新」按钮：回源刷新季节档案后再从缓存里选；选中季节后
+  // brand-picker 才去拉该季品牌。两段都走 userData/trends 下的 JSON 缓存，
+  // 只有点「更新」才回源 —— 避免每次进页面都打官网。
+  trends: {
+    taskId: 'trends',
+    logChannel: 'trends',
+    runIPC: 'trendsScrape',
+    cancelIPC: 'cancelTask',
+    cancelArg: 'trends',
+    adaptive: true,
+    steps: [
+      {
+        title: { en: 'Season', zh: '季节' },
+        desc: { en: 'Refresh the list, then pick the season to pull.', zh: '先更新列表，再选择要抓取的季节。' },
+        fields: [
+          {
+            key: 'season', type: 'season-picker', label: { en: 'Season', zh: '季节' }, required: true,
+            hint: { en: 'Fetched live from Vogue. The newest season only appears after you press Refresh.', zh: '列表实时取自 Vogue。最新一季需要先点「更新」才会出现。' },
+          },
+        ],
+      },
+      // 必须排在 Season 之后：wizard 的 visibleSteps 是下标驱动的，
+      // 依赖「尚未出现的字段」的步骤插到前面会把「下一步」打回原地。
+      {
+        title: { en: 'Brands', zh: '品牌' },
+        desc: { en: 'Search and tick the brands to pull from this season.', zh: '搜索并勾选本季要抓取的品牌。' },
+        showWhen: (p) => Boolean(p.season),
+        fields: [
+          {
+            key: 'brands', type: 'brand-picker', label: { en: 'Brands', zh: '品牌' }, required: true,
+            showWhen: (p) => Boolean(p.season),
+            hint: { en: 'Search and tick one or more brands from this season.', zh: '搜索并勾选本季的一个或多个品牌。' },
+          },
+        ],
+      },
+      {
+        title: { en: 'Output & Download', zh: '输出与下载' },
+        desc: { en: 'Choose where the looks are saved and how large they are.', zh: '设置保存位置和图片规格。' },
+        fields: [
+          { key: 'outputDir', type: 'dir-picker', label: { en: 'Output Folder', zh: '输出目录' }, hint: { en: 'Each brand gets its own subfolder. Defaults to Downloads.', zh: '每个品牌一个子文件夹。默认保存到下载目录。' } },
+          {
+            key: 'imageWidth', type: 'select', label: { en: 'Image Size', zh: '图片规格' }, default: 5000,
+            hint: { en: 'Vogue renders on demand — a larger width returns the original file.', zh: 'Vogue 按需渲染，宽度越大越接近原图。' },
+            options: [
+              { value: 5000, label: { en: 'Original (max resolution, ~860 KB each)', zh: '原图（最大分辨率，约 860KB/张）' }, desc: { en: 'Full-size runway shots.', zh: '完整尺寸秀场图。' } },
+              { value: 2000, label: { en: 'Large (2000 px)', zh: '大图（2000px）' } },
+              { value: 1200, label: { en: 'Medium (1200 px)', zh: '中图（1200px）' } },
+            ],
+          },
+          {
+            key: 'maxLooks', type: 'number', label: { en: 'Looks per Brand', zh: '每品牌张数' }, default: 0, min: 0,
+            hint: { en: '0 = download every look in the show.', zh: '0 = 下载该场秀的全部 look。' },
+          },
+          {
+            key: 'includeDetails', type: 'toggle', label: { en: 'Include Detail Shots', zh: '包含细节特写' }, default: false,
+            desc: { en: 'Also download the close-up detail images for each look.', zh: '同时下载每个 look 的细节特写图。' },
+          },
+          { key: 'concurrency', type: 'number', label: { en: 'Download Threads', zh: '下载线程数' }, default: 3, min: 1, max: 8 },
         ],
       },
     ],

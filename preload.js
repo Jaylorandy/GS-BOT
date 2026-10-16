@@ -205,4 +205,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   paddleOcrGetConfig: () => ipcRenderer.invoke('paddleOcrGetConfig'),
   paddleOcrSaveConfig: (token, options) => ipcRenderer.invoke('paddleOcrSaveConfig', token, options),
   paddleOcrTestConnection: (token) => ipcRenderer.invoke('paddleOcrTestConnection', token),
+
+  // Trend Lookahead (Vogue Runway)
+  // 品牌列表是实时数据：季节档案与每季品牌都缓存在 userData/trends 下，
+  // 前端先读缓存（trendsListSeasons / trendsBrands），用户点「更新」才回源。
+  trendsListSeasons: () => ipcRenderer.invoke('trends-list-seasons'),
+  trendsRefreshSeasons: () => ipcRenderer.invoke('trends-refresh-seasons'),
+  trendsBrands: (payload) => ipcRenderer.invoke('trends-brands', payload),
+  trendsScrape: (config) => ipcRenderer.invoke('trends-scrape', config),
+  onTrendsLog: (callback) => ipcRenderer.on('trends-log', (_event, value) => callback(value)),
+  onTrendsProgress: (callback) => ipcRenderer.on('trends-progress', (_event, value) => callback(value)),
+  removeTrendsListeners: () => {
+    ipcRenderer.removeAllListeners('trends-log');
+    ipcRenderer.removeAllListeners('trends-progress');
+  },
 });

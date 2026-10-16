@@ -54,6 +54,7 @@ const { registerSlidesAnalysisHandlers } = require('./slides-analysis-handlers')
 const firecrawlService = require('./firecrawl-service');
 const firecrawlFallback = require('./firecrawl-fallback');
 const paddleOcrService = require('./paddleocr-service');
+const vogueTrends = require('./vogue-trends');
 const {
   clearAllCaches,
   clearNamespaceCache,
@@ -434,23 +435,38 @@ function normalizeManualStyleNumbers(styleNumbers) {
 }
 
 /**
- * Write a search query directly into a DOM input element via the native value
- * descriptor and dispatch the full input lifecycle (input / change / Enter /
- * search / form-submit). This bypasses page.keyboard.type which is prone to
- * being clipped mid-typing by React controlled-input sync, autocomplete
- * debounce, or focus-stealing modals — the root cause of "only the first
- * digit was entered" bugs across retail scrapers.
+ * 把搜索词写进 DOM 输入框。
  *
- * Returns true if the DOM write succeeded; falls back to keyboard typing
- * if the evaluate call itself fails.
+ * 首选**真实按键**（`humanType` → CDP `Input.dispatchKeyEvent`，isTrusted:true）；
+ * 只有真按键被页面吞掉时才退回 native value setter + 合成事件 —— 后者能绕开
+ * React 受控输入的截断（历史上「只输入了第一位数字」的根因），但会留下
+ * 「value 变了、零按键序列」这一强自动化特征，故只当兜底。
+ *
+ * Returns true if the real-keystroke pass (or, failing that, the DOM write) succeeded.
  */
 async function writeSearchValueViaDOM(page, inputElement, query, emitLog, brand = '') {
   const searchValue = String(query ?? '').trim();
   if (!inputElement) return false;
 
-  const wroteOk = await page.evaluate((args) => {
-    const el = args.el;
-    const val = String(args.val ?? '');
+  // 1) 首选：真键盘输入 —— humanType 内部已 focus + 清空 + 回验 value
+  const typedByKeyboard = await antiDetection.humanType(page, inputElement, searchValue, { clear: true })
+    .catch(() => false);
+  if (typedByKeyboard) {
+    await antiDetection.randomDelay(400, 800);
+    await page.keyboard.press('Enter').catch(() => {});
+    await antiDetection.randomDelay(600, 1000);
+    return true;
+  }
+  if (emitLog) {
+    emitLog(`    ⌨️ ${brand || 'Search'} real keystrokes were clipped by the page; using DOM-write fallback…`, 'info');
+  }
+
+  // 2) 兜底：DOM 直写（保留原逻辑，修 React 受控输入截断）
+  //    注意：句柄必须作为**顶层**实参传入 —— 嵌在对象里（如 { el: handle }）puppeteer
+  //    不会解包，页面里拿到的是一个空对象（实测 `args.el` = [object Object]），
+  //    那样所有 dispatchEvent 都会静默失败、函数却仍返回 true。
+  const wroteOk = await page.evaluate((el, rawVal) => {
+    const val = String(rawVal ?? '');
     if (!el) return false;
     try { el.focus?.(); } catch { /* noop */ }
     // Use the native value descriptor so React/Vue controlled inputs pick up
@@ -486,7 +502,7 @@ async function writeSearchValueViaDOM(page, inputElement, query, emitLog, brand 
       else if (form) form.submit();
     } catch { /* noop */ }
     return true;
-  }, { el: inputElement, val: searchValue }).catch(() => false);
+  }, inputElement, searchValue).catch(() => false);
 
   if (!wroteOk) {
     if (emitLog) emitLog(`    ⚠️ ${brand || 'Search'} DOM write failed; falling back to keyboard typing…`, 'warning');
@@ -1533,6 +1549,14 @@ function getHmSessionDir() {
   return path.join(app.getPath('userData'), 'hm-browser-session');
 }
 
+// Aritzia sits behind Cloudflare bot management. A fresh profile passed the
+// first probe run (2026-10-14), but the clearance cookie Cloudflare hands out
+// is what makes repeat runs cheap, so this session persists and is versioned
+// per Chrome major (same rule as UNIQLO — see resolveVersionedSessionDir).
+function getAritziaSessionDir(executablePath = null) {
+  return resolveVersionedSessionDir('aritzia-browser-session', executablePath);
+}
+
 // H&M keeps using the plain (unversioned) directory: prepareHmChromeProfile
 // rewrites it from the user's real browser (Chrome or Edge — whichever one
 // drives the run) on every run, and that identity is what gets past Akamai.
@@ -1761,7 +1785,6 @@ function countHmSessionCookies() {
   const store = path.join(getHmSessionDir(), 'Default', 'Network', 'Cookies');
   try {
     if (!fs.existsSync(store)) return -1;
-    // eslint-disable-next-line global-require
     const { DatabaseSync } = require('node:sqlite');
     const db = new DatabaseSync(store, { readOnly: true });
     const row = db.prepare('SELECT count(*) AS n FROM cookies').get();
@@ -2096,6 +2119,8 @@ function normalizeScraperBrand(value = '') {
   if (raw === 'hm' || raw === 'h&m' || raw === 'h & m' || raw === 'h and m' || raw === 'handm') return 'hm';
   if (raw === 'freepeople' || raw === 'free people' || raw === 'fp' || raw === 'free-people') return 'freepeople';
   if (raw === 'abercrombie' || raw === 'a&f' || raw === 'anf' || raw === 'abercrombie & fitch' || raw === 'aberchrombie') return 'abercrombie';
+  if (raw === 'aritzia') return 'aritzia';
+  if (raw === 'princesspolly' || raw === 'princess polly' || raw === 'pp' || raw === 'princess-polly') return 'princesspolly';
   return '';
 }
 
@@ -2115,6 +2140,8 @@ function getScraperOutputFolderName(brand = '') {
   if (normalizedBrand === 'hm') return 'H&M';
   if (normalizedBrand === 'freepeople') return 'Free People';
   if (normalizedBrand === 'abercrombie') return 'Abercrombie';
+  if (normalizedBrand === 'aritzia') return 'Aritzia';
+  if (normalizedBrand === 'princesspolly') return 'Princess Polly';
   if (normalizedBrand === 'mixed') return 'Mixed Brands';
   return 'Zara';
 }
@@ -2989,7 +3016,8 @@ async function scrapeUniqloProduct(browser, reference, emitLog, ensureActive, pr
     // We click EVERY expandable element that could be relevant — using
     // keyword matching rather than exact label match, because UNIQLO's
     // actual label is often "Materials and Care" (not just "Materials").
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
       // 1. Open ALL <details> elements — safe and non-destructive.
       document.querySelectorAll('details').forEach((el) => {
         el.open = true;
@@ -3007,7 +3035,7 @@ async function scrapeUniqloProduct(browser, reference, emitLog, ensureActive, pr
       triggers.forEach((node) => {
         const label = String(node.textContent || '').replace(/\s+/g, ' ').trim();
         if (label.length < 80 && KEYWORDS.test(label)) {
-          try { node.click(); } catch { /* ignore */ }
+          try { out.push(node); } catch { /* ignore */ }
         }
       });
 
@@ -3016,10 +3044,11 @@ async function scrapeUniqloProduct(browser, reference, emitLog, ensureActive, pr
       document.querySelectorAll('[class*="collapse"], [class*="expandable"], [class*="disclosure"]').forEach((el) => {
         const trigger = el.querySelector('button, [role="button"], summary, .header, .title');
         if (trigger && KEYWORDS.test(String(trigger.textContent || ''))) {
-          try { trigger.click(); } catch { /* ignore */ }
+          try { out.push(trigger); } catch { /* ignore */ }
         }
       });
-    }).catch(() => {});
+      return out;
+    });
 
     // Brief pause so the DOM can settle after expansions.
     await antiDetection.randomDelay(600, 1000);
@@ -3349,7 +3378,6 @@ async function searchUniqloResults(browser, sku, emitLog, ensureActive) {
   try {
     await antiDetection.applyRetailBrowsingProfile(page);
     await page.setViewport(antiDetection.getRandomViewport());
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
 
     emitLog(`    🏠 Opening UNIQLO homepage to search "${sku}"…`, 'info');
     await page.goto(UNIQLO_BASE_URL, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -3357,18 +3385,27 @@ async function searchUniqloResults(browser, sku, emitLog, ensureActive) {
     ensureActive();
 
     // Dismiss cookie / region popups that can cover the search box.
-    await page.evaluate(() => {
-      const re = /^\s*(accept|agree|allow all|got it|ok|continue|i accept|accept all)\s*$/i;
-      for (const el of document.querySelectorAll('button, [role="button"], a')) {
-        const t = String(el.textContent || '').trim();
-        if (t && t.length < 24 && re.test(t)) { try { el.click(); } catch { /* noop */ } }
-      }
-    }).catch(() => {});
-    await antiDetection.randomDelay(600, 1200);
+    // 旧实现：页内合成点击 + 零等待，文案表只有英文。统一入口会等弹窗滑入、
+    // 覆盖 OneTrust / Cookiebot / Shopify / 自研等框架，并把候选限定在同意容器内。
+    await dismissCookieBanners(page, { waitMs: 12000 });
 
     // Locate + focus the search input. UNIQLO's header has a search trigger
     // that may need clicking before the input is usable.
-    const typedOk = await page.evaluate((skuVal) => {
+    //
+    // 触发器点击从原来的「同一个 evaluate 里合成 click」拆出来，改成 CDP 人形
+    // 点击：注释本身就说 input 要等触发器点开后才可用，所以这里必须先真点一次
+    // （异步等待渲染），再去找 input —— 原先同 tick 查找本来就偏早。
+    await antiDetection.clickInPage(page, () => {
+      const toggle = [...document.querySelectorAll('button, [role="button"], a')]
+        .find((el) => /search/i.test(el.getAttribute('aria-label') || el.getAttribute('title') || el.className || ''));
+      return toggle || null;
+    });
+    await antiDetection.randomDelay(400, 800);
+
+    // Locate + focus the search input, then type with real keystrokes
+    // (CDP Input.dispatchKeyEvent → isTrusted). Only if the controlled input
+    // clips them do we fall back to a native-setter DOM write.
+    const uniInputHandle = await page.evaluateHandle(() => {
       const isVisible = (el) => {
         if (!el) return false;
         const r = el.getBoundingClientRect();
@@ -3376,16 +3413,21 @@ async function searchUniqloResults(browser, sku, emitLog, ensureActive) {
         const s = window.getComputedStyle(el);
         return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
       };
-      // Click a search toggle if present.
-      const toggle = [...document.querySelectorAll('button, [role="button"], a')]
-        .find((el) => /search/i.test(el.getAttribute('aria-label') || el.getAttribute('title') || el.className || ''));
-      if (toggle) { try { toggle.click(); } catch { /* noop */ } }
       const input = [...document.querySelectorAll('input[type="search"], input[name*="search" i], input[placeholder*="search" i], input[aria-label*="search" i], input[type="text"]')]
         .find(isVisible);
       if (input) {
-        input.focus();
-        // Write value directly via native descriptor (React-safe) and dispatch
-        // the full input lifecycle — avoids keyboard.type getting clipped.
+        try { input.focus(); } catch { /* noop */ }
+      }
+      return input || null;
+    }).catch(() => null);
+
+    let typedOk = await antiDetection.humanType(page, uniInputHandle, String(sku), { clear: true })
+      .catch(() => false);
+    if (!typedOk) {
+      // Fallback: native value descriptor (React-safe) + full input lifecycle —
+      // avoids keyboard input getting clipped.
+      typedOk = await page.evaluate((input, skuVal) => {
+        if (!input) return false;
         try {
           const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
           if (setter) setter.call(input, String(skuVal));
@@ -3395,9 +3437,9 @@ async function searchUniqloResults(browser, sku, emitLog, ensureActive) {
         input.dispatchEvent(new Event('change', { bubbles: true }));
         input.dispatchEvent(new Event('search', { bubbles: true }));
         return true;
-      }
-      return false;
-    }, sku).catch(() => false);
+      }, uniInputHandle, String(sku)).catch(() => false);
+    }
+    await uniInputHandle?.dispose?.().catch(() => {});
 
     if (!typedOk) {
       // Fallback: direct search URL (still a real search results page, not a guessed PDP).
@@ -4509,16 +4551,18 @@ async function scrapeGuProduct(browser, reference, emitLog, ensureActive) {
       // Continue with loaded DOM.
     }
     await antiDetection.randomDelay(1200, 1900);
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
       document.querySelectorAll('details').forEach((el) => { el.open = true; });
       [...document.querySelectorAll('button[aria-expanded="false"], summary, [role="button"][aria-expanded="false"]')]
         .forEach((node) => {
           const label = String(node.textContent || '').replace(/\s+/g, ' ').trim();
           if (/features|details|materials|care/i.test(label)) {
-            try { node.click(); } catch {}
+            try { out.push(node); } catch {}
           }
         });
-    }).catch(() => {});
+      return out;
+    });
     await antiDetection.humanScroll(page, 900);
     await antiDetection.randomDelay(500, 800);
 
@@ -5554,103 +5598,6 @@ async function extractBershkaSearchProductUrl(page, query, expectedDigits = '', 
   }, query, expectedDigits, isSearchPage);
 }
 
-async function focusBershkaSearchInput(page, query = '') {
-  const opened = await page.evaluate(() => {
-    const isVisible = (element) => {
-      if (!element) return false;
-      const rect = element.getBoundingClientRect();
-      const style = window.getComputedStyle(element);
-      return style.visibility !== 'hidden' && style.display !== 'none' && style.pointerEvents !== 'none';
-    };
-    const normalize = (value) => String(value || '').trim().toLowerCase();
-    const controls = [...document.querySelectorAll('button,a,[role="button"],[tabindex]')];
-    const opener = controls.find((element) => {
-      if (!isVisible(element)) return false;
-      const text = normalize([
-        element.getAttribute('aria-label'),
-        element.getAttribute('title'),
-        element.getAttribute('data-testid'),
-        element.getAttribute('href'),
-        element.className,
-        element.textContent,
-      ].join(' '));
-      return /\b(search|buscar)\b/.test(text) || /\/search/i.test(text);
-    });
-    if (opener) {
-      opener.click();
-      return true;
-    }
-    return false;
-  }).catch(() => false);
-
-  if (opened) {
-    await antiDetection.randomDelay(500, 900);
-  }
-
-  return page.evaluate((searchQuery) => {
-    const isInteractive = (element) => {
-      if (!element) return false;
-      const style = window.getComputedStyle(element);
-      if (style.visibility === 'hidden' || style.display === 'none') return false;
-      if (element.offsetWidth === 0 && element.offsetHeight === 0) return false;
-      return true;
-    };
-    const normalize = (value) => String(value || '').trim().toLowerCase();
-
-    const inputs = [...document.querySelectorAll('input[type="text"],input[type="search"],input:not([type]),textarea,[contenteditable="true"]')].filter(isInteractive);
-
-    const getHaystack = (element) => normalize([
-        element.getAttribute('type'),
-        element.getAttribute('name'),
-        element.getAttribute('aria-label'),
-        element.getAttribute('placeholder'),
-        element.getAttribute('data-testid'),
-        element.getAttribute('id'),
-        element.className,
-        element.closest('form')?.getAttribute('action'),
-        element.closest('form')?.className,
-        element.closest('[role="search"]')?.className,
-        element.parentElement?.className,
-        element.parentElement?.parentElement?.className,
-      ].join(' '));
-
-    const searchInput = inputs.find((element) => {
-      const haystack = getHaystack(element);
-      return /search|buscar|query|keyword|term/i.test(haystack);
-    }) || inputs.find((element) => {
-      const haystack = getHaystack(element);
-      return /\bsearch\b/i.test(haystack);
-    }) || inputs.find((element) => {
-      const type = normalize(element.getAttribute('type'));
-      return !type || ['text', 'search'].includes(type);
-    });
-
-    if (!searchInput) {
-      return false;
-    }
-
-    searchInput.focus();
-    searchInput.click();
-    searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-    const valueToType = String(searchQuery || '');
-    if ('value' in searchInput) {
-      const valueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
-      if (valueSetter && searchInput instanceof window.HTMLInputElement) {
-        valueSetter.call(searchInput, valueToType);
-      } else {
-        searchInput.value = valueToType;
-      }
-      searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-      searchInput.dispatchEvent(new Event('change', { bubbles: true }));
-    } else {
-      searchInput.textContent = valueToType;
-      searchInput.dispatchEvent(new InputEvent('input', { bubbles: true, data: valueToType }));
-    }
-    return true;
-  }, String(query || '')).catch(() => false);
-}
-
 async function openBershkaSearchOverlay(page) {
   // Step 1: Try known specific search trigger selectors first
   const directSelectors = [
@@ -5670,11 +5617,11 @@ async function openBershkaSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        const visible = await handle.isIntersectingViewport().catch(() => true);
+        const visible = await antiDetection.isInViewport(handle);
         if (visible) {
-          await handle.click({ delay: 50 }).catch(() => {});
+          await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
           return true;
         }
       }
@@ -5682,7 +5629,7 @@ async function openBershkaSearchOverlay(page) {
   }
 
   // Step 2: Fallback - scan all buttons in header/nav for search-like attributes
-  return page.evaluate(() => {
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -5705,12 +5652,11 @@ async function openBershkaSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\b(search|buscar|cerca|recherche|suche|szukaj)\b/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
-    return false;
-  });
+    return null;
+  })) > 0;
 }
 
 async function findVisibleBershkaSearchInput(page) {
@@ -5824,13 +5770,13 @@ async function searchBershkaByTyping(page, query, expectedDigits, emitLog, ensur
 
   // Step 3: Click into the input and type human-like
   try {
-    await inputElement.click({ delay: 80 });
+    await antiDetection.humanClick(page, inputElement, { delay: 80 });
   } catch {
     await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
   }
   await antiDetection.randomDelay(300, 600);
 
-  emitLog(`    ⌨️ Typing Bershka search "${query}" via DOM write…`, 'info');
+  emitLog(`    ⌨️ Typing Bershka search "${query}"…`, 'info');
   await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Bershka');
   ensureActive();
 
@@ -5875,9 +5821,14 @@ async function resolveBershkaProductUrl(browser, reference, emitLog, ensureActiv
   const norm = normalizeBershkaReference(reference);
   const queries = norm.searchTerms?.length ? norm.searchTerms : [norm.raw || reference];
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
+  // Single-page closed loop: when the caller hands in its long-lived slot tab we
+  // search on that very tab and hand it back untouched (no create, no close).
+  const page = options.page || await browser.newPage();
+  const ownsPage = !options.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+  }
 
   try {
     // Typed search only: skip the direct API/product lookup and go straight to
@@ -5896,14 +5847,16 @@ async function resolveBershkaProductUrl(browser, reference, emitLog, ensureActiv
         return '';
       });
       if (typedProductUrl) {
-        return { url: typedProductUrl, input: reference };
+        return { url: typedProductUrl, input: reference, page, ownsPage };
       }
     }
 
     // Deep catalog lookup disabled per user request (too slow, low success rate)
-    return { url: '', input: reference };
+    return { url: '', input: reference, page, ownsPage };
   } finally {
-    await page.close().catch(() => {});
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 }
 
@@ -6203,16 +6156,419 @@ async function resolveBershkaProductFromCatalog(page, reference, emitLog, ensure
   return null;
 }
 
+// ---------------------------------------------------------------------------
+// OneTrust cookie 弹窗统一处理（2026-10-14）
+//
+// 实测（Chrome + puppeteer-core 24.43.1，5 个 Inditex 系品牌首页各探一次）：
+//   · Bershka / Stradivarius / Pull&Bear / Zara 的 banner **没有 Accept 按钮** ——
+//     #onetrust-button-group 里 .banner-actions-container 是空的，整条 banner 只提供
+//     一个 aria-label="Close" 的关闭按钮（#onetrust-banner-sdk .onetrust-close-btn-handler）。
+//   · 只有 Lefties 有 #onetrust-accept-btn-handler（文案 "Accept All Cookies"）。
+//   → 旧代码把 #onetrust-accept-btn-handler 当通用解，在 4/5 个品牌上恒 miss。
+//
+// 第二个实测事实：banner 出现得极晚（相对 page.goto 返回）——
+//   Bershka +6.3s / Stradivarius +11.1s / Pull&Bear +12.2s / Lefties +3.8s / Zara +15.8s。
+//   旧代码在 goto 之后**立刻**检查一次就收工（Bershka 实测 goto 后 +5.6s 就检查完了），
+//   必然扑空。所以本函数内建「等 banner 滑入视口」。
+//
+// 只等一次：OneTrust 关闭后会写 OptanonAlertBoxClosed cookie，之后 banner 不再出现；
+// 检测到该 cookie 就跳过等待，否则每个款号都要白等 20s（实测确认该 cookie 在点击后写入）。
+//
+// 候选选择器全部限定在 OneTrust 自己的 id/容器内 —— 旧代码的 `button[class*="cookie"]`
+// 会命中页脚的 "Cookie settings" 按钮，而 humanClick → elementAimPoint 会先
+// scrollIntoView：实测把页面从 scrollY 0 滚到 3371，弹窗却原样留在屏幕上。
+// ---------------------------------------------------------------------------
+async function dismissOneTrustCookies(page, { waitMs = 20000 } = {}) {
+  try {
+    const alreadyHandled = await page.evaluate(
+      () => document.cookie.includes('OptanonAlertBoxClosed'),
+    ).catch(() => false);
+
+    // 已处理过（OneTrust 写过 OptanonAlertBoxClosed）→ banner 不会再出现，直接返回
+    if (alreadyHandled) return true;
+
+    const deadline = Date.now() + waitMs;
+    while (Date.now() < deadline) {
+      const state = await page.evaluate(() => {
+        const banner = document.querySelector('#onetrust-banner-sdk');
+        if (!banner) return 'absent';
+        const rect = banner.getBoundingClientRect();
+        return (rect.height > 40 && rect.top < window.innerHeight && rect.bottom > 0)
+          ? 'visible' : 'hidden';
+      }).catch(() => 'absent');
+      if (state === 'visible') break;
+      // 注意：'hidden'（存在但 height≈0）**不能**提前退出 —— 2026-10-14 实测
+      // Pull&Bear 的 banner 存在却长时间不可见（goto 后 54s 仍是 hidden），
+      // 提前退出会直接漏掉它。
+      await antiDetection.randomDelay(400, 700);
+    }
+
+    const selectors = [
+      '#onetrust-accept-btn-handler',                     // Lefties："Accept All Cookies"
+      '#onetrust-banner-sdk .onetrust-close-btn-handler', // 其余 4 家：唯一的 X
+      '#onetrust-close-btn-container button',
+      'button.onetrust-close-btn-handler',
+      '#onetrust-banner-sdk button[aria-label*="accept" i]',
+      '#onetrust-banner-sdk button[class*="accept"]',
+    ];
+
+    for (const selector of selectors) {
+      const button = await antiDetection.queryOne(page, selector);
+      if (!button) continue;
+      if (!(await antiDetection.isInViewport(button))) {
+        await button.dispose().catch(() => {});
+        continue;
+      }
+      await antiDetection.humanClick(page, button).catch(() => {});
+      await button.dispose().catch(() => {});
+      await antiDetection.randomDelay(400, 700);
+      const gone = await page.evaluate(() => {
+        const banner = document.querySelector('#onetrust-banner-sdk');
+        if (!banner) return true;
+        const rect = banner.getBoundingClientRect();
+        return rect.height < 10 || rect.top >= window.innerHeight;
+      }).catch(() => true);
+      if (gone) return true;
+    }
+
+    // UI 点不到时的兜底：banner 存在却不可见（滑入动画中 / AB 分组延迟），或选择器
+    // 又被站点改动。此时走 OneTrust 自己的接口 —— 对站点而言与用户按按钮等价
+    // （最终都是 OneTrust 内部写同意记录）。Pull&Bear 实测 banner 长时间 hidden，
+    // UI 循环全被 isInViewport 拦下，靠这里收口。
+    const viaApi = await page.evaluate(() => {
+      const call = (obj, name, label) => {
+        try {
+          if (obj && typeof obj[name] === 'function') { obj[name](); return label; }
+        } catch { /* 单个接口失败就继续试下一个 */ }
+        return '';
+      };
+      const ot = window.OneTrust;
+      const op = window.Optanon;
+      return call(op, 'AllowAll', 'Optanon.AllowAll')
+        || call(ot, 'AllowAll', 'OneTrust.AllowAll')
+        || call(op, 'Close', 'Optanon.Close')
+        || call(ot, 'Close', 'OneTrust.Close')
+        || '';
+    }).catch(() => '');
+    if (viaApi) {
+      await antiDetection.randomDelay(400, 700);
+      const gone = await page.evaluate(() => {
+        const banner = document.querySelector('#onetrust-banner-sdk');
+        if (!banner) return true;
+        const rect = banner.getBoundingClientRect();
+        return rect.height < 10 || rect.top >= window.innerHeight;
+      }).catch(() => true);
+      return gone;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 通用 cookie / 同意弹窗 + 国家选择器统一处理（2026-10-14）
+//
+// 实测表（Chrome + puppeteer-core 24.43.1，全新 profile，40s 窗口）。本文件里
+// 所有通用选择器都来自这张表，不是猜的：
+//   Mango        自研        button#cookies.button.acceptAll   "Accept all"   +5.8s
+//   Reserved     Cookiebot   #cookiebotDialogOkButton          "OK"           +11.5s
+//   Sinsay       Cookiebot   #cookiebotDialogOkButton          "W porządku"   +35.3s
+//   UrbanRevivo  Shopify     #shopify-pc__banner__btn-accept   "Accept"       +16.1s
+//   Abercrombie  OneTrust    **没有可见的 accept 按钮** → 只能走 OneTrust API
+//   Inditex ×5   OneTrust    4 家只有 X，仅 Lefties 有 Accept（见 dismissOneTrustCookies）
+//
+// 五个旧 dismissCommon*（Mango/Reserved/Abercrombie/Sinsay/UrbanRevivo）的通病：
+//   ① 零等待 —— banner 都在 goto 返回后 6~35s 才出现，旧代码查一次就收工。
+//      最惨的是 Sinsay（+35.3s）：上一轮 15s 的探测窗口直接把它误判成「无弹窗」。
+//   ② 把 #onetrust-accept-btn-handler 当通用解 —— 实测只有 Lefties 有它。
+//   ③ 文字兜底只认英文/德文 —— 漏掉 Sinsay 的波兰语 "W porządku"。
+//
+// 安全约束：候选一律限定在「框架自有 id」或「同意容器」内部，绝不用
+// `button[class*="cookie"]` —— 它会命中页脚的 "Cookie settings"，而
+// humanClick → elementAimPoint 第一步就 scrollIntoView，实测把页面从
+// scrollY 0 滚到 3371、弹窗却原样留着。国家选择器同理：只在 country/region/
+// locale/geo 容器内动手，不点页面上任意一个 "Continue"。
+// ---------------------------------------------------------------------------
+
+// 各框架「已处理过」的同意 cookie —— 有它就跳过等待，否则每个款号白等几十秒。
+// 刻意只收「用户动作之后才会写入」的 cookie：像 Shopify 的 `_tracking_consent`
+// 在部分地区首次加载就写，拿它当判据会导致弹窗没关就提前退出。
+const COOKIE_DONE_COOKIES = [
+  'OptanonAlertBoxClosed', // OneTrust（关闭/接受后写入）
+  'CookieConsent',         // Cookiebot
+  'CookieScriptConsent',   // CookieScript
+];
+
+// 「接受」类文案（多语言）。刻意排除 Settings / Ustawienia / Manage preferences /
+// Decline / Odrzuć —— 那些会打开偏好面板或直接拒绝，不是「该接受的接受」。
+const COOKIE_ACCEPT_TEXT = /^\s*(?:accept(?:\s+all)?(?:\s+cookies)?|agree(?:\s+all)?|allow(?:\s+all)?|ok(?:ay)?|got\s+it|i\s+agree|continue|close|dismiss|akceptuj(?:ę|e)?(?:\s+(?:wszystkie|wszystko))?|zgadzam\s+si[eę]|w\s+porz[ąa]dku|akzeptieren|alle\s+akzeptieren|zustimmen|einverstanden|aceptar(?:\s+todo)?|tout\s+accepter|accepter|accetta(?:\s+tutto)?|同意|接受|确定|知道了)\s*$/i;
+
+// 「关闭」类文案（无 Accept 时的次选）
+const COOKIE_CLOSE_TEXT = /^\s*(?:close|dismiss|no\s+thanks?|not\s+now|×|✕|✖|x|zamknij|schlie[ßs]en|cerrar|fermer|chiudi|关闭)\s*$/i;
+
+// 国家 / 地区选择器的确认文案
+const REGION_CONFIRM_TEXT = /^\s*(?:continue|confirm|stay(?:\s+(?:here|on\s+this\s+site))?|keep(?:\s+(?:browsing|shopping))?|yes|go(?:\s+to)?|shop(?:\s+now)?|enter|apply|ok(?:ay)?|weiter|best[äa]tigen|fortfahren|continuar|na\s+stron[ęe]|przejd[źz]|同意|确定|继续|进入)\s*$/i;
+
+// 框架自有的「接受」按钮（实测 id；命中即点，不再往下走）
+const COOKIE_ACCEPT_SELECTORS = [
+  '#onetrust-accept-btn-handler',                            // Lefties
+  '#CybotCookiebotDialogBodyLevelButtonLevelOptinAllowAll',  // Cookiebot
+  '#CybotCookiebotDialogBodyButtonAccept',                   // Cookiebot
+  '#cookiebotDialogOkButton',                                // Cookiebot（Reserved / Sinsay 实测）
+  '#cookiescript_accept',                                    // CookieScript
+  '#cookie-law-info-bar button[data-cli-type="accept"]',     // CookieLawInfo
+  '#shopify-pc__banner__btn-accept',                         // Shopify（UrbanRevivo 实测）
+  'button[id*="cookies.button.accept" i]',                   // Mango 自研（实测）
+  '[id*="onetrust" i] button[class*="accept" i]',
+  'button[data-testid*="accept-all" i]',
+];
+
+// 无 Accept 时的关闭按钮（含 Inditex-4 唯一的那个 X）
+const COOKIE_CLOSE_SELECTORS = [
+  '#onetrust-banner-sdk .onetrust-close-btn-handler',
+  '#onetrust-close-btn-container button',
+  'button.onetrust-close-btn-handler',
+  '#CybotCookiebotDialogBodyButtonDecline',
+  '#shopify-pc__banner__btn-decline',
+];
+
+// 同意容器（用于「容器内按文案兜底」；顺序＝优先级）
+const COOKIE_CONTAINER_SELECTORS = [
+  '#onetrust-banner-sdk',
+  '#onetrust-consent-sdk',
+  '#CybotCookiebotDialog',
+  '#cookiescript_injected',
+  '#cookie-law-info-bar',
+  '#shopify-pc__banner',
+  '#cookiebanner',
+  '#cookieBannerOverlay',
+  '[id*="cookie" i][id*="banner" i]',
+  '[id*="cookie" i][id*="consent" i]',
+  '[class*="cookie-banner" i]',
+  '[class*="cookiebanner" i]',
+  '[class*="cookie-consent" i]',
+  '[class*="cookieconsent" i]',
+  '[class*="consent-banner" i]',
+];
+
+// 国家 / 地区选择器容器 —— 只在这些容器内确认，避免误点页面上的 Continue
+const REGION_CONTAINER_SELECTORS = [
+  '[data-testid*="country-selector" i]',
+  '[id*="country" i][id*="select" i]',
+  '[class*="country" i][class*="selector" i]',
+  '[class*="country" i][class*="modal" i]',
+  '[class*="country" i][class*="popup" i]',
+  '[class*="region" i][class*="modal" i]',
+  '[class*="region" i][class*="selector" i]',
+  '[class*="locale" i][class*="modal" i]',
+  '[class*="locale" i][class*="popup" i]',
+  '[class*="geo" i][class*="modal" i]',
+];
+
+// 页内：还有「可见的同意提示」吗？同时用作「等它出现」和「确认它消失」的判据。
+// 能跨框架通用，是因为判据不是「某个容器是否消失」，而是「还有没有一个可见的
+// 接受按钮 / 同意容器里的接受按钮」—— Mango 那种自研弹窗的容器名完全对不上，
+// 但按钮 id 命中 COOKIE_ACCEPT_SELECTORS，照样判得到。
+function consentPromptVisibleInPage(acceptSels, containerSels, reSrc) {
+  const isVis = (el) => {
+    if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+    const r = el.getBoundingClientRect();
+    if (r.width < 6 || r.height < 6) return false;
+    const s = window.getComputedStyle(el);
+    if (!s || s.visibility === 'hidden' || s.display === 'none' || parseFloat(s.opacity) < 0.05) return false;
+    return r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
+  };
+  for (const sel of acceptSels) {
+    try { if (isVis(document.querySelector(sel))) return true; } catch { /* 单条选择器非法就跳过 */ }
+  }
+  const re = new RegExp(reSrc, 'i');
+  for (const sel of containerSels) {
+    let boxes;
+    try { boxes = document.querySelectorAll(sel); } catch { continue; }
+    for (const box of boxes) {
+      if (!isVis(box)) continue;
+      for (const btn of box.querySelectorAll('button, [role="button"], a')) {
+        const t = String(btn.textContent || '').replace(/\s+/g, ' ').trim();
+        if (t && t.length <= 30 && re.test(t) && isVis(btn)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// 在指定容器内找一个「文案匹配且完全在视口内」的按钮并人形点击。
+// 返回被点按钮的文案（没有候选则 ''）。视口判断放在页内做 —— 越界的元素交给
+// CDP 会被钳到边界、点到别的元素上，「点错比不点更糟」。
+async function clickInContainersByText(page, containerSelectors, textRe) {
+  const info = await antiDetection.pickInPage(page, (sels, reSrc) => {
+    const isVis = (el) => {
+      if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+      const r = el.getBoundingClientRect();
+      if (r.width < 6 || r.height < 6) return false;
+      const s = window.getComputedStyle(el);
+      if (!s || s.visibility === 'hidden' || s.display === 'none' || parseFloat(s.opacity) < 0.05) return false;
+      return r.bottom > 0 && r.top < window.innerHeight && r.right > 0 && r.left < window.innerWidth;
+    };
+    const re = new RegExp(reSrc, 'i');
+    for (const sel of sels) {
+      let boxes;
+      try { boxes = document.querySelectorAll(sel); } catch { continue; }
+      for (const box of boxes) {
+        if (!isVis(box)) continue;
+        for (const btn of box.querySelectorAll('button, [role="button"], a')) {
+          const t = String(btn.textContent || '').replace(/\s+/g, ' ').trim();
+          if (t && t.length <= 30 && re.test(t) && isVis(btn)) return { el: btn, info: { label: t, container: sel } };
+        }
+      }
+    }
+    return { el: null, info: null };
+  }, containerSelectors, textRe.source);
+  return info ? info.label : '';
+}
+
+// 国家 / 地区选择器：只在 REGION_CONTAINER_SELECTORS 内确认。
+async function confirmCountrySelector(page, { waitMs = 6000 } = {}) {
+  const deadline = Date.now() + waitMs;
+  try {
+    while (Date.now() < deadline) {
+      const label = await clickInContainersByText(page, REGION_CONTAINER_SELECTORS, REGION_CONFIRM_TEXT);
+      if (label) {
+        await antiDetection.randomDelay(600, 1100);
+        return label;
+      }
+      await antiDetection.randomDelay(400, 700);
+    }
+  } catch { /* 没有国家选择器不影响抓取 */ }
+  return '';
+}
+
+// 统一入口。waitMs = 「等弹窗滑入」的上限；命中即返回，不会白等满。
+// 已同意过的站点靠 COOKIE_DONE_COOKIES 秒退 —— 一次会话只需付一次等待成本。
+async function dismissCookieBanners(page, { waitMs = 20000 } = {}) {
+  try {
+    const acceptSels = COOKIE_ACCEPT_SELECTORS;
+    const containerSels = COOKIE_CONTAINER_SELECTORS;
+    const reSrc = COOKIE_ACCEPT_TEXT.source;
+
+    const isVisible = () => page.evaluate(consentPromptVisibleInPage, acceptSels, containerSels, reSrc).catch(() => false);
+    const alreadyDone = () => page.evaluate(
+      (names) => names.some((n) => document.cookie.indexOf(n) !== -1),
+      COOKIE_DONE_COOKIES,
+    ).catch(() => false);
+    const frameworkReady = () => page.evaluate(
+      () => Boolean(window.OneTrust || window.Optanon || window.Cookiebot
+        || (window.Shopify && window.Shopify.customerPrivacy)),
+    ).catch(() => false);
+    const callFrameworkApi = () => page.evaluate(() => {
+      const call = (obj, name) => {
+        try { if (obj && typeof obj[name] === 'function') { obj[name](); return true; } } catch { /* 试下一个 */ }
+        return false;
+      };
+      call(window.Optanon, 'AllowAll')
+        || call(window.OneTrust, 'AllowAll')
+        || call(window.Optanon, 'Close')
+        || call(window.OneTrust, 'Close');
+      const cb = window.Cookiebot;
+      if (cb && typeof cb.submitCustomConsent === 'function') {
+        try { cb.submitCustomConsent(true, true, true); } catch { /* noop */ }
+        if (typeof cb.hide === 'function') { try { cb.hide(); } catch { /* noop */ } }
+      }
+      const sp = window.Shopify && window.Shopify.customerPrivacy;
+      if (sp && typeof sp.setTrackingConsent === 'function') {
+        try {
+          // 用权限对象式：布尔式在部分主题上不生效（实测 UrbanRevivo 上弹窗会
+          // 在 2s 后重新注入，说明同意没被持久化）。
+          sp.setTrackingConsent({ analytics: true, marketing: true, preferences: true, sale_of_data: true }, () => {});
+        } catch { /* noop */ }
+      }
+      return true;
+    }).catch(() => false);
+
+    // 点一轮候选，命中且弹窗消失才返回该选择器
+    const sweep = async (selectors) => {
+      for (const sel of selectors) {
+        const btn = await antiDetection.queryOne(page, sel).catch(() => null);
+        if (!btn) continue;
+        if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+        await antiDetection.humanClick(page, btn).catch(() => {});
+        await btn.dispose().catch(() => {});
+        await antiDetection.randomDelay(400, 700);
+        if (!(await isVisible())) return sel;
+      }
+      return '';
+    };
+
+    const deadline = Date.now() + waitMs;
+    let sawVisible = false;
+    let uiHit = '';
+    let uiRounds = 0;
+
+    while (true) {
+      const visible = await isVisible();
+      if (visible) sawVisible = true;
+
+      if (visible) {
+        // ① 框架接受按钮 → ② 容器内接受文案 → ③ 关闭按钮 → ④ 容器内关闭文案
+        uiHit = await sweep(acceptSels);
+        if (!uiHit) uiHit = await clickInContainersByText(page, containerSels, COOKIE_ACCEPT_TEXT);
+        if (!uiHit) uiHit = await sweep(COOKIE_CLOSE_SELECTORS);
+        if (!uiHit) uiHit = await clickInContainersByText(page, containerSels, COOKIE_CLOSE_TEXT);
+
+        // 「点完就没了」不足以判定成功：2026-10-14 实测 UrbanRevivo 的 Shopify
+        // banner 会在消失约 2s 后**重新注入**（同意没能持久化到它的域上）。
+        // 所以要求它在 1.5s 内持续不可见才收口，否则重来一轮（最多 3 轮），
+        // 避免把「点掉了又回来」误判成成功。
+        if (uiHit) {
+          let stable = true;
+          for (let k = 0; k < 3; k += 1) {
+            await antiDetection.randomDelay(450, 650);
+            if (await isVisible()) { stable = false; break; }
+          }
+          if (stable) break;
+          uiHit = '';
+          uiRounds += 1;
+        }
+      } else {
+        if (await alreadyDone()) break;
+        // 之前可见、现在没了 → 已经收口（可能是我点了，也可能是站点自己收的）
+        if (sawVisible) break;
+        // 没看见可见弹窗，但框架已经就绪 —— Abercrombie 这种「有 OneTrust 却
+        // 根本没有可见接受按钮」的站点只能走接口；要拿「同意 cookie 已写入」
+        // 当成功判据，不能拿「看不见」当判据（那和「还没出现」无法区分）。
+        if (await frameworkReady()) {
+          await callFrameworkApi();
+          await antiDetection.randomDelay(500, 900);
+          if (await alreadyDone()) break;
+        }
+      }
+
+      if (uiRounds >= 3 || Date.now() > deadline) break;
+      await antiDetection.randomDelay(400, 700);
+    }
+
+    // ⑤ 国家 / 地区选择器（与同意状态无关，可能每页都拦一次）
+    await confirmCountrySelector(page, { waitMs: sawVisible ? 2500 : 5000 });
+    return Boolean(uiHit) || sawVisible;
+  } catch {
+    return false;
+  }
+}
+
 async function dismissCommonBershkaPopups(page) {
   try {
+    await dismissOneTrustCookies(page);
     const selectors = [
       '[data-cy="cookie-consent"] button[class*="accept"]',
-      'button[class*="cookie"]',
       '[aria-label*="accept cookies"]',
     ];
     for (const sel of selectors) {
-      const btn = await page.$(sel);
-      if (btn) { await btn.click(); await page.waitForTimeout(500); }
+      const btn = await antiDetection.queryOne(page, sel);
+      if (!btn) continue;
+      if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+      await antiDetection.humanClick(page, btn).catch(() => {});
+      await btn.dispose().catch(() => {});
+      await antiDetection.randomDelay(400, 700);
     }
   } catch { /* ignore */ }
 }
@@ -6346,22 +6702,22 @@ async function gotoStradivariusWithRetry(page, url, label = 'Stradivarius page',
 
 async function dismissCommonStradivariusPopups(page) {
   try {
+    await dismissOneTrustCookies(page);
+    // 以下为站内自研弹窗的兜底（OneTrust 已由 dismissOneTrustCookies 处理）。
+    // 实测 `button[class*="accept"]` / `[aria-label*="accept" i]` 在 Stradivarius 上
+    // 命中 0，已移除；保留 testid 系（较精确，且不限容器也不容易误伤）。
     const selectors = [
-      '#onetrust-accept-btn-handler',
-      'button[id*="accept"]',
-      'button[class*="accept"]',
       'button[data-testid*="accept"]',
-      '[aria-label*="accept" i]',
-      '[aria-label*="Accept" i]',
       '[data-testid*="cookie"] button',
     ];
 
     for (const selector of selectors) {
-      const button = await page.$(selector);
-      if (button) {
-        await button.click().catch(() => {});
-        await page.waitForTimeout(400).catch(() => {});
-      }
+      const button = await antiDetection.queryOne(page, selector);
+      if (!button) continue;
+      if (!(await antiDetection.isInViewport(button))) { await button.dispose().catch(() => {}); continue; }
+      await antiDetection.humanClick(page, button).catch(() => {});
+      await button.dispose().catch(() => {});
+      await antiDetection.randomDelay(300, 600);
     }
   } catch {
     // Ignore popup handling failures; scraping can continue without this.
@@ -6650,18 +7006,18 @@ async function openStradivariusSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        const visible = await handle.isIntersectingViewport().catch(() => true);
+        const visible = await antiDetection.isInViewport(handle);
         if (visible) {
-          await handle.click({ delay: 50 }).catch(() => {});
+          await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
           return true;
         }
       }
     } catch { /* ignore */ }
   }
 
-  return page.evaluate(() => {
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -6684,12 +7040,11 @@ async function openStradivariusSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\b(search|buscar|cerca|recherche|suche|szukaj)\b/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
     return false;
-  });
+  })) > 0;
 }
 
 async function findVisibleStradivariusSearchInput(page) {
@@ -6774,7 +7129,9 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
   }
   await new Promise((r) => setTimeout(r, 600));
 
-  const result = await page.evaluate((prefixesRaw, expectedRaw) => {
+  // 用 pickInPage：页面内只负责「挑一张卡片并描述它」，点击交给 CDP 人形点击。
+  // 顺序上 info 先取回、再点击，所以即使点击触发了同步导航，我们也已经拿到 href。
+  const result = await antiDetection.pickInPage(page, (prefixesRaw, expectedRaw) => {
     const prefixes = Array.isArray(prefixesRaw) ? prefixesRaw : [];
     const expectedDigits = String(expectedRaw || '');
     const isVisible = (el) => {
@@ -6841,14 +7198,12 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       const withImg = allLinks.find((a) => hrefMatchesStyle(a.href) && a.querySelector('img'));
       if (withImg) {
         withImg.scrollIntoView({ behavior: 'instant', block: 'center' });
-        withImg.click();
-        return { href: withImg.href, pass: 'A', candidates: allLinks.length, hasContainer: !!searchContainer };
+        return { el: withImg, info: { href: withImg.href, pass: 'A', candidates: allLinks.length, hasContainer: !!searchContainer } };
       }
       const noImg = allLinks.find((a) => hrefMatchesStyle(a.href));
       if (noImg) {
         noImg.scrollIntoView({ behavior: 'instant', block: 'center' });
-        noImg.click();
-        return { href: noImg.href, pass: 'A', candidates: allLinks.length, hasContainer: !!searchContainer };
+        return { el: noImg, info: { href: noImg.href, pass: 'A', candidates: allLinks.length, hasContainer: !!searchContainer } };
       }
     }
 
@@ -6861,8 +7216,7 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       });
       if (digitMatch) {
         digitMatch.scrollIntoView({ behavior: 'instant', block: 'center' });
-        digitMatch.click();
-        return { href: digitMatch.href, pass: 'B', candidates: allLinks.length, hasContainer: !!searchContainer };
+        return { el: digitMatch, info: { href: digitMatch.href, pass: 'B', candidates: allLinks.length, hasContainer: !!searchContainer } };
       }
     }
 
@@ -6877,8 +7231,7 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       const first = scopedWithImg || scopedLinks[0];
       if (first) {
         first.scrollIntoView({ behavior: 'instant', block: 'center' });
-        first.click();
-        return { href: first.href, pass: 'C', candidates: scopedLinks.length, hasContainer: true };
+        return { el: first, info: { href: first.href, pass: 'C', candidates: scopedLinks.length, hasContainer: true } };
       }
     }
 
@@ -6891,8 +7244,7 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       const anyCard = allLinks.find((a) => a.querySelector('img')) || allLinks[0];
       if (anyCard) {
         anyCard.scrollIntoView({ behavior: 'instant', block: 'center' });
-        anyCard.click();
-        return { href: anyCard.href, pass: 'D', candidates: allLinks.length, hasContainer: true };
+        return { el: anyCard, info: { href: anyCard.href, pass: 'D', candidates: allLinks.length, hasContainer: true } };
       }
     }
 
@@ -6933,8 +7285,7 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       }
       if (chosenEl) {
         chosenEl.scrollIntoView({ behavior: 'instant', block: 'center' });
-        try { chosenEl.click(); } catch { /* noop */ }
-        return { href: chosenHref, pass: 'E', candidates: cards.length, hasContainer: true };
+        return { el: chosenEl, info: { href: chosenHref, pass: 'E', candidates: cards.length, hasContainer: true } };
       }
     }
 
@@ -6949,7 +7300,7 @@ async function clickFirstStradivariusProductCard(page, expectedDigits, emitLog) 
       }
     } catch { /* noop */ }
 
-    return { href: '', pass: '', candidates: allLinks.length, hasContainer: !!searchContainer, snippet };
+    return { el: null, info: { href: '', pass: '', candidates: allLinks.length, hasContainer: !!searchContainer, snippet } };
   }, stylePrefixes, expectedDigitsNorm);
 
   const clickedHref = result && result.href ? result.href : '';
@@ -7091,7 +7442,7 @@ async function searchStradivariusByTyping(page, query, expectedDigits, emitLog, 
   }
 
   try {
-    await inputElement.click({ delay: 80 });
+    await antiDetection.humanClick(page, inputElement, { delay: 80 });
   } catch {
     await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
   }
@@ -7135,7 +7486,7 @@ async function searchStradivariusByTyping(page, query, expectedDigits, emitLog, 
       }
     } catch { /* noop */ }
     try {
-      await inputElement.click({ delay: 80 });
+      await antiDetection.humanClick(page, inputElement, { delay: 80 });
     } catch {
       await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
     }
@@ -7294,7 +7645,7 @@ async function searchStradivariusByTyping(page, query, expectedDigits, emitLog, 
   return url;
 }
 
-async function resolveStradivariusProduct(browser, reference, emitLog, ensureActive) {
+async function resolveStradivariusProduct(browser, reference, emitLog, ensureActive, options = {}) {
   const normalized = normalizeStradivariusReference(reference);
   if (!normalized) {
     throw new Error('Empty Stradivarius reference.');
@@ -7317,10 +7668,14 @@ async function resolveStradivariusProduct(browser, reference, emitLog, ensureAct
     };
   }
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
-  await page.bringToFront().catch(() => {});
+  // Single-page closed loop: reuse the caller's long-lived slot tab when provided.
+  const page = options.page || await browser.newPage();
+  const ownsPage = !options.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+  }
 
   try {
     await gotoStradivariusWithRetry(page, STRADIVARIUS_ENTRY_URL, 'Stradivarius entry', 2, { timeout: 20000 });
@@ -7389,11 +7744,15 @@ async function resolveStradivariusProduct(browser, reference, emitLog, ensureAct
         styleNumber: normalized.styleNumber || normalized.styleReference,
         url: typedUrl,
       };
+      // The cache must stay free of live page handles, so the slot tab is attached
+      // to the returned copy only.
       cachedStradivariusStyleMatches.set(cacheKey, resolved);
-      return resolved;
+      return { ...resolved, page, ownsPage };
     }
   } finally {
-    await page.close().catch(() => {});
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 
   throw new Error(`No Stradivarius product was found for ${normalized.styleNumber || normalized.input}.`);
@@ -8193,8 +8552,8 @@ async function waitForStradivariusProductImages(page, styleNumber, capturedImage
   return bestCount;
 }
 
-async function scrapeStradivariusProduct(browser, reference, emitLog, ensureActive) {
-  const resolved = await resolveStradivariusProduct(browser, reference, emitLog, ensureActive);
+async function scrapeStradivariusProduct(browser, reference, emitLog, ensureActive, options = {}) {
+  const resolved = await resolveStradivariusProduct(browser, reference, emitLog, ensureActive, options);
   if (!resolved.url) {
     throw new Error(`Could not build a Stradivarius product URL for ${resolved.styleNumber}.`);
   }
@@ -8276,18 +8635,24 @@ async function scrapeStradivariusProduct(browser, reference, emitLog, ensureActi
   }
   // ── End Firecrawl manual mode ───────────────────────────────────
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
-  await page.bringToFront().catch(() => {});
+  // The search step hands us its long-lived slot tab so one reference is handled by a
+  // single page (entry → results → product page) that then goes back to the slot.
+  const page = resolved.page || await browser.newPage();
+  const ownsPage = !resolved.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+  }
 
   const capturedImageUrls = new Set();
-  page.on('response', (resp) => {
+  const onStradivariusResponse = (resp) => {
     const reqUrl = canonicalizeStradivariusImageUrl(resp.url());
     if (isLikelyStradivariusProductImage(reqUrl)) {
       capturedImageUrls.add(reqUrl);
     }
-  });
+  };
+  page.on('response', onStradivariusResponse);
 
   try {
     ensureActive();
@@ -8300,15 +8665,17 @@ async function scrapeStradivariusProduct(browser, reference, emitLog, ensureActi
     await antiDetection.randomDelay(250, 450);
 
     // Expand the "Composition and care" accordion so the section text is in the DOM
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
       const target = [...document.querySelectorAll('button, summary, [role="button"], a, h2, h3, div, span')]
         .find((el) => /composition\s+and\s+care|composition,?\s*care(\s+and\s+source)?|materials,?\s+care\s+and\s+source/i
           .test(String(el.textContent || '').trim()));
       if (target) {
         target.scrollIntoView({ behavior: 'instant', block: 'center' });
-        target.click();
+        out.push(target);
       }
-    }).catch(() => {});
+      return out;
+    });
     await antiDetection.randomDelay(400, 800);
 
     const pageData = await page.evaluate(() => {
@@ -8502,7 +8869,10 @@ async function scrapeStradivariusProduct(browser, reference, emitLog, ensureActi
       pageText: pageData.pageText || '',
     };
   } finally {
-    await page.close().catch(() => {});
+    page.off('response', onStradivariusResponse);
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 }
 
@@ -8779,13 +9149,31 @@ async function runStradivariusScraper(config, emitLog, emitProgress, taskControl
     const totalItems = styleNumbers.length;
     let currentProgress = 5;
     emitProgress(currentProgress);
-    const effectiveTabConcurrency = 1;
+    // Two persistent tabs per run, each owned by one concurrency slot — the same
+    // shape UNIQLO / Pull&Bear already use.
+    const effectiveTabConcurrency = 2;
+
+    // One long-lived tab per slot, reused across batches and across both passes.
+    const slotPages = new Array(effectiveTabConcurrency).fill(null);
+    const acquireSlotPage = async (slotIndex) => {
+      const existing = slotPages[slotIndex];
+      if (existing && !existing.isClosed()) {
+        return existing;
+      }
+      const page = await browser.newPage();
+      await antiDetection.applyRetailBrowsingProfile(page);
+      await page.setViewport(antiDetection.getRandomViewport());
+      await page.bringToFront().catch(() => {});
+      slotPages[slotIndex] = page;
+      return page;
+    };
 
     // Helper: run a single reference through scrapeStradivariusProduct (one attempt)
-    const processReference = async (reference) => {
+    const processReference = async (reference, slotIndex = 0) => {
       try {
         ensureActive();
-        return await scrapeStradivariusProduct(browser, reference, emitLog, ensureActive);
+        const slotPage = await acquireSlotPage(slotIndex);
+        return await scrapeStradivariusProduct(browser, reference, emitLog, ensureActive, { page: slotPage });
       } catch (error) {
         if (isCancellationError(error) || taskController?.cancelled) {
           throw new TaskCancelledError();
@@ -8814,7 +9202,7 @@ async function runStradivariusScraper(config, emitLog, emitProgress, taskControl
       const batchResults = await Promise.all(batch.map(async (reference, idxInBatch) => {
         const normalizedReference = normalizeStradivariusReference(reference);
         emitLog(`🎯 Stradivarius input raw: "${reference}"${normalizedReference?.styleNumber ? ` -> ${normalizedReference.styleNumber}` : ''}`, 'info');
-        const result = await processReference(reference);
+        const result = await processReference(reference, idxInBatch);
         return { index: i + idxInBatch, result };
       }));
 
@@ -8850,7 +9238,7 @@ async function runStradivariusScraper(config, emitLog, emitProgress, taskControl
         const remaining = failedIndexes.length - n;
         emitLog(`🔄 [第二轮 剩余 ${remaining}] ${reference}`, 'warning');
         await antiDetection.randomDelay(1800, 3200);
-        const result = await processReference(reference);
+        const result = await processReference(reference, n % effectiveTabConcurrency);
         firstPassResults[idx] = result;
         if (result?.url && result.imageUrls?.length > 0) {
           emitLog(`    ✅ 第二轮成功: ${reference}`, 'success');
@@ -9434,23 +9822,32 @@ async function scrapeBershkaProduct(browser, reference, emitLog, ensureActive, o
   }
   // ── End Firecrawl manual mode ───────────────────────────────────
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
-  await page.bringToFront().catch(() => {});
+  // The search step hands us its long-lived slot tab so the whole reference is
+  // handled by ONE page: storefront → search results → product page. The tab is
+  // handed back to the slot for the next reference instead of being closed.
+  const page = normalized.page || await browser.newPage();
+  const ownsPage = !normalized.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+  }
 
   if (!normalized.url) {
-    await page.close().catch(() => {});
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
     throw new Error('Product not found on Bershka for reference: ' + reference);
   }
 
   const capturedUrls = new Set();
-  page.on('response', (resp) => {
+  const onBershkaResponse = (resp) => {
     const reqUrl = cleanImageUrl(resp.url());
     if (isLikelyBershkaProductImage(reqUrl)) {
       capturedUrls.add(reqUrl);
     }
-  });
+  };
+  page.on('response', onBershkaResponse);
 
   try {
     ensureActive();
@@ -9464,12 +9861,14 @@ async function scrapeBershkaProduct(browser, reference, emitLog, ensureActive, o
       throw new Error('Bershka blocked the current session while opening the product page.');
     }
 
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
       const materialsToggle = [...document.querySelectorAll('button, summary, [role="button"]')].find((element) =>
         /materials, care and source/i.test(String(element.textContent || '').trim()),
       );
-      materialsToggle?.click();
-    }).catch(() => {});
+      out.push(materialsToggle);
+      return out;
+    });
 
     await antiDetection.randomDelay(800, 1200);
     await antiDetection.humanScroll(page, 2400);
@@ -9623,7 +10022,10 @@ async function scrapeBershkaProduct(browser, reference, emitLog, ensureActive, o
       pageText: info.pageText || '',
     };
   } finally {
-    await page.close().catch(() => {});
+    page.off('response', onBershkaResponse);
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 }
 
@@ -9696,13 +10098,32 @@ async function runBershkaScraper(config, emitLog, emitProgress, taskController, 
     let currentProgress = 5;
     emitProgress(currentProgress);
     const totalItems = styleNumbers.length;
-    const effectiveTabConcurrency = 1;
+    // Two persistent tabs per run, each owned by one concurrency slot — the same
+    // shape UNIQLO / Pull&Bear already use.
+    const effectiveTabConcurrency = 2;
+
+    // One long-lived tab per slot, reused across batches: every reference after the
+    // first one in that slot reuses the warmed tab instead of paying a cold start.
+    const slotPages = new Array(effectiveTabConcurrency).fill(null);
+    const acquireSlotPage = async (slotIndex) => {
+      const existing = slotPages[slotIndex];
+      if (existing && !existing.isClosed()) {
+        return existing;
+      }
+      const page = await browser.newPage();
+      await antiDetection.applyRetailBrowsingProfile(page);
+      await page.setViewport(antiDetection.getRandomViewport());
+      await page.bringToFront().catch(() => {});
+      slotPages[slotIndex] = page;
+      return page;
+    };
 
     // Helper: run a single reference through scrapeBershkaProduct (one attempt)
-    const processReference = async (reference) => {
+    const processReference = async (reference, slotIndex = 0) => {
       try {
         ensureActive();
-        return await scrapeBershkaProduct(browser, reference, emitLog, ensureActive);
+        const slotPage = await acquireSlotPage(slotIndex);
+        return await scrapeBershkaProduct(browser, reference, emitLog, ensureActive, { page: slotPage });
       } catch (error) {
         if (isCancellationError(error) || taskController?.cancelled) {
           throw new TaskCancelledError();
@@ -9728,7 +10149,7 @@ async function runBershkaScraper(config, emitLog, emitProgress, taskController, 
       const batchResults = await Promise.all(batch.map(async (reference, idxInBatch) => {
         const normalizedReference = normalizeBershkaReference(reference);
         emitLog(`🎯 Bershka input raw: "${reference}"${normalizedReference?.styleCode ? ` -> Search ${normalizedReference.styleCode}` : ''}`, 'info');
-        const result = await processReference(reference);
+        const result = await processReference(reference, idxInBatch);
         return { index: i + idxInBatch, result };
       }));
 
@@ -10033,7 +10454,7 @@ function isRelevantLeftiesProductImage(url = '', styleNumber = '') {
 // the panel text behind the "Composition and care" accordion. Returns a clean,
 // comma-joined string like "65% Cotton, 35% Polyester" or "" when nothing matches.
 function extractLeftiesFabricComposition(rawText = '') {
-  const text = String(rawText || '').replace(/ /g, ' ').trim();
+  const text = String(rawText || '').replace(/\u00A0/g, ' ').trim();
   if (!text) return '';
   const lines = text.split(/[\n\r]+/)
     .map((line) => line.trim())
@@ -10170,19 +10591,18 @@ async function extractLeftiesSearchProductUrl(page, query, expectedDigits = '', 
 
 async function dismissCommonLeftiesPopups(page) {
   try {
+    await dismissOneTrustCookies(page);
     const selectors = [
       '[data-cy="cookie-consent"] button[class*="accept"]',
-      'button[class*="cookie"]',
       '[aria-label*="accept cookies" i]',
-      '[id*="onetrust-accept" i]',
-      '#onetrust-accept-btn-handler',
     ];
     for (const sel of selectors) {
-      const btn = await page.$(sel);
-      if (btn) {
-        await btn.click().catch(() => {});
-        await page.waitForTimeout(500).catch(() => {});
-      }
+      const btn = await antiDetection.queryOne(page, sel);
+      if (!btn) continue;
+      if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+      await antiDetection.humanClick(page, btn).catch(() => {});
+      await btn.dispose().catch(() => {});
+      await antiDetection.randomDelay(400, 700);
     }
   } catch { /* ignore */ }
 }
@@ -10213,18 +10633,18 @@ async function openLeftiesSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        const visible = await handle.isIntersectingViewport().catch(() => true);
+        const visible = await antiDetection.isInViewport(handle);
         if (visible) {
-          await handle.click({ delay: 50 }).catch(() => {});
+          await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
           return true;
         }
       }
     } catch { /* ignore */ }
   }
 
-  return page.evaluate(() => {
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -10247,12 +10667,11 @@ async function openLeftiesSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\b(search|buscar|cerca|recherche|suche)\b/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
     return false;
-  });
+  })) > 0;
 }
 
 async function findVisibleLeftiesSearchInput(page) {
@@ -10290,7 +10709,7 @@ async function findVisibleLeftiesSearchInput(page) {
 
 async function clickFirstLeftiesProductCard(page, emitLog) {
   const before = page.url();
-  const clickedHref = await page.evaluate(() => {
+  const clickedHref = await antiDetection.pickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -10311,8 +10730,7 @@ async function clickFirstLeftiesProductCard(page, emitLog) {
       if (isRecommendationHref(href)) continue;
       if (!a.querySelector('img')) continue;
       a.scrollIntoView({ behavior: 'instant', block: 'center' });
-      a.click();
-      return href;
+      return { el: a, info: href };
     }
     // Fallback: any visible product link (still excluding recommendation links)
     for (const a of links) {
@@ -10321,10 +10739,9 @@ async function clickFirstLeftiesProductCard(page, emitLog) {
       if (!productLinkRegex.test(href)) continue;
       if (isRecommendationHref(href)) continue;
       a.scrollIntoView({ behavior: 'instant', block: 'center' });
-      a.click();
-      return href;
+      return { el: a, info: href };
     }
-    return '';
+    return { el: null, info: '' };
   });
 
   if (!clickedHref) return '';
@@ -10424,13 +10841,13 @@ async function searchLeftiesByTyping(page, query, expectedDigits, emitLog, ensur
   }
 
   try {
-    await inputElement.click({ delay: 80 });
+    await antiDetection.humanClick(page, inputElement, { delay: 80 });
   } catch {
     await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
   }
   await antiDetection.randomDelay(300, 600);
 
-  emitLog(`    ⌨️ Typing Lefties search "${query}" via DOM write…`, 'info');
+  emitLog(`    ⌨️ Typing Lefties search "${query}"…`, 'info');
   await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Lefties');
   ensureActive();
 
@@ -10497,13 +10914,17 @@ async function searchLeftiesByTyping(page, query, expectedDigits, emitLog, ensur
   return url;
 }
 
-async function resolveLeftiesProductUrl(browser, reference, emitLog, ensureActive) {
+async function resolveLeftiesProductUrl(browser, reference, emitLog, ensureActive, options = {}) {
   const norm = normalizeLeftiesReference(reference);
   const queries = norm.searchTerms?.length ? norm.searchTerms : [norm.raw || reference];
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
+  // Single-page closed loop: reuse the caller's long-lived slot tab when provided.
+  const page = options.page || await browser.newPage();
+  const ownsPage = !options.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+  }
 
   try {
     // Typed search only: type the style number into the homepage search box,
@@ -10522,18 +10943,20 @@ async function resolveLeftiesProductUrl(browser, reference, emitLog, ensureActiv
         return '';
       });
       if (typedUrl) {
-        return { url: typedUrl, input: reference };
+        return { url: typedUrl, input: reference, page, ownsPage };
       }
     }
 
-    return { url: '', input: reference };
+    return { url: '', input: reference, page, ownsPage };
   } finally {
-    await page.close().catch(() => {});
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 }
 
-async function scrapeLeftiesProduct(browser, reference, emitLog, ensureActive) {
-  const normalized = await resolveLeftiesProductUrl(browser, reference, emitLog, ensureActive);
+async function scrapeLeftiesProduct(browser, reference, emitLog, ensureActive, options = {}) {
+  const normalized = await resolveLeftiesProductUrl(browser, reference, emitLog, ensureActive, options);
 
   // ── Firecrawl mode check ───────────────────────────────────────
   const currentMode = firecrawlService.getMode();
@@ -10611,23 +11034,31 @@ async function scrapeLeftiesProduct(browser, reference, emitLog, ensureActive) {
   }
   // ── End Firecrawl manual mode ───────────────────────────────────
 
-  const page = await browser.newPage();
-  await antiDetection.applyRetailBrowsingProfile(page);
-  await page.setViewport(antiDetection.getRandomViewport());
-  await page.bringToFront().catch(() => {});
+  // The search step hands us its long-lived slot tab so one reference is handled by a
+  // single page (storefront → results → product page) that then goes back to the slot.
+  const page = normalized.page || await browser.newPage();
+  const ownsPage = !normalized.page;
+  if (ownsPage) {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+  }
 
   if (!normalized.url) {
-    await page.close().catch(() => {});
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
     throw new Error('Product not found on Lefties for reference: ' + reference);
   }
 
   const capturedUrls = new Set();
-  page.on('response', (resp) => {
+  const onLeftiesResponse = (resp) => {
     const reqUrl = cleanImageUrl(resp.url());
     if (isLikelyLeftiesProductImage(reqUrl)) {
       capturedUrls.add(reqUrl);
     }
-  });
+  };
+  page.on('response', onLeftiesResponse);
 
   try {
     ensureActive();
@@ -10680,13 +11111,13 @@ async function scrapeLeftiesProduct(browser, reference, emitLog, ensureActive) {
       }, compositionElement).catch(() => {});
       let realClickOk = false;
       try {
-        await compositionElement.click({ delay: 60 });
+        await antiDetection.humanClick(page, compositionElement, { delay: 60 });
         realClickOk = true;
       } catch (err) {
         emitLog(`    ⚠️ Lefties composition real-click failed: ${err.message}; trying synthetic`, 'warning');
       }
       if (!realClickOk) {
-        await page.evaluate((el) => el.click(), compositionElement).catch(() => {});
+        await antiDetection.humanClick(page, compositionElement).catch(() => {});
       }
       await compositionHandle.dispose().catch(() => {});
       emitLog(`    🧶 Clicked Lefties composition accordion`, 'info');
@@ -10849,7 +11280,10 @@ async function scrapeLeftiesProduct(browser, reference, emitLog, ensureActive) {
       pageText: info.pageText || '',
     };
   } finally {
-    await page.close().catch(() => {});
+    page.off('response', onLeftiesResponse);
+    if (ownsPage) {
+      await page.close().catch(() => {});
+    }
   }
 }
 
@@ -10921,12 +11355,30 @@ async function runLeftiesScraper(config, emitLog, emitProgress, taskController, 
     let currentProgress = 5;
     emitProgress(currentProgress);
     const totalItems = styleNumbers.length;
-    const effectiveTabConcurrency = 1;
+    // Two persistent tabs per run, each owned by one concurrency slot — the same
+    // shape UNIQLO / Pull&Bear already use.
+    const effectiveTabConcurrency = 2;
 
-    const processReference = async (reference) => {
+    // One long-lived tab per slot, reused across batches and across both passes.
+    const slotPages = new Array(effectiveTabConcurrency).fill(null);
+    const acquireSlotPage = async (slotIndex) => {
+      const existing = slotPages[slotIndex];
+      if (existing && !existing.isClosed()) {
+        return existing;
+      }
+      const page = await browser.newPage();
+      await antiDetection.applyRetailBrowsingProfile(page);
+      await page.setViewport(antiDetection.getRandomViewport());
+      await page.bringToFront().catch(() => {});
+      slotPages[slotIndex] = page;
+      return page;
+    };
+
+    const processReference = async (reference, slotIndex = 0) => {
       try {
         ensureActive();
-        return await scrapeLeftiesProduct(browser, reference, emitLog, ensureActive);
+        const slotPage = await acquireSlotPage(slotIndex);
+        return await scrapeLeftiesProduct(browser, reference, emitLog, ensureActive, { page: slotPage });
       } catch (error) {
         if (isCancellationError(error) || taskController?.cancelled) {
           throw new TaskCancelledError();
@@ -10952,7 +11404,7 @@ async function runLeftiesScraper(config, emitLog, emitProgress, taskController, 
       const batchResults = await Promise.all(batch.map(async (reference, idxInBatch) => {
         const normalizedReference = normalizeLeftiesReference(reference);
         emitLog(`🎯 Lefties input raw: "${reference}"${normalizedReference?.styleCode ? ` -> Search ${normalizedReference.styleCode}` : ''}`, 'info');
-        const result = await processReference(reference);
+        const result = await processReference(reference, idxInBatch);
         return { index: i + idxInBatch, result };
       }));
 
@@ -10986,7 +11438,7 @@ async function runLeftiesScraper(config, emitLog, emitProgress, taskController, 
         const reference = styleNumbers[idx];
         emitLog(`🔄 [第二轮 ${n + 1}/${failedIndexes.length}] ${reference}`, 'warning');
         await antiDetection.randomDelay(1800, 3200);
-        const result = await processReference(reference);
+        const result = await processReference(reference, n % effectiveTabConcurrency);
         firstPassResults[idx] = result;
         if (result?.url && result.imageUrls?.length > 0) {
           emitLog(`    ✅ 第二轮成功: ${reference}`, 'success');
@@ -11358,26 +11810,10 @@ function extractMangoFabricComposition(rawText = '') {
 }
 
 async function dismissCommonMangoPopups(page) {
-  // Mango uses OneTrust cookies + occasional newsletter/promotion modals.
-  const selectors = [
-    '#onetrust-accept-btn-handler',
-    'button[id*="accept" i][id*="cookie" i]',
-    'button[aria-label*="accept" i]',
-    'button[aria-label*="aceptar" i]',
-    'button[aria-label*="close" i]',
-    'button[aria-label*="cerrar" i]',
-    'button[data-testid*="accept" i]',
-    'button[data-testid*="close" i]',
-  ];
-  for (const sel of selectors) {
-    try {
-      const btn = await page.$(sel);
-      if (btn) {
-        await btn.click({ delay: 60 }).catch(() => {});
-        await antiDetection.randomDelay(300, 600);
-      }
-    } catch { /* noop */ }
-  }
+  // 实测（40s 窗口）：Mango 的同意弹窗是**自研**的 —— button#cookies.button.acceptAll，
+  // 文案 "Accept all"，+5.8s 出现，全程没有 OneTrust（window.OneTrust === false）。
+  // 旧代码把 #onetrust-accept-btn-handler 放第一位，在 Mango 上恒 miss。
+  await dismissCookieBanners(page, { waitMs: 12000 });
 }
 
 async function openMangoSearchOverlay(page) {
@@ -11392,14 +11828,14 @@ async function openMangoSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        await handle.click({ delay: 50 }).catch(() => {});
+        await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
         return true;
       }
     } catch { /* noop */ }
   }
-  return page.evaluate(() => {
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -11418,12 +11854,11 @@ async function openMangoSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\b(search|buscar|cerca|recherche|suche)\b/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
     return false;
-  });
+  })) > 0;
 }
 
 async function findVisibleMangoSearchInput(page) {
@@ -11632,13 +12067,13 @@ async function searchMangoByTyping(page, query, emitLog, ensureActive) {
     }
 
     try {
-      await inputElement.click({ delay: 80 });
+      await antiDetection.humanClick(page, inputElement, { delay: 80 });
     } catch {
       await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
     }
     await antiDetection.randomDelay(300, 600);
 
-    emitLog(`    ⌨️ Typing Mango search "${query}" via DOM write…`, 'info');
+    emitLog(`    ⌨️ Typing Mango search "${query}"…`, 'info');
     await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Mango');
 
     emitLog('    ⏳ Waiting for Mango search results…', 'info');
@@ -11875,9 +12310,9 @@ async function scrapeMangoProduct(browser, reference, emitLog, ensureActive) {
         try { el.scrollIntoView({ behavior: 'instant', block: 'center' }); } catch { /* noop */ }
       }, compositionElement).catch(() => {});
       try {
-        await compositionElement.click({ delay: 60 });
+        await antiDetection.humanClick(page, compositionElement, { delay: 60 });
       } catch {
-        await page.evaluate((el) => el.click(), compositionElement).catch(() => {});
+        await antiDetection.humanClick(page, compositionElement).catch(() => {});
       }
       // Mango's accordion animates open; wait for the panel content (any
       // visible "<digits>% <Word>" text) to materialise before extracting.
@@ -12153,7 +12588,6 @@ async function scrapeMangoProduct(browser, reference, emitLog, ensureActive) {
           };
           const flags = [];
           for (const url of urls) {
-            // eslint-disable-next-line no-await-in-loop
             flags.push(await sample(url));
           }
           return flags;
@@ -12585,52 +13019,11 @@ function cleanReservedDescription(rawText = '') {
 }
 
 async function dismissCommonReservedPopups(page) {
-  // Pass 1: try well-known cookie/consent selectors.
-  const selectors = [
-    '#onetrust-accept-btn-handler',
-    '#cookiescript_accept',
-    'button[id*="accept" i][id*="cookie" i]',
-    'button[id*="accept" i][id*="consent" i]',
-    'button[aria-label*="accept" i]',
-    'button[aria-label*="close" i]',
-    'button[data-testid*="accept" i]',
-    'button[data-testid*="close" i]',
-    '[class*="cookie" i] button',
-    '[class*="consent" i] button',
-  ];
-  for (const sel of selectors) {
-    try {
-      const btn = await page.$(sel);
-      if (btn) {
-        await btn.click({ delay: 60 }).catch(() => {});
-        await antiDetection.randomDelay(300, 600);
-      }
-    } catch { /* noop */ }
-  }
-
-  // Pass 2: text-based fallback — find any visible button whose text contains
-  // "Accept" / "Agree" / "Okay" / "Allow" / "Got it" inside likely cookie banners.
-  try {
-    await page.evaluate(() => {
-      const isVisible = (el) => {
-        if (!el) return false;
-        const r = el.getBoundingClientRect();
-        if (r.width < 8 || r.height < 8) return false;
-        const s = window.getComputedStyle(el);
-        return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
-      };
-      const textRegex = /^\s*(?:accept(?:\s+all)?|agree(?:\s+all)?|okay|ok|got\s+it|allow(?:\s+all)?|i\s+agree|continue|close)\s*$/i;
-      const buttons = [...document.querySelectorAll('button, [role="button"], a')];
-      for (const btn of buttons) {
-        if (!isVisible(btn)) continue;
-        const text = String(btn.textContent || '').trim();
-        if (text.length < 30 && textRegex.test(text)) {
-          try { btn.click(); } catch { /* noop */ }
-        }
-      }
-    });
-  } catch { /* noop */ }
-  await antiDetection.randomDelay(400, 700);
+  // 实测（40s 窗口）：Reserved 用的是 **Cookiebot**（#cookiebotDialogOkButton，
+  // 文案 "OK"，+11.5s 出现），不是 OneTrust —— 旧代码 10 条选择器里 5 条是
+  // OneTrust 专属、全恒 miss，最后靠英文文字兜底命中 "OK"，但因为零等待，
+  // goto 之后立刻查的那一次必然扑空。
+  await dismissCookieBanners(page, { waitMs: 20000 });
 }
 
 async function openReservedSearchOverlay(page) {
@@ -12649,14 +13042,16 @@ async function openReservedSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        await handle.click({ delay: 50 }).catch(() => {});
+        await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
         return true;
       }
     } catch { /* noop */ }
   }
-  return page.evaluate(() => {
+  // 两轮候选（属性里提到 search → 可见文本就是 "SEARCH"）合并成一个 picker，
+  // 顺序与原先完全一致；命中后由 CDP 人形点击真正按下。
+  const clicked = await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -12677,8 +13072,7 @@ async function openReservedSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\bsearch\b/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
     // 2. Reserved labels its search trigger with the literal visible word
@@ -12687,18 +13081,22 @@ async function openReservedSearchOverlay(page) {
       if (!isVisible(el)) continue;
       const text = String(el.textContent || '').trim();
       if (text.length < 30 && /^\s*search\s*$/i.test(text)) {
-        el.click();
-        return true;
+        return el;
       }
     }
-    // 3. Last-resort: keyboard shortcut "/" opens a search overlay on many
-    //    modern shopfronts including Reserved.
+    return null;
+  });
+  if (clicked > 0) return true;
+
+  // 3. Last-resort: keyboard shortcut "/" opens a search overlay on many
+  //    modern shopfronts including Reserved.
+  await page.evaluate(() => {
     try {
       const event = new KeyboardEvent('keydown', { key: '/', code: 'Slash', bubbles: true });
       document.dispatchEvent(event);
     } catch { /* noop */ }
-    return false;
-  });
+  }).catch(() => {});
+  return false;
 }
 
 async function findVisibleReservedSearchInput(page) {
@@ -12731,7 +13129,7 @@ async function findVisibleReservedSearchInput(page) {
 
 async function clickFirstReservedProductCard(page, emitLog, skuLower = '') {
   await antiDetection.randomDelay(900, 1400);
-  const result = await page.evaluate((skuLowerRaw) => {
+  const result = await antiDetection.pickInPage(page, (skuLowerRaw) => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -12767,7 +13165,7 @@ async function clickFirstReservedProductCard(page, emitLog, skuLower = '') {
     const anchors = [...root.querySelectorAll('a[href]')]
       .filter((a) => isVisible(a))
       .filter((a) => productLinkRegex.test((a.href || '').split('?')[0].split('#')[0]));
-    if (!anchors.length) return { href: '', candidates: 0 };
+    if (!anchors.length) return { el: null, info: { href: '', candidates: 0 } };
 
     // Enhanced matching: check URL, card text content, data attributes,
     // and image alt/src. Reserved URLs use a different product code
@@ -12827,13 +13225,12 @@ async function clickFirstReservedProductCard(page, emitLog, skuLower = '') {
         // anchors[0]. Clicking a non-matching card always leads to
         // rejection and wastes a navigation round-trip. Return empty so
         // the caller tries the next variant or reports "not found".
-        return { href: '', candidates: anchors.length, noMatch: true };
+        return { el: null, info: { href: '', candidates: anchors.length, noMatch: true } };
       }
     }
     if (!chosen) chosen = anchors[0];
     chosen.scrollIntoView({ behavior: 'instant', block: 'center' });
-    try { chosen.click(); } catch { /* noop */ }
-    return { href: chosen.href, candidates: anchors.length };
+    return { el: chosen, info: { href: chosen.href, candidates: anchors.length } };
   }, skuLower);
 
   if (emitLog) {
@@ -12922,11 +13319,11 @@ async function searchReservedByTyping(page, query, emitLog, ensureActive) {
       return '';
     }
 
-    try { await inputElement.click({ delay: 80 }); }
+    try { await antiDetection.humanClick(page, inputElement, { delay: 80 }); }
     catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
     await antiDetection.randomDelay(300, 600);
 
-    emitLog(`    ⌨️ Typing Reserved search "${query}" via DOM write…`, 'info');
+    emitLog(`    ⌨️ Typing Reserved search "${query}"…`, 'info');
     await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Reserved');
 
     // Verify the input actually contains the query. Reserved's React
@@ -12942,7 +13339,7 @@ async function searchReservedByTyping(page, query, emitLog, ensureActive) {
     if (!inputHasValue) {
       emitLog('    🔁 Reserved search input reverted to empty; retrying with keyboard typing…', 'info');
       // Focus again and clear any stale selection
-      try { await inputElement.click({ delay: 60 }); }
+      try { await antiDetection.humanClick(page, inputElement, { delay: 60 }); }
       catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
       await antiDetection.randomDelay(200, 400);
       // Select-all + delete to clear, then type the query char by char
@@ -13188,9 +13585,9 @@ async function scrapeReservedProduct(browser, reference, emitLog, ensureActive) 
         try { el.scrollIntoView({ behavior: 'instant', block: 'center' }); } catch { /* noop */ }
       }, materialElement).catch(() => {});
       try {
-        await materialElement.click({ delay: 60 });
+        await antiDetection.humanClick(page, materialElement, { delay: 60 });
       } catch {
-        await page.evaluate((el) => el.click(), materialElement).catch(() => {});
+        await antiDetection.humanClick(page, materialElement).catch(() => {});
       }
       await page.waitForFunction(
         () => /\d+\s*%\s*(?:cotton|polyester|elastane|viscose|linen|wool|silk|nylon|polyamide|acrylic|cashmere|lyocell|modal|rayon|spandex|tencel)/i.test(String(document.body?.innerText || '')),
@@ -13229,9 +13626,9 @@ async function scrapeReservedProduct(browser, reference, emitLog, ensureActive) 
         try { el.scrollIntoView({ behavior: 'instant', block: 'center' }); } catch { /* noop */ }
       }, moreElement).catch(() => {});
       try {
-        await moreElement.click({ delay: 60 });
+        await antiDetection.humanClick(page, moreElement, { delay: 60 });
       } catch {
-        await page.evaluate((el) => el.click(), moreElement).catch(() => {});
+        await antiDetection.humanClick(page, moreElement).catch(() => {});
       }
       await antiDetection.randomDelay(600, 900);
       await moreHandle.dispose().catch(() => {});
@@ -13239,19 +13636,20 @@ async function scrapeReservedProduct(browser, reference, emitLog, ensureActive) 
     } else {
       // Fallback: click ANY visible "More"-type toggle near a description block,
       // since Reserved sometimes labels the section differently per locale.
-      const clickedAny = await page.evaluate(() => {
+      // 页面内收集所有候选，逐个用 CDP 人形点击按下（原先是页内合成 click）。
+      const clickedAny = (await antiDetection.clickInPage(page, () => {
         const moreRe = /^(?:more|show\s*more|read\s*more|see\s*more|view\s*more|\+\s*more|voir\s*plus|mehr|más|展开|更多)$/i;
         const els = [...document.querySelectorAll('button, [role="button"], a, span')];
-        let clicked = false;
+        const out = [];
         for (const el of els) {
           const text = String(el.textContent || '').trim();
           if (!moreRe.test(text)) continue;
           const r = el.getBoundingClientRect();
           if (r.width < 4 || r.height < 4) continue;
-          try { el.click(); clicked = true; } catch { /* noop */ }
+          out.push(el);
         }
-        return clicked;
-      }).catch(() => false);
+        return out;
+      })) > 0;
       if (clickedAny) {
         emitLog('    📄 Clicked a generic Reserved "More" toggle (fallback)', 'info');
         await antiDetection.randomDelay(600, 900);
@@ -13535,144 +13933,27 @@ function isLikelyAbercrombieProductImage(url = '') {
 }
 
 async function dismissCommonAbercrombiePopups(page) {
-  const selectors = [
-    '#onetrust-accept-btn-handler',
-    'button[id*="accept" i][id*="cookie" i]',
-    'button[id*="accept" i][id*="consent" i]',
-    'button[aria-label*="accept" i]',
-    'button[aria-label*="close" i]',
-    'button[data-testid*="accept" i]',
-    'button[data-testid*="close" i]',
-    '[class*="cookie" i] button',
-    '[class*="consent" i] button',
+  // 实测（40s 窗口）：A&F 有 OneTrust（window.OneTrust.AllowAll 可用），但
+  // **40s 内始终没有出现可见的接受按钮** —— UI 路径必然全 miss，也就是说旧代码
+  // 这段逻辑在这家站点上从来没有真正生效过。统一入口会走 OneTrust API 兜底
+  // （对站点而言与用户按键等价，最终都是它内部写同意记录）。
+  await dismissCookieBanners(page, { waitMs: 20000 });
+
+  // 站内自研的 promo / newsletter 弹窗（与同意状态无关）。
+  // 旧代码里的 `button[class*="close" i]` 是无容器限定的宽泛选择器，可能点到
+  // 站点自身 UI（搜索结果页上的搜索框关闭等），这里收窄到容器内。
+  const promoSelectors = [
     '[class*="promo" i] button[aria-label*="close" i]',
-    'button[class*="close" i]',
+    '[class*="newsletter" i] button[aria-label*="close" i]',
   ];
-  for (const sel of selectors) {
-    try {
-      const btn = await page.$(sel);
-      if (btn) {
-        await btn.click({ delay: 60 }).catch(() => {});
-        await antiDetection.randomDelay(300, 600);
-      }
-    } catch { /* noop */ }
+  for (const sel of promoSelectors) {
+    const btn = await antiDetection.queryOne(page, sel).catch(() => null);
+    if (!btn) continue;
+    if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+    await antiDetection.humanClick(page, btn).catch(() => {});
+    await btn.dispose().catch(() => {});
+    await antiDetection.randomDelay(300, 600);
   }
-  // Text-based fallback
-  try {
-    await page.evaluate(() => {
-      const isVisible = (el) => {
-        if (!el) return false;
-        const r = el.getBoundingClientRect();
-        if (r.width < 8 || r.height < 8) return false;
-        const s = window.getComputedStyle(el);
-        return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
-      };
-      const textRegex = /^\s*(?:accept(?:\s+all)?|agree(?:\s+all)?|okay|ok|got\s+it|allow(?:\s+all)?|i\s+agree|continue|close|no\s*thanks|not\s*now)\s*$/i;
-      const buttons = [...document.querySelectorAll('button, [role="button"], a')];
-      for (const btn of buttons) {
-        if (!isVisible(btn)) continue;
-        const text = String(btn.textContent || '').trim();
-        if (text.length < 30 && textRegex.test(text)) {
-          try { btn.click(); } catch { /* noop */ }
-        }
-      }
-    });
-  } catch { /* noop */ }
-  await antiDetection.randomDelay(400, 700);
-}
-
-async function findVisibleAbercrombieSearchInput(page) {
-  const handle = await page.evaluateHandle(() => {
-    const isVisible = (el) => {
-      if (!el) return false;
-      const r = el.getBoundingClientRect();
-      if (r.width < 20 || r.height < 6) return false;
-      const s = window.getComputedStyle(el);
-      return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
-    };
-    // Exclude newsletter / email subscription inputs
-    const isNewsletterInput = (el) => {
-      const attrs = [
-        el.type || '',
-        el.name || '',
-        el.id || '',
-        el.placeholder || '',
-        el.getAttribute('aria-label') || '',
-        el.getAttribute('data-testid') || '',
-      ].join(' ').toLowerCase();
-      return /email|subscribe|newsletter|signup|sign.up|mailing|coupon|offer|promo/.test(attrs);
-    };
-    const inputs = [...document.querySelectorAll(
-      'input[type="search"], input[type="text"], input:not([type]), textarea',
-    )].filter((el) => isVisible(el) && !isNewsletterInput(el));
-
-    // Priority 1: inputs inside header or search overlay containers
-    const headerInput = inputs.find((el) =>
-      el.closest('header, [role="search"], [class*="search" i], [data-testid*="search" i], [class*="overlay" i], [class*="modal" i]')
-    );
-    if (headerInput) return headerInput;
-
-    // Priority 2: inputs in the top half of the viewport
-    const topInput = inputs.find((el) => {
-      const r = el.getBoundingClientRect();
-      return r.top < window.innerHeight * 0.5;
-    });
-    if (topInput) return topInput;
-
-    // Fallback: first visible non-newsletter input
-    return inputs[0] || null;
-  }).catch(() => null);
-  return handle;
-}
-
-async function openAbercrombieSearchOverlay(page) {
-  const directSelectors = [
-    'button[aria-label*="search" i]',
-    'a[aria-label*="search" i]',
-    '[data-testid*="search" i] button',
-    '[data-testid*="search" i] a',
-    'header button[class*="search" i]',
-    'header [class*="search" i] button',
-    'header [class*="search" i] a',
-    'button[class*="search" i]',
-    'a[class*="search" i]',
-    '[class*="search-toggle" i]',
-    '[class*="search-icon" i]',
-  ];
-  for (const sel of directSelectors) {
-    try {
-      const handle = await page.$(sel);
-      if (handle) {
-        await handle.click({ delay: 50 }).catch(() => {});
-        return true;
-      }
-    } catch { /* noop */ }
-  }
-  // Fallback: walk visible buttons/links for "search" text or magnifier SVG
-  return page.evaluate(() => {
-    const isVisible = (el) => {
-      if (!el) return false;
-      const r = el.getBoundingClientRect();
-      if (r.width < 8 || r.height < 8) return false;
-      const s = window.getComputedStyle(el);
-      return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
-    };
-    const candidates = [...document.querySelectorAll('button, a, [role="button"], [class*="search" i]')];
-    for (const el of candidates) {
-      if (!isVisible(el)) continue;
-      const text = String(el.textContent || '').trim().toLowerCase();
-      const aria = String(el.getAttribute('aria-label') || '').toLowerCase();
-      if (text === 'search' || aria.includes('search')) {
-        try { el.click(); return true; } catch { /* noop */ }
-      }
-      // Check for magnifier icon SVG
-      const svg = el.querySelector('svg');
-      if (svg && el.classList.toString().toLowerCase().includes('search')) {
-        try { el.click(); return true; } catch { /* noop */ }
-      }
-    }
-    return false;
-  }).catch(() => false);
 }
 
 async function searchAbercrombieByTyping(page, query, emitLog, ensureActive) {
@@ -13960,9 +14241,9 @@ async function scrapeAbercrombieProduct(browser, reference, emitLog, ensureActiv
       const expandedBefore = await page.evaluate((el) => el.getAttribute('aria-expanded'), detailsElement).catch(() => null);
       if (expandedBefore === 'false' || expandedBefore === null) {
         try {
-          await detailsElement.click({ delay: 60 });
+          await antiDetection.humanClick(page, detailsElement, { delay: 60 });
         } catch {
-          await page.evaluate((el) => el.click(), detailsElement).catch(() => {});
+          await antiDetection.humanClick(page, detailsElement).catch(() => {});
         }
       }
       // Wait for composition text to appear
@@ -14343,15 +14624,17 @@ async function scrapeAbercrombieProduct(browser, reference, emitLog, ensureActiv
     }
 
     // 2c: Gallery thumbnail clicking + DOM extraction
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
       const thumbs = [...document.querySelectorAll(
         '[class*="thumbnail" i] img, [class*="thumb" i] img, [class*="gallery" i] [class*="thumb" i], ' +
         '[data-testid*="thumb" i], [class*="carousel" i] [class*="dot" i], ' +
         '[class*="slider" i] [class*="thumb" i], button[aria-label*="product image" i], ' +
         'button[aria-label*="view" i], [class*="media" i] button, [role="tab"]'
       )];
-      thumbs.forEach((t) => { try { t.click(); } catch { /* noop */ } });
-    }).catch(() => {});
+      thumbs.forEach((t) => { try { out.push(t); } catch { /* noop */ } });
+      return out;
+    });
     await antiDetection.randomDelay(800, 1200);
 
     const thumbCount = await page.evaluate(() => {
@@ -14365,15 +14648,17 @@ async function scrapeAbercrombieProduct(browser, reference, emitLog, ensureActiv
     }).catch(() => 0);
 
     for (let t = 0; t < Math.min(thumbCount, 12); t += 1) {
-      await page.evaluate((idx) => {
+      await antiDetection.clickInPage(page, (idx) => {
+        const out = [];
         const thumbs = [...document.querySelectorAll(
           '[class*="thumbnail" i] img, [class*="thumb" i] img, [class*="gallery" i] [class*="thumb" i], ' +
           '[data-testid*="thumb" i], [class*="carousel" i] [class*="dot" i], ' +
           'button[aria-label*="product image" i], [class*="media" i] [class*="thumb" i], ' +
           'button[aria-label*="view" i], [class*="media" i] button, [role="tab"]'
         )];
-        if (thumbs[idx]) { try { thumbs[idx].click(); } catch { /* noop */ } }
-      }, t).catch(() => {});
+        if (thumbs[idx]) { try { out.push(thumbs[idx]); } catch { /* noop */ } }
+        return out;
+      }, t);
       await antiDetection.randomDelay(400, 700);
     }
 
@@ -15098,7 +15383,7 @@ function translateSinsayProductName(text = '') {
     'falbaną': 'ruffle', 'falbana': 'ruffle',
     'nadrukiem': 'print', 'nadruk': 'print',
     'prążkowane': 'ribbed', 'prążkowany': 'ribbed',
-    'w': 'in', 'kratkę': 'check', 'kratke': 'check',
+    'kratkę': 'check', 'kratke': 'check',
     'paski': 'stripes', 'w paski': 'striped', 'striped': 'striped',
     'Kolor': 'Color', 'kolor': 'color',
     'granatowy': 'navy', 'czarny': 'black', 'biały': 'white', 'bialy': 'white',
@@ -15150,32 +15435,11 @@ function extractSinsayComposition(rawText = '') {
 }
 
 async function dismissCommonSinsayPopups(page) {
-  const selectors = [
-    '#onetrust-accept-btn-handler',
-    '#cookiescript_accept',
-    'button[id*="accept" i][id*="cookie" i]',
-    'button[data-testid*="accept" i]',
-    '.cookie-consent button',
-    '#cookie-law-info-bar button',
-  ];
-  for (const sel of selectors) {
-    try {
-      const btn = await page.$(sel);
-      if (btn) { await btn.click({ delay: 60 }).catch(() => {}); await antiDetection.randomDelay(300, 500); }
-    } catch { /* noop */ }
-  }
-  // text-based fallback
-  await page.evaluate(() => {
-    const textRe = /^\s*(?:accept|agree|ok|got\s+it|allow|akceptuj|zgadzam|zamknij|close)\s*$/i;
-    [...document.querySelectorAll('button, [role="button"]')].forEach((el) => {
-      const r = el.getBoundingClientRect();
-      if (r.width < 8 || r.height < 8) return;
-      const s = window.getComputedStyle(el);
-      if (s.visibility === 'hidden' || s.display === 'none') return;
-      if (textRe.test(String(el.textContent || '').trim())) try { el.click(); } catch { /* noop */ }
-    });
-  }).catch(() => {});
-  await antiDetection.randomDelay(400, 700);
+  // 实测（40s 窗口）：Sinsay 也是 **Cookiebot**（#cookiebotDialogOkButton），但
+  // 按钮文案是波兰语 **"W porządku"**，而且弹窗到 **+35.3s** 才出现 ——
+  // 旧代码既没有等待（查一次就收工），文字兜底也只认 akceptuj/zgadzam/ok，
+  // 两条路都断。上一轮 15s 的探测窗口还把它误判成「该站点不弹窗」。
+  await dismissCookieBanners(page, { waitMs: 45000 });
 }
 
 async function openSinsaySearchOverlay(page) {
@@ -15187,11 +15451,13 @@ async function openSinsaySearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const h = await page.$(sel);
-      if (h) { await h.click({ delay: 50 }).catch(() => {}); return true; }
+      const h = await antiDetection.queryOne(page, sel);
+      if (h) { await antiDetection.humanClick(page, h, { delay: 50 }).catch(() => {}); return true; }
     } catch { /* noop */ }
   }
-  return page.evaluate(() => {
+  // 两轮候选合并成一个 picker（属性含 search → 可见文本为 "search"/"szukaj"），
+  // 命中后由 CDP 人形点击按下。
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -15205,15 +15471,15 @@ async function openSinsaySearchOverlay(page) {
       const haystack = [
         el.getAttribute('aria-label'), el.getAttribute('title'), el.getAttribute('data-testid'), el.className, el.id,
       ].join(' ').toLowerCase();
-      if (/\bsearch\b/.test(haystack)) { try { el.click(); } catch { /* noop */ } return true; }
+      if (/\bsearch\b/.test(haystack)) return el;
     }
     for (const el of all) {
       if (!isVisible(el)) continue;
       const text = String(el.textContent || '').trim();
-      if (text.length < 30 && /^\s*(?:search|szukaj)\s*$/i.test(text)) { try { el.click(); } catch { /* noop */ } return true; }
+      if (text.length < 30 && /^\s*(?:search|szukaj)\s*$/i.test(text)) return el;
     }
-    return false;
-  });
+    return null;
+  })) > 0;
 }
 
 async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
@@ -15285,10 +15551,10 @@ async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
       return '';
     }
 
-    try { await inputElement.click({ delay: 80 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
+    try { await antiDetection.humanClick(page, inputElement, { delay: 80 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
     await antiDetection.randomDelay(300, 600);
 
-    emitLog(`    ⌨️ Typing Sinsay search "${query}" via DOM write…`, 'info');
+    emitLog(`    ⌨️ Typing Sinsay search "${query}"…`, 'info');
     await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Sinsay');
 
     // Verify the input actually contains the query. Sinsay's React
@@ -15303,7 +15569,7 @@ async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
 
     if (!sinInputHasValue) {
       emitLog('    🔁 Sinsay search input reverted to empty; retrying with keyboard typing…', 'info');
-      try { await inputElement.click({ delay: 60 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
+      try { await antiDetection.humanClick(page, inputElement, { delay: 60 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
       await antiDetection.randomDelay(200, 400);
       try {
         await page.evaluate((el) => {
@@ -15361,7 +15627,7 @@ async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
     }
 
     // Click first matching product card
-    const result = await page.evaluate((ql) => {
+    const result = await antiDetection.pickInPage(page, (ql) => {
       const isVisible = (el) => {
         if (!el) return false;
         const r = el.getBoundingClientRect();
@@ -15372,7 +15638,7 @@ async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
       const productLinkRe = /sinsay\.com\/.+-[a-z0-9]+-[a-z0-9]+$/i;
       const anchors = [...document.querySelectorAll('a[href]')]
         .filter((a) => isVisible(a) && productLinkRe.test((a.href || '').split('?')[0].split('#')[0]));
-      if (!anchors.length) return { href: '', candidates: 0 };
+      if (!anchors.length) return { el: null, info: { href: '', candidates: 0 } };
       const qlCompact = String(ql || '').replace(/[\s-]/g, '');
       const cardMatchesSkuSinsay = (anchor) => {
         if (!ql) return false;
@@ -15413,14 +15679,13 @@ async function searchSinsayByTyping(page, query, emitLog, ensureActive) {
           // SKU specified but no product URL/text matched — do NOT fall back to
           // anchors[0]. Clicking a non-matching card always leads to
           // rejection and wastes a navigation round-trip.
-          return { href: '', candidates: anchors.length, noMatch: true };
+          return { el: null, info: { href: '', candidates: anchors.length, noMatch: true } };
         }
       } else {
         chosen = anchors[0];
       }
       chosen.scrollIntoView({ behavior: 'instant', block: 'center' });
-      try { chosen.click(); } catch { /* noop */ }
-      return { href: chosen.href, candidates: anchors.length };
+      return { el: chosen, info: { href: chosen.href, candidates: anchors.length } };
     }, queryLower);
 
     if (result?.noMatch) {
@@ -15589,7 +15854,10 @@ async function scrapeSinsayProduct(browser, reference, emitLog, ensureActive) {
     const compElement = compHandle ? compHandle.asElement() : null;
     if (compElement) {
       await page.evaluate((el) => { try { el.scrollIntoView({ behavior: 'instant', block: 'center' }); } catch { /* noop */ } }, compElement).catch(() => {});
-      try { await compElement.click({ delay: 60 }); } catch { await page.evaluate((el) => el.click(), compElement).catch(() => {}); }
+      // humanClick 已经走 CDP 真点击；这里的页内合成 click 是它失败后的最后兜底
+      // （元素被遮挡 / 已 detach 等）。全文件仅此一处保留合成点击：成分信息拿不到
+      // 会直接让这单抓取作废，「点得到」在这里必须压过反爬洁癖。
+      try { await antiDetection.humanClick(page, compElement, { delay: 60 }); } catch { await page.evaluate((el) => el.click(), compElement).catch(() => {}); }
       await page.waitForFunction(
         () => /\d+\s*%\s*(?:bawełna|cotton|poliester|polyester|elastan|elastane|wiskoza|viscose|len|linen)/i.test(String(document.body?.innerText || '')),
         { timeout: 6000, polling: 300 },
@@ -15912,64 +16180,37 @@ function extractUrbanRevivoComposition(rawText = '') {
 }
 
 async function dismissCommonUrbanRevivoPopups(page) {
+  // 实测（40s 窗口）：UrbanRevivo 用的是 **Shopify 自带的 consent banner**
+  // （#shopify-pc__banner__btn-accept，文案 "Accept"，+16.1s 出现）——
+  // 既不是 OneTrust 也不是 CookieScript，旧代码整张选择器表全 miss。
+  await dismissCookieBanners(page, { waitMs: 25000 });
+
+  // 站内自研弹层：newsletter / promo / subscribe。
+  // 旧代码里的 `[aria-label*="close" i]` / `button[class*="close" i]` /
+  // `[class*="mask" i]` / `svg[class*="close" i]` 都是无容器限定的宽泛选择器，
+  // 会点到站点自身的正常 UI（搜索框关闭、抽屉等），这里收窄到容器内。
+  // 国家/地区选择器交给 confirmCountrySelector —— 它只在 country/region/
+  // locale/geo 容器内确认，不会误点页面上任意一个 "Continue"。
   const selectors = [
-    '#onetrust-accept-btn-handler',
-    'button[id*="accept" i][id*="cookie" i]',
-    'button[data-testid*="accept" i]',
-    '[class*="cookie" i] button',
-    '[class*="consent" i] button',
-    '[class*="privacy" i] button[class*="accept" i]',
-    // Region selector ("you are visiting from…") — confirm / stay buttons
-    '[class*="region" i] button',
-    '[class*="country" i] button',
-    '[class*="geo" i] button',
-    '[class*="locale" i] button',
-    // Newsletter / promo / subscribe modals
     '[class*="newsletter" i] [class*="close" i]',
     '[class*="subscribe" i] [class*="close" i]',
     '[class*="modal" i] [class*="close" i]',
     '[class*="popup" i] [class*="close" i]',
     '[class*="dialog" i] [class*="close" i]',
     '[class*="drawer" i] [class*="close" i]',
-    '[aria-label*="close" i]',
-    '[aria-label*="dismiss" i]',
-    'button[class*="close" i]',
-    'svg[class*="close" i]',
-    'i[class*="close" i]',
-    '[class*="mask" i]',
-    '[class*="overlay" i][class*="close" i]',
   ];
   // Run two passes — a region modal often reveals a newsletter modal underneath.
   for (let pass = 0; pass < 2; pass += 1) {
+    await confirmCountrySelector(page, { waitMs: 1500 });
     for (const sel of selectors) {
-      try {
-        const handles = await page.$$(sel);
-        for (const btn of handles.slice(0, 3)) {
-          const visible = await page.evaluate((el) => {
-            if (!el) return false;
-            const r = el.getBoundingClientRect();
-            if (r.width < 6 || r.height < 6) return false;
-            const s = window.getComputedStyle(el);
-            return s.visibility !== 'hidden' && s.display !== 'none' && s.opacity !== '0';
-          }, btn).catch(() => false);
-          if (visible) { await btn.click({ delay: 50 }).catch(() => {}); await antiDetection.randomDelay(200, 400); }
-        }
-      } catch { /* noop */ }
+      const handles = await antiDetection.queryAll(page, sel).catch(() => []);
+      for (const btn of handles.slice(0, 3)) {
+        if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+        await antiDetection.humanClick(page, btn).catch(() => {});
+        await btn.dispose().catch(() => {});
+        await antiDetection.randomDelay(200, 400);
+      }
     }
-    // text-based fallback for accept/close/keep-region
-    await page.evaluate(() => {
-      const textRe = /^\s*(?:accept(?:\s+all)?|agree|ok|okay|got\s+it|allow(?:\s+all)?|i\s+agree|continue|confirm|close|dismiss|no\s+thanks?|stay|keep|shop\s+now|×|✕|✖|x|关闭|确定|同意)\s*$/i;
-      let clicked = 0;
-      [...document.querySelectorAll('button, [role="button"], a, [class*="close" i]')].forEach((el) => {
-        if (clicked > 6) return;
-        const r = el.getBoundingClientRect();
-        if (r.width < 6 || r.height < 6) return;
-        const s = window.getComputedStyle(el);
-        if (s.visibility === 'hidden' || s.display === 'none' || s.opacity === '0') return;
-        const t = String(el.textContent || el.getAttribute('aria-label') || '').trim();
-        if (t.length <= 14 && textRe.test(t)) { try { el.click(); clicked += 1; } catch { /* noop */ } }
-      });
-    }).catch(() => {});
     // Press Escape — closes most modal/drawer overlays.
     await page.keyboard.press('Escape').catch(() => {});
     await antiDetection.randomDelay(300, 500);
@@ -15993,18 +16234,19 @@ async function openUrbanRevivoSearchSidebar(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const h = await page.$(sel);
+      const h = await antiDetection.queryOne(page, sel);
       if (h) {
         await page.evaluate((el) => { try { el.scrollIntoView({ block: 'center' }); } catch { /* noop */ } }, h).catch(() => {});
-        await h.click({ delay: 50 }).catch(async () => {
-          await page.evaluate((el) => el.click(), h).catch(() => {});
+        await antiDetection.humanClick(page, h, { delay: 50 }).catch(async () => {
+          await antiDetection.humanClick(page, h).catch(() => {});
         });
         return true;
       }
     } catch { /* noop */ }
   }
   // 2. DOM walk: any clickable element in the top region whose attrs mention search.
-  return page.evaluate(() => {
+  //    页面内只负责打分挑出最优候选，点击交给 CDP 人形点击。
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -16032,9 +16274,8 @@ async function openUrbanRevivoSearchSidebar(page) {
       scored.push({ el, score: topScore * 2 + rightScore, top: r.top });
     }
     scored.sort((a, b) => a.score - b.score || a.top - b.top);
-    if (scored.length) { try { scored[0].el.click(); } catch { /* noop */ } return true; }
-    return false;
-  });
+    return scored.length ? scored[0].el : null;
+  })) > 0;
 }
 
 async function findVisibleUrbanRevivoSearchInput(page) {
@@ -16065,7 +16306,7 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
   // Helper: scan the current page for a /products/ link whose slug contains the
   // SKU, click it, and return the resolved PDP URL (or '' if none).
   const clickSkuResult = async () => {
-    const result = await page.evaluate((sku) => {
+    const result = await antiDetection.pickInPage(page, (sku) => {
       const isVisible = (el) => {
         if (!el) return false;
         const r = el.getBoundingClientRect();
@@ -16079,11 +16320,10 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
         return href.includes('/products/') && href.replace(/[^a-z0-9]/gi, '').includes(sku);
       });
       const productsOnPage = anchors.filter((a) => /\/products\//i.test(a.href || '')).length;
-      if (!skuMatch) return { href: '', candidates: productsOnPage };
+      if (!skuMatch) return { el: null, info: { href: '', candidates: productsOnPage } };
       if (isVisible(skuMatch)) skuMatch.scrollIntoView({ behavior: 'instant', block: 'center' });
       const href = skuMatch.href;
-      try { skuMatch.click(); } catch { /* noop */ }
-      return { href, candidates: anchors.length };
+      return { el: skuMatch, info: { href, candidates: anchors.length } };
     }, skuLower);
     return result;
   };
@@ -16198,7 +16438,7 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
     // focus + type into the actual input element (page-level keyboard can be
     // swallowed by a modal that stole focus).
     await dismissCommonUrbanRevivoPopups(page);
-    try { await inputElement.click({ delay: 80 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
+    try { await antiDetection.humanClick(page, inputElement, { delay: 80 }); } catch { await page.evaluate((el) => el.focus(), inputElement).catch(() => {}); }
     await antiDetection.randomDelay(300, 600);
     await page.keyboard.down('Meta').catch(() => {}); await page.keyboard.press('A').catch(() => {}); await page.keyboard.up('Meta').catch(() => {});
     await page.keyboard.down('Control').catch(() => {}); await page.keyboard.press('A').catch(() => {}); await page.keyboard.up('Control').catch(() => {});
@@ -16219,7 +16459,7 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
       // Clear and retry
       emitLog(`    🔁 Search input has "${current}"; refocusing and retyping…`, 'info');
       await dismissCommonUrbanRevivoPopups(page);
-      try { await inputElement.click({ delay: 60 }); } catch { /* noop */ }
+      try { await antiDetection.humanClick(page, inputElement, { delay: 60 }); } catch { /* noop */ }
       await page.evaluate((el) => {
         try {
           const proto = Object.getPrototypeOf(el);
@@ -16265,7 +16505,7 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
 
     // Click the search result whose href contains the SKU. NEVER fall back to
     // an unrelated tile — if no SKU-matching product exists, report failure.
-    const result = await page.evaluate((sku) => {
+    const result = await antiDetection.pickInPage(page, (sku) => {
       const isVisible = (el) => {
         if (!el) return false;
         const r = el.getBoundingClientRect();
@@ -16282,11 +16522,10 @@ async function searchUrbanRevivoByTyping(page, query, emitLog, ensureActive) {
       const chosen = skuMatch || null;
       if (!chosen) {
         const total = anchors.filter((a) => /\/products\//i.test(a.href || '')).length;
-        return { href: '', candidates: total };
+        return { el: null, info: { href: '', candidates: total } };
       }
       chosen.scrollIntoView({ behavior: 'instant', block: 'center' });
-      try { chosen.click(); } catch { /* noop */ }
-      return { href: chosen.href, candidates: anchors.length };
+      return { el: chosen, info: { href: chosen.href, candidates: anchors.length } };
     }, skuLower);
 
     emitLog(`    🧭 Urban Revivo card click → matched=${result?.href ? 'yes' : 'no'} products-on-page=${result?.candidates ?? 0}`, 'info');
@@ -16433,8 +16672,8 @@ async function scrapeUrbanRevivoProduct(browser, reference, emitLog, ensureActiv
     // Expand all collapsible tabs/accordions on the PDP so description +
     // composition text materialises. We click everything that looks like an
     // accordion header, then filter content afterwards.
-    await page.evaluate(async () => {
-      const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    // 页面内只收集候选，逐个用 CDP 人形点击按下（原先是页内合成 click + sleep）。
+    await antiDetection.clickInPage(page, () => {
       const headers = [...document.querySelectorAll(
         '[class*="accordion" i] [class*="header" i], [class*="accordion" i] [class*="title" i],'
         + ' [class*="collapse" i] [class*="header" i], [class*="collaps" i] [class*="title" i],'
@@ -16442,16 +16681,14 @@ async function scrapeUrbanRevivoProduct(browser, reference, emitLog, ensureActiv
         + ' [class*="detail" i] [class*="title" i], [class*="param" i] [class*="title" i],'
         + ' [class*="foldable" i], [class*="expand" i]',
       )];
+      const out = [];
       for (const h of headers) {
-        try {
-          const r = h.getBoundingClientRect();
-          if (r.width < 8 || r.height < 8) continue;
-          h.scrollIntoView({ block: 'center' });
-          h.click();
-          await sleep(180);
-        } catch { /* noop */ }
+        const r = h.getBoundingClientRect();
+        if (r.width < 8 || r.height < 8) continue;
+        out.push(h);
       }
-    }).catch(() => {});
+      return out;
+    }).catch(() => 0);
     await antiDetection.randomDelay(800, 1200);
     emitLog('    🧶 Expanded Urban Revivo description tabs', 'info');
 
@@ -16987,16 +17224,9 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
     // Retry up to 3 times if the frame gets detached during interaction.
     for (let dismissAttempt = 0; dismissAttempt < 3; dismissAttempt += 1) {
       try {
-        await page.evaluate(() => {
-          const texts = ['accept', 'agree', 'allow all', 'got it', 'continue', 'i accept', 'accept all'];
-          const clickable = [...document.querySelectorAll('button, [role="button"], a')];
-          for (const el of clickable) {
-            const t = String(el.textContent || '').trim().toLowerCase();
-            if (t && texts.some((x) => t === x || t.includes(x)) && t.length < 30) {
-              try { el.click(); } catch { /* noop */ }
-            }
-          }
-        });
+        // 旧实现：零等待 + 只认英文文案。改走统一入口。waitMs 给小值 —— 这是
+        // 每个商品页都会走一次的路径，首页/搜索页那一次已经把同意 cookie 写好了。
+        await dismissCookieBanners(page, { waitMs: 6000 });
         break; // success
       } catch (err) {
         if (/detached/i.test(String(err.message || ''))) {
@@ -17063,22 +17293,44 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
     // main frame to detach (e.g. auto-redirect or SPA re-mount).
     for (let pass = 0; pass < 2; pass += 1) {
       try {
-        await page.evaluate(() => {
+        const expandResult = await antiDetection.clickInPage(page, () => {
+        const out = [];
         const wanted = /description|details|materials?|composition|care|fit/i;
-        const headers = [...document.querySelectorAll('button, summary, [role="button"], [aria-expanded]')];
+        // H&M's aria-expanded does NOT track real open state (measured: clicking
+        // "Description & fit" leaves it at "false"), so we must NOT use it to
+        // decide whether to click. Click idempotently instead — an already-open
+        // panel just toggles closed then we re-open it on the next pass, and the
+        // text stays readable in `textContent` either way.
+        const headers = [...document.querySelectorAll('button, summary, [role="button"], [aria-expanded], dt')];
         for (const el of headers) {
           const t = String(el.textContent || el.getAttribute('aria-label') || '').trim();
           if (!t || t.length > 40) continue;
           if (!wanted.test(t)) continue;
-          const expanded = el.getAttribute('aria-expanded');
-          if (expanded === 'false' || expanded === null) {
-            try { el.click(); } catch { /* noop */ }
-          }
+          // Only click things that look clickable (button/summary/role/aria) —
+          // a bare <dt> is a label, not a control; clicking it is harmless but
+          // the real toggle is its sibling button, already covered above.
+          const clickable = el.tagName === 'BUTTON' || el.tagName === 'SUMMARY'
+            || el.getAttribute('role') === 'button' || el.hasAttribute('aria-expanded');
+          if (!clickable) continue;
+          try { out.push(el); } catch { /* noop */ }
         }
         for (const d of document.querySelectorAll('details:not([open])')) {
           try { d.setAttribute('open', ''); } catch { /* noop */ }
         }
+        return out;
       });
+        // Report how many we clicked, and re-measure after the panel settled so
+        // we can tell "panel opened" from "panel never existed".
+        const clicked = Array.isArray(expandResult) ? expandResult.length : 0;
+        const stats = await page.evaluate(() => {
+          const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+          const tc = clean(document.body?.textContent || '');
+          return {
+            textContentLen: tc.length,
+            hasComposition: /\d+\s*%/.test(tc),
+          };
+        }).catch(() => ({}));
+        emitLog(`    🧶 Expand pass ${pass + 1}: clicked ${clicked} control(s); textContent=${stats.textContentLen || 0}, hasPercent=${stats.hasComposition ? 'yes' : 'no'}`, 'info');
       } catch (err) {
         if (/detached/i.test(String(err.message || ''))) {
           emitLog(`    ⚠️ H&M ${article}: frame detached during expansion, re-navigating…`, 'warning');
@@ -17128,23 +17380,20 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
       }
 
       // ── Primary source: __NEXT_DATA__ embedded JSON. H&M is a Next.js site;
-      // this blob holds the article's gallery + description. Strategy: find the
-      // subtree(s) that mention THIS article and carry an image/gallery array,
-      // then keep the one with the MOST images (that's the full gallery, not a
-      // 1-image thumbnail reference or a recommendation card).
+      // this blob holds the article's gallery + description. Strategy: find nodes
+      // that carry THIS article as one of their own values, drop those that also
+      // contain other colours of the same style, and keep the biggest gallery
+      // among what is left (see the Colour scoping notes below for the details).
       let nextDesc = '';
       const nextImages = [];
       let nextDiag = 'no __NEXT_DATA__';
+      let pickDiag = '';
       try {
         const nd = document.getElementById('__NEXT_DATA__');
         if (nd && nd.textContent) {
           const root = JSON.parse(nd.textContent);
           const wantArticle = (colour && colour.article) ? String(colour.article).replace(/\D/g, '') : '';
           const isImgStr = (s) => typeof s === 'string' && /image\.hm\.com\/.+\.(?:jpe?g|png|webp)/i.test(s);
-          const mentionsArticle = (obj) => {
-            try { return wantArticle && JSON.stringify(obj).replace(/\D/g, '').includes(wantArticle); }
-            catch { return false; }
-          };
 
           // Recursively collect every image URL within a node.
           const collectImgs = (node, depth, sink) => {
@@ -17155,27 +17404,85 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
             for (const c of children) collectImgs(c, depth + 1, sink);
           };
 
-          // Find the best article-scoped subtree: among object nodes that
-          // mention the article AND contain images, pick the one yielding the
-          // largest image set.
-          let bestImgs = new Set();
-          const scan = (node, depth) => {
-            if (!node || depth > 14 || typeof node !== 'object' || Array.isArray(node)) {
-              if (Array.isArray(node)) { for (const c of node) scan(c, depth + 1); }
+          // How many colour variants of THIS product live inside a node? All
+          // colours share the 7-digit style prefix; only the last 3 digits
+          // differ. A node holding one variant is the colour node we want; a
+          // node holding several is a colour container (must be rejected).
+          const familyPrefix = wantArticle ? wantArticle.slice(0, 7) : '';
+          const collectCodes = (node, depth, sink) => {
+            if (!node || depth > 16) return;
+            if (typeof node === 'string' || typeof node === 'number') {
+              const t = String(node).trim();
+              if (familyPrefix && /^\d{10}$/.test(t) && t.startsWith(familyPrefix)) sink.add(t);
               return;
             }
-            if (mentionsArticle(node)) {
-              const s = new Set();
-              collectImgs(node, 0, s);
-              if (s.size > bestImgs.size) bestImgs = s;
+            if (typeof node !== 'object') return;
+            const children = Array.isArray(node) ? node : Object.values(node);
+            for (const c of children) collectCodes(c, depth + 1, sink);
+          };
+
+          // ── Colour scoping ─────────────────────────────────────────────
+          // Every colour of an H&M product is its own 10-digit article (last
+          // three digits = colour code) and __NEXT_DATA__ carries them ALL
+          // (variant list + swatches) plus recommendation imagery. The old
+          // test — JSON.stringify(node).replace(/\D/g,'').includes(article) —
+          // failed twice: digit runs of unrelated fields concatenate into the
+          // article ("id":131675,"code":2015 → "1316752015"), and the ROOT
+          // blob always contains the article somewhere, so "largest image set
+          // wins" selected the entire page (71 imgs ≈ 8 colour variants + recos
+          // on Art. 1316752015, measured on a real scrape + contact sheet).
+          // Pass 1: a node matches only when one of its OWN primitive values IS
+          // the article (whole-value equality; strings > 32 chars excluded so
+          // prose containing the digits can't match) — never an ancestor that
+          // merely contains it.
+          // Pass 2 (added after the first real run showed `matched=5` but still
+          // 142 images): an own-code node can still be a CONTAINER — H&M puts
+          // the selected `articleCode` on the product node whose `articles[]`
+          // lists every colour. So keep only nodes whose subtree holds exactly
+          // ONE variant of this style; among those take the largest image set
+          // (the real gallery outranks swatch thumbnails of the same code).
+          let matchedNodes = 0;
+          let bestImgs = new Set();
+          const cands = [];
+          const consider = (node, depth) => {
+            let hitKey = '';
+            for (const [k, v] of Object.entries(node)) {
+              const shortPrim = (typeof v === 'string' && v.length <= 32) || typeof v === 'number';
+              if (shortPrim && String(v).replace(/\D/g, '') === wantArticle) { hitKey = k; break; }
             }
+            if (!hitKey) return;
+            matchedNodes += 1;
+            const imgs = new Set();
+            collectImgs(node, 0, imgs);
+            const codes = new Set();
+            collectCodes(node, 0, codes);
+            cands.push({ depth, key: hitKey, urls: imgs, codes: codes.size });
+          };
+          const scan = (node, depth) => {
+            if (!node || depth > 14 || typeof node !== 'object') return;
+            if (Array.isArray(node)) { for (const c of node) scan(c, depth + 1); return; }
+            consider(node, depth);
             for (const v of Object.values(node)) scan(v, depth + 1);
           };
           scan(root, 0);
 
-          // Fallback: if article-scoping found nothing, harvest the whole tree.
+          // Keep only single-colour candidates, then take the biggest image set
+          // among them. If nothing qualified, fall back to the biggest matched
+          // node, then to the whole tree (previous behaviour) so we degrade
+          // instead of returning nothing.
+          const withImgs = cands.filter((c) => c.urls.size > 0);
+          const pure = withImgs.filter((c) => c.codes <= 1);
+          const pool = pure.length ? pure : withImgs;
+          let chosen = null;
+          for (const c of pool) if (!chosen || c.urls.size > chosen.urls.size) chosen = c;
+          if (chosen) bestImgs = chosen.urls;
           if (bestImgs.size === 0) collectImgs(root, 0, bestImgs);
           for (const u of bestImgs) nextImages.push(u);
+          const diagCands = withImgs
+            .slice(0, 6)
+            .map((c) => `d${c.depth}/${c.key}/i${c.urls.size}/c${c.codes}`)
+            .join(',');
+          pickDiag = `pick=${pure.length ? 'pure' : 'fallback'}${chosen ? `/d${chosen.depth}/i${chosen.urls.size}/c${chosen.codes}` : ''} cands=[${diagCands}]`;
 
           // Description: collect description-keyed strings anywhere in the tree.
           const descCands = [];
@@ -17191,8 +17498,18 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
           };
           collectDesc(root, 0);
           const banDescN = /cookie|consent|privacy|advertising|newsletter/i;
-          nextDesc = descCands.map((s) => clean(s)).filter((s) => /[.!]/.test(s) && !banDescN.test(s)).sort((a, b) => a.length - b.length)[0] || '';
-          nextDiag = `nextData imgs=${nextImages.length} descCands=${descCands.length}`;
+          // Same UI-junk guard the DOM fallback uses: __NEXT_DATA__ carries toast /
+          // payment / cart strings under a "description" key on H&M, and "Your
+          // payment did not go through." is shorter than the real blurb so a
+          // length-sort alone would pick it. Measured on Art. 1316752015.
+          const junkN = /\b(?:payment|checkout|cart|bag|sign in|log in|newsletter|subscribe|your order|added to|out of stock|sold out|shipping|delivery|return policy|cookie|wishlist)\b/i;
+          const nextDescCands = descCands
+            .map((s) => clean(s))
+            .filter((s) => /[.!]/.test(s) && !banDescN.test(s) && !junkN.test(s))
+            // prefer the longest plausible blurb over a short toast fragment
+            .filter((s) => (s.match(/\s/g) || []).length >= 8);
+          nextDesc = nextDescCands.sort((a, b) => b.length - a.length)[0] || '';
+          nextDiag = `nextData imgs=${nextImages.length} matched=${matchedNodes} descCands=${descCands.length} ${pickDiag}`;
         }
       } catch (e) {
         nextDiag = `nextData error: ${String(e).slice(0, 80)}`;
@@ -17228,13 +17545,24 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
       }
       // DOM fallback: the paragraph under the "Description" disclosure only.
       if (!description) {
-        const descRe = /^\s*description\s*$/i;
-        const headers = [...document.querySelectorAll('button, summary, h2, h3, h4, [role="button"]')];
+        // H&M US labels this accordion "Description & fit" (not bare "Description"),
+        // so the old exact-match `/^\s*description\s*$/i` never matched and the whole
+        // fallback was skipped. Accept the variants, then also try the <dt> label
+        // itself (H&M renders the header as <dt>, not <button>/<summary>).
+        const descRe = /^\s*description(?:\s*(?:&|and)\s*fit)?\s*:?\s*$/i;
+        const headers = [...document.querySelectorAll('button, summary, h2, h3, h4, dt, [role="button"]')];
         const descHeader = headers.find((el) => descRe.test(clean(el.textContent)) && clean(el.textContent).length < 24);
         const looksLikeProse = (t) => t.length >= 25 && t.length < 600 && /[.!]/.test(t)
           && (t.match(/\s/g) || []).length >= 4
           && !banDesc.test(t)
-          && !/^\s*(?:art\.\s*no|composition|shell|lining|imported|material)/i.test(t);
+          // UI chrome / toast / error copy that happens to read like a sentence.
+          // Measured on the live page: "Your payment did not go through." surfaced
+          // and beat the real blurb because it is shorter.
+          && !/\b(?:payment|checkout|cart|bag|sign in|log in|newsletter|subscribe|your order|added to|out of stock|sold out|shipping|delivery|return policy|cookie|wishlist)\b/i.test(t)
+          // never mistake a composition / measurement / care row for the prose blurb
+          && !/\d+\s*%\s*(?:,|$)/.test(t)
+          && !/^(?:composition|care instructions|materials? in this)/i.test(t)
+          && !/^\s*(?:art\.\s*no|composition|shell|lining|imported|material|size|waist|fit|style|length)\s*:/i.test(t);
         const collectFrom = (root) => {
           if (!root) return '';
           const cands = [...root.querySelectorAll('p, span, div')]
@@ -17255,18 +17583,60 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
             }
           }
         }
+        // Last resort: scan the whole document for the shortest prose-shaped block.
+        // H&M's collapsible panels keep their text in `textContent` even while
+        // collapsed (innerText is empty), so a page-wide semantic scan is safe here.
+        if (!description) {
+          const seen = new Set();
+          const cands = [];
+          for (const el of document.querySelectorAll('p, span, div, li')) {
+            const t = clean(el.textContent);
+            if (!t || t.length > 900 || seen.has(t)) continue;
+            seen.add(t);
+            if (looksLikeProse(t)) cands.push(t);
+          }
+          description = cands.sort((a, b) => a.length - b.length)[0] || '';
+        }
       }
 
-      // ── Composition: lines like "Shell: Cotton 100%", "Embroidery: Polyester
-      // 100%". Keep only well-formed "Part: Fibre NN%" rows; drop empties.
+      // ── Composition: H&M serves two shapes and the old regex only accepted one.
+      //   a) "Shell: Cotton 100%" / "Embroidery: Polyester 100%"   (colon-prefixed)
+      //   b) "Polyester 69%, Rayon 29%, Spandex 2%"                (H&M US: comma list,
+      //      NO colon — the old `/^Label: ... NN%/` rejected it outright, which is why
+      //      every H&M composition came back empty. Verified on Art. 1316752015.)
+      // Also tolerate a single "Polyester 100%". Everything must carry a real "NN%".
       let composition = '';
-      const fibreLine = /^[A-Za-z][A-Za-z /&-]{1,30}:\s*[A-Za-z].*\d+\s*%/;
+      const looksLikeFibreList = (t) => {
+        let s = String(t || '').trim();
+        if (!s || s.length > 200) return false;
+        // A section heading glued to the fibres ("CompositionPolyester 69%...")
+        // is a container node, not a composition row. Note `\b` cannot separate
+        // "Composition" from "Polyester" (both are letters, no word boundary), so
+        // match the run-together headings directly and reject them.
+        if (/^(?:composition|materials?|shell|lining|fabric)(?=[A-Z])/.test(s)) return false;
+        if (!/\d+\s*%/.test(s)) return false;            // must contain a percentage
+        // Reject any string where a lowercase letter runs straight into an
+        // uppercase one ("CompositionPolyester") — that is a heading glued to a
+        // fibre name, never a real fibre. Applies to every branch below.
+        const hasSeam = /[a-z][A-Z]/.test(s);
+        // (b) comma / "and" / "&" separated list where every item ends in "NN%"
+        const items = s.split(/[,;]|\band\b|&/i).map((x) => x.trim()).filter(Boolean);
+        if (items.length >= 2 && items.every((it) => /^[A-Za-z][A-Za-z /()-]*\s+\d+\s*%$/.test(it))) {
+          // a well-formed list still shouldn't contain a glued heading
+          if (!items.some((it) => /[a-z][A-Z]/.test(it))) return true;
+        }
+        // (a) "Label: something NN%"
+        if (/^[A-Za-z][A-Za-z /&-]{1,30}:\s*[A-Za-z].*\d+\s*%/.test(s)) return true;
+        // single fibre: "Polyester 100%"
+        if (/^[A-Za-z][A-Za-z /()-]{1,40}\s+\d+\s*%$/.test(s) && !hasSeam) return true;
+        return false;
+      };
       const compLines = [];
       const seenComp = new Set();
       const pushComp = (raw) => {
         const t = clean(raw);
         if (!t || seenComp.has(t.toLowerCase())) return;
-        if (fibreLine.test(t)) {
+        if (looksLikeFibreList(t)) {
           seenComp.add(t.toLowerCase());
           compLines.push(t);
         }
@@ -17385,8 +17755,6 @@ async function scrapeHmProduct(browser, reference, emitLog, ensureActive, reuseP
       url,
       imageUrls,
     };
-  } catch (error) {
-    throw error;
   } finally {
     if (ownsPage) await page.close().catch(() => {});
   }
@@ -17829,6 +18197,684 @@ async function runNewYorkerScraper(config, emitLog, emitProgress, taskController
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// Aritzia (www.aritzia.com/us/en) — style number → product page.
+//
+// Two independent obstacles, each with its own answer:
+//
+// 1. RESOLVING the style number. Aritzia's URL needs a slug, and its style
+//    number is NOT the product id — 135315 (the number printed on the PDP) is
+//    masterId 135469. The site's own search is Algolia, and the index record
+//    carries the style number verbatim in `articleGeneric` (probed
+//    2026-10-14: a query for 135315 returns the 135469 record with
+//    `_highlightResult.articleGeneric.matchLevel === "full"`). So we drive the
+//    real search page and read the response the site itself fires, then require
+//    an EXACT `articleGeneric === <style>` match — a fuzzy hit would otherwise
+//    silently scrape the wrong product, which is worse than failing.
+//    If the site changes its search boot sequence we fall back to issuing the
+//    index query ourselves (Aritzia's Algolia keys are public search-only
+//    credentials, the same pair their storefront ships in the page).
+//
+// 2. DOWNLOADING the images. assets.aritzia.com is Cloudflare-fronted and
+//    refuses anything that is not a real browser: a plain HTTPS request from
+//    Node gets HTTP 403 for every URL, regardless of headers (measured
+//    2026-10-14 — bare UA and full browser header sets both 403). The bytes
+//    are therefore pulled THROUGH the browser with CDP
+//    `Network.loadNetworkResource` + `IO.read`, which reuses the browser's
+//    network stack and TLS fingerprint. Measured: HTTP 200, real JPEG payload
+//    (magic /9j/4AAQSkZJRg), 120–260 KB each, ~0.8–2.4 s per image.
+//    `f_jpg` is forced in the transform chain because the site's own
+//    `f_auto` answers `image/jxl` to Chrome, and the saved filename is built
+//    from the path extension (there is none), so the file would end up as a
+//    .jpg that is not a JPEG.
+// ════════════════════════════════════════════════════════════════════════════
+
+const ARITZIA_HOME_URL = 'https://www.aritzia.com/us/en';
+// Cloudinary transform chain. `f_jpg` keeps the payload universally readable
+// (see the note above); w_1600 is squarely above the 1200px the site itself
+// serves at 1x.
+const ARITZIA_IMAGE_TRANSFORM = 'q_auto,f_jpg,w_1600';
+const ARITZIA_IMAGE_HOST_RE = /^https?:\/\/assets\.aritzia\.com\/image\/upload\/(.+)$/i;
+// The Details trigger before the modal opens (see scrapeAritziaProductDetail).
+const ARITZIA_DETAILS_TRIGGER = '[data-testid="details-link"], button#details, [data-testid="pdp-panel-detail-tab"]';
+// Country / region UI containers, checked before anything outside them is clicked.
+const ARITZIA_COUNTRY_SCOPE = '[class*="country" i], [class*="region" i], [data-testid*="country" i], [data-testid*="region" i], [class*="locale" i]';
+// Public search-only Algolia credentials Aritzia's storefront ships. Used only
+// as a fallback when the site's own search request cannot be observed.
+const ARITZIA_ALGOLIA_FALLBACK = {
+  host: 'https://search-1.aritzia.com',
+  index: 'production_ecommerce_aritzia__Aritzia_US__products__en_US',
+  appId: 'SONLJM8OH6',
+  apiKey: '1455bca7c6c33e746a0f38beb28422e6',
+};
+
+/**
+ * Aritzia geolocates its visitors and can greet a session with a country /
+ * region selector. Everything this scraper produces is the US catalogue
+ * (`us/en` URLs, USD prices), so when such a UI is present we pick
+ * **United States** — otherwise the run could quietly continue on the
+ * Canadian or International assortment, which carries different sizes and
+ * availability. Best-effort by design: never throws, and does nothing when no
+ * country UI is on screen.
+ *
+ * @returns {Promise<boolean>} whether a US option was clicked
+ */
+async function selectAritziaUsCountry(page, emitLog, ensureActive) {
+  ensureActive();
+  // Visibility must be judged by the layout box, NOT by `offsetParent`: Chrome
+  // returns null for `position: fixed` elements, and a region modal is exactly
+  // that — the naive check reports "not visible" on every real prompt.
+  // The inline helper is repeated in each evaluate because functions passed to
+  // page.evaluate are serialised and cannot close over a shared definition.
+  const hasCountryUi = await page.evaluate((scope) => {
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+    };
+    for (const el of document.querySelectorAll(scope)) {
+      // Not just present in the DOM — the footer locale list is always there.
+      if (visible(el)) return true;
+    }
+    return false;
+  }, ARITZIA_COUNTRY_SCOPE).catch(() => false);
+  if (!hasCountryUi) return false;
+
+  // 1) the USA / United States option, inside the country UI only
+  const picked = await antiDetection.clickInPage(page, (scope) => {
+    const US = /^(?:usa?|u\.s\.a?\.?|united states(?: of america)?|america)\b/i;
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+    };
+    const scopes = [...document.querySelectorAll(scope)];
+    const inScope = (el) => (scopes.length ? scopes.some((c) => c.contains(el)) : true);
+    const out = [];
+    for (const el of document.querySelectorAll('button, a, li, [role="option"], [role="button"], span, p')) {
+      const label = String(el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!label || label.length > 40) continue;
+      if (!US.test(label)) continue;
+      if (!visible(el)) continue;
+      if (!inScope(el)) continue;
+      out.push(el.closest('button, a, li, [role="option"]') || el);
+    }
+    // Prefer the shortest label — "USA" over a wrapped sentence that mentions it.
+    out.sort((a, b) => String(a.textContent || '').length - String(b.textContent || '').length);
+    return out.slice(0, 1);
+  }, ARITZIA_COUNTRY_SCOPE).catch(() => 0);
+
+  if (!picked) return false;
+  emitLog('    🇺🇸 Aritzia country selector → chose United States (US catalogue).', 'info');
+  await antiDetection.randomDelay(600, 1100);
+
+  // 2) the selector often needs a confirm tap to apply the region
+  await antiDetection.clickInPage(page, (scope) => {
+    const CONFIRM = /^(?:confirm|continue|save|apply|done|select|shop\s*now|go|ok(?:ay)?)\b/i;
+    const visible = (el) => {
+      const r = el.getBoundingClientRect();
+      if (!r.width || !r.height) return false;
+      const cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none' && cs.opacity !== '0';
+    };
+    const scopes = [...document.querySelectorAll(scope)];
+    const out = [];
+    for (const el of document.querySelectorAll('button, [role="button"], a')) {
+      const label = String(el.textContent || '').replace(/\s+/g, ' ').trim();
+      if (!label || label.length > 24 || !CONFIRM.test(label)) continue;
+      if (!visible(el)) continue;
+      if (scopes.length && !scopes.some((c) => c.contains(el))) continue;
+      out.push(el);
+    }
+    return out.slice(0, 1);
+  }, ARITZIA_COUNTRY_SCOPE).catch(() => 0);
+  await antiDetection.randomDelay(500, 1000);
+  return true;
+}
+
+// `.../image/upload/<t1>/<t2>/<publicId>` → `<publicId>` (the last segment).
+// The site emits two chained transform segments; both are dropped so the
+// download can impose its own.
+function aritziaImagePublicId(url = '') {
+  const m = String(url || '').match(ARITZIA_IMAGE_HOST_RE);
+  if (!m) return '';
+  const segments = m[1].split('/').filter(Boolean);
+  return segments.length ? segments[segments.length - 1].trim() : '';
+}
+
+function buildAritziaImageUrl(publicId = '') {
+  const id = String(publicId || '').trim();
+  if (!id) return '';
+  return `https://assets.aritzia.com/image/upload/${ARITZIA_IMAGE_TRANSFORM}/${id}`;
+}
+
+// Same label convention as the other brands (F = front / first shot,
+// B = back / last shot, then 01…NN in gallery order) so every downstream
+// consumer (PPT, Slide Maker, the AI report) keeps working unchanged.
+function buildAritziaImageMap(imageUrls = []) {
+  const list = [...imageUrls];
+  const map = {};
+  if (!list.length) return map;
+  // Aritzia orders its gallery as on-model shots first (front full body →
+  // details → side → BACK), then flat-lay/detail shots. Verified visually on
+  // two styles (135067: on_e, 135068: on_f — both were genuine back views):
+  // the last ON-MODEL image is the back, while the last image of the whole
+  // list is just a fabric close-up. There is no front/back metadata anywhere
+  // (URL `on/off` = on-model/off-model, alt text is the product name), so this
+  // ordering rule is the only reliable signal.
+  const basename = (u) => String(u || '').split('/').pop().split('?')[0];
+  const onShots = list.filter((u) => /_on_[a-z]$/i.test(basename(u)));
+  if (onShots.length >= 2) {
+    map.F = onShots[0];
+    map.B = onShots[onShots.length - 1];
+  } else {
+    // No on-model pair to bracket front/back (accessories, single shot) —
+    // fall back to positional labels instead of inventing a back view.
+    map.F = list[0];
+    if (list.length > 1) map.B = list[list.length - 1];
+  }
+  let extra = 1;
+  for (const u of list) {
+    if (u === map.F || u === map.B) continue;
+    map[String(extra).padStart(2, '0')] = u;
+    extra += 1;
+  }
+  return map;
+}
+
+function aritziaHitsForStyle(hits = [], digits = '') {
+  return (Array.isArray(hits) ? hits : []).filter((hit) => String(hit?.articleGeneric ?? '').trim() === digits);
+}
+
+/**
+ * Resolve an Aritzia style number to its product page.
+ *
+ * @param {object} page    a live puppeteer page (reused for every style)
+ * @param {string} styleNumber
+ * @returns {Promise<object>} { url, styleNumber, masterId, name, price, colorId }
+ */
+async function resolveAritziaProductUrl(page, styleNumber, emitLog, ensureActive) {
+  const digits = String(styleNumber || '').replace(/\D/g, '');
+  if (!digits) throw new Error(`Aritzia style number must contain digits (got "${styleNumber}").`);
+
+  const captured = [];
+  const onResponse = async (response) => {
+    try {
+      const url = response.url();
+      if (!/aritzia\.com\/1\/indexes\/[^/]+\/query/i.test(url)) return;
+      const json = await response.json().catch(() => null);
+      if (json && Array.isArray(json.hits)) captured.push(...json.hits);
+    } catch { /* body already consumed / not JSON — ignore */ }
+  };
+  page.on('response', onResponse);
+
+  try {
+    emitLog(`    🔎 Aritzia index lookup for ${digits}…`, 'info');
+    await page.goto(`${ARITZIA_HOME_URL}/search?q=${encodeURIComponent(digits)}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
+
+    let matches = [];
+    // The storefront fires its own index query a beat after boot. Poll for a
+    // FULL match on articleGeneric (never accept a fuzzy hit).
+    for (let tick = 0; tick < 10; tick += 1) {
+      ensureActive();
+      matches = aritziaHitsForStyle(captured, digits);
+      if (matches.length) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+
+    // Fallback: the site never issued (or we never observed) its query —
+    // issue the same call ourselves with the public search-only credentials.
+    if (!matches.length && !captured.length) {
+      emitLog('    ℹ️ Aritzia search did not expose its index call; querying the index directly.', 'info');
+      const direct = await page.evaluate(async (cfg, q) => {
+        const qs = `x-algolia-agent=${encodeURIComponent('Algolia for JavaScript')}`
+          + `&x-algolia-api-key=${encodeURIComponent(cfg.apiKey)}`
+          + `&x-algolia-application-id=${encodeURIComponent(cfg.appId)}`;
+        try {
+          const r = await fetch(`${cfg.host}/1/indexes/${encodeURIComponent(cfg.index)}/query?${qs}`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/x-www-form-urlencoded' },
+            body: JSON.stringify({ query: q, hitsPerPage: 20 }),
+          });
+          const j = await r.json();
+          return { status: r.status, hits: Array.isArray(j.hits) ? j.hits : [] };
+        } catch (e) {
+          return { status: 0, hits: [], error: String((e && e.message) || e) };
+        }
+      }, ARITZIA_ALGOLIA_FALLBACK, digits).catch(() => ({ status: 0, hits: [] }));
+      if (direct.hits.length) captured.push(...direct.hits);
+      matches = aritziaHitsForStyle(captured, digits);
+    }
+
+    if (!matches.length) {
+      throw new Error(`No Aritzia product carries style number ${digits} (the search index returned ${captured.length} candidate(s), none with articleGeneric=${digits}). It may be sold out or renamed.`);
+    }
+
+    // The index stores some records twice (objectID suffixed `_duplicate`);
+    // prefer the canonical one.
+    const chosen = matches.find((h) => !/_duplicate$/i.test(String(h.objectID || ''))) || matches[0];
+    const slug = String(chosen.slug || '').trim();
+    if (!slug) throw new Error(`Aritzia index hit for ${digits} carries no slug — cannot build the product URL.`);
+    const colorId = String(chosen.color || '').trim();
+    const priceValue = Number(chosen?.price?.min);
+    const url = `${ARITZIA_HOME_URL}/product/${slug}${colorId ? `?color=${encodeURIComponent(colorId)}` : ''}`;
+    emitLog(`    🎯 Aritzia ${digits} → ${chosen.name || '(unnamed)'} · masterId ${chosen.masterId || '?'} · colour ${colorId || '?'}`, 'info');
+    return {
+      url,
+      styleNumber: digits,
+      masterId: String(chosen.masterId || ''),
+      name: String(chosen.c_name || chosen.name || chosen.c_displayName || '').trim(),
+      price: Number.isFinite(priceValue) ? `$${priceValue}` : '',
+      colorId,
+    };
+  } finally {
+    page.off('response', onResponse);
+  }
+}
+
+/**
+ * Open the product page and read the Details panel.
+ *
+ * Structure (probed 2026-10-14): "Details" is a tab trigger that opens a modal
+ * containing `[data-testid="details-panel"]`, which holds two blocks —
+ *   `[data-testid="features-copy"]`            → the product description
+ *   `[data-testid="materials-and-care-copy"]`  → the fabric composition
+ * The gallery <img> elements are already in the DOM (they carry no test id;
+ * they are identified by their Cloudinary host + the style number in the
+ * public id, which also scopes them to the colour we resolved).
+ */
+async function scrapeAritziaProductDetail(page, product, emitLog, ensureActive) {
+  const response = await page.goto(product.url, { waitUntil: 'domcontentloaded', timeout: 90000 }).catch(() => null);
+  const status = response ? response.status() : 0;
+  if (status === 403 || status === 429) throw new Error(`blocked (HTTP ${status}, Cloudflare)`);
+  if (status >= 400) throw new Error(`HTTP ${status}`);
+  await antiDetection.randomDelay(1200, 2000);
+  ensureActive();
+
+  // Ride out the Cloudflare interstitial instead of reporting a missing page.
+  for (let tick = 0; tick < 8; tick += 1) {
+    ensureActive();
+    const challenged = await page.evaluate(() => /Just a moment|challenges\.cloudflare\.com/i.test(document.documentElement.innerHTML)).catch(() => false);
+    if (!challenged) break;
+    if (tick === 7) throw new Error('Cloudflare challenge did not clear');
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+
+  // The consent banner can sit on top of the Details trigger.
+  await dismissCookieBanners(page, { waitMs: 3000 }).catch(() => {});
+  // Landing on a product URL can re-trigger Aritzia's region prompt; take the
+  // US option again when it appears so nothing is read in another region's
+  // context (prices, sizes and availability differ per region).
+  await selectAritziaUsCountry(page, emitLog, ensureActive).catch(() => false);
+
+  // Gallery first — it is in the DOM before the modal opens.
+  const galleryUrls = await page.evaluate((styleNumber) => {
+    const out = [];
+    const seen = new Set();
+    for (const img of document.querySelectorAll('img[src*="assets.aritzia.com/image/upload/"]')) {
+      const src = String(img.getAttribute('src') || '');
+      const file = src.split('/').pop() || '';
+      // Public ids look like `<season>_<a03>_<styleNumber>_<colour>_<on|off>_<view>`.
+      if (styleNumber && !file.includes(`_${styleNumber}_`)) continue;
+      const key = src.split('?')[0];
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      out.push(key);
+    }
+    return out;
+  }, product.styleNumber).catch(() => []);
+
+  // Open Details. The trigger is client-rendered, so wait for it before
+  // clicking — clicking a not-yet-rendered trigger silently does nothing, which
+  // is what produced intermittent "the Details panel was empty" runs.
+  //
+  // Selector note (probed 2026-10-14): BEFORE the modal opens the trigger is
+  // `[data-testid="details-link"]`; `button#details` and
+  // `[data-testid="pdp-panel-detail-tab"]` only exist once the modal is up, so
+  // keying readiness on those never becomes true. All three are accepted, with
+  // the visible "Details" label as a last-resort fallback.
+  const detailsTriggerPicker = () => {
+    let el = document.querySelector('[data-testid="details-link"], button#details, [data-testid="pdp-panel-detail-tab"]');
+    if (!el) {
+      for (const candidate of document.querySelectorAll('button, [role="tab"], [role="button"]')) {
+        if (/^details$/i.test(String(candidate.textContent || '').replace(/\s+/g, ' ').trim())) { el = candidate; break; }
+      }
+    }
+    return el ? [el.closest('button, a') || el] : [];
+  };
+  let triggerReady = false;
+  for (let tick = 0; tick < 12; tick += 1) {
+    ensureActive();
+    triggerReady = await page.evaluate((selector) => Boolean(document.querySelector(selector)), ARITZIA_DETAILS_TRIGGER).catch(() => false);
+    if (triggerReady) break;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+  if (!triggerReady) throw new Error('the Details trigger never rendered');
+
+  // Poll the two panels. Round 0 uses the human-like pointer, later rounds fall
+  // back to a synthesised click: both were verified to open the modal on their
+  // own, but the pointer can land on a sticky overlay when the layout shifts,
+  // and the modal must not be missed just because of that.
+  let panels = null;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    ensureActive();
+    if (attempt === 0) {
+      await antiDetection.clickInPage(page, detailsTriggerPicker).catch(() => 0);
+    } else {
+      await page.evaluate((selector) => {
+        const el = document.querySelector(selector);
+        if (el) (el.closest('button, a') || el).click();
+      }, ARITZIA_DETAILS_TRIGGER).catch(() => {});
+    }
+    for (let tick = 0; tick < 6; tick += 1) {
+      ensureActive();
+      panels = await page.evaluate(() => {
+        const bullets = (sel) => {
+          const root = document.querySelector(sel);
+          if (!root) return [];
+          return [...root.querySelectorAll('li')]
+            .map((li) => String(li.innerText || li.textContent || '').replace(/\s+/g, ' ').trim())
+            .filter(Boolean);
+        };
+        return {
+          description: bullets('[data-testid="features-copy"]'),
+          materials: bullets('[data-testid="materials-and-care-copy"]'),
+          hasPanel: Boolean(document.querySelector('[data-testid="details-panel"]')),
+        };
+      }).catch(() => null);
+      if (panels && panels.hasPanel && panels.description.length) break;
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    if (panels && panels.hasPanel && panels.description.length) break;
+  }
+
+  const descriptionBullets = Array.isArray(panels?.description) ? panels.description : [];
+  const materialsBullets = Array.isArray(panels?.materials) ? panels.materials : [];
+  if (!descriptionBullets.length) throw new Error('the Details panel was empty (page layout may have changed)');
+
+  const gallery = [];
+  const gallerySeen = new Set();
+  for (const raw of galleryUrls) {
+    const publicId = aritziaImagePublicId(raw);
+    if (!publicId || gallerySeen.has(publicId)) continue;
+    gallerySeen.add(publicId);
+    gallery.push(buildAritziaImageUrl(publicId));
+  }
+
+  return {
+    description: descriptionBullets.join('\n'),
+    // `Materials & Care` is one panel: Content (the fibre blend) plus the care
+    // and origin lines. Kept whole — the user asked for the fabric block to be
+    // separated from the description, not subdivided.
+    composition: materialsBullets.join(' | '),
+    imageUrls: gallery,
+    colorCount: 0,
+  };
+}
+
+/**
+ * Pull image bytes THROUGH the browser (Cloudflare rejects plain Node HTTPS).
+ *
+ * Throws with the concrete reason for anything unexpected — a silent `null`
+ * made an early "0/11 downloaded" run impossible to diagnose. `null` is
+ * reserved for "this shot genuinely does not exist" (HTTP 404), which is
+ * normal: the gallery lists a–h for every colour and the CDN 404s the views a
+ * colour does not have.
+ *
+ * @returns {Promise<Buffer|null>}
+ */
+async function fetchAritziaImageViaBrowser(client, frameId, url) {
+  if (!frameId) throw new Error('no frame id — the browser-side fetch cannot start');
+  const result = await client.send('Network.loadNetworkResource', {
+    frameId,
+    url,
+    options: { includeCredentials: true, disableCache: false },
+  });
+  const resource = result?.resource;
+  if (!resource) throw new Error('CDP returned no resource descriptor');
+  const status = Number(resource.httpStatusCode || 0);
+  if (resource.success === false) {
+    if (status === 404) return null;
+    throw new Error(`browser-side fetch failed (netError=${resource.netErrorName || '?'}, HTTP ${status || '?'})`);
+  }
+  if (!resource.stream) throw new Error('CDP returned no readable stream');
+  if (status && status !== 200) {
+    await client.send('IO.close', { handle: resource.stream }).catch(() => {});
+    throw new Error(`browser-side fetch returned HTTP ${status}`);
+  }
+  const chunks = [];
+  for (;;) {
+    const chunk = await client.send('IO.read', { handle: resource.stream, size: 1 << 20 });
+    if (chunk.data) chunks.push(Buffer.from(chunk.data, chunk.base64Encoded ? 'base64' : 'utf8'));
+    if (chunk.eof) break;
+  }
+  await client.send('IO.close', { handle: resource.stream }).catch(() => {});
+  const buffer = Buffer.concat(chunks);
+  // Guard against an HTML error page being written as a .jpg.
+  if (buffer.length < 512) throw new Error(`payload too small (${buffer.length} bytes)`);
+  if (buffer[0] !== 0xFF || buffer[1] !== 0xD8) throw new Error(`payload is not a JPEG (starts with 0x${buffer[0].toString(16)} 0x${buffer[1].toString(16)}, ${buffer.length} bytes)`);
+  return buffer;
+}
+
+async function runAritziaScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
+  let { styleNumbers, excelPath, outputDir } = config;
+  styleNumbers = normalizeManualStyleNumbers(styleNumbers);
+  const ensureActive = () => taskController?.throwIfCancelled?.();
+  let browser = null;
+
+  if (excelPath) {
+    try {
+      emitLog(`Reading Excel file: ${excelPath}`, 'info');
+      const wb = XLSX.readFile(excelPath);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      styleNumbers = [];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:B1');
+      for (let row = 1; row <= range.e.r; row += 1) {
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: 1 })];
+        if (cell) {
+          const v = String(cell.w ?? cell.v ?? '').trim();
+          if (v) styleNumbers.push(v);
+        }
+      }
+      emitLog(`Loaded ${styleNumbers.length} Aritzia style numbers from Excel.`, 'success');
+    } catch (error) {
+      throw new Error(`Excel parse failed: ${error.message}`);
+    }
+  }
+
+  ensureActive();
+  if (!styleNumbers || styleNumbers.length === 0) throw new Error('No Aritzia style numbers provided.');
+
+  const targetDir = !outputDir || outputDir === '未选择' ? path.join(app.getPath('desktop'), 'Aritzia') : outputDir;
+  fs.mkdirSync(targetDir, { recursive: true });
+  emitLog(`📁 Output directory: ${targetDir}`, 'info');
+  emitLog('🌐 Launching the Aritzia scraper session...', 'info');
+
+  const executablePath = resolveScraperBrowserExecutable(config?.scraperBrowser);
+  if (!executablePath) throw new Error(describeMissingBrowserError());
+
+  try {
+    browser = await puppeteer.launch({
+      executablePath,
+      headless: false,
+      userDataDir: getAritziaSessionDir(executablePath),
+      args: antiDetection.getRetailLaunchArgs(),
+      ignoreDefaultArgs: ['--enable-automation'],
+      defaultViewport: null,
+    });
+    previewBridge?.attachToBrowser(browser);
+    taskController?.onCancel(() => { if (browser && browser.isConnected()) browser.close().catch(() => {}); });
+
+    const page = await browser.newPage();
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+
+    // Warm the session once: this is where Cloudflare's clearance cookie is
+    // minted, so the first style does not pay for it.
+    await page.goto(ARITZIA_HOME_URL, { waitUntil: 'domcontentloaded', timeout: 90000 }).catch(() => null);
+    await antiDetection.randomDelay(1800, 3000);
+    await dismissCookieBanners(page, { waitMs: 4000 }).catch(() => {});
+    // Aritzia geolocates visitors; make sure we are on the US catalogue before
+    // anything is read, or prices/sizes would come from another region.
+    await selectAritziaUsCountry(page, emitLog, ensureActive).catch(() => false);
+
+    const products = [];
+    const total = styleNumbers.length;
+    emitLog(`🚀 Aritzia: ${total} 个款号 (站内搜索定位 → 商品页 Details 面板)`, 'warning');
+    emitProgress(5);
+
+    for (let i = 0; i < total; i += 1) {
+      ensureActive();
+      const ref = styleNumbers[i];
+      emitLog(`🎯 Aritzia input raw: "${ref}"`, 'info');
+      emitLog(`🔄 Processing Aritzia ${i + 1}/${total}: ${ref}`, 'warning');
+      try {
+        const resolved = await resolveAritziaProductUrl(page, ref, emitLog, ensureActive);
+        const detail = await scrapeAritziaProductDetail(page, resolved, emitLog, ensureActive);
+        products.push({
+          styleNumber: resolved.styleNumber,
+          productId: resolved.styleNumber,
+          brand: 'Aritzia',
+          name: resolved.name,
+          price: resolved.price,
+          colorRef: resolved.colorId || '',
+          url: resolved.url,
+          imageUrls: detail.imageUrls,
+          description: detail.description || '',
+          composition: detail.composition
+            ? { outerShell: null, lining: null, other: detail.composition }
+            : null,
+        });
+        if (!detail.imageUrls.length) {
+          emitLog(`    ⚠️ ${resolved.styleNumber}: no gallery images matched this style number.`, 'warning');
+        }
+        if (!detail.composition) {
+          emitLog(`    ℹ️ ${resolved.styleNumber}: the Details panel carried no Materials & Care block.`, 'info');
+        }
+      } catch (error) {
+        if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
+        emitLog(`    ⚠️ Aritzia ${ref} failed: ${error.message}`, 'warning');
+        products.push({ styleNumber: ref, productId: ref, brand: 'Aritzia', url: '', error: error.message, imageUrls: [] });
+      }
+      emitProgress(5 + Math.round(((i + 1) / total) * 45));
+      if (i < total - 1) await antiDetection.randomDelay(1200, 2200);
+    }
+
+    emitProgress(50);
+    const success = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
+    const failed = products.filter((p) => !success.includes(p));
+    emitLog(`📊 Aritzia summary: ${success.length} styles succeeded, ${failed.length} styles failed.`, 'info');
+    failed.forEach((p) => {
+      emitLog(`    ❌ ${p.styleNumber} - ${p.error || 'No product images found'}`, 'error');
+    });
+
+    // ── Download through the browser (see the Cloudflare note above) ──
+    const client = success.length ? await page.createCDPSession() : null;
+    let frameId = '';
+    if (client) {
+      await client.send('Network.enable').catch(() => {});
+      const tree = await client.send('Page.getFrameTree').catch(() => null);
+      frameId = tree?.frameTree?.frame?.id || '';
+    }
+
+    let totalImages = 0;
+    let savedImages = 0;
+    let doneStyles = 0;
+    for (const product of success) {
+      ensureActive();
+      const cleanSku = sanitizeFileSegment(String(product.productId || product.styleNumber || '').replace(/[./]/g, '-'), 'aritzia-item');
+      const styleDir = path.join(targetDir, cleanSku);
+      fs.mkdirSync(styleDir, { recursive: true });
+
+      const classified = buildAritziaImageMap(product.imageUrls);
+      const savedMap = {};
+      for (const [label, imgUrl] of Object.entries(classified)) {
+        ensureActive();
+        totalImages += 1;
+        const filename = `${cleanSku}_${label}.jpg`;
+        const filePath = path.join(styleDir, filename);
+        if (!client || !frameId) {
+          emitLog(`    ❌ [failed] ${filename}: the browser-side fetcher is unavailable`, 'error');
+          continue;
+        }
+        let buffer = null;
+        try {
+          buffer = await fetchAritziaImageViaBrowser(client, frameId, imgUrl);
+        } catch (error) {
+          emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error');
+          continue;
+        }
+        if (!buffer) {
+          // HTTP 404: this colour simply has no such view (the gallery lists
+          // a–h generically). Not a failure.
+          emitLog(`    ℹ️ [skip] ${filename}: the CDN has no such shot`, 'info');
+          continue;
+        }
+        try {
+          fs.writeFileSync(filePath, buffer);
+          savedMap[label] = imgUrl;
+          savedImages += 1;
+          emitLog(`    ⬇️ [saved] ${filename} (${(buffer.length / 1024).toFixed(1)} KB)`);
+        } catch (error) {
+          emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error');
+        }
+        await antiDetection.randomDelay(120, 320);
+      }
+
+      const infoData = {
+        styleNumber: product.productId || product.styleNumber,
+        brand: 'Aritzia',
+        name: product.name,
+        price: product.price,
+        colorRef: product.colorRef || '',
+        description: product.description || '',
+        composition: product.composition || null,
+        url: product.url,
+        images: savedMap,
+      };
+      fs.writeFileSync(path.join(styleDir, `${cleanSku}_info.json`), JSON.stringify(infoData, null, 2), 'utf-8');
+      emitLog(`📄 Saved product metadata: ${cleanSku}_info.json`, 'success');
+
+      if (!Object.keys(savedMap).length) {
+        // Nothing landed on disk: report it as a failure rather than leaving an
+        // empty folder behind that looks like a success.
+        product.error = 'No image could be downloaded';
+        product.imageUrls = [];
+      }
+
+      doneStyles += 1;
+      emitProgress(50 + Math.round((doneStyles / Math.max(success.length, 1)) * 50));
+    }
+
+    emitProgress(100);
+    emitLog(`📦 Aritzia images: ${savedImages}/${totalImages} downloaded through the browser.`, 'info');
+    const finalSuccess = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
+    const finalFailed = products.filter((p) => !finalSuccess.includes(p));
+    fs.writeFileSync(path.join(targetDir, 'summary.json'), JSON.stringify(products.map((p) => ({
+      styleNumber: p.productId || p.styleNumber,
+      brand: 'Aritzia',
+      name: p.name,
+      price: p.price,
+      colorRef: p.colorRef || '',
+      description: p.description || '',
+      composition: p.composition || null,
+      images: p.imageUrls?.length || 0,
+      error: p.error || null,
+    })), null, 2), 'utf-8');
+    emitLog('📊 Saved summary.json', 'success');
+    if (finalFailed.length) {
+      fs.writeFileSync(path.join(targetDir, 'failed_styles.json'), JSON.stringify(finalFailed.map((p) => ({ styleNumber: p.productId || p.styleNumber, error: p.error || 'No product images found' })), null, 2), 'utf-8');
+      emitLog('📄 Saved failed_styles.json', 'success');
+    }
+    emitLog(`🎉 Aritzia scraping finished. Files saved to: ${targetDir}`, 'success');
+  } finally {
+    if (browser && browser.isConnected()) await browser.close().catch(() => {});
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // Bestseller Analysis — list-page harvest + per-style detail + LLM trend report.
 //   New Yorker editorial bestseller pages, e.g.
 //     https://www.newyorker.de/products/?gender=MALE&editorials=218   (men)
@@ -17872,6 +18918,16 @@ const BESTSELLER_SOURCES = {
   // collectFreePeopleBestSellerLinks) instead of a persisted session.
   'freepeople|male': 'https://www.freepeople.com/best-sellers/',
   'freepeople|female': 'https://www.freepeople.com/best-sellers/',
+  // Princess Polly. /collections/best-selling is a Shopify collection with ONE
+  // aggregated ranking (no gender split), so both buckets point at the same
+  // URL — the wizard hides the gender step for it (same treatment as Free
+  // People). Measured 2026-10-14: the storefront JSON API
+  // (`/collections/best-selling/products.json?limit=250&page=1`) returns all
+  // 178 products in a single page, each with title / price / gallery / the
+  // Description accordion's HTML — so, unlike every other brand here, no PDP
+  // visit is needed. See collectPrincessPollyBestsellerProducts().
+  'princesspolly|male': 'https://us.princesspolly.com/collections/best-selling',
+  'princesspolly|female': 'https://us.princesspolly.com/collections/best-selling',
 };
 
 function resolveBestsellerSource(brand, gender) {
@@ -17949,7 +19005,7 @@ async function collectBestsellerArticleIds(browser, listingUrl, emitLog, ensureA
 
     // New Yorker shows a country/region selector on first entry that blocks the
     // page. Auto-pick a country (prefer Germany / international) to get through.
-    const pickedCountry = await page.evaluate(() => {
+    const pickedCountry = await antiDetection.clickFirstInPage(page, () => {
       const isVisible = (el) => {
         if (!el) return false;
         const r = el.getBoundingClientRect();
@@ -17966,17 +19022,17 @@ async function collectBestsellerArticleIds(browser, listingUrl, emitLog, ensureA
         const links = [...scope.querySelectorAll('a, button, [role="button"], li')];
         // Prefer Germany/Deutschland, else first visible country-looking entry.
         const preferred = links.find((el) => isVisible(el) && wantRe.test(String(el.textContent || '')) && String(el.textContent || '').trim().length < 40);
-        if (preferred) { try { preferred.click(); } catch { /* noop */ } return String(preferred.textContent || '').trim().slice(0, 40); }
+        if (preferred) return preferred;
       }
       // 2) A generic "continue / enter / confirm" gate button.
       const gateRe = /^\s*(?:continue|enter|confirm|weiter|bestätigen|ok|los geht|shop now|jetzt einkaufen)\s*$/i;
       for (const el of document.querySelectorAll('button, [role="button"], a')) {
         if (!isVisible(el)) continue;
         const t = String(el.textContent || '').trim();
-        if (t && t.length < 30 && gateRe.test(t)) { try { el.click(); } catch { /* noop */ } return `gate:${t}`; }
+        if (t && t.length < 30 && gateRe.test(t)) return el;
       }
-      return '';
-    }).catch(() => '');
+      return null;
+    });
     if (pickedCountry) {
       emitLog(`    🌍 Auto-selected region/gate: ${pickedCountry}`, 'info');
       await antiDetection.randomDelay(1500, 2500);
@@ -17989,13 +19045,15 @@ async function collectBestsellerArticleIds(browser, listingUrl, emitLog, ensureA
     }
 
     // Dismiss cookie / consent that can block lazy-load.
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
       const re = /^\s*(?:accept|agree|akzeptieren|alle akzeptieren|zustimmen|ok|got it|allow all)\s*$/i;
+      const out = [];
       for (const el of document.querySelectorAll('button, [role="button"], a')) {
         const t = String(el.textContent || '').trim();
-        if (t && t.length < 30 && re.test(t)) { try { el.click(); } catch { /* noop */ } }
+        if (t && t.length < 30 && re.test(t)) out.push(el);
       }
-    }).catch(() => {});
+      return out;
+    });
     await antiDetection.randomDelay(800, 1400);
 
     // Scroll + click any "load more" repeatedly until the id set stops growing.
@@ -18009,16 +19067,18 @@ async function collectBestsellerArticleIds(browser, listingUrl, emitLog, ensureA
           window.scrollBy(0, document.body.scrollHeight);
           await sleep(350);
         }
-        // Click a "load more / show more / mehr" control if present.
+      }).catch(() => {});
+      // Click a "load more / show more / mehr" control if present.
+      await antiDetection.clickInPage(page, () => {
         const re = /load\s*more|show\s*more|mehr\s*(?:laden|anzeigen)|weitere|more products/i;
+        const out = [];
         for (const el of document.querySelectorAll('button, a, [role="button"]')) {
           const t = String(el.textContent || '').trim();
           const r = el.getBoundingClientRect();
-          if (t && t.length < 40 && re.test(t) && r.width > 0 && r.height > 0) {
-            try { el.click(); } catch { /* noop */ }
-          }
+          if (t && t.length < 40 && re.test(t) && r.width > 0 && r.height > 0) out.push(el);
         }
-      }).catch(() => {});
+        return out;
+      });
       await antiDetection.randomDelay(1400, 2200);
 
       // Harvest ids from the visible product TILES only — anchors that link to
@@ -18075,22 +19135,14 @@ async function collectZaraBestsellerLinks(browser, listingUrl, emitLog, ensureAc
   const page = await browser.newPage();
   try {
     await antiDetection.applyRetailBrowsingProfile(page);
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
     await page.setViewport(antiDetection.getRandomViewport());
     emitLog(`    🌐 Opening Zara bestseller listing: ${listingUrl}`, 'info');
     await page.goto(listingUrl, { waitUntil: 'networkidle2', timeout: 60000 });
     await antiDetection.randomDelay(2500, 3500);
     ensureActive();
 
-    // Cookie / region consent.
-    await page.evaluate(() => {
-      const re = /^\s*(?:accept all|accept|agree|i agree|ok|got it|reject all)\s*$/i;
-      for (const el of document.querySelectorAll('button, [role="button"], a')) {
-        const t = String(el.textContent || '').trim();
-        if (t && t.length < 24 && re.test(t)) { try { el.click(); } catch { /* noop */ } }
-      }
-    }).catch(() => {});
-    await antiDetection.randomDelay(800, 1400);
+    // Cookie / region consent. 旧实现零等待，而实测同类的 banner 要 6~35s 才出现。
+    await dismissCookieBanners(page, { waitMs: 15000 });
 
     // Wait for the product grid to hydrate (the first paint is an unstyled
     // skeleton; real product links appear only after the SPA loads).
@@ -18193,7 +19245,6 @@ async function collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, en
     // <img>; give the client-side swap up to ~7s across 6 ticks.
     for (let settle = 0; settle < 6; settle += 1) {
       ensureActive();
-      // eslint-disable-next-line no-await-in-loop
       const state = await page.evaluate(() => {
         const tiles = [...document.querySelectorAll('[data-qa-product-tile]')];
         return {
@@ -18202,10 +19253,8 @@ async function collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, en
         };
       }).catch(() => ({ skeletons: 1, missingImg: 1 }));
       if (state.skeletons === 0 && state.missingImg === 0) break;
-      // eslint-disable-next-line no-await-in-loop
       await new Promise((r) => setTimeout(r, 1200));
     }
-    // eslint-disable-next-line no-await-in-loop
     return page.evaluate(() => {
       const pickImage = (img) => {
         if (!img) return '';
@@ -18328,7 +19377,6 @@ async function collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, en
     const base = listingUrl.replace(/\/+$/, '');
     for (let p = 2; p <= maxPages; p += 1) {
       ensureActive();
-      // eslint-disable-next-line no-await-in-loop
       const resp = await page.goto(`${base}/?page=${p}`, { waitUntil: 'domcontentloaded', timeout: 90000 });
       const st = resp ? resp.status() : 0;
       if (st === 403 || st === 429) {
@@ -18339,7 +19387,6 @@ async function collectFreePeopleBestsellerLinks(browser, listingUrl, emitLog, en
         emitLog(`    ⚠️ Page ${p} returned HTTP ${st}; stopping pagination there.`, 'warning');
         break;
       }
-      // eslint-disable-next-line no-await-in-loop
       const next = await harvestCurrentPage(p);
       const before = links.length;
       collectFromEntries(next.entries);
@@ -18423,7 +19470,6 @@ async function scrapeFreePeopleProductDetail(page, entry, refererUrl, emitLog, e
   let cards = null;
   for (let tick = 0; tick < 6; tick += 1) {
     ensureActive();
-    // eslint-disable-next-line no-await-in-loop
     cards = await page.evaluate(() => {
       // NOTE: closest('[class*="accordion"]') would stop at
       // `o-pwa-accordion__headings` (the heading wrapper ALSO contains the
@@ -18455,16 +19501,16 @@ async function scrapeFreePeopleProductDetail(page, entry, refererUrl, emitLog, e
     const swatchesReady = cards.codes.length >= 1;
     if (descriptionReady && compositionReady && swatchesReady) break;
     if (tick === 1) {
-      // eslint-disable-next-line no-await-in-loop
-      await page.evaluate(() => {
+      await antiDetection.clickInPage(page, () => {
+        const out = [];
         for (const h of document.querySelectorAll('.o-pwa-accordion__heading')) {
           if (!/^contents$/i.test(String(h.textContent || '').trim())) continue;
           const toggle = h.closest('.o-pwa-accordion')?.querySelector('button[aria-expanded="false"]');
-          if (toggle) { try { toggle.click(); } catch { /* ignore */ } }
+          if (toggle) out.push(toggle);
         }
-      }).catch(() => {});
+        return out;
+      });
     }
-    // eslint-disable-next-line no-await-in-loop
     await new Promise((r) => setTimeout(r, 1000));
   }
 
@@ -18489,6 +19535,233 @@ async function scrapeFreePeopleProductDetail(page, entry, refererUrl, emitLog, e
     emitLog(`    ℹ️ ${entry.name || entry.styleKey}: no composition found on the product page.`, 'info');
   }
   return { description, composition, gallery, colorCodes };
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// Princess Polly (us.princesspolly.com) — bestseller listing.
+//
+// The /collections/best-selling page is a Shopify collection, so the entire
+// ranked catalogue is available from the public storefront JSON API:
+//   /collections/best-selling/products.json?limit=250&page=N
+// Measured 2026-10-14: ONE page of 178 products (matching the "177 STYLES"
+// counter + 1 fee line item), 178 unique style numbers, no pagination needed.
+//
+// Two things make this route the right one:
+//   1. A bare curl from this machine answers `local_rate_limited`, but the same
+//      fetch issued INSIDE the driven browser page (same origin, same cookies,
+//      real UA) answers 200 — so the request is made from page.evaluate.
+//   2. The payload already carries the Description accordion's HTML
+//      (`body_html`), which is where the fabric line lives — so no PDP visit
+//      is required, unlike Free People / H&M / the Inditex brands.
+//
+// Style number: Princess Polly SKUs are `<style>-<variant>`, e.g.
+// `139342-1275700` → style 139342. Verified: 178 products → 178 unique styles.
+// ════════════════════════════════════════════════════════════════════════════
+
+const PRINCESS_POLLY_HOME_URL = 'https://us.princesspolly.com';
+const PRINCESS_POLLY_COLLECTION_PATH = '/collections/best-selling';
+// Princess Polly runs several ranked collections and they are NOT
+// interchangeable. Every handle below was verified to serve products through
+// its products.json (2026-10-15). Deliberately absent: `best-sellers` — the
+// nav's "Best Sellers" link uses that plural handle, but it returns ZERO
+// products, and so do `trending-now` / `most-loved`. Never derive a handle
+// from the link label; probe it.
+const PRINCESS_POLLY_RANKINGS = {
+  'best-selling': { path: '/collections/best-selling', label: 'All Best Sellers' },
+  'top-sellers': { path: '/collections/top-sellers', label: 'Top Sellers' },
+  trending: { path: '/collections/trending', label: 'Trending' },
+  'new-arrivals': { path: '/collections/new-arrivals', label: 'New Arrivals' },
+};
+
+/**
+ * Resolve a Princess Polly ranking key to its collection path.
+ * Unknown / missing keys fall back to the original best-selling ranking so a
+ * stale saved preset can never break the run.
+ *
+ * @param {string} key
+ * @returns {{ path: string, label: string }}
+ */
+function resolvePrincessPollyRanking(key) {
+  const wanted = String(key || '').trim().toLowerCase();
+  return PRINCESS_POLLY_RANKINGS[wanted] || PRINCESS_POLLY_RANKINGS['best-selling'];
+}
+
+// Defensive ceiling for the "All" mode. The ranking is 178 today; 300 leaves
+// room for growth without letting a runaway loop download thousands of styles.
+const PRINCESS_POLLY_RANKING_MAX = 300;
+
+// A fibre/percentage line, e.g. "95% reclaimed cotton 5% spandex",
+// "Main: 100% cotton, Lining: 100% cotton", "90% reclaimed PU 10% metal".
+// The Description accordion mixes these in with the copy, which is exactly
+// what the user asked us to pull apart.
+const PP_FIBER_RE = /\b(?:cotton|polyester|polyamide|nylon|elastane|spandex|viscose|rayon|wool|acrylic|linen|cashmere|silk|modal|lyocell|tencel|leather|pu|polyurethane|metal|zinc(?:\s*alloy)?|steel|brass|acetate|triacetate|rubber|hemp|jute|sequins?|glass|beads?|down|feathers?|reclaimed)\b/i;
+const PP_COMPOSITION_LABEL_RE = /^\s*(?:main|shell|outer(?:\s*shell)?|lining|content|composition|fabric|trim)\b\s*[:\-]/i;
+
+/**
+ * Split Princess Polly's `body_html` (the Description accordion) into the
+ * style description and the fabric composition.
+ *
+ * The HTML is a flat list of bullets — `<ul><li>Ribbed 3/4 sleeve top</li>…
+ * <li>Good stretch, unlined</li><li>95% reclaimed cotton 5% spandex</li>
+ * <li>Cold hand wash</li></ul>` — occasionally with a leading empty `<ul>`
+ * and/or `<p>` copy. A bullet counts as composition when it carries a
+ * percentage AND either a fibre name or a "Main:/Lining:/Content:" label.
+ *
+ * Care instructions ("Cold hand wash") stay in the description: they are not
+ * fabric composition, and dropping them would lose information the panel shows.
+ *
+ * @param {string} html
+ * @returns {{ description: string, composition: string }}
+ */
+function splitPrincessPollyBodyHtml(html = '') {
+  const text = String(html || '');
+  if (!text.trim()) return { description: '', composition: '' };
+  const chunks = text
+    // Each bullet / paragraph is one line of the accordion.
+    .split(/<\/li\s*>|<\/p\s*>|<\/div\s*>|<br\s*\/?>/i)
+    .map((chunk) => chunk
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/&amp;/gi, '&')
+      .replace(/&#39;|&rsquo;|&lsquo;/gi, "'")
+      .replace(/&quot;|&ldquo;|&rdquo;/gi, '"')
+      .replace(/&trade;/gi, '™')
+      .replace(/&reg;/gi, '®')
+      .replace(/&mdash;/gi, '—')
+      .replace(/&ndash;/gi, '–')
+      .replace(/&hellip;/gi, '…')
+      .replace(/\s+/g, ' ')
+      .trim())
+    .filter(Boolean);
+
+  const descriptionParts = [];
+  const compositionParts = [];
+  for (const chunk of chunks) {
+    const looksComposite = /%/.test(chunk) && (PP_FIBER_RE.test(chunk) || PP_COMPOSITION_LABEL_RE.test(chunk));
+    if (looksComposite) compositionParts.push(chunk);
+    else descriptionParts.push(chunk);
+  }
+  return {
+    description: descriptionParts.join('\n').trim(),
+    composition: compositionParts.join(', ').replace(/\s*,\s*/g, ', ').trim(),
+  };
+}
+
+/**
+ * Harvest every ranked Princess Polly bestseller.
+ *
+ * Unlike the Free People collector there is no page to hand back: everything
+ * the report needs (title, price, gallery, description, composition) already
+ * came from products.json, so no PDP visit follows and the tab is closed here.
+ *
+ * @returns {Promise<{ links: Array }>}
+ */
+async function collectPrincessPollyBestsellerProducts(browser, listingUrl, emitLog, ensureActive, collectionPath = PRINCESS_POLLY_COLLECTION_PATH) {
+  const page = await browser.newPage();
+  try {
+    await antiDetection.applyRetailBrowsingProfile(page);
+    emitLog(`    🌐 Opening Princess Polly bestseller listing: ${listingUrl}`, 'info');
+
+    const response = await page.goto(listingUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    const status = response ? response.status() : 0;
+    if (status === 403 || status === 429) {
+      throw new Error(`Princess Polly refused this visit (HTTP ${status}). This is a temporary rate limit — wait 2–3 minutes and retry.`);
+    }
+    if (status >= 400) throw new Error(`Princess Polly listing returned HTTP ${status}.`);
+    await antiDetection.randomDelay(1200, 2200);
+    ensureActive();
+
+    // Same-origin fetch from inside the page — this is what turns the
+    // `local_rate_limited` answer into a normal 200.
+    const fetched = await page.evaluate(async (collectionPath) => {
+      const out = [];
+      let pageNo = 1;
+      for (;;) {
+        let resp;
+        try {
+          resp = await fetch(`${collectionPath}/products.json?limit=250&page=${pageNo}`, { headers: { accept: 'application/json' } });
+        } catch (e) {
+          return { error: String((e && e.message) || e), out };
+        }
+        if (!resp.ok) return { error: `HTTP ${resp.status}`, out };
+        const json = await resp.json().catch(() => null);
+        const batch = Array.isArray(json && json.products) ? json.products : [];
+        for (const pr of batch) {
+          const variants = Array.isArray(pr.variants) ? pr.variants : [];
+          out.push({
+            title: pr.title || '',
+            handle: pr.handle || '',
+            type: pr.product_type || '',
+            bodyHtml: pr.body_html || '',
+            price: (variants[0] && variants[0].price) || '',
+            skus: variants.map((v) => String(v.sku || '')).filter(Boolean),
+            colors: (Array.isArray(pr.options) ? pr.options : [])
+              .filter((o) => /colou?r/i.test(String(o.name || '')))
+              .flatMap((o) => (Array.isArray(o.values) ? o.values : [])),
+            images: (Array.isArray(pr.images) ? pr.images : [])
+              .map((im) => String(im.src || '').split('?')[0])
+              .filter(Boolean),
+          });
+        }
+        // A short page means the ranking is exhausted.
+        if (batch.length < 250) break;
+        pageNo += 1;
+        if (pageNo > 8) break;
+      }
+      return { error: '', out };
+    }, collectionPath).catch((e) => ({ error: String((e && e.message) || e), out: [] }));
+
+    if (fetched.error) {
+      throw new Error(`Princess Polly products.json failed (${fetched.error}). The storefront API may have changed or rate-limited this IP.`);
+    }
+
+    const seen = new Set();
+    const links = [];
+    let skippedJunk = 0;
+    let skippedDup = 0;
+    for (const raw of fetched.out) {
+      // `139342-1275700` → style 139342. Fall back to the handle only if a
+      // product ever ships without SKUs, so nothing is silently dropped.
+      const styleNumber = String(raw.skus[0] || '').split('-')[0].trim() || String(raw.handle || '').trim();
+      const category = String(raw.type || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      // The collection carries storefront plumbing ("Road Improvement and Food
+      // Delivery Fee", "Gift Cards"). Those have no images and a Fee/Gift-Card
+      // product type — drop them here so they never reach the report or the
+      // Product Count budget. This is unconditional: it is not an apparel
+      // judgement, so the "Include Accessories" switch must not resurrect them.
+      if (!raw.images.length || /^(?:fee|fees|gift_?cards?)$/.test(category)) {
+        skippedJunk += 1;
+        continue;
+      }
+      if (seen.has(styleNumber)) {
+        skippedDup += 1;
+        continue;
+      }
+      seen.add(styleNumber);
+      const { description, composition } = splitPrincessPollyBodyHtml(raw.bodyHtml);
+      links.push({
+        styleNumber,
+        url: `${PRINCESS_POLLY_HOME_URL}/products/${raw.handle}`,
+        name: String(raw.title || '').trim(),
+        price: raw.price ? `$${raw.price}` : '',
+        category,
+        colorName: raw.colors.length === 1 ? String(raw.colors[0]) : '',
+        imageUrls: raw.images,
+        description,
+        composition,
+      });
+    }
+
+    emitLog(`    ✅ Princess Polly listing harvested ${links.length} ranked style(s)`
+      + `${skippedJunk ? `, skipped ${skippedJunk} storefront line item(s)` : ''}`
+      + `${skippedDup ? `, ${skippedDup} duplicate style(s)` : ''}.`, links.length ? 'success' : 'warning');
+    if (!links.length) {
+      throw new Error('The Princess Polly collection loaded but products.json returned no usable products — the storefront API may have changed.');
+    }
+    return { links };
+  } finally {
+    await page.close().catch(() => {});
+  }
 }
 
 // ── Parse a raw H&M listing HTML (server response) into the SAME shape the
@@ -18637,17 +19910,7 @@ async function collectHmBestsellerLinks(browser, listingUrl, emitLog, ensureActi
       ensureActive();
 
       // Cookie / region consent (some regions gate the payload behind it).
-      await page.evaluate(() => {
-        const texts = ['accept', 'agree', 'allow all', 'got it', 'continue', 'i accept', 'accept all'];
-        const clickable = [...document.querySelectorAll('button, [role="button"], a')];
-        for (const el of clickable) {
-          const t = String(el.textContent || '').trim().toLowerCase();
-          if (t && texts.some((x) => t === x || t.includes(x)) && t.length < 30) {
-            try { el.click(); } catch { /* noop */ }
-          }
-        }
-      }).catch(() => {});
-      await antiDetection.randomDelay(600, 1100);
+      await dismissCookieBanners(page, { waitMs: 15000 });
       ensureActive();
 
       const out = await page.evaluate(() => {
@@ -18895,7 +20158,6 @@ async function scrapeZaraBestsellerProduct(browser, pdpUrl, emitLog, ensureActiv
   const captured = new Set();
   try {
     await antiDetection.applyRetailBrowsingProfile(page);
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
     await page.setViewport(antiDetection.getRandomViewport());
     const productId = extractZaraProductIdFromUrl(pdpUrl) || pdpUrl.split('/').pop().replace(/\.html.*$/, '');
     page.on('response', (resp) => {
@@ -18904,6 +20166,8 @@ async function scrapeZaraBestsellerProduct(browser, pdpUrl, emitLog, ensureActiv
     });
 
     await page.goto(pdpUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+    // 商品详情页同样会弹 cookie banner（用户在真实抓取中实测到），此前此处没有关窗调用
+    await dismissCommonZaraPopups(page);
     await antiDetection.randomDelay(1800, 2600);
     ensureActive();
     await page.evaluate(async () => {
@@ -18913,15 +20177,15 @@ async function scrapeZaraBestsellerProduct(browser, pdpUrl, emitLog, ensureActiv
     await antiDetection.randomDelay(800, 1400);
 
     // Expand the materials/composition accordion.
-    await page.evaluate(() => {
+    await antiDetection.clickInPage(page, () => {
       const re = /material|composition|care|fabric|extra|detail/i;
+      const out = [];
       for (const el of document.querySelectorAll('button, summary, [role="button"], [aria-expanded]')) {
         const t = String(el.textContent || el.getAttribute('aria-label') || '').trim();
-        if (t && t.length < 40 && re.test(t) && el.getAttribute('aria-expanded') !== 'true') {
-          try { el.click(); } catch { /* noop */ }
-        }
+        if (t && t.length < 40 && re.test(t) && el.getAttribute('aria-expanded') !== 'true') out.push(el);
       }
-    }).catch(() => {});
+      return out;
+    });
     await antiDetection.randomDelay(900, 1500);
 
     const info = await page.evaluate(() => {
@@ -19032,7 +20296,6 @@ async function collectIntersportProductHandles(browser, listingUrl, maxCount, em
   const page = await browser.newPage();
   try {
     await antiDetection.applyRetailBrowsingProfile(page);
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
     await page.setViewport(antiDetection.getRandomViewport());
 
     emitLog(`    🌐 Opening Intersport collection: ${listingUrl}`, 'info');
@@ -19041,14 +20304,9 @@ async function collectIntersportProductHandles(browser, listingUrl, maxCount, em
     ensureActive();
 
     // Dismiss cookie / consent banners.
-    await page.evaluate(() => {
-      const re = /^\s*(?:accept all|accept|agree|akzeptieren|alle akzeptieren|zustimmen|ok|got it|allow all|einverstanden)\s*$/i;
-      for (const el of document.querySelectorAll('button, [role="button"], a')) {
-        const t = String(el.textContent || '').trim();
-        if (t && t.length < 30 && re.test(t)) { try { el.click(); } catch { /* noop */ } }
-      }
-    }).catch(() => {});
-    await antiDetection.randomDelay(800, 1400);
+    // 旧实现零等待 + 只认文字；改走统一入口（文案表已含德语 akzeptieren/
+    // zustimmen/einverstanden、波兰语 w porządku 等，候选也限定在同意容器内）。
+    await dismissCookieBanners(page, { waitMs: 15000 });
 
     // Scroll to load all products (Shopify infinite scroll / load more).
     const handles = [];
@@ -19064,16 +20322,18 @@ async function collectIntersportProductHandles(browser, listingUrl, maxCount, em
           window.scrollBy(0, document.body.scrollHeight);
           await sleep(400);
         }
-        // Click "load more / mehr laden / mehr anzeigen" if present.
+      }).catch(() => {});
+      // Click "load more / mehr laden / mehr anzeigen" if present.
+      await antiDetection.clickInPage(page, () => {
         const re = /load\s*more|show\s*more|mehr\s*(?:laden|anzeigen)|weitere|more products/i;
+        const out = [];
         for (const el of document.querySelectorAll('button, a, [role="button"]')) {
           const t = String(el.textContent || '').trim();
           const r = el.getBoundingClientRect();
-          if (t && t.length < 40 && re.test(t) && r.width > 0 && r.height > 0) {
-            try { el.click(); } catch { /* noop */ }
-          }
+          if (t && t.length < 40 && re.test(t) && r.width > 0 && r.height > 0) out.push(el);
         }
-      }).catch(() => {});
+        return out;
+      });
       await antiDetection.randomDelay(1200, 2000);
 
       // Extract product handles from the DOM (product card links).
@@ -19217,7 +20477,9 @@ function isNonApparelBestseller(category, name) {
 async function runBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
   const ensureActive = () => taskController?.throwIfCancelled?.();
   const brand = String(config?.brand || 'newyorker').trim();
-  const gender = String(config?.gender || 'female').trim();
+  // `let`: the gender can be coerced below when a non-UNIQLO brand receives the
+  // UNIQLO-only "all" mode (stale wizard selection after a brand switch).
+  let gender = String(config?.gender || 'female').trim();
   let { outputDir, downloadConcurrency } = config;
   // 0 (or negative/NaN) = download ALL images; any positive number caps per style.
   const rawImagesPerStyle = Number(config?.imagesPerStyle);
@@ -19227,16 +20489,32 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   let freePeopleProfileDir = '';
 
   const brandKey = String(brand || '').trim().toLowerCase().replace(/\s+/g, '');
-  const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
 
   // UNIQLO needs a different shape of work: the ranking comes from the official
   // ranked-products JSON API (invoked in-session, since Akamai 403s cold hits)
   // and each style's images come from that payload rather than from the listing
   // DOM. That is a wholly separate flow, so hand off before the shared
   // browser-listing path below builds its own session.
+  //
+  // This is ALSO the only branch that can serve gender === 'all' (merge the men
+  // + women rankings). The coercion below therefore has to stay after it, or
+  // UNIQLO's All mode would be rewritten to Women's before the hand-off.
   if (brandKey === 'uniqlo') {
     return runUniqloBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge);
   }
+
+  // "All genders" is UNIQLO-only: BESTSELLER_SOURCES has no `|all` key and
+  // buildIntersportUrl maps every non-male gender to Damen. The wizard no longer
+  // offers the option for these brands, but a value left over from a brand
+  // switch (pick UNIQLO → All, then switch to H&M) would otherwise surface as a
+  // confusing "No bestseller source URL for hm / all" — or, for Intersport,
+  // silently scrape the women's collection. Coerce loudly instead.
+  if (/^(all|全部)$/i.test(gender)) {
+    emitLog('    ⚠️ "All" (both genders) is only supported for UNIQLO — falling back to the women\'s list.', 'warning');
+    gender = 'female';
+  }
+
+  const genderLabel = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'Men' : 'Women';
 
   let listingUrl;
   let intersportCategory = '';
@@ -19248,7 +20526,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   } else {
     listingUrl = resolveBestsellerSource(brand, gender);
   }
-  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker, UNIQLO, H&M, Free People (male/female), Intersport (male/female + category).`);
+  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker, UNIQLO, H&M, Free People (male/female), Princess Polly (male/female), Intersport (male/female + category).`);
 
   const brandLabel = brandKey === 'intersport' ? 'Intersport' : (getScraperOutputFolderName(brand) || 'New Yorker');
   const targetDir = !outputDir || outputDir === '未选择'
@@ -19537,6 +20815,80 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
       } finally {
         await fpPage.close().catch(() => {});
       }
+    } else if (brandKey === 'princesspolly') {
+      // ── Princess Polly (Shopify): the collection's products.json already
+      // carries the name, price, gallery AND the Description accordion's HTML
+      // (description + fabric line), so this is the cheapest brand here — ONE
+      // request for the whole ranking, zero PDP visits. Order comes straight
+      // from the collection, which is the "Best Sellers" ranking itself.
+      //
+      // "All colours" is deliberately absent: every Princess Polly product URL
+      // is already a single colourway (…-top-white / …-top-black), so there is
+      // no colourway dimension to expand.
+      const rawLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+      const wantsAll = !Number.isFinite(rawLimit) || rawLimit === 0;
+      const ppLimit = rawLimit > 0 ? Math.min(Math.floor(rawLimit), PRINCESS_POLLY_RANKING_MAX) : PRINCESS_POLLY_RANKING_MAX;
+
+      // Which ranked collection to pull. `listingUrl` came from the brand table
+      // (always the best-selling default) and is only used as the page we stand
+      // on; the JSON request uses this path — so both are re-derived here from
+      // the SAME ranking choice, otherwise the page and the data would diverge.
+      const ppRanking = resolvePrincessPollyRanking(config?.ppRanking);
+      const ppListingUrl = `${PRINCESS_POLLY_HOME_URL}${ppRanking.path}`;
+      emitLog(`    🏆 Princess Polly ranking: ${ppRanking.label} (${ppRanking.path})`, 'info');
+
+      const { links: ppLinks } = await collectPrincessPollyBestsellerProducts(browser, ppListingUrl, emitLog, ensureActive, ppRanking.path);
+      emitProgress(10);
+
+      const ppLabel = wantsAll ? `all (cap ${PRINCESS_POLLY_RANKING_MAX})` : String(ppLimit);
+      emitLog(`    🚀 Step 2/2: collecting ${ppLabel} Princess Polly style(s)…`, 'warning');
+      // Be explicit when the cap actually bites: `new-arrivals` carries 2000+
+      // styles, so "All" silently means "the first 300" there. Saying so beats
+      // letting the run look complete when it is not.
+      if (wantsAll && ppLinks.length > PRINCESS_POLLY_RANKING_MAX) {
+        emitLog(`    ⚠️ ${ppRanking.label} carries ${ppLinks.length} styles; only the first ${PRINCESS_POLLY_RANKING_MAX} are collected (the ranking cap). Pick a Product Count to make this explicit.`, 'warning');
+      }
+
+      let ppStyleCount = 0;
+      for (let i = 0; i < ppLinks.length; i += 1) {
+        ensureActive();
+        if (ppStyleCount >= ppLimit) {
+          if (!wantsAll) {
+            emitLog(`    ✋ Reached the requested ${ppLimit} apparel style(s); ${ppLinks.length - i} candidate(s) left unprocessed.`, 'info');
+          }
+          break;
+        }
+        const entry = ppLinks[i];
+        const product = {
+          styleNumber: entry.styleNumber,
+          productId: entry.styleNumber,
+          brand: 'Princess Polly',
+          name: entry.colorName ? `${entry.name} · ${entry.colorName}` : entry.name,
+          price: entry.price,
+          colorRef: entry.colorName || '',
+          url: entry.url,
+          imageUrls: entry.imageUrls,
+          description: entry.description || '',
+          composition: entry.composition
+            ? { outerShell: null, lining: null, other: entry.composition }
+            : null,
+        };
+
+        if (excludeApparelActive && isNonApparelBestseller(entry.category, product.name)) {
+          skippedNonApparel += 1;
+          emitLog(`    🚫 Skipped non-apparel: ${product.name || product.styleNumber}`, 'info');
+        } else {
+          products.push(product);
+          if (!product.composition) {
+            emitLog(`    ℹ️ ${product.name || product.styleNumber}: no fabric line found in the description.`, 'info');
+          }
+          // Budget counts DISTINCT STYLES, same unit as Free People / H&M.
+          ppStyleCount += 1;
+        }
+
+        emitProgress(10 + Math.round(((i + 1) / Math.max(ppLinks.length, 1)) * 40));
+        await antiDetection.randomDelay(120, 320);
+      }
     } else if (brandKey === 'hm') {
       // ── H&M: the listing's own Next.js payload already carries, per ranked
       // style, the product name, price, category AND the full image set
@@ -19728,7 +21080,8 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         : buildNewYorkerImageMap(capped);
       const referer = brandKey === 'intersport' ? 'https://www.intersport.ch/'
         : brandKey === 'freepeople' ? 'https://www.freepeople.com/'
-          : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
+          : brandKey === 'princesspolly' ? `${PRINCESS_POLLY_HOME_URL}/`
+            : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
       for (const [label, imgUrl] of Object.entries(classified)) {
         const ext = getUrlExtension(imgUrl, '.jpg');
         const filename = `${cleanSku}_${label}${ext}`;
@@ -19788,17 +21141,18 @@ const ZARA_HOME_URL_ES = 'https://www.zara.com/es/en/';
 
 async function dismissCommonZaraPopups(page) {
   try {
+    await dismissOneTrustCookies(page);
+    // Zara 自研 cookie banner 的兜底（实测 #onetrust-accept-btn-handler 在 Zara 上命中 0）
     const selectors = [
-      '#onetrust-accept-btn-handler',
       'button[data-qa-id="cookies-banner-accept"]',
-      'button[aria-label*="accept" i]',
     ];
     for (const sel of selectors) {
-      const btn = await page.$(sel);
-      if (btn) {
-        await btn.click().catch(() => {});
-        await page.waitForTimeout(500).catch(() => {});
-      }
+      const btn = await antiDetection.queryOne(page, sel);
+      if (!btn) continue;
+      if (!(await antiDetection.isInViewport(btn))) { await btn.dispose().catch(() => {}); continue; }
+      await antiDetection.humanClick(page, btn).catch(() => {});
+      await btn.dispose().catch(() => {});
+      await antiDetection.randomDelay(400, 700);
     }
   } catch { /* ignore */ }
 }
@@ -19815,17 +21169,17 @@ async function openZaraSearchOverlay(page) {
   ];
   for (const sel of directSelectors) {
     try {
-      const handle = await page.$(sel);
+      const handle = await antiDetection.queryOne(page, sel);
       if (handle) {
-        const visible = await handle.isIntersectingViewport().catch(() => true);
+        const visible = await antiDetection.isInViewport(handle);
         if (visible) {
-          await handle.click({ delay: 50 }).catch(() => {});
+          await antiDetection.humanClick(page, handle, { delay: 50 }).catch(() => {});
           return true;
         }
       }
     } catch { /* ignore */ }
   }
-  return page.evaluate(() => {
+  return (await antiDetection.clickInPage(page, () => {
     const isVisible = (el) => {
       if (!el) return false;
       const r = el.getBoundingClientRect();
@@ -19847,12 +21201,11 @@ async function openZaraSearchOverlay(page) {
         el.id,
       ].join(' ').toLowerCase();
       if (/\b(search|buscar)\b|\/search/.test(haystack)) {
-        el.click();
-        return true;
+        return el;
       }
     }
     return false;
-  });
+  })) > 0;
 }
 
 async function findVisibleZaraSearchInput(page) {
@@ -19979,13 +21332,13 @@ async function clickFirstZaraProductCard(page, emitLog) {
   // Real CDP click — fires React/Next.js handlers properly so the router navigates.
   let realClickOk = false;
   try {
-    await cardElement.click({ delay: 60 });
+    await antiDetection.humanClick(page, cardElement, { delay: 60 });
     realClickOk = true;
   } catch (err) {
     emitLog(`    ⚠️ Zara real-click failed: ${err.message}; falling back to synthetic click`, 'warning');
   }
   if (!realClickOk) {
-    await page.evaluate((el) => el.click(), cardElement).catch(() => {});
+    await antiDetection.humanClick(page, cardElement).catch(() => {});
   }
   await cardElement.dispose().catch(() => {});
 
@@ -20020,9 +21373,8 @@ async function searchZaraByTyping(browser, query, emitLog, ensureActive) {
   const page = await browser.newPage();
   let keepPageOpen = false;
   try {
-    await antiDetection.applyAntiDetection(page);
+    await antiDetection.applyRetailBrowsingProfile(page);
     await page.setViewport(antiDetection.getRandomViewport());
-    await page.setUserAgent(antiDetection.getRandomUserAgent());
 
     // Go straight to Zara's dedicated search page — the input is already on the
     // page, so we skip the fragile header search-overlay button entirely.
@@ -20085,13 +21437,13 @@ async function searchZaraByTyping(browser, query, emitLog, ensureActive) {
     }
 
     try {
-      await inputElement.click({ delay: 80 });
+      await antiDetection.humanClick(page, inputElement, { delay: 80 });
     } catch {
       await page.evaluate((el) => el.focus(), inputElement).catch(() => {});
     }
     await antiDetection.randomDelay(300, 600);
 
-    emitLog(`    ⌨️ Typing Zara search "${query}" via DOM write…`, 'info');
+    emitLog(`    ⌨️ Typing Zara search "${query}"…`, 'info');
     await writeSearchValueViaDOM(page, inputElement, query, emitLog, 'Zara');
     ensureActive();
 
@@ -20222,6 +21574,10 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
     return runAbercrombieScraper(config, emitLog, emitProgress, taskController, previewBridge);
   }
 
+  if (config?.brand === 'aritzia') {
+    return runAritziaScraper(config, emitLog, emitProgress, taskController, previewBridge);
+  }
+
   let { styleNumbers, excelPath, outputDir, tabConcurrency, downloadConcurrency } = config;
   styleNumbers = normalizeManualStyleNumbers(styleNumbers);
   // Zara backup mode: skip the direct-PDP first round entirely and scrape every
@@ -20272,7 +21628,7 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
     browser = await puppeteer.launch({
       executablePath: executablePath,
       headless: false,
-      args: antiDetection.getEnhancedLaunchArgs(),
+      args: antiDetection.getRetailLaunchArgs(),
       ignoreDefaultArgs: ['--enable-automation'],
       defaultViewport: null,
     });
@@ -20402,18 +21758,15 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
           } else {
             page = await browser.newPage();
 
-            // 应用完整的反检测措施
-            await antiDetection.applyAntiDetection(page);
+            // 只填补缺口，不做任何伪造 —— 本机真实 Chrome 的身份本身最自洽。
+            // 实测结论（同 H&M 路径）：在本机 Windows Chrome 上覆盖 UA 会连带
+            // 抹掉 userAgentData，与真实引擎版本矛盾，会被 Akamai 立即拦截。
+            await antiDetection.applyRetailBrowsingProfile(page);
 
             // 设置随机视口
             const viewport = antiDetection.getRandomViewport();
             await page.setViewport(viewport);
 
-            // 设置随机User-Agent
-            const userAgent = antiDetection.getRandomUserAgent();
-            await page.setUserAgent(userAgent);
-
-            emitLog(`    🎭 使用UA: ${userAgent.substring(0, 50)}...`, 'info');
             emitLog(`    📐 视口: ${viewport.width}x${viewport.height}`, 'info');
           }
 
@@ -20531,17 +21884,12 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
           await antiDetection.randomDelay(3000, 5000);
           ensureActive();
 
-          // 模拟鼠标移动
-          await antiDetection.simulateMouseMovement(page).catch(() => {});
-
-          // 关闭 cookie
-          try {
-            const btn = await page.$('#onetrust-accept-btn-handler');
-            if (btn) {
-              await btn.click();
-              await antiDetection.randomDelay(500, 1000);
-            }
-          } catch (e) {}
+          // 关 cookie 前不再撒合成 mousemove：humanClick 自带真实贝塞尔轨迹，
+          // 而合成事件（isTrusted:false）在风控眼里是负面证据。
+          // 关闭 cookie —— 旧实现只查 #onetrust-accept-btn-handler（实测只有
+          // Lefties 有它）且零等待。这是**每个商品页都会走**的路径，所以 waitMs
+          // 给小值：首页 / 搜索页那一次已经处理过，这里只是兜底。
+          await dismissCookieBanners(page, { waitMs: 3000 });
 
           // Zara may fire a second (bot-challenge) navigation during the delays
           // above, which destroys the execution context. Re-settle right before
@@ -20553,7 +21901,8 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
           // inside a collapsed accordion panel labelled "Composition & Care"
           // or "Composition, Care and Source". Without expanding it, body
           // innerText will not contain any material data.
-          await page.evaluate(() => {
+          await antiDetection.clickInPage(page, () => {
+            const out = [];
             // 1. Open ALL <details> elements.
             document.querySelectorAll('details').forEach((el) => { el.open = true; });
 
@@ -20568,7 +21917,7 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
             triggers.forEach((node) => {
               const label = String(node.textContent || '').replace(/\s+/g, ' ').trim();
               if (label.length < 80 && RELEVANT.test(label)) {
-                try { node.click(); } catch { /* ignore */ }
+                try { out.push(node); } catch { /* ignore */ }
               }
             });
 
@@ -20579,10 +21928,11 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
               if (heading && RELEVANT.test(String(heading.textContent || ''))) {
                 // Click the heading itself or an inner clickable element
                 const btn = heading.querySelector('button, [role="button"]') || heading;
-                try { btn.click(); } catch { /* ignore */ }
+                try { out.push(btn); } catch { /* ignore */ }
               }
             });
-          }).catch(() => {});
+            return out;
+          });
 
           // Brief pause so the DOM can settle after accordion expansions.
           await antiDetection.randomDelay(600, 1000);
@@ -20593,7 +21943,6 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
             // Retry once if a late bot-challenge navigation destroys the context.
             for (let attemptInfo = 0; attemptInfo < 2; attemptInfo += 1) {
               try {
-                // eslint-disable-next-line no-await-in-loop
                 return await page.evaluate(() => {
           const h1 = document.querySelector('h1');
           const name = h1 ? h1.textContent.trim() : '';
@@ -21698,6 +23047,170 @@ ipcMain.handle('bestseller-analyze', async (event, config = {}) => {
 });
 
 
+// ── Trend Lookahead (Vogue Runway) IPC ──────────────────────────────────────
+// Vogue 完全无反爬（常规 UA 直连 200），所以整条链路是纯 Node fetch，
+// 不需要浏览器 / 不需要身份克隆 —— 与抓取器模块是两套独立实现。
+//
+// 数据分层：
+//   季节档案  userData/trends/season-index.json   ← 253 个季节，随官网更新
+//   每季品牌  userData/trends/brands-<season>.json ← 品牌列表每季变动
+// 先读缓存、用户点「更新」才回源，避免每次进页面都打官网。
+const trendsCacheDir = () => path.join(app.getPath('userData'), 'trends');
+const trendsCacheFile = (name) => path.join(trendsCacheDir(), name);
+
+function readTrendsCache(name) {
+  try {
+    const file = trendsCacheFile(name);
+    if (!fs.existsSync(file)) return null;
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    // 缓存损坏不致命：当作没有缓存，由调用方回源
+    return null;
+  }
+}
+
+function writeTrendsCache(name, data) {
+  fs.mkdirSync(trendsCacheDir(), { recursive: true });
+  fs.writeFileSync(trendsCacheFile(name), `${JSON.stringify(data, null, 2)}\n`);
+}
+
+ipcMain.handle('trends-list-seasons', async () => {
+  const cached = readTrendsCache('season-index.json');
+  return {
+    success: true,
+    seasons: Array.isArray(cached?.seasons) ? cached.seasons : [],
+    updatedAt: String(cached?.updatedAt || ''),
+    cached: Boolean(cached),
+  };
+});
+
+ipcMain.handle('trends-refresh-seasons', async (event) => {
+  const emitLog = (msg, type = 'info') => {
+    event.sender.send('trends-log', { time: new Date().toLocaleTimeString(), message: msg, type });
+  };
+  try {
+    assertLicensedForFeature();
+    emitLog('🔄 正在从 Vogue Runway 更新季节档案…');
+    const seasons = await vogueTrends.fetchSeasons({ log: emitLog });
+    const payload = { updatedAt: new Date().toISOString(), seasons };
+    writeTrendsCache('season-index.json', payload);
+    emitLog(`✅ 季节档案已更新：${seasons.length} 个季节`, 'success');
+    return { success: true, ...payload };
+  } catch (error) {
+    const licenseFailure = getLicenseFailurePayload(error);
+    if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    emitLog(`季节档案更新失败：${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('trends-brands', async (event, payload = {}) => {
+  const emitLog = (msg, type = 'info') => {
+    event.sender.send('trends-log', { time: new Date().toLocaleTimeString(), message: msg, type });
+  };
+  const season = String(payload?.season || '').trim();
+  // slug 只允许 [a-z0-9-]：它会被拼进缓存文件名，必须挡住路径穿越
+  if (!/^[a-z0-9-]{3,64}$/.test(season)) {
+    return { success: false, error: `无效的季节标识：${season || '(空)'}` };
+  }
+  const cacheName = `brands-${season}.json`;
+  if (!payload?.force) {
+    const cached = readTrendsCache(cacheName);
+    if (Array.isArray(cached?.brands) && cached.brands.length) {
+      return {
+        success: true,
+        cached: true,
+        season,
+        seasonName: cached.seasonName || vogueTrends.seasonLabel(season),
+        brands: cached.brands,
+        updatedAt: String(cached.updatedAt || ''),
+      };
+    }
+  }
+  try {
+    assertLicensedForFeature();
+    const result = await vogueTrends.fetchBrands(season, { log: emitLog });
+    const out = { updatedAt: new Date().toISOString(), ...result };
+    writeTrendsCache(cacheName, out);
+    return { success: true, cached: false, ...out };
+  } catch (error) {
+    const licenseFailure = getLicenseFailurePayload(error);
+    if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    emitLog(`品牌列表获取失败：${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('trends-scrape', async (event, config = {}) => {
+  const emitLog = (msg, type = 'info') => {
+    event.sender.send('trends-log', { time: new Date().toLocaleTimeString(), message: msg, type });
+  };
+  const emitProgress = (val) => event.sender.send('trends-progress', val);
+  try {
+    assertLicensedForFeature();
+    return await runManagedTask(event, 'trends', async (taskController) => {
+      const season = String(config?.season || '').trim();
+      const brands = Array.isArray(config?.brands)
+        ? config.brands.filter((b) => b && String(b.slug || '').trim())
+        : [];
+      if (!season) throw new Error('未选择季节。');
+      if (!brands.length) throw new Error('未选择品牌。');
+      const outputDir = String(config?.outputDir || '').trim() || app.getPath('downloads');
+      updateTaskSnapshot(event.sender, 'trends', {
+        inputPath: `${season} · ${brands.length} 个品牌`,
+        outputPath: outputDir,
+        summary: 'Trend Lookahead scrape',
+        cacheMode: 'live-run',
+      });
+      emitLog(`🚀 趋势前瞻：${season} · ${brands.length} 个品牌 → ${outputDir}`);
+
+      const results = [];
+      for (let i = 0; i < brands.length; i += 1) {
+        taskController.throwIfCancelled();
+        const brand = brands[i];
+        emitLog(`\n── [${i + 1}/${brands.length}] ${brand.name || brand.slug} ──`);
+        const result = await vogueTrends.scrapeShow({
+          season,
+          brand,
+          outputDir,
+          imageWidth: Number(config?.imageWidth) || 5000,
+          includeDetails: Boolean(config?.includeDetails),
+          concurrency: Number(config?.concurrency) || 3,
+          maxLooks: Number(config?.maxLooks) || 0,
+        }, {
+          log: emitLog,
+          progress: (p) => emitProgress(Math.round(((i + (p / 100)) / brands.length) * 100)),
+          ensureActive: () => taskController.throwIfCancelled(),
+        });
+        results.push(result);
+      }
+
+      const images = results.reduce((n, r) => n + r.count, 0);
+      const failed = results.reduce((n, r) => n + r.failed, 0);
+      emitLog(`\n🎉 全部完成：${results.length} 个品牌 / ${images} 张图${failed ? `（${failed} 张失败）` : ''}`,
+        failed ? 'warning' : 'success');
+      return {
+        success: failed === 0,
+        outputPath: outputDir,
+        brandCount: results.length,
+        imageCount: images,
+        failed,
+        directories: results.map((r) => r.dir),
+      };
+    }, activeTaskControllers);
+  } catch (error) {
+    const licenseFailure = getLicenseFailurePayload(error);
+    if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    if (error.userCancelled || isCancellationError(error)) {
+      emitLog(error.message || '任务已取消', 'warning');
+      return { success: false, error: error.message || 'Task cancelled', cancelled: true };
+    }
+    emitLog(`趋势前瞻失败：${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
+});
+
+
 // Excel标注功能
 ipcMain.handle('preview-excel', async (event, config = {}) => {
   try {
@@ -21717,15 +23230,15 @@ ipcMain.handle('preview-excel', async (event, config = {}) => {
     for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 1) {
       const row = rows[rowIndex] || [];
       if (isMixed) {
-        const rawBrand = String(row[0] ?? '').replace(/ /g, ' ').trim();
-        const rawStyle = String(row[1] ?? '').replace(/ /g, ' ').trim();
+        const rawBrand = String(row[0] ?? '').replace(/\u00A0/g, ' ').trim();
+        const rawStyle = String(row[1] ?? '').replace(/\u00A0/g, ' ').trim();
         if (!rawBrand && !rawStyle) continue;
         if (!rawStyle) continue;
         const normalizedBrand = normalizeScraperBrand(rawBrand) || 'unknown';
         byBrand[normalizedBrand] = (byBrand[normalizedBrand] || 0) + 1;
         total += 1;
       } else {
-        const rawStyle = String(row[1] ?? '').replace(/ /g, ' ').trim();
+        const rawStyle = String(row[1] ?? '').replace(/\u00A0/g, ' ').trim();
         if (!rawStyle) continue;
         total += 1;
       }

@@ -118,6 +118,7 @@ const LOG_CHANNELS = {
   slides: { log: 'onSlidesLog', progress: 'onSlidesProgress', remove: 'removeSlidesListeners' },
   scraper: { log: 'onLog', progress: 'onProgress', remove: 'removeListeners' },
   bestseller: { log: 'onBestsellerLog', progress: 'onBestsellerProgress', remove: 'removeBestsellerListeners' },
+  trends: { log: 'onTrendsLog', progress: 'onTrendsProgress', remove: 'removeTrendsListeners' },
   pdfSqueezer: { log: 'onPdfSqueezerLog', progress: 'onPdfSqueezerProgress', item: 'onPdfSqueezerItem', remove: 'removePdfSqueezerListeners' },
 };
 
@@ -314,6 +315,344 @@ function HmPreflightPanel({ onChange, tx, accentRgb, allParams }) {
   );
 }
 
+// ── 趋势前瞻：季节选择器 ──────────────────────────────────
+// 季节档案实时取自 Vogue（253 个季节，1988→2027），所以这里是「先更新、再选择」。
+// 用原生 <select>+<optgroup>（按年份分组）而不是 wizard 的卡片式选项 ——
+// 200+ 条时卡片会把整页撑成一面墙。
+function SeasonPicker({ value, onChange, tx, accentRgb }) {
+  const [seasons, setSeasons] = useState([]);
+  const [updatedAt, setUpdatedAt] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState(null); // { kind: 'ok' | 'err' | 'info', text }
+
+  const applyPayload = useCallback((payload) => {
+    if (!Array.isArray(payload?.seasons)) return;
+    setSeasons(payload.seasons);
+    setUpdatedAt(String(payload.updatedAt || ''));
+  }, []);
+
+  // 进页面先读本地缓存（不打官网）；没有缓存就保持空，等用户点「更新」
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const api = window.electronAPI;
+      if (!api?.trendsListSeasons) return;
+      try {
+        const r = await api.trendsListSeasons();
+        if (!cancelled && r?.success) applyPayload(r);
+      } catch {
+        // 读缓存失败不致命：用户点「更新」即可回源
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [applyPayload]);
+
+  const refresh = useCallback(async () => {
+    const api = window.electronAPI;
+    if (!api?.trendsRefreshSeasons) {
+      setStatus({ kind: 'err', text: tx('Trend module unavailable in this build.', '此版本不支持趋势前瞻。') });
+      return;
+    }
+    setBusy(true);
+    setStatus({ kind: 'info', text: tx('Fetching season list from Vogue…', '正在从 Vogue 拉取季节列表…') });
+    try {
+      const r = await api.trendsRefreshSeasons();
+      if (r?.success && Array.isArray(r.seasons)) {
+        applyPayload(r);
+        setStatus({ kind: 'ok', text: tx(`Updated — ${r.seasons.length} seasons.`, `已更新 — ${r.seasons.length} 个季节。`) });
+        // 更新后原选中季节可能已不在最新列表里 → 清空，避免带着死 slug 往下走
+        if (value && !r.seasons.some((s) => s.slug === value)) onChange('');
+      } else {
+        setStatus({ kind: 'err', text: r?.error || tx('Update failed.', '更新失败。') });
+      }
+    } catch (err) {
+      setStatus({ kind: 'err', text: err?.message || tx('Update failed.', '更新失败。') });
+    } finally {
+      setBusy(false);
+    }
+  }, [applyPayload, onChange, tx, value]);
+
+  const groups = useMemo(() => {
+    const map = new Map();
+    for (const s of seasons) {
+      const m = String(s.slug).match(/-(\d{4})/);
+      const year = m ? m[1] : '—';
+      if (!map.has(year)) map.set(year, []);
+      map.get(year).push(s);
+    }
+    return [...map.entries()];
+  }, [seasons]);
+
+  const stamp = useMemo(() => {
+    if (!updatedAt) return '';
+    const d = new Date(updatedAt);
+    if (Number.isNaN(d.getTime())) return '';
+    return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }, [updatedAt]);
+
+  const controlStyle = {
+    '--accent-rgb': accentRgb,
+    background: '#2a2a3e',
+    color: '#e8e8f0',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 10,
+    padding: '9px 12px',
+    fontSize: '0.92em',
+    flex: '1 1 240px',
+    minWidth: 180,
+  };
+
+  return (
+    <div className="wizard-field wizard-field--season-picker">
+      <label className="wizard-field__label">{tx('Season', '季节')}</label>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <select
+          value={value || ''}
+          disabled={busy || !seasons.length}
+          onChange={(e) => onChange(e.target.value)}
+          style={controlStyle}
+        >
+          <option value="">
+            {seasons.length
+              ? tx('— Select a season —', '— 请选择季节 —')
+              : tx('— No season data, press Refresh —', '— 暂无季节数据，请先更新 —')}
+          </option>
+          {groups.map(([year, list]) => (
+            <optgroup key={year} label={year}>
+              {list.map((s) => <option key={s.slug} value={s.slug}>{s.label || s.slug}</option>)}
+            </optgroup>
+          ))}
+        </select>
+        <button
+          type="button"
+          className="wizard-action-btn"
+          style={{ '--accent-rgb': accentRgb }}
+          onClick={refresh}
+          disabled={busy}
+        >
+          {busy ? tx('Refreshing…', '更新中…') : tx('Refresh', '更新')}
+        </button>
+      </div>
+      <span className="wizard-field__hint">
+        {seasons.length
+          ? tx(`${seasons.length} seasons cached${stamp ? ` · updated ${stamp}` : ''}`, `已缓存 ${seasons.length} 个季节${stamp ? ` · 更新于 ${stamp}` : ''}`)
+          : tx('Season list not fetched yet — press Refresh to pull it from Vogue.', '尚未拉取季节列表 —— 点「更新」从 Vogue 获取。')}
+      </span>
+      {status && (
+        <span
+          className="wizard-field__hint"
+          style={{ color: status.kind === 'ok' ? '#4ade80' : status.kind === 'err' ? '#f87171' : undefined }}
+        >
+          {status.text}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ── 趋势前瞻：品牌多选 ────────────────────────────────────
+// 品牌列表依赖已选季节（换了季节 → 列表和勾选都要重来），所以这里自己拉数据，
+// 不把几百项塞进 params 跨字段传递。
+function BrandPicker({ value, onChange, tx, accentRgb, allParams }) {
+  const season = allParams?.season || '';
+  const [brands, setBrands] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState(null);
+  const [fetchedFor, setFetchedFor] = useState('');
+
+  // 空数组字面量每次渲染都是新引用 → 会让下面 useMemo 的依赖每帧变化，
+  // 所以这里自己也 useMemo 一层，稳定引用。
+  const selected = useMemo(() => (Array.isArray(value) ? value : []), [value]);
+  const selectedSlugs = useMemo(() => new Set(selected.map((b) => b.slug)), [selected]);
+
+  // onChange 来自 FieldRenderer 内联箭头函数，每次渲染都是新引用 →
+  // 放进 effect 依赖会死循环。用 ref 固定引用。
+  const onChangeRef = useRef(onChange);
+  useEffect(() => { onChangeRef.current = onChange; }, [onChange]);
+
+  const fetchBrands = useCallback(async (force) => {
+    const api = window.electronAPI;
+    if (!api?.trendsBrands) {
+      setStatus({ kind: 'err', text: tx('Trend module unavailable in this build.', '此版本不支持趋势前瞻。') });
+      return;
+    }
+    if (!season) return;
+    setBusy(true);
+    setStatus({ kind: 'info', text: tx(`Loading brands for ${season}…`, `正在加载 ${season} 的品牌…`) });
+    try {
+      const r = await api.trendsBrands({ season, force });
+      if (r?.success && Array.isArray(r.brands)) {
+        setBrands(r.brands);
+        setStatus({
+          kind: r.cached ? 'info' : 'ok',
+          text: r.cached
+            ? tx(`${r.brands.length} brands (cached)`, `已缓存 ${r.brands.length} 个品牌`)
+            : tx(`Updated — ${r.brands.length} brands.`, `已更新 — ${r.brands.length} 个品牌。`),
+        });
+      } else {
+        setBrands([]);
+        setStatus({ kind: 'err', text: r?.error || tx('Failed to load brands.', '品牌加载失败。') });
+      }
+    } catch (err) {
+      setBrands([]);
+      setStatus({ kind: 'err', text: err?.message || tx('Failed to load brands.', '品牌加载失败。') });
+    } finally {
+      setBusy(false);
+    }
+  }, [season, tx]);
+
+  // 换季：清空已选品牌 + 重新拉取该季列表（每个季节只自动跑一次）。
+  // 🔴 setBrands([]) 不能省：新季节的数据到达前（fetch 约 1-3s），界面上
+  //    还挂着上一季的品牌 pill —— 用户会看着「Spring 2027」勾走 Resort 的
+  //    Louis Vuitton（实测踩过）。
+  useEffect(() => {
+    if (!season || fetchedFor === season) return;
+    setFetchedFor(season);
+    setQuery('');
+    setBrands([]);
+    if (selected.length) onChangeRef.current?.([]);
+    fetchBrands(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [season, fetchedFor, fetchBrands]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return brands;
+    return brands.filter((b) => b.name.toLowerCase().includes(q) || b.slug.includes(q));
+  }, [brands, query]);
+
+  // 348 项全渲染会让每次输入都卡一下：只渲染前 300 条，其余靠搜索收窄
+  const LIMIT = 300;
+  const shown = filtered.slice(0, LIMIT);
+
+  const toggle = (brand) => {
+    const next = selectedSlugs.has(brand.slug)
+      ? selected.filter((b) => b.slug !== brand.slug)
+      : [...selected, { slug: brand.slug, name: brand.name }];
+    onChange(next);
+  };
+
+  const inputStyle = {
+    '--accent-rgb': accentRgb,
+    background: '#2a2a3e',
+    color: '#e8e8f0',
+    border: '1px solid rgba(255,255,255,0.14)',
+    borderRadius: 10,
+    padding: '8px 12px',
+    fontSize: '0.9em',
+    flex: '1 1 180px',
+    minWidth: 150,
+  };
+
+  return (
+    <div className="wizard-field wizard-field--brand-picker">
+      <label className="wizard-field__label">
+        {tx('Brands', '品牌')}
+        {selected.length ? <span style={{ opacity: 0.75, fontWeight: 400 }}>{` · ${tx(`${selected.length} selected`, `已选 ${selected.length} 个`)}`}</span> : null}
+      </label>
+
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          disabled={!season || busy}
+          placeholder={tx('Search brands…', '搜索品牌…')}
+          style={inputStyle}
+        />
+        <button
+          type="button"
+          className="wizard-action-btn"
+          style={{ '--accent-rgb': accentRgb }}
+          onClick={() => fetchBrands(true)}
+          disabled={!season || busy}
+        >
+          {busy ? tx('Refreshing…', '更新中…') : tx('Refresh', '更新')}
+        </button>
+        <button
+          type="button"
+          className="wizard-action-btn"
+          style={{ '--accent-rgb': accentRgb }}
+          onClick={() => onChange(filtered.slice(0, LIMIT).map((b) => ({ slug: b.slug, name: b.name })))}
+          disabled={!shown.length || busy}
+        >
+          {tx('Select all', '全选')}
+        </button>
+        <button
+          type="button"
+          className="wizard-action-btn"
+          style={{ '--accent-rgb': accentRgb }}
+          onClick={() => onChange([])}
+          disabled={!selected.length}
+        >
+          {tx('Clear', '清空')}
+        </button>
+      </div>
+
+      {!season ? (
+        <span className="wizard-field__hint">{tx('Pick a season first.', '请先选择季节。')}</span>
+      ) : (
+        <>
+          <div
+            style={{
+              maxHeight: 260,
+              overflowY: 'auto',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 10,
+              padding: 6,
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 6,
+            }}
+          >
+            {shown.map((b) => {
+              const on = selectedSlugs.has(b.slug);
+              return (
+                <button
+                  key={b.slug}
+                  type="button"
+                  onClick={() => toggle(b)}
+                  style={{
+                    '--accent-rgb': accentRgb,
+                    background: on ? `rgba(${accentRgb}, 0.22)` : 'rgba(255,255,255,0.05)',
+                    color: '#e8e8f0',
+                    border: on ? `1px solid rgba(${accentRgb}, 0.75)` : '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: 999,
+                    padding: '5px 11px',
+                    fontSize: '0.82em',
+                    cursor: 'pointer',
+                  }}
+                >
+                  {on ? '✓ ' : ''}{b.name}
+                </button>
+              );
+            })}
+            {!shown.length && !busy && (
+              <span className="wizard-field__hint" style={{ padding: 6 }}>
+                {brands.length ? tx('No brand matches that search.', '没有匹配的品牌。') : tx('No brands loaded yet.', '尚未加载品牌。')}
+              </span>
+            )}
+          </div>
+          <span className="wizard-field__hint">
+            {filtered.length > LIMIT
+              ? tx(`Showing ${LIMIT} of ${filtered.length} — search to narrow down.`, `显示 ${LIMIT}/${filtered.length} —— 用搜索缩小范围。`)
+              : tx(`${filtered.length} brand(s) shown.`, `显示 ${filtered.length} 个品牌。`)}
+          </span>
+        </>
+      )}
+      {status && (
+        <span
+          className="wizard-field__hint"
+          style={{ color: status.kind === 'ok' ? '#4ade80' : status.kind === 'err' ? '#f87171' : undefined }}
+        >
+          {status.text}
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ── Field renderer ────────────────────────────────────────
 // `t` handles {en, zh} objects from wizardConfig; `tx` handles (en, zh) inline strings.
 function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) {
@@ -392,6 +731,14 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
         allParams={allParams}
       />
     );
+  }
+
+  if (field.type === 'season-picker') {
+    return <SeasonPicker value={value} onChange={onChange} tx={tx} accentRgb={accentRgb} />;
+  }
+
+  if (field.type === 'brand-picker') {
+    return <BrandPicker value={value} onChange={onChange} tx={tx} accentRgb={accentRgb} allParams={allParams} />;
   }
 
   if (field.type === 'divider') {
@@ -640,7 +987,13 @@ function FieldRenderer({ field, value, onChange, t, tx, accentRgb, allParams }) 
   }
 
   if (field.type === 'select') {
-    const opts = field.options || [];
+    // Option-level `showWhen`: a few wizard selects offer choices that only one
+    // of the sibling branches can actually honour (e.g. UNIQLO is the only
+    // bestseller source that can be scraped for BOTH genders at once). Field
+    // level `showWhen` cannot express that — it would hide the whole field — so
+    // options carry their own predicate and are filtered here instead of being
+    // rendered as a choice that blows up at run time.
+    const opts = (field.options || []).filter(o => !o.showWhen || o.showWhen(allParams || {}));
     const hasDesc = opts.some(o => o.desc);
     return (
       <div className="wizard-field wizard-field--select">
@@ -1133,7 +1486,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       }));
     }
     return steps;
-  }, [config, params, tab.id, llmSettings, aiSource, availableOcrEngines]);
+  }, [config, params, tab.id, availableOcrEngines]);
 
   const isSinglePage = !config?.adaptive || visibleSteps.length <= 1;
   const currentStep = visibleSteps[stepIdx];
@@ -1232,7 +1585,15 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     if (params.aiSource && params.aiSource !== aiSource) {
       setAiSource(params.aiSource);
     }
-  }, [params.aiSource]);
+  }, [params.aiSource, aiSource]);
+
+  // Keep the latest onLog callback in a ref: the listener is registered once per
+  // log channel, so re-registering whenever the parent re-creates onLog would
+  // tear down and rebuild IPC listeners on every render.
+  const onLogRef = useRef(onLog);
+  useEffect(() => {
+    onLogRef.current = onLog;
+  }, [onLog]);
 
   useEffect(() => {
     if (!config?.logChannel) return;
@@ -1251,7 +1612,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       const type = entry?.type || 'info';
       const logEntry = { time: tm, message: line, type };
       setLogs(prev => [...prev.slice(-200), logEntry]);
-      onLog?.(logEntry);
+      onLogRef.current?.(logEntry);
     };
 
     const progCb = (p) => {
@@ -1380,9 +1741,14 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       if (tab.id === 'slides') {
         const styleGrp = params.styleInfoGroup || {};
         const fabricGrp = params.fabricInfoGroup || {};
+        // 趋势前瞻画册：源目录是趋势前瞻的产物（<季节>/<品牌>/look-001.jpg…），
+        // 版式固定「封面 + 每页 3 张图、零文字」。
+        const isTrendDeck = params.sourceMode === 'trend-images';
         const imageLayout = params.sourceMode === 'fabric-images'
           ? (Number(params.fabricPageImageCount) === 2 ? 'fabric-pair' : 'fabric-single')
-          : `style-gallery-${params.stylePageImageCount}`;
+          : isTrendDeck
+            ? 'trend-gallery-3'
+            : `style-gallery-${params.stylePageImageCount}`;
         // Pass-through FIRST, then explicit overrides. A strict whitelist here
         // silently dropped newly added wizard fields (enableToc / enableSummary /
         // exportPdf / pptTheme were lost this way — backend defaulted them to off).
@@ -1402,6 +1768,24 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           includeWeight: fabricGrp.includeWeight ?? false,
           sortBy: params.sortBy || 'styleNumber',
           fillMissingSlots: params.fillMissingSlots ?? true,
+          // 趋势前瞻画册只要「封面 + 每页 3 张图」。这里把文字/目录/汇总一律压平，
+          // 而不是依赖界面隐藏 —— params 里可能留着上一次模式的勾选，靠隐藏字段
+          // 拦不住（字段不渲染 → 值还在 → 页面上会重新长出目录页和 AI 描述）。
+          ...(isTrendDeck ? {
+            sourceMode: 'trend-images',
+            trendPageImageCount: 3,
+            enableToc: false,
+            enableSummary: false,
+            includeStyleNumber: false,
+            includeName: false,
+            includePrice: false,
+            includeDescription: false,
+            includeFabricCode: false,
+            includeComposition: false,
+            includeWidth: false,
+            includeCuttable: false,
+            includeWeight: false,
+          } : {}),
         };
         // AI is needed by AI descriptions AND by the summary page (its overview
         // and category suggestions are AI-generated). The wizard only carries
@@ -1475,7 +1859,10 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         payload.brand = params.brand || 'newyorker';
         payload.downloadConcurrency = 6;
         payload.brandLabel = params.brand === 'newyorker' ? 'New Yorker' : (params.brand === 'intersport' ? 'Intersport' : (params.brand || 'Brand'));
-        payload.genderLabel = params.gender === 'female' ? 'Women' : 'Men';
+        // Consumed by the AI trend report header (see generateBestsellerReport).
+        // 'all' is UNIQLO's merged UNISEX/MEN/WOMEN mode — the old binary
+        // ternary labelled that run "Men" in the report.
+        payload.genderLabel = params.gender === 'all' ? 'All' : (params.gender === 'female' ? 'Women' : 'Men');
         // The wizard's browser choice for H&M. Passed through so the run uses
         // exactly what the pre-flight check validated — pickDefault here would
         // otherwise diverge from what the user saw on the check step.
@@ -1486,17 +1873,25 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         // listing brand. (Before 2026-09-29 these were only sent for Intersport,
         // which silently made the wizard's Product Count / Include Accessories
         // choices no-ops for UNIQLO / H&M / Free People.)
-        if (['intersport', 'uniqlo', 'hm', 'freepeople'].includes(params.brand)) {
+        if (['intersport', 'uniqlo', 'hm', 'freepeople', 'princesspolly'].includes(params.brand)) {
           payload.productCount = Number(params.productCount) || 0;
           payload.includeAccessories = params.includeAccessories === true;
         }
         if (params.brand === 'intersport') {
           payload.intersportCategory = params.intersportCategory || 'funktionsjacken';
         }
-        if (params.brand === 'freepeople') {
+        if (params.brand === 'freepeople' || params.brand === 'princesspolly') {
           // The wizard hides the gender step for Free People (their list has no
-          // gender split); the URL table still needs a bucket, so default it.
+          // gender split) and for Princess Polly (same — one aggregated
+          // /collections/best-selling ranking); the URL table still needs a
+          // bucket, so default it.
           payload.gender = params.gender || 'female';
+        }
+        if (params.brand === 'princesspolly') {
+          // Which ranked collection to pull (best-selling / top-sellers /
+          // trending / new-arrivals). Defaults preserve the pre-feature
+          // behaviour so an old saved preset keeps working unchanged.
+          payload.ppRanking = params.ppRanking || 'best-selling';
         }
         // doAnalyze defaults to true (matching wizardConfig default);
         // the toggle's default is only used at render time so params may be
@@ -1522,6 +1917,18 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       if (tab.id === 'pdfsqueezer') {
         payload.config = { preset: params.preset || 'balanced' };
         payload.sourceFiles = Array.isArray(params.sourceFiles) ? params.sourceFiles : (params.sourceFiles ? [params.sourceFiles] : []);
+      }
+      if (tab.id === 'trends') {
+        // Vogue Runway 走独立采集链路（vogue-trends.js，纯 Node fetch），
+        // 与抓取器共用的是任务中心 / 日志通道，不是浏览器。payload 已由
+        // `{...params}` 带上全部字段，这里只把类型收敛，避免字符串进数字位。
+        payload.season = String(params.season || '');
+        payload.brands = Array.isArray(params.brands) ? params.brands : [];
+        payload.imageWidth = Number(params.imageWidth) || 5000;
+        payload.maxLooks = Number(params.maxLooks) || 0;
+        payload.includeDetails = params.includeDetails === true;
+        payload.concurrency = Number(params.concurrency) || 3;
+        payload.outputDir = typeof params.outputDir === 'string' ? params.outputDir : '';
       }
 
       const res = await api[config.runIPC]?.(payload);
@@ -1643,8 +2050,12 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       if (f.type === 'hm-preflight') return params[f.key]?.ready === true;
       const v = params[f.key];
       if (v === undefined || v === '' || v === null) return false;
+      // Multi-select fields (e.g. Trend Lookahead brands) hold an array: an
+      // empty array is truthy, so the scalar checks above would let the user
+      // walk past a step with nothing selected.
+      if (Array.isArray(v)) return v.length > 0;
       // Handle object values from source-or-file-picker
-      if (typeof v === 'object' && !Array.isArray(v)) {
+      if (typeof v === 'object') {
         return Boolean(v.path);
       }
       return true;
