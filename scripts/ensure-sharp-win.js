@@ -116,8 +116,17 @@ async function ensureOne(target) {
   await download(versionInfo.dist.tarball, tgz);
 
   // Extract: npm tarballs have a top-level "package/" folder.
+  //
+  // Run tar with *relative* names and cwd=IMG_DIR. GNU tar parses any argument
+  // containing ':' as a remote "host:path" spec, so a Windows absolute path like
+  // E:\...\x.tgz makes tar treat the drive letter as a host and abort with
+  // "Cannot connect to ...: resolve failed". Relative names avoid that entirely
+  // (and remain correct on macOS/Linux, whose absolute paths have no colon).
   fs.mkdirSync(destDir, { recursive: true });
-  execFileSync('tar', ['-xzf', tgz, '-C', destDir, '--strip-components=1'], { stdio: 'inherit' });
+  execFileSync('tar', ['-xzf', path.basename(tgz), '-C', path.basename(destDir), '--strip-components=1'], {
+    cwd: IMG_DIR,
+    stdio: 'inherit',
+  });
   fs.rmSync(tgz, { force: true });
 
   // Sanity: must contain the native .node or .dll payload.
