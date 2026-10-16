@@ -130,10 +130,7 @@
       "node_modules/is-arrayish/**/*",
       "node_modules/@img/**/*",
       "node_modules/regenerator-runtime/**/*",
-      "node_modules/**/*.{json,js}",
-      "!**/__pycache__/**",
-      "!**/*.pyc",
-      "!python_vendor/pymupdf/mupdf-devel/**"
+      "node_modules/**/*.{json,js}"
     ],
     "asar": true,
     "asarUnpack": [
@@ -186,10 +183,6 @@
     "win": {
       "signAndEditExecutable": true,
       "icon": "icon.ico",
-      "files": [
-        "!python_vendor/pymupdf/**",
-        "!python_vendor/fitz/**"
-      ],
       "target": [
         {
           "target": "nsis",
