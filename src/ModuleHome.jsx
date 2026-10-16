@@ -1924,7 +1924,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       }
       if (tab.id === 'trends') {
         // Vogue Runway 走独立采集链路（vogue-trends.js，纯 Node fetch），
-        // 与抓取器共用的是任务中心 / 日志通道，不是浏览器。payload 已由
+        // 与款号索引共用的是任务中心 / 日志通道，不是浏览器。payload 已由
         // `{...params}` 带上全部字段，这里只把类型收敛，避免字符串进数字位。
         payload.season = String(params.season || '');
         payload.brands = Array.isArray(params.brands) ? params.brands : [];

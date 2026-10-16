@@ -6,7 +6,7 @@ function buildManualSections(tx) {
   return [
     {
       id: 'scraper',
-      title: tx('Scraper', '抓取器'),
+      title: tx('Style Index', '款号索引'),
       summary: tx(
         'Collects product assets and structured information from supported retail sites.',
         '从支持的零售网站抓取商品素材和结构化信息。',
@@ -64,7 +64,7 @@ function buildManualSections(tx) {
     },
     {
       id: 'bestseller',
-      title: tx('Bestseller Analysis', '热门款式分析'),
+      title: tx('Brand DNA', '品牌DNA'),
       summary: tx(
         'Pulls a brand\'s best-seller listing and turns it into an AI trend report.',
         '抓取品牌的热门榜单，并生成 AI 趋势报告。',

@@ -170,7 +170,7 @@ export const WIZARD_CONFIG = {
     ],
   },
 
-  // ── 抓取器 ──────────────────────────────────────────────
+  // ── 款号索引 ──────────────────────────────────────────────
   scraper: {
     taskId: 'scrape',
     logChannel: 'scraper',
@@ -248,7 +248,7 @@ export const WIZARD_CONFIG = {
     ],
   },
 
-  // ── 热门款式分析 ──────────────────────────────────────────
+  // ── 品牌DNA（原热门款式分析）──────────────────────────────
   bestseller: {
     taskId: 'bestseller',
     logChannel: 'bestseller',

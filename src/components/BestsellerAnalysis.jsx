@@ -171,7 +171,7 @@ export default function BestsellerAnalysis({ homeFeature }) {
     <div className="bestseller-container">
       <div className="bestseller-header">
         <div className="bestseller-header-text">
-          <h2>{tx('Bestseller Analysis', '热门款式分析')}</h2>
+          <h2>{tx('Brand DNA', '品牌DNA')}</h2>
           <p>{tx('Scrape bestseller listings and generate an AI fashion-trend report.', '抓取畅销榜款式并生成 AI 流行趋势报告。')}</p>
         </div>
         {showConsole && (
