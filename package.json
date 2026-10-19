@@ -1,7 +1,7 @@
 {
   "name": "zara-scraper-pro",
   "private": true,
-  "version": "2.3.2",
+  "version": "2.3.3",
   "main": "main.js",
   "description": "GS Bot - 本地服装净图、整理与工作流工具",
   "author": "Jaylor Andy",
@@ -72,6 +72,7 @@
       "annotate_excel.js",
       "anti-detection.js",
       "vogue-trends.js",
+      "tagwalk-trends.js",
       "image-url-generator.js",
       "generate_slides.py",
       "pdf_squeezer.py",

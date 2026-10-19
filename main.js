@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, nativeTheme, session } = require('electron');
 const path = require('path');
 const puppeteer = require('puppeteer-core');
 const fs = require('fs');
@@ -55,6 +55,7 @@ const firecrawlService = require('./firecrawl-service');
 const firecrawlFallback = require('./firecrawl-fallback');
 const paddleOcrService = require('./paddleocr-service');
 const vogueTrends = require('./vogue-trends');
+const tagwalkTrends = require('./tagwalk-trends');
 const {
   clearAllCaches,
   clearNamespaceCache,
@@ -19910,7 +19911,7 @@ async function runCosScraper(config, emitLog, emitProgress, taskController) {
 
   emitLog(`📁 Output directory: ${targetDir}`, 'info');
   emitLog(`🚀 COS: ${styleNumbers.length} style number(s) — site search → product page → Details`, 'warning');
-  emitProgress(5);
+  emitProgress({ percent: 3, stage: 'entering-site', brandLabel: 'COS' });
 
   const products = [];
   const total = styleNumbers.length;
@@ -19920,6 +19921,9 @@ async function runCosScraper(config, emitLog, emitProgress, taskController) {
     const reference = styleNumbers[i];
     const wanted = String(reference).replace(/[^0-9]/g, '');
     emitLog(`🔄 Processing COS ${i + 1}/${total}: ${reference}`, 'warning');
+    // Named BEFORE the search request so the bar reads "3/12 · 1353924001"
+    // while the retry back-off is running, not only after the style finished.
+    emitProgress({ percent: 5 + Math.round((i / Math.max(total, 1)) * 45), stage: 'fetching', current: i + 1, total, styleNumber: reference });
 
     try {
       if (!wanted) throw new Error(`"${reference}" does not contain a COS style number.`);
@@ -19953,15 +19957,20 @@ async function runCosScraper(config, emitLog, emitProgress, taskController) {
       products.push({ styleNumber: reference, productId: reference, brand: 'COS', url: '', error: error.message, imageUrls: [] });
     }
 
-    emitProgress(5 + Math.round(((i + 1) / total) * 45));
+    emitProgress({ percent: 5 + Math.round(((i + 1) / total) * 45), stage: 'fetching', current: i + 1, total, styleNumber: reference });
     if (i < total - 1) await antiDetection.randomDelay(1500, 2600);
   }
 
-  emitProgress(50);
+  emitProgress({ percent: 50, stage: 'downloading', current: 0, total: products.length });
   const success = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
   const failed = products.filter((p) => !success.includes(p));
   emitLog(`📊 COS summary: ${success.length} style(s) succeeded, ${failed.length} failed.`, 'info');
   failed.forEach((p) => emitLog(`    ❌ ${p.styleNumber} - ${p.error || 'No product images found'}`, 'error'));
+
+  // Planned image count is known up-front, so the download phase can report a
+  // real fraction instead of dividing by the running total (which is always 100%).
+  const plannedImages = success.reduce((n, p) => n + (p.imageUrls?.length || 0), 0);
+  emitProgress({ percent: 50, stage: 'downloading', current: 0, total: plannedImages });
 
   let totalImages = 0;
   let savedImages = 0;
@@ -19991,6 +20000,15 @@ async function runCosScraper(config, emitLog, emitProgress, taskController) {
       } catch (error) {
         emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error');
       }
+      // 50 → 95 % spans the download phase; the counter moves per image so a
+      // single 11-photo style does not freeze the bar.
+      emitProgress({
+        percent: 50 + Math.round((totalImages / Math.max(plannedImages, 1)) * 45),
+        stage: 'downloading',
+        current: totalImages,
+        total: plannedImages,
+        styleNumber: product.styleNumber,
+      });
       await antiDetection.randomDelay(120, 320);
     }
 
@@ -20040,6 +20058,7 @@ async function runCosScraper(config, emitLog, emitProgress, taskController) {
     error: p.error || null,
   })), null, 2), 'utf-8');
   emitLog('📊 Saved summary.json', 'success');
+  emitProgress({ percent: 100, stage: 'done', current: success.length, total: total });
   emitLog(`🎉 COS scraping finished. Files saved to: ${targetDir}`, 'success');
 }
 
@@ -21759,9 +21778,20 @@ function isNonApparelBestseller(category, name) {
   return BESTSELLER_NON_APPAREL_NAME_RE.test(String(name || ''));
 }
 
-async function runBestsellerScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
+async function runBestsellerScraper(config, emitLog, emitProgressRaw, taskController, previewBridge = null) {
+  // Same wrapper as runScraper: brand branches that still report a bare number
+  // get "fetching" attached, while the ones sending an object keep their own
+  // stage (listing / fetching / downloading / saving).
+  const emitProgress = (val) => {
+    if (val && typeof val === 'object') { emitProgressRaw(val); return; }
+    const percent = Number(val);
+    // 100 from a brand scraper means "this run is over", not "still fetching".
+    emitProgressRaw({ percent, stage: Number.isFinite(percent) && percent >= 100 ? 'done' : 'fetching' });
+  };
   const ensureActive = () => taskController?.throwIfCancelled?.();
   const brand = String(config?.brand || 'newyorker').trim();
+  // Same first frame as runScraper: a named phase instead of an empty bar.
+  emitProgress({ percent: 2, stage: 'preparing', brandLabel: getScraperOutputFolderName(brand) });
   // `let`: the gender can be coerced below when a non-UNIQLO brand receives the
   // UNIQLO-only "all" mode (stale wizard selection after a brand switch).
   let gender = String(config?.gender || 'female').trim();
@@ -21923,7 +21953,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           emitLog(`    ⚠️ ${handle} failed: ${error.message}`, 'warning');
           products.push({ styleNumber: handle, productId: handle, url: '', error: error.message, imageUrls: [] });
         }
-        emitProgress(10 + Math.round(((i + 1) / total) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / total) * 40), stage: 'fetching', current: i + 1, total, styleNumber: handle });
         await antiDetection.randomDelay(200, 500);
       }
     } else if (brandKey === 'zara') {
@@ -21950,7 +21980,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
           emitLog(`    ⚠️ ${pdpUrl} failed: ${error.message}`, 'warning');
         }
-        emitProgress(10 + Math.round(((i + 1) / links.length) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / links.length) * 40), stage: 'fetching', current: i + 1, total: links.length });
         await antiDetection.randomDelay(400, 900);
       }
     } else if (brandKey === 'freepeople') {
@@ -22094,7 +22124,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
             fpStyleCount += 1;
           }
 
-          emitProgress(10 + Math.round(((i + 1) / Math.max(fpLinks.length, 1)) * 40));
+          emitProgress({ percent: 10 + Math.round(((i + 1) / Math.max(fpLinks.length, 1)) * 40), stage: 'fetching', current: i + 1, total: Math.max(fpLinks.length, 1) });
           await antiDetection.randomDelay(300, 700);
         }
       } finally {
@@ -22171,7 +22201,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           ppStyleCount += 1;
         }
 
-        emitProgress(10 + Math.round(((i + 1) / Math.max(ppLinks.length, 1)) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / Math.max(ppLinks.length, 1)) * 40), stage: 'fetching', current: i + 1, total: Math.max(ppLinks.length, 1) });
         await antiDetection.randomDelay(120, 320);
       }
     } else if (brandKey === 'americaneagle' || brandKey === 'aerie') {
@@ -22302,7 +22332,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
             }
           }
 
-          emitProgress(10 + Math.round(((i + 1) / Math.max(aeEntries.length, 1)) * 40));
+          emitProgress({ percent: 10 + Math.round(((i + 1) / Math.max(aeEntries.length, 1)) * 40), stage: 'fetching', current: i + 1, total: Math.max(aeEntries.length, 1) });
           await antiDetection.randomDelay(300, 700);
         }
       } finally {
@@ -22423,7 +22453,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           emitLog(`    ⚠️ H&M ${article}: no images available, skipped.`, 'warning');
         }
 
-        emitProgress(10 + Math.round(((i + 1) / Math.min(articleLinks.length, limit || articleLinks.length)) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / Math.min(articleLinks.length, limit || articleLinks.length)) * 40), stage: 'fetching', current: i + 1, total: Math.min(articleLinks.length, limit || articleLinks.length), styleNumber: article });
         await antiDetection.randomDelay(150, 400);
       }
 
@@ -22443,9 +22473,10 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
       const cosGender = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'male' : 'female';
 
       emitLog(`    🌐 Reading the COS ranked listing (${cosGender === 'male' ? 'men' : 'women'})…`, 'info');
+      emitProgress({ percent: 6, stage: 'entering-site', brandLabel: 'COS' });
       const { items: cosItems, total: cosTotal } = await collectCosRanking(cosGender, cosLimit, emitLog, ensureActive);
       if (!cosItems.length) throw new Error('No COS styles were found on the ranked listing.');
-      emitProgress(10);
+      emitProgress({ percent: 10, stage: 'listing', current: cosItems.length, total: cosTotal || cosItems.length });
       emitLog(`    ✅ COS ranking: ${cosItems.length} style(s)${cosTotal ? ` of ${cosTotal}` : ''} — now reading description + composition per style…`, 'success');
 
       // A challenge we keep hitting means the whole run should stop paying the
@@ -22458,6 +22489,9 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         ensureActive();
         const item = cosItems[i];
         const sku = cosStyleNumber(item);
+        // Emitted BEFORE the request so the bar names the style being worked on
+        // during the (possibly 10 s) retry back-off, not after it.
+        emitProgress({ percent: 10 + Math.round((i / Math.max(cosItems.length, 1)) * 40), stage: 'fetching', current: i + 1, total: cosItems.length, styleNumber: sku });
 
         let detail = null;
         if (cosDetailFailStreak < COS_DETAIL_FAIL_LIMIT) {
@@ -22492,7 +22526,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           emitLog(`    ✅ COS ${bits.join(' · ')}`, 'info');
         }
 
-        emitProgress(10 + Math.round(((i + 1) / Math.max(cosItems.length, 1)) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / Math.max(cosItems.length, 1)) * 40), stage: 'fetching', current: i + 1, total: cosItems.length, styleNumber: sku });
         await antiDetection.randomDelay(600, 1300);
       }
 
@@ -22562,7 +22596,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
           emitLog(`    ⚠️ ${ref} failed: ${error.message}`, 'warning');
           products.push({ styleNumber: ref, productId: ref, url: '', error: error.message, imageUrls: [] });
         }
-        emitProgress(10 + Math.round(((i + 1) / articleIds.length) * 40));
+        emitProgress({ percent: 10 + Math.round(((i + 1) / articleIds.length) * 40), stage: 'fetching', current: i + 1, total: articleIds.length, styleNumber: ref });
         await antiDetection.randomDelay(250, 650);
       }
     }
@@ -22608,8 +22642,17 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
     }
 
     emitLog(`📦 Downloading ${allTasks.length} bestseller images with ${downloadConcurrency} worker(s)...`, 'info');
+    emitProgress({ percent: 50, stage: 'downloading', current: 0, total: allTasks.length });
     let done = 0;
-    await parallelLimit(allTasks.map((t) => async () => { ensureActive(); await t(); done += 1; emitProgress(50 + Math.round((done / Math.max(allTasks.length, 1)) * 40)); }), downloadConcurrency || 6);
+    await parallelLimit(allTasks.map((t) => async () => {
+      ensureActive();
+      await t();
+      done += 1;
+      // Per-image counter: the only progress signal that moves during the long
+      // download tail, and the one users read as "12/268 images".
+      emitProgress({ percent: 50 + Math.round((done / Math.max(allTasks.length, 1)) * 40), stage: 'downloading', current: done, total: allTasks.length });
+    }), downloadConcurrency || 6);
+    emitProgress({ percent: 95, stage: 'saving', current: allTasks.length, total: allTasks.length });
 
     // Persist a manifest the analysis step can read.
     fs.writeFileSync(path.join(targetDir, 'bestseller_manifest.json'), JSON.stringify({
@@ -23026,7 +23069,25 @@ async function searchZaraByTyping(browser, query, emitLog, ensureActive) {
   }
 }
 
-async function runScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
+async function runScraper(config, emitLog, emitProgressRaw, taskController, previewBridge = null) {
+  // Every brand scraper below still reports a bare number. Rather than touch
+  // ~30 call sites (and risk breaking one brand at a time), upgrade the numbers
+  // here: a bar that says "正在抓取" beats a bar with no words at all. Brands
+  // that send a full object (COS, the download loops) pass straight through.
+  const emitProgress = (val) => {
+    if (val && typeof val === 'object') { emitProgressRaw(val); return; }
+    const percent = Number(val);
+    // 100 from a brand scraper means "this run is over", not "still fetching".
+    emitProgressRaw({ percent, stage: Number.isFinite(percent) && percent >= 100 ? 'done' : 'fetching' });
+  };
+  // First frame of the progress bar: tell the user what is about to happen
+  // before any network call, so a slow start is never a blank bar. `stage` is a
+  // key — the renderer owns the bilingual copy.
+  emitProgress({
+    percent: 2,
+    stage: 'preparing',
+    brandLabel: getScraperOutputFolderName(config?.brand),
+  });
   if (config?.brand === 'mixed') {
     return runMixedBrandScraper(config, emitLog, emitProgress, taskController, previewBridge);
   }
@@ -24116,6 +24177,20 @@ app.on('quit', (_event, exitCode) => {
 app.whenReady().then(async () => {
   try {
     writeStartupLog('app whenReady resolved');
+    // 🔴 Tagwalk 图片被系统代理拦截：本机代理（如 127.0.0.1:12450）对 cdn.tag-walk.com
+    //    直连失败（实测渲染进程 fetch 报 Failed to fetch，Node 直连同 URL 却 200），
+    //    造成「女装图有缓存能显、男装图首次拉取全挂」。
+    //    处理：整体仍跟随系统代理（mode:'system'，其它站点行为不变），
+    //    只对 Tagwalk 两个域名加旁路规则。
+    try {
+      await session.defaultSession.setProxy({
+        mode: 'system',
+        proxyBypassRules: 'cdn.tag-walk.com,www.tag-walk.com,<local>',
+      });
+      writeStartupLog('session proxy: system + tag-walk bypass');
+    } catch (proxyError) {
+      writeStartupLog(`session proxy setup failed: ${proxyError.message}`);
+    }
     const chromePath = findChromePath();
     if (chromePath) {
       console.log('Found browser at:', chromePath);
@@ -24447,11 +24522,96 @@ ipcMain.handle('cache-center-clear', async (_event, namespace) => {
   }
 });
 
+// ── Progress wire format ─────────────────────────────────────────────────────
+// Historical scrapers call emitProgress(37) with a bare number. Newer call sites
+// send an object so the renderer can show a human sentence instead of a bar:
+//
+//   { percent, stage, current, total, styleNumber }
+//
+// `stage` is a KEY, never a sentence: main is language-agnostic and the renderer
+// owns the bilingual copy (踩坑日志: never hardcode UI strings on this side).
+//   preparing | entering-site | listing | fetching | downloading | saving | done
+//
+// Both shapes must survive every IPC hop, so the sender side normalises here
+// instead of at each of the ~40 emitProgress call sites.
+function normalizeProgressPayload(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return { percent: Math.max(0, Math.min(100, value)) };
+  }
+  if (value && typeof value === 'object') {
+    const percent = Number(value.percent ?? value.progress);
+    return {
+      ...value,
+      percent: Number.isFinite(percent) ? Math.max(0, Math.min(100, percent)) : 0,
+    };
+  }
+  return { percent: 0 };
+}
+
+// ── Failed-style lookup (one-click retry) ────────────────────────────────────
+// Every scraper already records what it could not finish, but in three
+// different files and three different shapes. This collects all of them into
+// one list so the UI can offer "retry N failed styles" and hand the style
+// numbers straight back to start-task (Style Index), which is the only path
+// that can re-fetch an arbitrary style.
+function readJsonIfPresent(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+function collectFailedStyles(dir) {
+  const found = new Map();          // styleNumber → reason
+  const add = (styleNumber, reason) => {
+    const key = String(styleNumber || '').trim();
+    if (!key) return;
+    if (!found.has(key)) found.set(key, String(reason || 'unknown'));
+  };
+
+  // 1. COS Style Index writes this explicitly (images shipped, details missing).
+  const failedFile = readJsonIfPresent(path.join(dir, 'failed_styles.json'));
+  if (Array.isArray(failedFile)) {
+    for (const entry of failedFile) add(entry?.styleNumber, entry?.reason);
+  }
+
+  // 2. Brand scrapers write summary.json with `error` on the styles that failed.
+  const summary = readJsonIfPresent(path.join(dir, 'summary.json'));
+  if (Array.isArray(summary)) {
+    for (const entry of summary) {
+      if (entry?.error) add(entry.styleNumber || entry.productId, entry.error);
+    }
+  }
+
+  // 3. Bestseller runs write bestseller_manifest.json.
+  const manifest = readJsonIfPresent(path.join(dir, 'bestseller_manifest.json'));
+  if (manifest && Array.isArray(manifest.styles)) {
+    for (const entry of manifest.styles) {
+      if (entry?.error) add(entry.styleNumber, entry.error);
+    }
+  }
+
+  return Array.from(found, ([styleNumber, reason]) => ({ styleNumber, reason }));
+}
+
+ipcMain.handle('scrape-failed-list', async (_event, payload = {}) => {
+  try {
+    const dir = resolveScraperOutputDir(payload?.brand, payload?.outputDir);
+    if (!fs.existsSync(dir)) return { success: true, dir, count: 0, items: [] };
+    const items = collectFailedStyles(dir);
+    return { success: true, dir, count: items.length, items };
+  } catch (error) {
+    return { success: false, error: error.message, count: 0, items: [] };
+  }
+});
+
 ipcMain.handle('start-task', async (event, config) => {
   const emitLog = (msg, type = 'info') => {
     event.sender.send('log', { time: new Date().toLocaleTimeString(), message: msg, type });
   };
-  const emitProgress = (val) => event.sender.send('progress', val);
+  const emitProgress = (val) => event.sender.send('progress', normalizeProgressPayload(val));
 
   try {
     assertLicensedForFeature();
@@ -24490,7 +24650,7 @@ ipcMain.handle('bestseller-scrape', async (event, config = {}) => {
   const emitLog = (msg, type = 'info') => {
     event.sender.send('bestseller-log', { time: new Date().toLocaleTimeString(), message: msg, type });
   };
-  const emitProgress = (val) => event.sender.send('bestseller-progress', val);
+  const emitProgress = (val) => event.sender.send('bestseller-progress', normalizeProgressPayload(val));
   try {
     assertLicensedForFeature();
     return await runManagedTask(event, 'bestseller', async (taskController) => {
@@ -24514,7 +24674,7 @@ ipcMain.handle('bestseller-analyze', async (event, config = {}) => {
   const emitLog = (msg, type = 'info') => {
     event.sender.send('bestseller-log', { time: new Date().toLocaleTimeString(), message: msg, type });
   };
-  const emitProgress = (val) => event.sender.send('bestseller-progress', val);
+  const emitProgress = (val) => event.sender.send('bestseller-progress', normalizeProgressPayload(val));
   try {
     assertLicensedForFeature();
     return await runManagedTask(event, 'bestseller', async (taskController) => {
@@ -24665,7 +24825,7 @@ ipcMain.handle('trends-scrape', async (event, config = {}) => {
   const emitLog = (msg, type = 'info') => {
     event.sender.send('trends-log', { time: new Date().toLocaleTimeString(), message: msg, type });
   };
-  const emitProgress = (val) => event.sender.send('trends-progress', val);
+  const emitProgress = (val) => event.sender.send('trends-progress', normalizeProgressPayload(val));
   try {
     assertLicensedForFeature();
     return await runManagedTask(event, 'trends', async (taskController) => {
@@ -24728,6 +24888,269 @@ ipcMain.handle('trends-scrape', async (event, config = {}) => {
     emitLog(`趋势前瞻失败：${error.message}`, 'error');
     return { success: false, error: error.message };
   }
+});
+
+
+// ── Trends Dashboard (Tagwalk) IPC ──────────────────────────────────────────
+// 与上面的 Vogue 链路彼此独立：Tagwalk 用 /zh/trends 的季节页，
+// robots.txt 明写 `Crawl-delay: 2`，所以采集层自带串行节流（见 tagwalk-trends.js）。
+//
+// 缓存分层（都放在 userData/trends 下，和 Vogue 共用目录但不同前缀）：
+//   tagwalk-season-index.json        40 个季节（女 20 / 男 20），变化以「季」为单位
+//   tagwalk-<gender>-<season>.json   单季关键词 + 代表 look
+// 一律「先读缓存、用户点更新才回源」，进页面不打官网。
+const TAGWALK_INDEX_CACHE = 'tagwalk-season-index.json';
+const tagwalkKeywordsCacheName = (gender, season) => `tagwalk-${gender}-${season}.json`;
+
+function readTagwalkSeasonIndex() {
+  const cached = readTrendsCache(TAGWALK_INDEX_CACHE);
+  return Array.isArray(cached?.seasons) ? cached : null;
+}
+
+/**
+ * 「本季新增」判据：同一性别下，站点顺序的**下一项**就是更早一季。
+ * 该季关键词不在上一季出现 → 本季新增。对比失败不影响主结果（只是没有 NEW 标记）。
+ */
+async function buildTagwalkComparison({ gender, season, seasons, emitLog }) {
+  const list = seasons.filter((item) => item.gender === gender);
+  const index = list.findIndex((item) => item.slug === season);
+  const previous = index >= 0 ? list[index + 1] : null;
+  if (!previous) return null;
+  const cacheName = tagwalkKeywordsCacheName(gender, previous.slug);
+  const cached = readTrendsCache(cacheName);
+  if (Array.isArray(cached?.keywords) && cached.keywords.length) {
+    return { season: previous.slug, label: previous.label, keywords: cached.keywords, cached: true };
+  }
+  try {
+    const result = await tagwalkTrends.fetchTrends({ gender, season: previous.slug, log: emitLog });
+    writeTrendsCache(cacheName, { updatedAt: new Date().toISOString(), ...result });
+    return { season: previous.slug, label: result.seasonLabel, keywords: result.keywords, cached: false };
+  } catch (error) {
+    // 对比是增强信息，失败只降级成「无 NEW 标记」，不能把主结果带崩
+    emitLog(`上一季（${previous.label}）对比失败：${error.message}`, 'warning');
+    return null;
+  }
+}
+
+ipcMain.handle('trends-dashboard-seasons', async (event, payload = {}) => {
+  // 独立通道：趋势前瞻向导订阅的是 'trends-log'，共用会在切换模块时互相摘掉监听
+  const emitLog = (msg, type = 'info') => {
+    event.sender.send('trends-dashboard-log', { time: new Date().toLocaleTimeString(), message: msg, type });
+  };
+  if (!payload?.force) {
+    const cached = readTagwalkSeasonIndex();
+    if (cached) {
+      return { success: true, cached: true, updatedAt: String(cached.updatedAt || ''), seasons: cached.seasons, counts: cached.counts || null };
+    }
+  }
+  try {
+    assertLicensedForFeature();
+    const result = await tagwalkTrends.fetchSeasonIndex({ log: emitLog });
+    const out = { updatedAt: new Date().toISOString(), ...result };
+    writeTrendsCache(TAGWALK_INDEX_CACHE, out);
+    return { success: true, cached: false, ...out };
+  } catch (error) {
+    const licenseFailure = getLicenseFailurePayload(error);
+    if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    emitLog(`Tagwalk 季节清单获取失败：${error.message}`, 'error');
+    // 回源失败但手里有旧缓存 → 用旧的，别让页面空着
+    const stale = readTagwalkSeasonIndex();
+    if (stale) {
+      return { success: true, cached: true, stale: true, updatedAt: String(stale.updatedAt || ''), seasons: stale.seasons, counts: stale.counts || null, warning: error.message };
+    }
+    return { success: false, error: error.message };
+  }
+});
+
+ipcMain.handle('trends-dashboard-fetch', async (event, payload = {}) => {
+  const emitLog = (msg, type = 'info') => {
+    event.sender.send('trends-dashboard-log', { time: new Date().toLocaleTimeString(), message: msg, type });
+  };
+  const gender = payload?.gender === 'man' ? 'man' : 'woman';
+  const season = String(payload?.season || '').trim();
+  if (!/^[a-z0-9-]{3,64}$/.test(season)) {
+    return { success: false, error: `无效的季节标识：${season || '(空)'}` };
+  }
+  const cacheName = tagwalkKeywordsCacheName(gender, season);
+  let primary = null;
+  if (!payload?.force) {
+    const cached = readTrendsCache(cacheName);
+    if (Array.isArray(cached?.keywords) && cached.keywords.length) {
+      primary = { ...cached, cached: true };
+    }
+  }
+  try {
+    if (!primary) {
+      assertLicensedForFeature();
+      const result = await tagwalkTrends.fetchTrends({ gender, season, log: emitLog });
+      primary = { updatedAt: new Date().toISOString(), ...result, cached: false };
+      writeTrendsCache(cacheName, primary);
+    }
+
+    // 对比只在需要时做（默认开），并为上一季单独缓存
+    let comparison = null;
+    if (payload?.compare !== false) {
+      const index = readTagwalkSeasonIndex();
+      const seasons = Array.isArray(index?.seasons) ? index.seasons : [];
+      comparison = await buildTagwalkComparison({ gender, season, seasons, emitLog });
+    }
+
+    const prevKeys = new Set((comparison?.keywords || []).map((item) => item.key));
+    // 老缓存没有品牌合集字段 → 返回前统一补算，避免历史缓存点了打开空链接
+    const keywords = primary.keywords.map((item) => ({
+      ...item,
+      isNew: comparison ? !prevKeys.has(item.key) : false,
+      brandSlug: item.brandSlug || tagwalkTrends.brandSlug(item.brand),
+      brandSearchUrl: item.brandSearchUrl || tagwalkTrends.collectionSearchUrl(item.brand, season),
+      brandCollectionUrl: item.brandCollectionUrl || tagwalkTrends.collectionUrl(item.brand, season, gender),
+      // 老缓存只有 361 档缩略图 → 补齐多档（srcset 用）与下载高清档
+      // image 为空时不覆盖，免得把已有 thumb 抹成空串
+      ...(item.image ? tagwalkTrends.imageVariants(item.image) : {}),
+    }));
+
+    return {
+      success: true,
+      cached: Boolean(primary.cached),
+      gender,
+      season,
+      seasonLabel: primary.seasonLabel || tagwalkTrends.seasonMeta(season).label,
+      sourceUrl: primary.sourceUrl || `${tagwalkTrends.SITE}/zh/trends/${gender}/${season}`,
+      updatedAt: String(primary.updatedAt || ''),
+      keywords,
+      newCount: keywords.filter((item) => item.isNew).length,
+      comparedWith: comparison ? { season: comparison.season, label: comparison.label } : null,
+    };
+  } catch (error) {
+    const licenseFailure = getLicenseFailurePayload(error);
+    if (licenseFailure) { emitLog(licenseFailure.error, 'error'); return licenseFailure; }
+    emitLog(`Tagwalk 关键词抓取失败：${error.message}`, 'error');
+    return { success: false, error: error.message };
+  }
+});
+
+// 趋势看板：下载选中的 look 原图
+// 默认落到「下载/GS Bot Trends/<季节>/」，不弹目录框（逐张点选时弹窗太烦）
+function sanitizeFileSegment(value, maxLength = 48) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '-')
+    .replace(/\s+/g, ' ')
+    .replace(/^[.\s]+|[.\s]+$/g, '')
+    .slice(0, maxLength)
+    .trim() || 'untitled';
+}
+
+// 点卡片上的品牌 → 直达该品牌该季的**整场** look（不是场次索引页）
+// 直连 URL 只在场次真实存在时可用（缺失会 302 到全站列表），所以先探测再决定目标
+ipcMain.handle('trends-open-collection', async (_event, payload = {}) => {
+  const gender = payload?.gender === 'man' ? 'man' : 'woman';
+  const season = String(payload?.season || '');
+  const slug = String(payload?.slug || '');
+  // slug / season 只允许小写字母数字与连字符，别让渲染进程拼出任意 URL
+  if (!/^[a-z0-9-]{1,64}$/.test(slug) || !/^[a-z0-9-]{1,64}$/.test(season)) {
+    return { success: false, error: '参数不合法' };
+  }
+  const fallbackUrl = tagwalkTrends.collectionSearchUrl(slug, season);
+  try {
+    const probe = await tagwalkTrends.probeCollection({ gender, slug, season });
+    const target = probe.ok ? probe.url : fallbackUrl;
+    await shell.openExternal(target);
+    return { success: true, opened: target, direct: probe.ok, cached: probe.cached, status: probe.status };
+  } catch (error) {
+    // 探测本身炸了也不能让用户点了没反应：退到更稳的场次索引页
+    try {
+      await shell.openExternal(fallbackUrl);
+      return { success: true, opened: fallbackUrl, direct: false, degraded: true };
+    } catch (fallbackError) {
+      return { success: false, error: fallbackError?.message || error?.message || String(error) };
+    }
+  }
+});
+
+ipcMain.handle('trends-download-images', async (event, payload = {}) => {
+  const items = Array.isArray(payload?.items) ? payload.items : [];
+  if (!items.length) {
+    return { success: false, error: '没有要下载的图片' };
+  }
+  if (items.length > 40) {
+    return { success: false, error: '一次最多下载 40 张' };
+  }
+
+  const seasonLabel = sanitizeFileSegment(payload?.seasonLabel || '', 40);
+  const targetDir = path.join(app.getPath('downloads'), 'GS Bot Trends', seasonLabel);
+  const saved = [];
+  const failed = [];
+
+  try {
+    await fs.promises.mkdir(targetDir, { recursive: true });
+  } catch (error) {
+    return { success: false, error: `无法创建目录：${error.message}` };
+  }
+
+  const queue = items.slice();
+  const downloadOne = async (item) => {
+    const rawUrl = String(item?.url || '').trim();
+    const rawName = sanitizeFileSegment(item?.filename || '', 96);
+    let parsed;
+    try {
+      parsed = new URL(rawUrl);
+    } catch {
+      failed.push({ url: rawUrl, reason: 'URL 无效' });
+      return;
+    }
+    // 只允许 Tagwalk 的图床，别让渲染进程把 IPC 当任意下载器用
+    if (parsed.protocol !== 'https:' || parsed.hostname !== 'cdn.tag-walk.com') {
+      failed.push({ url: rawUrl, reason: '域名不在白名单' });
+      return;
+    }
+
+    let outputPath = path.join(targetDir, rawName);
+    // 同名文件不覆盖，追加 -2 / -3
+    if (fs.existsSync(outputPath)) {
+      const ext = path.extname(rawName);
+      const base = path.basename(rawName, ext);
+      let n = 2;
+      while (fs.existsSync(path.join(targetDir, `${base}-${n}${ext}`)) && n < 500) n += 1;
+      outputPath = path.join(targetDir, `${base}-${n}${ext}`);
+    }
+
+    try {
+      // 🔴 cdn.tag-walk.com 对 localhost/陌生 Referer 会 403，
+      //    这里显式用站点自家 Referer（实测 200）
+      await downloadFile(parsed.toString(), outputPath, {
+        headers: {
+          Referer: 'https://www.tag-walk.com/',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36',
+        },
+        timeoutMs: 60000,
+      });
+      const stat = await fs.promises.stat(outputPath);
+      if (!stat.size) throw new Error('下载到的文件是空的');
+      saved.push({ path: outputPath, size: stat.size });
+    } catch (error) {
+      try { if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath); } catch { /* 清不掉就算了 */ }
+      failed.push({ url: rawUrl, reason: error.message });
+    }
+  };
+
+  const workers = Array.from({ length: Math.min(3, queue.length) }, async () => {
+    while (queue.length) {
+      const next = queue.shift();
+      await downloadOne(next);
+    }
+  });
+  await Promise.all(workers).catch(() => {});
+
+  return {
+    success: saved.length > 0,
+    dir: targetDir,
+    savedCount: saved.length,
+    failedCount: failed.length,
+    saved: saved.map((item) => item.path),
+    failed,
+    error: saved.length ? '' : (failed[0]?.reason || '下载失败'),
+  };
 });
 
 

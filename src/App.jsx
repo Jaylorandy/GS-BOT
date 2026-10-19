@@ -3,6 +3,7 @@ import SetupGuide from './components/SetupGuide';
 import HelpManual from './components/HelpManual';
 import LicenseGate from './components/LicenseGate';
 import ModuleHome from './ModuleHome';
+import TrendsDashboard from './TrendsDashboard';
 import LogDrawer from './components/LogDrawer';
 import TaskCenterPanel from './components/TaskCenterPanel';
 import { subscribeLLMConfigUpdate } from './utils/llmConfigSync';
@@ -92,6 +93,15 @@ function AppIcon({ name, className = '' }) {
           <path d="M3.5 20.5h17" />
         </svg>
       );
+    case 'dashboard':
+      return (
+        <svg {...sharedProps}>
+          <rect x="3.5" y="4.5" width="7.5" height="7" rx="1.6" />
+          <rect x="13" y="4.5" width="7.5" height="4.5" rx="1.6" />
+          <rect x="3.5" y="13.5" width="7.5" height="6" rx="1.6" />
+          <rect x="13" y="11" width="7.5" height="8.5" rx="1.6" />
+        </svg>
+      );
     case 'license':
       return (
         <svg {...sharedProps}>
@@ -173,6 +183,16 @@ function BrandLogo({ className }) {
 
 function createTabItems(tx) {
   return [
+    {
+      id: 'dashboard',
+      icon: 'dashboard',
+      accentRgb: '198, 172, 255',
+      accentInk: '#170a33',
+      label: tx('Trends Dashboard', '趋势看板'),
+      navMeta: tx('Keywords', '关键词'),
+      badge: 'KW',
+      description: tx('Seasonal trend keywords for womenswear and menswear.', '按季节查看男装 / 女装的热门趋势关键词。'),
+    },
     {
       id: 'trends',
       icon: 'trends',
@@ -281,7 +301,7 @@ function AppContent() {
   const { language, setLanguage, tx } = useI18n();
   const TAB_ITEMS = createTabItems(tx);
   const ALL_TABS = TAB_ITEMS;
-  const [activeTab, setActiveTab] = useState('trends');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [theme] = useState('dark');
   const [appReady, setAppReady] = useState(false);
   const [licenseStatus, setLicenseStatus] = useState(null);
@@ -761,14 +781,20 @@ function AppContent() {
 
         <main className="app-main">
           <div className="workspace-canvas">
-            <ModuleHome
-              tab={currentTab}
-              iconNode={<AppIcon name={currentTab.icon} className="module-home__icon" />}
-              fabIconNode={<AppIcon name={currentTab.icon} className="module-home__fab-icon" />}
-              onLogToggle={() => setShowLogDrawer(true)}
-              onLog={handleLog}
-              onNavigate={selectTab}
-            />
+            {currentTab?.id === 'dashboard' ? (
+              <TrendsDashboard
+                iconNode={<AppIcon name="dashboard" className="module-home__icon" />}
+              />
+            ) : (
+              <ModuleHome
+                tab={currentTab}
+                iconNode={<AppIcon name={currentTab.icon} className="module-home__icon" />}
+                fabIconNode={<AppIcon name={currentTab.icon} className="module-home__fab-icon" />}
+                onLogToggle={() => setShowLogDrawer(true)}
+                onLog={handleLog}
+                onNavigate={selectTab}
+              />
+            )}
           </div>
           <div id="workspace-overlay-root" className="workspace-overlay-root" />
         </main>

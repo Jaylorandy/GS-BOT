@@ -1,8 +1,8 @@
 // ui3d.js — Dynamic Pro 3D 引擎（从 ui-demo/gs-bot-dynamic-3d.html 移植并 React 化）
 //
 // 职责：
-//   1. 背景粒子引擎：canvas 上绘制 3 个径向渐变光球 + 70 个粒子 + 粒子连线，
-//      指针斥力用「平滑指针」驱动（lerp 0.14），全部在单一 rAF 循环里。
+//   1. 背景引擎（Aurora Mesh）：1/6 降采样画布上叠 4 团极慢流动的低饱和径向光雾，
+//      用 'lighter' 混合；指针只做轻微视差（lerp 0.14），不做斥力。单一 rAF 循环。
 //   2. 3D 倾斜引擎：自动接管容器内所有 [data-tilt] 元素（含动态新增/移除），
 //      按预设（hero / nav / tool）做 perspective + rotate + lift + zoom + glare。
 //
@@ -31,9 +31,18 @@ const TILT_PRESETS = {
   tool: { max: 10, radius: 170, lift: 0, zoom: 0.05, persp: 600, shadow: false, glare: true },
 };
 
-const PARTICLE_COUNT = 70;
-const LINK_DIST = 110;
-const REPEL_RADIUS = 130;
+// 背景：Aurora Mesh（2026-10-19 替换原「星空粒子 + 连线 + 流星」）
+//   AURORA_SCALE 降采样倍率：画布像素 = 容器尺寸 / SCALE，由浏览器双线性放大，
+//   既天然平滑又把逐帧填充成本压到 1/36；AURORA_FPS 限频，主线程只在需要时绘制。
+const AURORA_SCALE = 6;
+const AURORA_FPS = 30;
+const AURORA_PARALLAX = 22; // 指针视差幅度（CSS px），0 = 完全静止
+const AURORA_BLOBS = [
+  { x: 0.26, y: 0.30, r: 0.62, col: '70,88,186', a: 0.30, ax: 0.10, ay: 0.07, sp: 0.00013, px: 1.0 },
+  { x: 0.74, y: 0.66, r: 0.56, col: '52,118,140', a: 0.24, ax: 0.09, ay: 0.08, sp: 0.00011, px: 0.7 },
+  { x: 0.50, y: 0.20, r: 0.46, col: '98,76,152', a: 0.22, ax: 0.08, ay: 0.06, sp: 0.00015, px: 0.5 },
+  { x: 0.84, y: 0.28, r: 0.36, col: '58,130,104', a: 0.17, ax: 0.06, ay: 0.05, sp: 0.00009, px: 0.35 },
+];
 const POINTER_LERP = 0.14;
 
 let activeCleanup = null; // 单例守卫：重复挂载时先拆旧实例
@@ -46,43 +55,23 @@ export function initDynamic3D(canvas) {
   const ctx = canvas.getContext('2d');
   if (!root || !ctx) return () => {};
 
-  // ── 尺寸（DPR 感知）───────────────────────────────
+  // ── 尺寸（降采样；CSS 尺寸仍铺满容器）──────────────
   let W = 0;
   let H = 0;
+  let lastBgT = 0;
   const resize = () => {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    W = root.clientWidth;
-    H = root.clientHeight;
-    canvas.width = Math.max(1, Math.round(W * dpr));
-    canvas.height = Math.max(1, Math.round(H * dpr));
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    W = Math.max(1, Math.round(root.clientWidth / AURORA_SCALE));
+    H = Math.max(1, Math.round(root.clientHeight / AURORA_SCALE));
+    canvas.width = W;
+    canvas.height = H;
+    lastBgT = 0; // 尺寸变了立刻重绘一帧，避免拉伸期的旧画面
   };
   resize();
 
-  // ── 背景：粒子 ──────────────────────────────────
-  // 请求 P（2026-09-29）：移除三团大半径径向光斑（原 blobs：紫 124,110,255@0.16 /
-  // 蓝 64,160,255@0.14 / 绿 109,214,153@0.10，半径可达 ~350px）——它们沿窗口边缘
-  // 与内容区 22px 圆角晕开，被读成「光晕边框」。保留粒子 + 连线。
-  const particles = Array.from({ length: PARTICLE_COUNT }, () => ({
-    // 锚点用画布比例坐标（0~1）：窗口/画布任意 resize 后自动重锚，不会聚集在旧区域
-    hfx: Math.random(),
-    hfy: Math.random(),
-    ph: Math.random() * 6.2832,
-    x: 0,
-    y: 0,
-    vx: (Math.random() - 0.5) * 0.35,
-    vy: (Math.random() - 0.5) * 0.35,
-    r: Math.random() * 1.6 + 0.6,
-    // 背景动态（2026-09-29）：闪烁相位/速度 + ~8% 特亮星
-    tw: Math.random() * 6.2832,
-    ts: 0.6 + Math.random() * 1.1,
-    bright: Math.random() < 0.08,
-  }));
-
-  // 流星池：同屏最多 2 颗，间隔 2.8~7s 随机；直线飞行 + 渐隐尾迹
-  const meteors = [];
-  let nextMeteorAt = 2200;
-  let lastBgT = 0;
+  // ── 背景：Aurora Mesh ───────────────────────────
+  // 2026-10-19：用户看腻星空粒子（70 星 + 连线 + 流星），换成低饱和流动色雾。
+  // 旧实现见 git 历史（粒子/连线/流星/指针斥力），回滚只需还原 drawBackground。
+  const blobs = AURORA_BLOBS.map((b) => ({ ...b, ph: Math.random() * 6.2832 }));
 
   // ── 指针（目标 + 平滑）──────────────────────────
   let tx = window.innerWidth / 2;
@@ -188,118 +177,32 @@ export function initDynamic3D(canvas) {
   };
 
   // ── 每帧：背景绘制 ──────────────────────────────
-  let spawned = false; // 首帧按比例锚点撒粒子
+  // 首帧/尺寸变化后立即绘制；之后按 AURORA_FPS 限频（背景很慢，30fps 足够）
   const drawBackground = (t) => {
-    ctx.clearRect(0, 0, W, H);
-    // 粒子：比例锚点漂移 + 指针斥力 + 归位弹簧（被推开后慢慢恢复原位）
-    if (!spawned) {
-      for (const p of particles) { p.x = p.hfx * W; p.y = p.hfy * H; }
-      spawned = true;
-    }
-    for (const p of particles) {
-      // 锚点 = 比例坐标 × 当前画布尺寸 + 缓慢正弦漂移（保持场域有机感）
-      const hx = p.hfx * W + Math.sin(t * 0.0002 + p.ph) * 26;
-      const hy = p.hfy * H + Math.cos(t * 0.00016 + p.ph) * 22;
-      const dx = p.x - mx;
-      const dy = p.y - my;
-      const d2 = dx * dx + dy * dy;
-      if (d2 < REPEL_RADIUS * REPEL_RADIUS && d2 > 0.01) {
-        const d = Math.sqrt(d2);
-        const force = ((REPEL_RADIUS - d) / REPEL_RADIUS) * 0.55;
-        p.vx += (dx / d) * force;
-        p.vy += (dy / d) * force;
-      }
-      p.vx += (hx - p.x) * 0.0025;
-      p.vy += (hy - p.y) * 0.0025;
-      p.vx *= 0.96;
-      p.vy *= 0.96;
-      p.vx += (Math.random() - 0.5) * 0.012;
-      p.vy += (Math.random() - 0.5) * 0.012;
-      p.x += p.vx;
-      p.y += p.vy;
-      // 软夹紧（不再对穿回绕，锚点弹簧会把粒子拉回家）
-      if (p.x < -12) p.x = -12;
-      if (p.x > W + 12) p.x = W + 12;
-      if (p.y < -12) p.y = -12;
-      if (p.y > H + 12) p.y = H + 12;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, 6.2832);
-      // 闪烁：每颗星独立相位/速度；特亮星带柔光晕
-      const twk = 0.68 + 0.32 * Math.sin(t * 0.0012 * p.ts + p.tw);
-      if (p.bright) {
-        const halo = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4.5);
-        halo.addColorStop(0, `rgba(215, 228, 255, ${(0.42 * twk).toFixed(3)})`);
-        halo.addColorStop(1, 'rgba(215, 228, 255, 0)');
-        ctx.fillStyle = halo;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * 4.5, 0, 6.2832);
-        ctx.fill();
-        ctx.fillStyle = `rgba(235, 242, 255, ${(0.85 * twk).toFixed(3)})`;
-        ctx.arc(p.x, p.y, p.r * 1.15, 0, 6.2832);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = `rgba(190, 200, 255, ${(0.5 * twk).toFixed(3)})`;
-        ctx.fill();
-      }
-    }
-    // 连线
-    ctx.lineWidth = 1;
-    for (let i = 0; i < particles.length; i += 1) {
-      for (let j = i + 1; j < particles.length; j += 1) {
-        const a = particles[i];
-        const b = particles[j];
-        const d = Math.hypot(a.x - b.x, a.y - b.y);
-        if (d < LINK_DIST) {
-          ctx.strokeStyle = `rgba(150, 165, 235, ${((1 - d / LINK_DIST) * 0.14).toFixed(3)})`;
-          ctx.beginPath();
-          ctx.moveTo(a.x, a.y);
-          ctx.lineTo(b.x, b.y);
-          ctx.stroke();
-        }
-      }
-    }
-    // 流星：随机间隔生成，直线飞行 + 渐隐尾迹（画在粒子/连线上层）
-    if (t > nextMeteorAt && meteors.length < 2) {
-      const dir = Math.random() < 0.5 ? 1 : -1;
-      const spd = (0.32 + Math.random() * 0.22) * (Math.max(W, H) / 1000);
-      meteors.push({
-        x: W * (0.15 + Math.random() * 0.7),
-        y: H * (0.04 + Math.random() * 0.3),
-        vx: dir * spd,
-        vy: spd * (0.45 + Math.random() * 0.3),
-        life: 0,
-        maxLife: 750 + Math.random() * 650,
-      });
-      nextMeteorAt = t + 2800 + Math.random() * 4200;
-    }
-    const dt = lastBgT ? Math.min(64, t - lastBgT) : 16.7;
+    if (lastBgT && t - lastBgT < 1000 / AURORA_FPS - 1) return;
     lastBgT = t;
-    for (let i = meteors.length - 1; i >= 0; i -= 1) {
-      const m = meteors[i];
-      m.life += dt;
-      m.x += m.vx * dt;
-      m.y += m.vy * dt;
-      const k = m.life / m.maxLife;
-      const fade = Math.sin(Math.min(1, k) * Math.PI);
-      const sp = Math.hypot(m.vx, m.vy) || 1;
-      const tail = 120 * (Math.max(W, H) / 1000);
-      const tailX = m.x - (m.vx / sp) * tail;
-      const tailY = m.y - (m.vy / sp) * tail;
-      const grad = ctx.createLinearGradient(m.x, m.y, tailX, tailY);
-      grad.addColorStop(0, `rgba(205, 222, 255, ${(0.8 * fade).toFixed(3)})`);
-      grad.addColorStop(1, 'rgba(205, 222, 255, 0)');
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(m.x, m.y);
-      ctx.lineTo(tailX, tailY);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, 1.6, 0, 6.2832);
-      ctx.fillStyle = `rgba(236, 243, 255, ${(0.9 * fade).toFixed(3)})`;
-      ctx.fill();
-      if (m.life >= m.maxLife || m.x < -60 || m.x > W + 60 || m.y > H + 60) meteors.splice(i, 1);
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+
+    // 指针视差：以容器中心为原点，画布坐标需再除以降采样倍率
+    const px = ((mx / Math.max(1, root.clientWidth)) - 0.5) * (AURORA_PARALLAX / AURORA_SCALE);
+    const py = ((my / Math.max(1, root.clientHeight)) - 0.5) * (AURORA_PARALLAX / AURORA_SCALE);
+
+    for (const b of blobs) {
+      // 每团雾沿自己的正弦轨道漂移（周期 40~70s），互相错相 → 永不重复
+      const x = (b.x + Math.sin(t * b.sp + b.ph) * b.ax) * W + px * b.px;
+      const y = (b.y + Math.cos(t * b.sp * 0.8 + b.ph * 1.7) * b.ay) * H + py * b.px;
+      const r = b.r * Math.max(W, H);
+      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+      g.addColorStop(0, `rgba(${b.col}, ${b.a})`);
+      g.addColorStop(0.45, `rgba(${b.col}, ${(b.a * 0.36).toFixed(3)})`);
+      g.addColorStop(1, `rgba(${b.col}, 0)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
     }
+
+    ctx.globalCompositeOperation = 'source-over';
   };
 
   // ── 单一 rAF 循环 ───────────────────────────────

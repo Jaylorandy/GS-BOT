@@ -158,9 +158,12 @@ THEMES = {
     },
     'modern': {
         'name': 'Modern (Minimal Gray)',
-        'cover_bg': RGBColor(45, 45, 50),
-        'cover_text': WHITE,
-        'cover_accent': RGBColor(180, 180, 190),
+        # LIGHT cover — this is what separates it from 'classic' (black cover).
+        # Before 2026-10-19 both were dark covers (black vs 45,45,50), which read
+        # as the same theme at a glance and the user flagged them as duplicates.
+        'cover_bg': RGBColor(248, 248, 246),
+        'cover_text': RGBColor(35, 35, 40),
+        'cover_accent': RGBColor(122, 122, 130),
         'page_bg': RGBColor(252, 252, 254),
         'page_text': RGBColor(40, 40, 48),
         'label_color': RGBColor(130, 130, 140),
@@ -2831,6 +2834,21 @@ def parse_composition_string(text):
 
 # ── 页面生成 ─────────────────────────────────────────
 
+def _fit_cover_font(text, base_pt, steps=((8, 1.0), (14, 0.78), (20, 0.6), (28, 0.47), (40, 0.38))):
+    """Shrink the cover font as the text gets longer.
+
+    The cover title IS the folder name (os.path.basename(source)), which users
+    name freely — a 40-char folder name at 72 pt overflows the 13.33" slide.
+    The ladder keeps a single line down to ~40 chars; word_wrap stays on as the
+    last-resort overflow guard.
+    """
+    length = len(str(text or ''))
+    for threshold, factor in steps:
+        if length <= threshold:
+            return max(18, int(base_pt * factor))
+    return max(18, int(base_pt * steps[-1][1]))
+
+
 def add_cover(prs, title, count, brand='BRAND', unit='Styles'):
     """封面页（unit 决定数量行的量词：款式用 Styles、秀场画册用 Looks）"""
     global ACTIVE_THEME
@@ -2842,24 +2860,26 @@ def add_cover(prs, title, count, brand='BRAND', unit='Styles'):
     bg.fill.fore_color.rgb = ACTIVE_THEME['cover_bg']
     bg.line.fill.background()
 
-    # 品牌名
+    # 品牌名（= 文件夹名，长度不可控：阶梯缩号保单行，wrap 兜底）
     b1 = slide.shapes.add_textbox(0, Inches(2.2), PAGE_WIDTH, Inches(1.5))
     f1 = b1.text_frame
+    f1.word_wrap = True
     f1.text = brand.upper() if brand else 'BRAND'
     p1 = f1.paragraphs[0]
     p1.font.name = FONT_NAME
-    p1.font.size = Pt(72)
+    p1.font.size = Pt(_fit_cover_font(brand, 72))
     p1.font.bold = True
     p1.font.color.rgb = ACTIVE_THEME['cover_text']
     p1.alignment = PP_ALIGN.CENTER
 
-    # 副标题
+    # 副标题（同样可能长：用户自填标题）
     b2 = slide.shapes.add_textbox(0, Inches(3.8), PAGE_WIDTH, Inches(0.6))
     f2 = b2.text_frame
+    f2.word_wrap = True
     f2.text = title or f"{brand.upper() if brand else 'BRAND'} STYLE COLLECTION LOOKBOOK"
     p2 = f2.paragraphs[0]
     p2.font.name = FONT_NAME
-    p2.font.size = Pt(24)
+    p2.font.size = Pt(_fit_cover_font(f2.text, 24, steps=((40, 1.0), (60, 0.75), (90, 0.58))))
     p2.font.color.rgb = ACTIVE_THEME['cover_accent']
     p2.alignment = PP_ALIGN.CENTER
 

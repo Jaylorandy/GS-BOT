@@ -1405,6 +1405,14 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [progressLabel, setProgressLabel] = useState('');
+  // Structured progress from the backend: { stage, current, total, styleNumber,
+  // brandLabel }. The backend sends stage KEYS only, so the bilingual copy for
+  // every phase lives here (one place to translate, never out of sync).
+  const [progressMeta, setProgressMeta] = useState(null);
+  // Failed styles from the last run, so the user can retry just those instead
+  // of the whole list. { dir, count, items: [{ styleNumber, reason }] }
+  const [failedInfo, setFailedInfo] = useState(null);
+  const retryOverrideRef = useRef(null);
   const [logs, setLogs] = useState([]);
   const [done, setDone] = useState(false);
   const [result, setResult] = useState(null);
@@ -1508,6 +1516,8 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     setStepIdx(0);
     setProgress(0);
     setProgressLabel('');
+    setProgressMeta(null);
+    setFailedInfo(null);
     setLogs([]);
     setDone(false);
     setResult(null);
@@ -1620,9 +1630,21 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     };
 
     const progCb = (p) => {
-      const pct = typeof p === 'number' ? p : (p?.progress ?? 0);
-      const label = typeof p === 'string' ? p : (p?.label || p?.message || '');
+      const pct = typeof p === 'number' ? p : (p?.percent ?? p?.progress ?? 0);
+      const label = typeof p === 'string' ? p : (p?.label || p?.message || (typeof p?.status === 'string' ? p.status : ''));
       setProgress(pct);
+      // Keep the structured bits (stage / counters) for the human sentence.
+      if (p && typeof p === 'object' && (p.stage || p.current != null)) {
+        setProgressMeta({
+          stage: p.stage || '',
+          current: Number.isFinite(Number(p.current)) ? Number(p.current) : null,
+          total: Number.isFinite(Number(p.total)) ? Number(p.total) : null,
+          styleNumber: p.styleNumber ? String(p.styleNumber) : '',
+          brandLabel: p.brandLabel ? String(p.brandLabel) : '',
+        });
+      } else if (typeof p === 'number') {
+        setProgressMeta(null);
+      }
       if (label) setProgressLabel(label);
     };
 
@@ -1697,6 +1719,11 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     if (!config?.runIPC || running) return;
     const api = window.electronAPI;
     if (!api) return;
+    // "Retry failed styles" reuses this whole flow but overrides the input.
+    // Passing an argument to handleRun is NOT an option — it is also used as a
+    // click handler, so the first parameter is a SyntheticEvent.
+    const retryOverride = retryOverrideRef.current;
+    retryOverrideRef.current = null;
 
     // H&M bestseller: run the pre-flight diagnosis immediately before the run.
     // The wizard shows it on the browser step, but the user may have opened
@@ -1741,7 +1768,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     setLogs([]);
 
     try {
-      const payload = { ...params };
+      const payload = { ...params, ...(retryOverride || {}) };
       if (tab.id === 'slides') {
         const styleGrp = params.styleInfoGroup || {};
         const fabricGrp = params.fabricInfoGroup || {};
@@ -2021,6 +2048,20 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         setDone(true);
         setResult(res);
       }
+
+      // Ask what is still missing. Only the style-index path can re-fetch an
+      // arbitrary style number, so the retry button is offered there.
+      if (api.scrapeFailedList) {
+        try {
+          const failed = await api.scrapeFailedList({
+            brand: payload.brand,
+            outputDir: res?.outputPath || payload.outputDir || '',
+          });
+          setFailedInfo(failed?.count > 0 ? failed : null);
+        } catch {
+          setFailedInfo(null);
+        }
+      }
     } catch (err) {
       setRunning(false);
       setError(err.message || tx('Unexpected error.', '意外错误。'));
@@ -2134,6 +2175,55 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
     params, setParams, llmSettings, aiSource,
   };
 
+  // Human sentence for the progress bar. The backend only ever sends stage
+  // KEYS (preparing / entering-site / listing / fetching / downloading /
+  // saving / done) plus counters — all copy is assembled here so EN and ZH can
+  // never drift apart, and a new stage never needs a main.js change.
+  const progressSentence = (() => {
+    const m = progressMeta;
+    if (!m?.stage) return '';
+    const counted = Number.isFinite(m.current) && Number.isFinite(m.total) && m.total > 0;
+    const counter = counted ? `${m.current}/${m.total}` : '';
+    const brand = m.brandLabel || '';
+    switch (m.stage) {
+      case 'preparing':
+        return brand
+          ? tx(`Preparing · ${brand}…`, `正在准备 · ${brand}…`)
+          : tx('Preparing…', '正在准备…');
+      case 'entering-site':
+        return brand
+          ? tx(`Opening ${brand}…`, `正在进入 ${brand} 网站…`)
+          : tx('Opening the site…', '正在进入网站…');
+      case 'listing':
+        return counted
+          ? tx(`Reading the ranking · ${counter} styles…`, `正在读取榜单 · 共 ${m.total} 款…`)
+          : tx('Reading the ranking…', '正在读取榜单…');
+      case 'fetching':
+        if (counted && m.styleNumber) {
+          return tx(
+            `Fetching style ${m.current}/${m.total} · ${m.styleNumber}`,
+            `正在抓取第 ${m.current}/${m.total} 款 · 款号 ${m.styleNumber}`,
+          );
+        }
+        if (counted) {
+          return tx(`Fetching style ${m.current}/${m.total}…`, `正在抓取第 ${m.current}/${m.total} 款…`);
+        }
+        return m.styleNumber
+          ? tx(`Fetching ${m.styleNumber}…`, `正在抓取款号 ${m.styleNumber}…`)
+          : tx('Fetching styles…', '正在抓取款式…');
+      case 'downloading':
+        return counted
+          ? tx(`Downloading images ${m.current}/${m.total}…`, `正在下载图片 ${m.current}/${m.total} 张…`)
+          : tx('Downloading images…', '正在下载图片…');
+      case 'saving':
+        return tx('Saving files…', '正在保存文件…');
+      case 'done':
+        return tx('Done', '完成');
+      default:
+        return '';
+    }
+  })();
+
   return (
         <section
       className={`module-home ${isSinglePage ? 'module-home--single' : 'module-home--stepped'} ${running ? 'is-running' : ''} ${done ? 'is-done' : ''}`}
@@ -2151,7 +2241,37 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         {(running || done) && !reviewData && (
           <div className="wizard-progress">
             <div className="wizard-progress__bar" style={{ width: `${progress}%` }} />
-            <span className="wizard-progress__label">{progressLabel}</span>
+            <span className="wizard-progress__label">
+              {progressSentence || progressLabel}
+              <span className="wizard-progress__pct">{Math.round(progress)}%</span>
+            </span>
+          </div>
+        )}
+
+        {!running && failedInfo?.count > 0 && !reviewData && (
+          <div className="wizard-retry">
+            <span className="wizard-retry__text">
+              {tx(
+                `${failedInfo.count} style(s) are still missing — retry only those?`,
+                `还有 ${failedInfo.count} 个款没抓完整，只重试这几个吗？`,
+              )}
+            </span>
+            <button
+              type="button"
+              className="wizard-retry__btn"
+              onClick={() => {
+                // Hand the list to the normal run flow through the ref, since
+                // handleRun doubles as a click handler (1st arg = event).
+                retryOverrideRef.current = {
+                  styleNumbers: failedInfo.items.map((item) => item.styleNumber).join('\n'),
+                  excelPath: '',
+                };
+                setFailedInfo(null);
+                handleRun();
+              }}
+            >
+              {tx(`Retry ${failedInfo.count} failed`, `重试这 ${failedInfo.count} 个款`)}
+            </button>
           </div>
         )}
 

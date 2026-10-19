@@ -6,6 +6,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectFile: (opts) => ipcRenderer.invoke('select-file', opts),
 
   startTask: (config) => ipcRenderer.invoke('start-task', config),
+  // Reads failed_styles.json / summary.json / bestseller_manifest.json and
+  // returns the style numbers that need a re-run.
+  scrapeFailedList: (payload) => ipcRenderer.invoke('scrape-failed-list', payload),
   annotateExcel: (config) => ipcRenderer.invoke('annotate-excel', config),
   previewExcel: (config) => ipcRenderer.invoke('preview-excel', config),
   cancelTask: (taskType) => ipcRenderer.invoke('cancel-task', taskType),
@@ -218,5 +221,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeTrendsListeners: () => {
     ipcRenderer.removeAllListeners('trends-log');
     ipcRenderer.removeAllListeners('trends-progress');
+  },
+
+  // Trends Dashboard (Tagwalk)：季节清单 + 单季关键词，都是「先缓存、点更新才回源」
+  trendsDashboardSeasons: (payload) => ipcRenderer.invoke('trends-dashboard-seasons', payload),
+  trendsDashboardFetch: (payload) => ipcRenderer.invoke('trends-dashboard-fetch', payload),
+  trendsDownloadImages: (payload) => ipcRenderer.invoke('trends-download-images', payload),
+  trendsOpenCollection: (payload) => ipcRenderer.invoke('trends-open-collection', payload),
+  onTrendsDashboardLog: (callback) => ipcRenderer.on('trends-dashboard-log', (_event, value) => callback(value)),
+  removeTrendsDashboardListeners: () => {
+    ipcRenderer.removeAllListeners('trends-dashboard-log');
   },
 });

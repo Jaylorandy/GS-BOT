@@ -1916,6 +1916,52 @@
   color: var(--text-secondary);
 }
 
+/* Percentage sits at the right edge of the label line so the sentence and the
+   number never fight for the same space. */
+.wizard-progress__pct {
+  float: right;
+  margin-left: 12px;
+  font-variant-numeric: tabular-nums;
+  color: rgba(var(--home-accent-rgb),.95);
+  font-weight: 600;
+}
+
+/* "N styles are still missing — retry only those?" bar under the progress. */
+.wizard-retry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: -8px 0 20px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255,196,106,.08);
+  border: 1px solid rgba(255,196,106,.28);
+}
+
+.wizard-retry__text {
+  font-size: clamp(.74rem,.85vw,.82rem);
+  color: var(--text-secondary);
+}
+
+.wizard-retry__btn {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,196,106,.5);
+  background: rgba(255,196,106,.14);
+  color: inherit;
+  font-size: clamp(.74rem,.85vw,.82rem);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s ease, border-color .2s ease;
+}
+
+.wizard-retry__btn:hover {
+  background: rgba(255,196,106,.24);
+  border-color: rgba(255,196,106,.75);
+}
+
 .wizard-body {
   margin-bottom: 24px;
 }
@@ -2987,16 +3033,19 @@
   --glass-control-highlight: 0;
   --lg-filter:  ;
   --glass-dark-veil: none;
-  --page-bg-top: #161a2e;
-  --page-bg: #0f1320;
-  --page-bg-elevated: #141a2a;
-  --page-bg-deep: #0a0d18;
-  --surface-0: #14162c;
-  --surface-1: #181a30;
-  --surface-2: #1e203a;
-  --surface-3: #262844;
-  --surface-border: rgba(160, 165, 215, .16);
-  --surface-border-strong: rgba(168, 199, 250, .28);
+  /* 用户反馈「底色有点发蓝，不是很黑」：
+     原来的 #161a2e → #0f1320 蓝通道比红绿高 16~18，整屏读成藏青。
+     改成中性近黑（蓝只比红绿高 2~3，保留极轻冷调，不至于死灰）。 */
+  --page-bg-top: #17171a;
+  --page-bg: #0b0b0d;
+  --page-bg-elevated: #121215;
+  --page-bg-deep: #08080a;
+  --surface-0: #131316;
+  --surface-1: #18181b;
+  --surface-2: #1f1f23;
+  --surface-3: #27272c;
+  --surface-border: rgba(255, 255, 255, .08);
+  --surface-border-strong: rgba(255, 255, 255, .16);
   --surface-shadow: 0 24px 60px rgba(4, 6, 20, .42);
   --surface-shadow-soft: 0 14px 40px rgba(4, 6, 20, .24);
   --glass-bg: rgba(255, 255, 255, .18);
@@ -3014,9 +3063,9 @@
   --glass-lift-shadow: 0 18px 46px rgba(4, 6, 20, .4), 0 2px 8px rgba(4, 6, 20, .24);
   --glass-hover-glow: 0 14px 36px rgba(var(--accent-rgb), .2);
   --glass-specular: rgba(255, 255, 255, .55);
-  --text-primary: #f0f1fb;
-  --text-secondary: #c4c8e0;
-  --text-muted: #8388a8;
+  --text-primary: #f1f1f4;
+  --text-secondary: #c5c5cc;
+  --text-muted: #8a8a93;
   --accent: #a8c7fa;
   --accent-rgb: 168, 199, 250;
   --accent-ink: #0a1020;
@@ -3058,7 +3107,7 @@
      no border and no background at all, and only lit up on focus because of
      the browser's default outline. */
   --border-color: rgba(148, 163, 216, .34);
-  --bg-input: #0a0c1a;
+  --bg-input: #0b0b0e;
   --bg-secondary: rgba(255, 255, 255, .06);
   --primary-color: rgb(var(--accent-rgb));
   --btn-disabled-bg: rgba(255, 255, 255, .08);
@@ -3085,13 +3134,13 @@
   --log-bg-end: #060814;
   --lan-main-overlay-start: rgba(255, 255, 255, .015);
   --lan-main-overlay-end: rgba(0, 0, 0, .08);
-  --popup-gradient-start: #1a1c32;
-  --popup-gradient-end: #0e1018;
+  --popup-gradient-start: #19191d;
+  --popup-gradient-end: #0c0c0f;
   --page-glow-primary: rgba(66, 133, 244, .36);
   --page-glow-secondary: rgba(171, 125, 248, .3);
   --page-glow-tertiary: rgba(77, 208, 192, .28);
   --page-glow-quaternary: rgba(240, 98, 146, .24);
-  --shell-tint: linear-gradient(180deg, #161a2e 0%, #0f1320 100%);
+  --shell-tint: linear-gradient(180deg, #17171a 0%, #0b0b0d 100%);
   --shell-panel-border: rgba(255, 255, 255, .06);
   --shell-panel-inset: rgba(255, 255, 255, .05);
   --nav-index-bg: rgba(255, 255, 255, .06);
@@ -6389,4 +6438,777 @@ select option:hover {
   color: #ffffff;
 }
 
+/* ── Trends Dashboard (Tagwalk) ────────────────────────────────────────
+   设计取向：暗色 · 克制。
+   · 大面积只用中性灰，紫色 accent 只出现在 hover / focus / 当前 tab 的细节上
+   · 卡片不描边，靠留白 + 极淡阴影分层；操作按钮默认低透明度，hover 才浮现
+   · 筛选条是一条细线，不是一块盒子 —— 盒子越多越像后台表单，越少越像作品集 */
+.trends-dash {
+  --dash-accent: 178, 148, 255;
+  --dash-line: rgba(255, 255, 255, 0.07);
+  /* 🔴 父级 .app-main / .workspace-canvas 都是 overflow:hidden，
+     看板必须自己成为滚动容器，否则窗口一小就再也滚不到下面 */
+  height: 100%;
+  max-height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 24px 28px 56px;
+  color: var(--text-primary);
+  overscroll-behavior: contain;
+  /* 超宽窗口（2560+）下内容居中收拢，别让筛选条和大图各拉一头 */
+  width: 100%;
+  max-width: 1680px;
+  margin: 0 auto;
+}
 
+/* 滚动条：静止时完全透明，滚动时才浮出来
+   （is-scrolling 由 React onScroll 加，停止 900ms 后移除） */
+.trends-dash::-webkit-scrollbar {
+  width: 10px;
+}
+
+.trends-dash::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.trends-dash::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: transparent;
+  border: 3px solid transparent;
+  background-clip: padding-box;
+  transition: background-color 200ms ease;
+}
+
+.trends-dash.is-scrolling::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.16);
+  background-clip: padding-box;
+}
+
+.trends-dash.is-scrolling::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+}
+
+/* ── 页头 ──────────────────────────────────────────────────────────── */
+.trends-dash__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.trends-dash__heading {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.trends-dash__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 10px;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.34);
+  font-weight: 500;
+}
+
+/* 图标从 46px 紫块缩成 14px 线稿 —— 大色块是"不高级"的主要来源 */
+.trends-dash__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  color: rgba(var(--dash-accent), 0.7);
+}
+
+.trends-dash__icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.trends-dash__title {
+  margin: 0;
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.022em;
+}
+
+.trends-dash__sub {
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-muted);
+  max-width: 64ch;
+}
+
+.trends-dash__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.trends-dash__ghost {
+  appearance: none;
+  border: 1px solid var(--dash-line);
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.trends-dash__ghost:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.trends-dash__ghost:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+/* ── 筛选条：一条线，不是盒子 ──────────────────────────────────────── */
+.trends-dash__controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--dash-line);
+}
+
+/* 性别：文字 tab + 下划线（胶囊按钮的对比度太抢眼） */
+.trends-seg {
+  display: inline-flex;
+  gap: 20px;
+}
+
+.trends-seg__btn {
+  appearance: none;
+  border: 0;
+  background: none;
+  position: relative;
+  padding: 0 0 7px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: color 180ms ease;
+}
+
+.trends-seg__btn:hover {
+  color: var(--text-secondary);
+}
+
+.trends-seg__btn.is-active {
+  color: var(--text-primary);
+}
+
+.trends-seg__btn.is-active::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  border-radius: 2px;
+  background: rgba(var(--dash-accent), 0.85);
+}
+
+.trends-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.trends-field__label {
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+  font-weight: 600;
+}
+
+/* select 去框留下划线 + 自绘小箭头：比原生下拉轻很多 */
+.trends-field select {
+  min-width: 118px;
+  appearance: none;
+  border: 0;
+  border-bottom: 1px solid var(--dash-line);
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 2px 18px 6px 0;
+  cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, rgba(255, 255, 255, 0.4) 50%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.4) 50%, transparent 50%);
+  background-position: right 6px top calc(50% + 1px), right 2px top calc(50% + 1px);
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  transition: border-color 180ms ease;
+}
+
+.trends-field select:hover {
+  border-bottom-color: rgba(255, 255, 255, 0.2);
+}
+
+.trends-field select:focus-visible {
+  outline: none;
+  border-bottom-color: rgba(var(--dash-accent), 0.8);
+}
+
+/* ── 概要信息：纯文字 + 分隔点，不用胶囊 ──────────────────────────── */
+.trends-dash__meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  padding-bottom: 5px;
+}
+
+.trends-dash__chip {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.4);
+  background: none;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.trends-dash__chip + .trends-dash__chip::before {
+  content: '·';
+  margin-right: 7px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.trends-dash__chip.is-new {
+  color: #86d9a9;
+}
+
+.trends-dash__chip.is-new::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #86d9a9;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.trends-dash__chip.is-muted {
+  color: rgba(255, 255, 255, 0.28);
+}
+
+.trends-dash__stamp {
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.26);
+  font-variant-numeric: tabular-nums;
+}
+
+.trends-dash__stamp::before {
+  content: '·';
+  margin-right: 7px;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.trends-dash__meta-error {
+  font-size: 11.5px;
+  color: #ffb4a8;
+}
+
+/* ── 空态 / 提示 / 错误 ───────────────────────────────────────────── */
+.trends-dash__hint {
+  padding: 44px 18px;
+  border-radius: 12px;
+  border: 1px dashed var(--dash-line);
+  color: var(--text-muted);
+  font-size: 12.5px;
+  text-align: center;
+}
+
+/* 下载结果提示：细线 + 左侧 2px 色条，不再是一整块彩色底 */
+.trends-dash__notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px 9px 13px;
+  border-radius: 10px;
+  border: 1px solid var(--dash-line);
+  border-left: 2px solid #6ed69a;
+  background: rgba(255, 255, 255, 0.028);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.trends-dash__notice.is-err {
+  border-left-color: #ff8a80;
+  color: #ffc9c2;
+}
+
+.trends-dash__notice-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trends-dash__notice-btn {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: transparent;
+  color: inherit;
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.trends-dash__notice-btn:hover {
+  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.trends-dash__notice-close {
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  opacity: 0.5;
+  font-size: 11px;
+  padding: 2px 4px;
+  cursor: pointer;
+}
+
+.trends-dash__notice-close:hover {
+  opacity: 1;
+}
+
+.trends-dash__error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 138, 128, 0.24);
+  border-left: 2px solid #ff8a80;
+  background: rgba(255, 138, 128, 0.06);
+  color: #ffc9c2;
+  font-size: 12.5px;
+}
+
+.trends-dash__error button {
+  margin-left: auto;
+  appearance: none;
+  border: 1px solid rgba(255, 138, 128, 0.34);
+  background: transparent;
+  color: inherit;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+/* ── 焦点展示（专辑封面式）────────────────────────────────────────────
+   左：关键词信息（序号 / 大字标题 / 品牌 / 操作 / 上下切换）
+   右：当前款大图（按 3:4 定高，宽度自适应，居中留白）
+   下：胶片条，其余关键词堆在那里 */
+.td-stage {
+  display: grid;
+  /* 左列 = 标题 + 胶片条（竖着排），右列 = 大图。
+     gap 拉大，标题不再贴着大图。 */
+  grid-template-columns: minmax(300px, 470px) minmax(0, 1fr);
+  gap: 72px;
+  align-items: center;
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 4px 0 2px;
+}
+
+.td-stage__left {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  min-width: 0;
+}
+
+.td-stage__info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.td-stage__index {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 序号用极细大字重，像专辑编号而不是标题 */
+.td-stage__num {
+  font-size: 46px;
+  line-height: 1;
+  font-weight: 300;
+  letter-spacing: -0.035em;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.td-stage__sep {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.td-stage__total {
+  font-size: 12.5px;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+.td-stage__new {
+  align-self: flex-start;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  color: #9be6bb;
+  border: 1px solid rgba(155, 230, 187, 0.32);
+  transform: translateY(-6px);
+}
+
+.td-stage__title {
+  margin: 0;
+  font-size: clamp(30px, 3.1vw, 46px);
+  line-height: 1.08;
+  font-weight: 600;
+  letter-spacing: -0.028em;
+  text-transform: capitalize;
+  word-break: break-word;
+}
+
+.td-stage__by {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 18px 0 0;
+  font-size: 11.5px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.td-stage__brand {
+  color: rgba(255, 255, 255, 0.66);
+}
+
+.td-stage__look {
+  color: rgba(255, 255, 255, 0.26);
+}
+
+.td-stage__look::before {
+  content: '·';
+  margin-right: 10px;
+  color: rgba(255, 255, 255, 0.18);
+}
+
+.td-stage__actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+
+.td-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--dash-line);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+.td-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.td-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.td-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
+/* 主操作：浅色实心片，全页唯一的高对比元素 */
+.td-btn--solid {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: transparent;
+  color: #0f1016;
+  font-weight: 600;
+}
+
+.td-btn--solid:hover:not(:disabled) {
+  background: #fff;
+  color: #0f1016;
+  border-color: transparent;
+}
+
+.td-btn.is-done {
+  color: #8fe3b4;
+  border-color: rgba(143, 227, 180, 0.3);
+}
+
+.td-btn.is-error {
+  color: #ff9d94;
+  border-color: rgba(255, 157, 148, 0.3);
+}
+
+.td-btn.is-loading svg {
+  animation: trendsSpin 0.8s linear infinite;
+}
+
+.td-stage__nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.td-nav-btn {
+  appearance: none;
+  width: 34px;
+  height: 34px;
+  padding: 0 0 3px;
+  border-radius: 50%;
+  border: 1px solid var(--dash-line);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 17px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.td-nav-btn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.26);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.td-nav-btn:disabled {
+  opacity: 0.26;
+  cursor: default;
+}
+
+.td-stage__count {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  font-variant-numeric: tabular-nums;
+}
+
+.td-stage__count span {
+  color: rgba(255, 255, 255, 0.24);
+}
+
+/* 大图：按 3:4 定高、宽度自适应 —— 不裁切（源图就是 3:4） */
+.td-stage__frame {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: auto;
+/* 高度按「视口减去上方选择器区+底部来源行(~380px)」算，短窗口也不溢出（64vh 在 760px 高的窗口会溢出） */
+  height: clamp(300px, calc(100vh - 380px), 690px);
+  aspect-ratio: 3 / 4;
+  justify-self: center;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-1);
+  cursor: zoom-in;
+  box-shadow: 0 26px 64px rgba(0, 0, 0, 0.44);
+}
+
+.td-stage__frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* key 变化时重新挂载 → 每次切换都淡入，像翻页 */
+  animation: tdFadeIn 420ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  transition: transform 900ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.td-stage__frame:hover img {
+  transform: scale(1.02);
+}
+
+@keyframes tdFadeIn {
+  from { opacity: 0; transform: scale(1.014); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ── 胶片条 ───────────────────────────────────────────────────────── */
+.td-strip {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  /* 在左列内：宽度跟左列走，超出横向滚动 */
+  width: 100%;
+  margin: 0;
+  padding: 2px 1px 6px;
+  scroll-snap-type: x proximity;
+}
+
+.td-strip::-webkit-scrollbar {
+  height: 0;
+}
+
+.td-thumb {
+  appearance: none;
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  aspect-ratio: 3 / 4;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--surface-1);
+  cursor: pointer;
+  opacity: 0.4;
+  filter: saturate(0.55);
+  scroll-snap-align: center;
+  transition: opacity 220ms ease, filter 220ms ease, transform 220ms ease, box-shadow 220ms ease;
+}
+
+.td-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.td-thumb:hover {
+  opacity: 0.8;
+  filter: none;
+}
+
+/* 当前项：细白描边 + 上浮，不用填充色 */
+.td-thumb.is-active {
+  opacity: 1;
+  filter: none;
+  transform: translateY(-2px);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.85), 0 8px 18px rgba(0, 0, 0, 0.42);
+}
+
+.td-thumb__num {
+  position: absolute;
+  left: 4px;
+  bottom: 3px;
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 键盘可达 */
+.td-btn:focus-visible,
+.td-nav-btn:focus-visible,
+.td-thumb:focus-visible,
+.td-stage__frame:focus-visible {
+  outline: 1.5px solid rgba(var(--dash-accent), 0.7);
+  outline-offset: 2px;
+}
+
+@keyframes trendsSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* 窄窗口：图在上、标题+胶片条在下，仍保持单页展示的节奏 */
+@media (max-width: 900px) {
+  .td-stage {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
+
+  /* order 要作用在列容器上（info 现在装在 __left 里） */
+  .td-stage__left {
+    order: 2;
+  }
+
+  .td-stage__frame {
+    order: 1;
+    height: clamp(260px, 46vh, 460px);
+  }
+
+  .td-stage__num {
+    font-size: 34px;
+  }
+}
+
+.trends-dash__foot {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  padding: 2px 2px 0;
+  /* 与 stage 块同宽，左缘对齐 */
+  width: 100%;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+/* 触摸设备没有 hover，操作按钮不能藏着 */
+@media (hover: none) {
+  .td-thumb { opacity: 0.6; }
+}
+
+@media (max-width: 720px) {
+  .trends-dash { padding: 16px 14px 40px; gap: 18px; }
+  .trends-dash__title { font-size: 24px; }
+  .trends-dash__meta { margin-left: 0; }
+  .td-thumb { width: 54px; }
+}
