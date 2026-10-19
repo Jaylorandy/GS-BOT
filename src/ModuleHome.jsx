@@ -1862,11 +1862,23 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
       if (tab.id === 'bestseller') {
         payload.brand = params.brand || 'newyorker';
         payload.downloadConcurrency = 6;
-        payload.brandLabel = params.brand === 'newyorker' ? 'New Yorker' : (params.brand === 'intersport' ? 'Intersport' : (params.brand || 'Brand'));
+        payload.brandLabel = params.brand === 'newyorker' ? 'New Yorker'
+          : params.brand === 'intersport' ? 'Intersport'
+            : params.brand === 'americaneagle' ? 'American Eagle'
+              : params.brand === 'aerie' ? 'Aerie'
+                : params.brand === 'cos' ? 'COS'
+                  : (params.brand || 'Brand');
         // Consumed by the AI trend report header (see generateBestsellerReport).
         // 'all' is UNIQLO's merged UNISEX/MEN/WOMEN mode — the old binary
         // ternary labelled that run "Men" in the report.
-        payload.genderLabel = params.gender === 'all' ? 'All' : (params.gender === 'female' ? 'Women' : 'Men');
+        //
+        // The gender step is HIDDEN for the single-ranking brands (Free People,
+        // Princess Polly, Aerie), so params.gender is undefined there and the
+        // old ternary fell through to "Men" — mislabelling those runs even
+        // though main.js defaults to `config.gender || 'female'` and wrote a
+        // Women folder. Mirror that backend fallback here.
+        const genderBucket = params.gender || 'female';
+        payload.genderLabel = genderBucket === 'all' ? 'All' : (genderBucket === 'female' ? 'Women' : 'Men');
         // The wizard's browser choice for H&M. Passed through so the run uses
         // exactly what the pre-flight check validated — pickDefault here would
         // otherwise diverge from what the user saw on the check step.
@@ -1877,18 +1889,20 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
         // listing brand. (Before 2026-09-29 these were only sent for Intersport,
         // which silently made the wizard's Product Count / Include Accessories
         // choices no-ops for UNIQLO / H&M / Free People.)
-        if (['intersport', 'uniqlo', 'hm', 'freepeople', 'princesspolly'].includes(params.brand)) {
+        if (['intersport', 'uniqlo', 'hm', 'freepeople', 'princesspolly', 'americaneagle', 'aerie', 'cos'].includes(params.brand)) {
           payload.productCount = Number(params.productCount) || 0;
           payload.includeAccessories = params.includeAccessories === true;
         }
         if (params.brand === 'intersport') {
           payload.intersportCategory = params.intersportCategory || 'funktionsjacken';
         }
-        if (params.brand === 'freepeople' || params.brand === 'princesspolly') {
+        if (params.brand === 'freepeople' || params.brand === 'princesspolly' || params.brand === 'aerie' || params.brand === 'cos') {
           // The wizard hides the gender step for Free People (their list has no
-          // gender split) and for Princess Polly (same — one aggregated
-          // /collections/best-selling ranking); the URL table still needs a
-          // bucket, so default it.
+          // gender split), for Princess Polly (same — one aggregated
+          // /collections/best-selling ranking), for Aerie (a women's line with
+          // one ranked bestsellers category) and for COS (only the women's
+          // ranking is in scope); the URL table still needs a bucket, so
+          // default it. COS would otherwise 403 on a missing gender key.
           payload.gender = params.gender || 'female';
         }
         if (params.brand === 'princesspolly') {
@@ -1972,6 +1986,7 @@ export default function ModuleHome({ tab, iconNode, fabIconNode, onLogToggle, on
           lefties: 'Lefties', mango: 'Mango', reserved: 'Reserved', sinsay: 'Sinsay',
           urbanrevivo: 'Urban Revivo', newyorker: 'New Yorker', hm: 'H&M', uniqlo: 'Uniqlo',
           gu: 'GU', abercrombie: 'Abercrombie', mixed: 'Mixed Brands',
+          aritzia: 'Aritzia', americaneagle: 'American Eagle', aerie: 'Aerie', cos: 'COS',
         };
         setProgressLabel(tx('Running AI analysis…', '正在运行 AI 分析…'));
         setLogs(prev => [...prev, { id: Date.now(), type: 'info', text: tx('🤖 Starting AI trend report analysis…', '🤖 开始 AI 趋势报告分析…') }]);

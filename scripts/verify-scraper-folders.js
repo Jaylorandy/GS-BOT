@@ -51,12 +51,21 @@ const fnToBrand = {
   runBestsellerScraper: 'freepeople',
   runNewYorkerScraper: 'newyorker',
   runAritziaScraper: 'aritzia',
+  runAeScraper: 'americaneagle',
+  runCosScraper: 'cos',
   runScraper: 'zara',
   // runGuScraper delegates to runSingleBrandProductScraper({defaultFolder:'GU'}).
   runSingleBrandProductScraper: 'gu',
 };
 // Scrapers whose Desktop folder comes from an argument rather than a literal.
 const delegatedFolder = { runSingleBrandProductScraper: 'GU' };
+// One implementation serving several brands: its targetDir line is
+// `path.join(app.getPath('desktop'), <var>)` where <var> holds
+// getScraperOutputFolderName(config.brand). That is the strongest form possible —
+// the folder IS the single source of truth — so instead of comparing literals we
+// assert the variable really comes from that function, then check every brand it
+// can serve has a mapping.
+const brandDriven = { runAeScraper: ['americaneagle', 'aerie'] };
 
 function enclosingFunction(index) {
   for (let i = index; i >= 0; i -= 1) {
@@ -73,6 +82,19 @@ lines.forEach((line, index) => {
   if (!/const targetDir\s*=.*app\.getPath\('desktop'\)/.test(line)) return;
   const fn = enclosingFunction(index);
   if (!fn) return;
+  if (brandDriven[fn]) {
+    const varName = (line.match(/path\.join\(app\.getPath\('desktop'\),\s*([A-Za-z0-9_$]+)\)/) || [])[1];
+    if (!varName || !new RegExp(`const ${varName}\\s*=\\s*getScraperOutputFolderName\\(`).test(src)) {
+      problems.push(`${fn}: Desktop fallback should be getScraperOutputFolderName(config.brand)`);
+      return;
+    }
+    for (const brand of brandDriven[fn]) {
+      const expected = table[brand] || fallback.default;
+      if (!expected) { problems.push(`${fn}: brand '${brand}' has no folder mapping`); continue; }
+      checked.push({ fn: `${fn}[${brand}]`, folder: expected, expected });
+    }
+    return;
+  }
   const literal = line.match(/'([^']+)'\s*\)\s*:\s*outputDir/)
     || line.match(/path\.join\(app\.getPath\('desktop'\),\s*'([^']+)'\)/);
   const folder = delegatedFolder[fn] || (literal ? literal[1] : null);
@@ -99,7 +121,7 @@ if (mixedRoot !== table.mixed) {
 const wizardBrands = [
   'zara', 'bershka', 'stradivarius', 'pullandbear', 'lefties', 'mango', 'reserved',
   'sinsay', 'urbanrevivo', 'newyorker', 'hm', 'uniqlo', 'gu', 'abercrombie', 'mixed',
-  'freepeople', 'intersport', 'aritzia',
+  'freepeople', 'intersport', 'aritzia', 'americaneagle', 'aerie', 'cos',
 ];
 for (const brand of wizardBrands) {
   const resolved = table[brand] || fallback.default;

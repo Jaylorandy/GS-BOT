@@ -2120,7 +2120,13 @@ function normalizeScraperBrand(value = '') {
   if (raw === 'freepeople' || raw === 'free people' || raw === 'fp' || raw === 'free-people') return 'freepeople';
   if (raw === 'abercrombie' || raw === 'a&f' || raw === 'anf' || raw === 'abercrombie & fitch' || raw === 'aberchrombie') return 'abercrombie';
   if (raw === 'aritzia') return 'aritzia';
+  if (raw === 'cos' || raw === 'cos us' || raw === 'cos.com') return 'cos';
   if (raw === 'princesspolly' || raw === 'princess polly' || raw === 'pp' || raw === 'princess-polly') return 'princesspolly';
+  if (raw === 'americaneagle' || raw === 'american eagle' || raw === 'american-eagle' || raw === 'american eagle outfitters' || raw === 'aeo' || raw === 'ae') return 'americaneagle';
+  // Aerie is American Eagle's sister line. It is NOT a separate site any more —
+  // its products live on ae.com under /us/en/p/aerie/… — but it needs its own
+  // brand key so the style-index run can write to its own folder.
+  if (raw === 'aerie' || raw === 'aerie us' || raw === 'aerie (us)' || raw === 'american eagle aerie' || raw === 'aer') return 'aerie';
   return '';
 }
 
@@ -2141,7 +2147,10 @@ function getScraperOutputFolderName(brand = '') {
   if (normalizedBrand === 'freepeople') return 'Free People';
   if (normalizedBrand === 'abercrombie') return 'Abercrombie';
   if (normalizedBrand === 'aritzia') return 'Aritzia';
+  if (normalizedBrand === 'cos') return 'COS';
   if (normalizedBrand === 'princesspolly') return 'Princess Polly';
+  if (normalizedBrand === 'americaneagle') return 'American Eagle';
+  if (normalizedBrand === 'aerie') return 'Aerie';
   if (normalizedBrand === 'mixed') return 'Mixed Brands';
   return 'Zara';
 }
@@ -18657,6 +18666,471 @@ async function fetchAritziaImageViaBrowser(client, frameId, url) {
   return buffer;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// American Eagle (ae.com)
+//   • 款号索引 (style index): search page → primary-colour PDP → The Details
+//   • 热门款式 (bestseller):   category listing JSON → PDP details
+//
+// Measured 2026-10-16 (probe1–probe4, all four green):
+//   • Akamai only blocks bare curl (403); a real Chrome passes.
+//   • Product id = `2171_5373_318` (style `2171-5373`, colour `318`).
+//   • `/us/en/s/<style>` only renders the matching tile in HEADED mode — a
+//     headless run returned nothing but a footer banner tile. Never headless.
+//     The grid lists EVERY colourway of the style and each tile's href carries
+//     a query (`…/2171_5373_318?menu=cat4840004`), so the id must be matched
+//     against the query-stripped href. The first tile is the store's lead
+//     colour — the one the PDP opens on (318 for the test style).
+//   • The ranked category listing is served by
+//       /ugp-api/browse/v1/category/<handle>?offset=N     (products in `included[]`)
+//     A DIRECT fetch of that URL 401s (`apicg.token.invalid`), so the page's
+//     own XHR has to be intercepted instead. The payload already carries name,
+//     price, colour and gallery — no PDP needed for those.
+//   • Gallery images are Scene7 (`s7d2.scene7.com/is/image/aeo/<pid>_<view>`).
+//     Dropping the `$preset$` and adding `?scl=1&fmt=jpeg` returns the ORIGINAL
+//     1910×2449 file (verified for of/ob/f/os/d2). Node fetches Scene7 directly
+//     — unlike Aritzia, no browser-side CDP fetch is required.
+//   • Description + composition live in the COLLAPSED "The Details" accordion
+//     and its body is empty until clicked:
+//       Featuring a soft, brushed exterior …        ← description
+//       Soft thermal fabric with brushed exterior
+//       Crew neck / Long sleeves with ribbed cuffs
+//       Style: 2171-5373 | Color: 318               ← style + colour
+//       Materials & Care
+//       60% Cotton, 40% Recycled Polyester          ← composition
+//       Machine wash / Imported
+//
+// Colourways (probe5 + a byte-level Scene7 matrix, 2026-10-16):
+//   • A ranked tile carries exactly ONE colourway (`colorSwatches` holds a
+//     single entry), so the ranking is never a multi-colour source.
+//   • The PDP colour board mixes this style with look-alike styles: 14
+//     swatches on 2171_5373, of which only 8 share both leading pid segments.
+//     Filter by that prefix or you scrape another garment's colours.
+//   • Clicking a swatch re-renders the page and the gallery becomes THAT
+//     colour's — and its view list is colour-specific:
+//       318 → of,ob,f,os,d2   976 → of,ob,f,os   410 → of,ob,f,os,d1,d2
+//       001 → f only
+//   • A view that does not exist does NOT 404: Scene7 answers 200 with a
+//     1039×1333 / 36 KB placeholder. Reusing one colour's view list for
+//     another therefore writes fake photos to disk — always ask the page.
+// ════════════════════════════════════════════════════════════════════════════
+
+const AE_HOME_URL = 'https://www.ae.com';
+const AE_LISTING_API_RE = /\/ugp-api\/browse\/v1\/category\//i;
+// The rankings are live (women's ~58 / men's ~68 at probe time); 200 is a
+// generous ceiling so an unbounded "All" run is still capped.
+const AE_BESTSELLER_MAX = 200;
+// `_s` is the 30×30 colour swatch. Every other view is a real gallery shot.
+const AE_SWATCH_VIEW_RE = /^(?:s|sw|swatch)$/i;
+
+function getAeSessionDir(executablePath = null) {
+  return resolveVersionedSessionDir('ae-browser-session', executablePath);
+}
+
+// `2171-5373` / `21715373` / `2171_5373_318` → the parts we need.
+// AE style numbers are 4+4 digits; the third group is the colourway.
+function normalizeAeStyleReference(reference = '') {
+  const raw = String(reference || '').replace(/\u00a0/g, ' ').trim();
+  const pid = raw.match(/(\d{4})[_\-](\d{4})[_\-](\d{3,4})/);
+  if (pid) {
+    return { input: raw, prefix: `${pid[1]}_${pid[2]}`, styleNumber: `${pid[1]}-${pid[2]}`, colorCode: pid[3] };
+  }
+  const digits = raw.replace(/\D/g, '');
+  if (digits.length === 8) {
+    return { input: raw, prefix: `${digits.slice(0, 4)}_${digits.slice(4)}`, styleNumber: `${digits.slice(0, 4)}-${digits.slice(4)}`, colorCode: '' };
+  }
+  if (digits.length === 11) {
+    return { input: raw, prefix: `${digits.slice(0, 4)}_${digits.slice(4, 8)}`, styleNumber: `${digits.slice(0, 4)}-${digits.slice(4, 8)}`, colorCode: digits.slice(8) };
+  }
+  return { input: raw, prefix: '', styleNumber: raw, colorCode: '' };
+}
+
+// Scene7 gets us the original file: `?scl=1&fmt=jpeg` was measured at
+// 1910×2449 for every non-swatch view of the test style.
+function buildAeOriginalImageUrl(pid, view) {
+  return `https://s7d2.scene7.com/is/image/aeo/${pid}_${view}?scl=1&fmt=jpeg`;
+}
+
+// Both sources are normalised back to the original: the listing hands back
+// preset-less URLs (`//…/1313_5764_413_of`), the PDP preset-loaded ones
+// (`//…/2171_5373_318_of?$pdp-md-opt$&fmt=jpeg`). Anything that is not an AE
+// Scene7 asset returns '' so callers can filter it out.
+function normalizeAeImageUrl(url = '') {
+  let u = String(url || '').trim();
+  if (!u) return '';
+  if (u.startsWith('//')) u = `https:${u}`;
+  const stripped = u.split('?')[0];
+  const m = stripped.match(/\/is\/image\/aeo\/(\d{4}_\d{4}_\d{3,4})_([A-Za-z0-9]+?)(?:\.(?:jpe?g|png|webp))?$/i);
+  if (!m) return '';
+  return { pid: m[1], view: m[2], url: buildAeOriginalImageUrl(m[1], m[2]) };
+}
+
+// Parse the expanded "The Details" panel. Measured layout (probe4):
+//   <description, possibly several lines / bullets>
+//   Style: 2171-5373 | Color: 318
+//   Materials & Care
+//   60% Cotton, 40% Recycled Polyester
+//   Machine wash / Imported
+// Everything before the `Style:` line is the description; the composition is
+// the `…%` line(s) immediately after `Materials & Care` — the care lines that
+// follow must not leak into it.
+function parseAeDetailsBlock(bodyText = '') {
+  const lines = String(bodyText || '')
+    .replace(/\r/g, '')
+    .split('\n')
+    .map((line) => line.replace(/\s+/g, ' ').trim());
+
+  const styleIdx = lines.findIndex((line) => /^style\s*[:：]/i.test(line));
+  const materialsIdx = lines.findIndex((line) => /^materials?\s*(?:&|and)?\s*care/i.test(line));
+  const descEnd = styleIdx >= 0 ? styleIdx : (materialsIdx >= 0 ? materialsIdx : lines.length);
+  const description = lines.slice(0, descEnd).filter(Boolean).join('\n');
+
+  let composition = '';
+  if (materialsIdx >= 0) {
+    const parts = [];
+    for (const line of lines.slice(materialsIdx + 1)) {
+      if (!line) continue;
+      if (/%/.test(line) && /^\d/.test(line)) { parts.push(line); continue; }
+      if (parts.length) break; // care instructions begin here
+    }
+    composition = parts.join(', ');
+  }
+
+  const colorMatch = (styleIdx >= 0 ? lines[styleIdx] : '').match(/color\s*[:：]\s*([A-Za-z0-9_\-/ ]+)/i);
+  return { description, composition, colorFromDetail: colorMatch ? colorMatch[1].trim() : '' };
+}
+
+// Expand "The Details" (IDEMPOTENT — clicking an already-open panel would shut
+// it again). While collapsed the body exists but is empty and lacks
+// `collapsible-if-expanded_*`; once open that class appears, so the class is
+// the reliable read (aria-expanded is absent on this accordion, per probe4).
+//
+// The click MUST be verified. Measured on aerie (2026-10-16): arriving from the
+// search page, the accordion is server-rendered before React hydrates, so a
+// click on the not-yet-live node fires nothing at all — the panel stayed
+// `collapsible-if_TA3Qv` with an empty body while this helper happily returned
+// true, and the caller wrote an empty description/composition for a product
+// that has both. Same helper called a moment later opened the panel on the
+// first try. So: click → wait for the panel to actually open → retry, and
+// report the real state instead of assuming success.
+async function expandAeDetailsPanel(page, emitLog, ensureActive) {
+  const panelState = () => page.evaluate(() => {
+    for (const el of document.querySelectorAll('[class*=accordion-item]')) {
+      const headerEl = el.querySelector('[class*=accordion-header],button');
+      const header = String((headerEl && headerEl.innerText) || '').replace(/\s+/g, ' ').trim();
+      if (!/^the details$/i.test(header)) continue;
+      const body = el.querySelector('[class*=accordion-item-body]');
+      return {
+        found: true,
+        open: /expanded/i.test(String((body && body.className) || ''))
+          || String((body && body.innerText) || '').trim().length > 0,
+        header,
+      };
+    }
+    return { found: false, open: false, header: '' };
+  }).catch(() => ({ found: false, open: false, header: '' }));
+
+  let state = await panelState();
+  if (!state.found) return false;
+  if (state.open) return true;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    ensureActive();
+    await antiDetection.clickInPage(page, () => {
+      const out = [];
+      for (const el of document.querySelectorAll('button,[role=button],summary,div[class*=accordion-header],h2,h3')) {
+        const t = String(el.textContent || '').replace(/\s+/g, ' ').trim();
+        if (/^the details$/i.test(t) || /^details$/i.test(t)) out.push(el);
+      }
+      return out;
+    });
+
+    const opened = await page.waitForFunction(() => {
+      for (const el of document.querySelectorAll('[class*=accordion-item]')) {
+        const headerEl = el.querySelector('[class*=accordion-header],button');
+        const header = String((headerEl && headerEl.innerText) || '').replace(/\s+/g, ' ').trim();
+        if (!/^the details$/i.test(header)) continue;
+        const body = el.querySelector('[class*=accordion-item-body]');
+        return /expanded/i.test(String((body && body.className) || ''))
+          || String((body && body.innerText) || '').trim().length > 0;
+      }
+      return false;
+    }, { timeout: 6000, polling: 300 }).then(() => true).catch(() => false);
+
+    if (opened) return true;
+    await antiDetection.randomDelay(700, 1400);
+  }
+
+  state = await panelState();
+  emitLog?.(`    ⚠️ "The Details" panel did not open after 3 attempts — its text cannot be read.`, 'warning');
+  return state.open;
+}
+
+// Style number → the product's PRIMARY colourway.
+//
+// The search page is client-rendered, so the tiles are awaited rather than
+// read immediately. Only anchors whose href ENDS with `/<style>_<colour>` are
+// accepted: the page also carries footer/recommendation banners with unrelated
+// ids (probe4 saw `0437_6438_992` on the 2171-5373 page), and a prefix match
+// alone would have picked one of those. The first surviving tile is the
+// primary colour — AE orders the grid with the flagship colourway first
+// (probe4: both matching tiles were colour 318). When the user typed a full
+// product id, that exact colourway wins instead.
+async function resolveAeProductByStyle(page, reference, emitLog, ensureActive) {
+  const ref = normalizeAeStyleReference(reference);
+  if (!ref.prefix) throw new Error(`Unrecognised American Eagle / Aerie style reference: "${reference}"`);
+
+  const searchUrl = `${AE_HOME_URL}/us/en/s/${encodeURIComponent(ref.styleNumber)}`;
+  emitLog(`    🔍 Searching AE for ${ref.styleNumber}…`, 'info');
+  await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await dismissCookieBanners(page, { waitMs: 8000 }).catch(() => {});
+  await antiDetection.randomDelay(2200, 3600);
+  ensureActive();
+
+  await page.waitForFunction(
+    (prefix) => [...document.querySelectorAll('a[href*="/us/en/p/"]')]
+      .some((a) => (a.getAttribute('href') || '').includes(`/${prefix}_`)),
+    { timeout: 30000, polling: 500 },
+    ref.prefix,
+  ).catch(() => null);
+  ensureActive();
+
+  const tiles = await page.evaluate((prefix) => {
+    const re = new RegExp(`/${prefix}_([0-9]{3,4})$`);
+    const out = [];
+    const seen = new Set();
+    for (const a of document.querySelectorAll('a[href*="/us/en/p/"]')) {
+      // Search tiles carry a query (`…/2171_5373_318?menu=cat4840004`), so the
+      // anchor has to be stripped before the id can be matched at the END —
+      // matching the raw href found nothing at all (measured 2026-10-16).
+      const href = String(a.getAttribute('href') || '').split('?')[0].split('#')[0];
+      const m = href.match(re);
+      if (!m || seen.has(m[1])) continue;
+      seen.add(m[1]);
+      out.push({ colorCode: m[1], href });
+    }
+    return out;
+  }, ref.prefix).catch(() => []);
+
+  // The grid lists every colourway of the style (318, 976, 131 …); the first
+  // tile is the colourway the store leads with, which is also the one its PDP
+  // opens on (verified twice: probe4 and probe5 both landed on 318).
+  const chosen = (ref.colorCode ? tiles.find((t) => t.colorCode === ref.colorCode) : null) || tiles[0];
+  if (!chosen) {
+    throw new Error(`No American Eagle / Aerie product matched style ${ref.styleNumber} (searched ${searchUrl}).`);
+  }
+
+  const url = chosen.href.startsWith('http') ? chosen.href : `${AE_HOME_URL}${chosen.href}`;
+  return {
+    styleNumber: ref.styleNumber,
+    productId: `${ref.prefix}_${chosen.colorCode}`,
+    colorCode: chosen.colorCode,
+    url,
+    searchUrl,
+  };
+}
+
+// Gallery views that genuinely belong to `pid`, in the order the page lists
+// them. Anything from another product (recommendation rails, the colour board)
+// is dropped, as is the 30×30 swatch view.
+function aeViewsFromImageUrls(urls = [], pid = '') {
+  const views = [];
+  const seen = new Set();
+  for (const raw of urls) {
+    const norm = normalizeAeImageUrl(raw);
+    if (!norm || norm.pid !== pid) continue;
+    if (AE_SWATCH_VIEW_RE.test(norm.view)) continue;
+    if (seen.has(norm.view)) continue;
+    seen.add(norm.view);
+    views.push(norm.view);
+  }
+  return views;
+}
+
+// The colour board mixes THIS style with look-alike styles: probe5 found 14
+// swatches on 2171_5373, of which only 8 shared both leading pid segments
+// (`2171_5489`, `2171_5404`, `2171_5372` belong to other garments). Only the
+// matching ones are real colourways. `title` carries the colour name
+// ("Cobalt", "Black"…), and the open swatch carries `active` in its class.
+async function collectAeSwatchColours(page, stylePrefix, emitLog) {
+  const list = await page.evaluate((prefix) => {
+    const out = [];
+    const seen = new Set();
+    for (const el of document.querySelectorAll('[class*=swatch] img,[class*=colour] img,[class*=color] img,[data-color]')) {
+      const src = el.getAttribute('src') || el.getAttribute('data-src') || '';
+      const m = String(src).split('?')[0].match(/\/is\/image\/aeo\/(\d{4}_\d{4}_(\d{3,4}))_s$/);
+      if (!m || m[1].slice(0, 9) !== prefix) continue;
+      const code = m[2];
+      if (seen.has(code)) continue;
+      seen.add(code);
+      const holder = el.closest('button,a,[role=button],[role=radio],li,label,div[class*=swatch]') || el.parentElement;
+      out.push({
+        code,
+        name: String(el.getAttribute('title') || el.getAttribute('alt') || el.getAttribute('aria-label') || '').trim(),
+        active: /active|selected|current/i.test(String((holder && holder.className) || '')),
+      });
+    }
+    return out;
+  }, stylePrefix).catch(() => []);
+
+  if (!list.length) {
+    emitLog(`    ℹ️ ${stylePrefix}: the colour board exposed no swatch for this style.`, 'info');
+  }
+  return list;
+}
+
+// Click a colour swatch and read the gallery THAT colour actually has.
+//
+// This is not cosmetic: the primary colour's view list must never be reused for
+// another colourway. Measured 2026-10-16 (probe5 + a byte-level matrix):
+//   318 → of,ob,f,os,d2   976 → of,ob,f,os   410 → of,ob,f,os,d1,d2   001 → f ONLY
+// and every missing view does NOT 404 — Scene7 answers 200 with a 1039×1333
+// 36 KB placeholder, which would land on disk as a fake product photo. Asking
+// the page itself is the only trustworthy source.
+async function switchAeColourway(page, targetPid, emitLog, ensureActive) {
+  const clicked = await page.evaluate((pid) => {
+    for (const el of document.querySelectorAll('[class*=swatch] img,[class*=colour] img,[class*=color] img,[data-color]')) {
+      const src = el.getAttribute('src') || el.getAttribute('data-src') || '';
+      if (!String(src).includes(`${pid}_s`)) continue;
+      const holder = el.closest('button,a,[role=button],[role=radio],li,label,div[class*=swatch]') || el;
+      try { holder.click(); return true; } catch { return false; }
+    }
+    return false;
+  }, targetPid).catch(() => false);
+
+  if (!clicked) throw new Error(`the colour swatch for ${targetPid} is not on the page`);
+
+  await page.waitForFunction(
+    (pid) => [...document.querySelectorAll('img')].some((img) => String(img.getAttribute('src') || '').includes(pid)),
+    { timeout: 20000, polling: 400 },
+    targetPid,
+  ).catch(() => null);
+  await antiDetection.randomDelay(700, 1300);
+  ensureActive();
+
+  const urls = await page.evaluate(() => {
+    const out = [];
+    for (const img of document.querySelectorAll('img')) {
+      if (img.closest('[class*=swatch]')) continue;
+      out.push(img.getAttribute('src'));
+      out.push(img.getAttribute('data-src'));
+      for (const part of String(img.getAttribute('srcset') || '').split(',')) out.push(part.trim().split(' ')[0]);
+    }
+    return out.filter(Boolean);
+  }).catch(() => []);
+
+  const views = aeViewsFromImageUrls(urls, targetPid);
+  if (!views.length) throw new Error(`the gallery never switched to ${targetPid}`);
+  return views;
+}
+
+// Open the PDP and read everything that is NOT in the listing payload:
+// description, composition, product name, price and the gallery.
+//
+// options.allColors expands the colour board into one entry per colourway.
+// Every colourway is read off the page AFTER its swatch is clicked, so its
+// `views` are the ones that colour really has.
+async function scrapeAeProductDetail(page, resolved, emitLog, ensureActive, options = {}) {
+  const pid = String(resolved?.productId || '').trim();
+  if (!resolved?.url) throw new Error('no product URL');
+  if (!pid) throw new Error('no product id');
+
+  await page.goto(resolved.url, { waitUntil: 'domcontentloaded', timeout: 90000 });
+  await dismissCookieBanners(page, { waitMs: 8000 }).catch(() => {});
+  await antiDetection.randomDelay(1400, 2400);
+  ensureActive();
+
+  const expanded = await expandAeDetailsPanel(page, emitLog, ensureActive);
+  if (!expanded) emitLog(`    ℹ️ ${pid}: no "The Details" panel on this page.`, 'info');
+
+  const dom = await page.evaluate(() => {
+    let detailText = '';
+    for (const el of document.querySelectorAll('[class*=accordion-item]')) {
+      const headerEl = el.querySelector('[class*=accordion-header],button');
+      const header = String((headerEl && headerEl.innerText) || '').replace(/\s+/g, ' ').trim();
+      if (!/^the details$/i.test(header)) continue;
+      const body = el.querySelector('[class*=accordion-item-body]');
+      detailText = String((body && body.innerText) || '');
+      break;
+    }
+
+    const h1 = document.querySelector('h1');
+    const metaPrice = document.querySelector('meta[property="og:price:amount"],[itemprop="price"]');
+    const priceEl = document.querySelector('[class*=product-price],[class*=price]');
+    const priceMatch = String((priceEl && priceEl.innerText) || '').match(/\$\s?\d+(?:\.\d{2})?/);
+
+    const urls = [];
+    const pushUrl = (u) => { if (u && /\/is\/image\/aeo\//.test(u)) urls.push(u); };
+    for (const img of document.querySelectorAll('img')) {
+      // Swatch thumbnails are 30×30 and must never become a deck image.
+      const inSwatch = !!img.closest('[class*=swatch]');
+      if (inSwatch) continue;
+      pushUrl(img.getAttribute('src'));
+      pushUrl(img.getAttribute('data-src'));
+      for (const part of String(img.getAttribute('srcset') || '').split(',')) pushUrl(part.trim().split(' ')[0]);
+    }
+    return {
+      title: h1 ? String(h1.innerText || '').trim() : '',
+      detailText,
+      price: metaPrice
+        ? String(metaPrice.getAttribute('content') || '').trim()
+        : (priceMatch ? priceMatch[0].replace(/\s+/g, '') : ''),
+      imageUrls: urls,
+    };
+  });
+
+  const parsed = parseAeDetailsBlock(dom.detailText);
+
+  // This product's own gallery, in DOM order (= the PDP's own thumbnail
+  // order), de-duplicated, swatches and other products dropped.
+  const views = aeViewsFromImageUrls(dom.imageUrls, pid);
+  const stylePrefix = pid.slice(0, 9);
+  const primaryCode = pid.slice(10);
+
+  const buildColourway = (code, name, colourViews) => ({
+    code,
+    name: name || '',
+    views: colourViews,
+    imageUrls: colourViews.map((v) => buildAeOriginalImageUrl(`${stylePrefix}_${code}`, v)),
+  });
+
+  const colourways = [buildColourway(primaryCode, '', views)];
+
+  if (options.allColors) {
+    // Read the details panel BEFORE switching colours: clicking a swatch
+    // re-renders the page and collapses it again (hence `parsed` above).
+    const swatches = await collectAeSwatchColours(page, stylePrefix, emitLog);
+    const others = swatches.filter((s) => s.code !== primaryCode);
+    emitLog(`    🎨 ${pid}: ${others.length + 1} colourway(s) — ${swatches.length} swatch(es) belong to this style.`, 'info');
+    for (const sw of others) {
+      ensureActive();
+      const targetPid = `${stylePrefix}_${sw.code}`;
+      try {
+        const colourViews = await switchAeColourway(page, targetPid, emitLog, ensureActive);
+        colourways.push(buildColourway(sw.code, sw.name, colourViews));
+        emitLog(`      🎨 ${targetPid}${sw.name ? ` (${sw.name})` : ''}: ${colourViews.length} image(s) — ${colourViews.join(',')}`, 'info');
+      } catch (error) {
+        if (isCancellationError(error)) throw error;
+        // Never silently keep the previous colour's images as if they were
+        // this colour's: a skipped colourway is honest, a duplicated one is not.
+        emitLog(`      ⚠️ ${targetPid}${sw.name ? ` (${sw.name})` : ''}: colourway could not be read (${error.message}); skipped.`, 'warning');
+      }
+    }
+  }
+
+  return {
+    name: dom.title,
+    price: dom.price,
+    description: parsed.description,
+    composition: parsed.composition,
+    colorFromDetail: parsed.colorFromDetail,
+    styleNumber: `${stylePrefix.slice(0, 4)}-${stylePrefix.slice(5, 9)}`,
+    stylePrefix,
+    views,
+    imageUrls: views.map((v) => buildAeOriginalImageUrl(pid, v)),
+    colourways,
+  };
+}
+
 async function runAritziaScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
   let { styleNumbers, excelPath, outputDir } = config;
   styleNumbers = normalizeManualStyleNumbers(styleNumbers);
@@ -18874,6 +19348,701 @@ async function runAritziaScraper(config, emitLog, emitProgress, taskController, 
   }
 }
 
+// ── American Eagle: the style-index scraper (款号索引) ──────────────────────
+// Every input style resolves to its PRIMARY colourway (see
+// resolveAeProductByStyle), and that one PDP supplies the gallery, the
+// description and the composition. Layout mirrors the other brands:
+//   <output>/<style>_<colour>/<style>_<colour>_<label>.jpg  + _info.json
+//   <output>/summary.json   <output>/failed_styles.json
+async function runAeScraper(config, emitLog, emitProgress, taskController, previewBridge = null) {
+  let { styleNumbers, excelPath, outputDir } = config;
+  styleNumbers = normalizeManualStyleNumbers(styleNumbers);
+  const ensureActive = () => taskController?.throwIfCancelled?.();
+  // American Eagle and Aerie run through this one implementation. They are not
+  // two sites: aerie products live on ae.com under /us/en/p/aerie/…, use the
+  // same Scene7 assets (`/is/image/aeo/…`), the same `<style>_<colour>` ids and
+  // the same "The Details" accordion — verified against 0743-4162 on 2026-10-16.
+  // Only the label and the Desktop folder differ, and both come from the single
+  // source of truth so they cannot drift apart.
+  const brandLabel = getScraperOutputFolderName(config?.brand);
+  let browser = null;
+
+  if (excelPath) {
+    try {
+      emitLog(`Reading Excel file: ${excelPath}`, 'info');
+      const wb = XLSX.readFile(excelPath);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      styleNumbers = [];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:B1');
+      for (let row = 1; row <= range.e.r; row += 1) {
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: 1 })];
+        if (cell) {
+          const v = String(cell.w ?? cell.v ?? '').trim();
+          if (v) styleNumbers.push(v);
+        }
+      }
+      emitLog(`Loaded ${styleNumbers.length} ${brandLabel} style numbers from Excel.`, 'success');
+    } catch (error) {
+      throw new Error(`Excel parse failed: ${error.message}`);
+    }
+  }
+
+  ensureActive();
+  if (!styleNumbers || styleNumbers.length === 0) throw new Error(`No ${brandLabel} style numbers provided.`);
+
+  const targetDir = !outputDir || outputDir === '未选择' ? path.join(app.getPath('desktop'), brandLabel) : outputDir;
+  fs.mkdirSync(targetDir, { recursive: true });
+  emitLog(`📁 Output directory: ${targetDir}`, 'info');
+  emitLog(`🌐 Launching the ${brandLabel} scraper session...`, 'info');
+
+  const executablePath = resolveScraperBrowserExecutable(config?.scraperBrowser);
+  if (!executablePath) throw new Error(describeMissingBrowserError());
+
+  try {
+    browser = await puppeteer.launch({
+      executablePath,
+      // Headed on purpose: the search grid does not render in headless mode
+      // (probe2/3 got a lone footer banner tile, probe4 headed got the product).
+      headless: false,
+      userDataDir: getAeSessionDir(executablePath),
+      args: antiDetection.getRetailLaunchArgs(),
+      ignoreDefaultArgs: ['--enable-automation'],
+      defaultViewport: null,
+    });
+    previewBridge?.attachToBrowser(browser);
+    taskController?.onCancel(() => { if (browser && browser.isConnected()) browser.close().catch(() => {}); });
+
+    const page = await browser.newPage();
+    await antiDetection.applyRetailBrowsingProfile(page);
+    await page.setViewport(antiDetection.getRandomViewport());
+    await page.bringToFront().catch(() => {});
+
+    // Warm the session on the homepage: this is where Akamai mints the cookie,
+    // so the first style does not pay for it.
+    await page.goto(AE_HOME_URL, { waitUntil: 'domcontentloaded', timeout: 90000 }).catch(() => null);
+    await antiDetection.randomDelay(1800, 3000);
+    await dismissCookieBanners(page, { waitMs: 6000 }).catch(() => {});
+
+    const products = [];
+    const total = styleNumbers.length;
+    emitLog(`🚀 ${brandLabel}: ${total} style number(s) — site search → product page → The Details`, 'warning');
+    emitProgress(5);
+
+    for (let i = 0; i < total; i += 1) {
+      ensureActive();
+      const ref = styleNumbers[i];
+      emitLog(`🔄 Processing ${brandLabel} ${i + 1}/${total}: ${ref}`, 'warning');
+      try {
+        const resolved = await resolveAeProductByStyle(page, ref, emitLog, ensureActive);
+        emitLog(`    🎯 ${resolved.styleNumber} → ${resolved.productId} (colour ${resolved.colorCode})`, 'info');
+        const detail = await scrapeAeProductDetail(page, resolved, emitLog, ensureActive);
+        if (!detail.imageUrls.length) {
+          emitLog(`    ⚠️ ${resolved.productId}: no gallery image matched this product id.`, 'warning');
+        }
+        if (!detail.description && !detail.composition) {
+          emitLog(`    ⚠️ ${resolved.productId}: "The Details" panel came back empty — description and composition are missing.`, 'warning');
+        }
+        products.push({
+          styleNumber: resolved.styleNumber,
+          productId: resolved.productId,
+          brand: brandLabel,
+          name: detail.name,
+          price: detail.price,
+          colorRef: resolved.colorCode,
+          url: resolved.url,
+          imageUrls: detail.imageUrls,
+          views: detail.views,
+          description: detail.description,
+          composition: detail.composition
+            ? { outerShell: null, lining: null, other: detail.composition }
+            : null,
+        });
+      } catch (error) {
+        if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
+        emitLog(`    ⚠️ ${brandLabel} ${ref} failed: ${error.message}`, 'warning');
+        products.push({ styleNumber: ref, productId: ref, brand: brandLabel, url: '', error: error.message, imageUrls: [] });
+      }
+      emitProgress(5 + Math.round(((i + 1) / total) * 45));
+      if (i < total - 1) await antiDetection.randomDelay(1200, 2200);
+    }
+
+    emitProgress(50);
+    const success = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
+    const failed = products.filter((p) => !success.includes(p));
+    emitLog(`📊 ${brandLabel} summary: ${success.length} style(s) succeeded, ${failed.length} failed.`, 'info');
+    failed.forEach((p) => emitLog(`    ❌ ${p.styleNumber} - ${p.error || 'No product images found'}`, 'error'));
+
+    let totalImages = 0;
+    let savedImages = 0;
+    let doneStyles = 0;
+    for (const product of success) {
+      ensureActive();
+      const cleanSku = sanitizeFileSegment(String(product.productId || product.styleNumber).replace(/[./]/g, '-'), 'ae-item');
+      const styleDir = path.join(targetDir, cleanSku);
+      fs.mkdirSync(styleDir, { recursive: true });
+
+      // Same F / B / NN labelling the other brands use, so the deck's
+      // F,B,S,D suffix ordering keeps working on AE output. Which AE view
+      // (`of` / `ob` / `f` / `d2` …) each label came from is preserved in
+      // _info.json under `views`.
+      const classified = buildNewYorkerImageMap(product.imageUrls);
+      const viewByUrl = new Map((product.imageUrls || []).map((u, idx) => [u, (product.views || [])[idx] || '']));
+      const savedMap = {};
+      const savedViews = {};
+      for (const [label, imgUrl] of Object.entries(classified)) {
+        ensureActive();
+        totalImages += 1;
+        const filename = `${cleanSku}_${label}.jpg`;
+        const filePath = path.join(styleDir, filename);
+        try {
+          const size = await downloadFile(imgUrl, filePath, {
+            headers: { Referer: product.url || `${AE_HOME_URL}/`, 'User-Agent': 'Mozilla/5.0' },
+            timeoutMs: 60000,
+          });
+          savedMap[label] = imgUrl;
+          savedViews[label] = viewByUrl.get(imgUrl) || '';
+          savedImages += 1;
+          emitLog(`    ⬇️ [saved] ${filename} (${Number(size || 0).toFixed(1)} KB)`);
+        } catch (error) {
+          emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error');
+        }
+        await antiDetection.randomDelay(120, 320);
+      }
+
+      const infoData = {
+        styleNumber: product.styleNumber,
+        productId: product.productId,
+        brand: brandLabel,
+        name: product.name,
+        price: product.price,
+        colorRef: product.colorRef || '',
+        description: product.description || '',
+        composition: product.composition || null,
+        url: product.url,
+        images: savedMap,
+        views: savedViews,
+      };
+      fs.writeFileSync(path.join(styleDir, `${cleanSku}_info.json`), JSON.stringify(infoData, null, 2), 'utf-8');
+      emitLog(`📄 Saved product metadata: ${cleanSku}_info.json`, 'success');
+
+      if (!Object.keys(savedMap).length) {
+        // Nothing landed on disk: report a failure rather than leaving an empty
+        // folder behind that looks like a success.
+        product.error = 'No image could be downloaded';
+        product.imageUrls = [];
+      }
+      doneStyles += 1;
+      emitProgress(50 + Math.round((doneStyles / Math.max(success.length, 1)) * 50));
+    }
+
+    emitProgress(100);
+    emitLog(`📦 ${brandLabel} images: ${savedImages}/${totalImages} downloaded.`, 'info');
+    const finalSuccess = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
+    const finalFailed = products.filter((p) => !finalSuccess.includes(p));
+    fs.writeFileSync(path.join(targetDir, 'summary.json'), JSON.stringify(products.map((p) => ({
+      styleNumber: p.styleNumber,
+      productId: p.productId,
+      brand: brandLabel,
+      name: p.name,
+      price: p.price,
+      colorRef: p.colorRef || '',
+      description: p.description || '',
+      composition: p.composition || null,
+      images: p.imageUrls?.length || 0,
+      error: p.error || null,
+    })), null, 2), 'utf-8');
+    emitLog('📊 Saved summary.json', 'success');
+    if (finalFailed.length) {
+      fs.writeFileSync(path.join(targetDir, 'failed_styles.json'), JSON.stringify(finalFailed.map((p) => ({ styleNumber: p.styleNumber, error: p.error || 'No product images found' })), null, 2), 'utf-8');
+      emitLog('📄 Saved failed_styles.json', 'success');
+    }
+    emitLog(`🎉 ${brandLabel} scraping finished. Files saved to: ${targetDir}`, 'success');
+  } finally {
+    if (browser && browser.isConnected()) await browser.close().catch(() => {});
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// COS (cos.com) — Next.js SSR storefront.
+//
+// VERIFIED 2026-10-19 (see 踩坑日志.md for the full probe log):
+//   • The ranked listing is plain server-rendered HTML; `__NEXT_DATA__` carries
+//     every tile. NO browser needed, and the DESKTOP user-agent is the one that
+//     works — the mobile UA gets a 2.7 KB shell (that is backwards from the PDP,
+//     which only answers the mobile UA).
+//   • Pagination is asymmetric: women has 45 entries (page 1 = 40, page 2 = 5,
+//     page >= 3 re-serves page 2 under the SAME `rid`), men has 642 (real 40/page).
+//     So the loop must de-duplicate by sku AND stop when a page adds nothing —
+//     computing ceil(total/40) would double-count the women's tail.
+//   • A product page URL is `/{locale}/{categoryUri}/product/{uri}` — `uri` is
+//     only the slug. Joining `{HOME}/{locale}/{uri}` 404s (cost me a wasted probe).
+//   • Description + composition live in `product.details`:
+//       details.longDescription        → the "Details & description" panel (HTML)
+//       details.materialComposition[]  → { type: 'Shell'|'Lining', materials:[{material, percentage}] }
+//     They are ALSO in the collapsed accordion on screen, but the payload already
+//     has the full text — clicking that panel would be pointless work.
+//   • The listing's `sustainabilityComposition` is NOT the composition: it is
+//     populated on roughly half the styles and names only the eco-certified
+//     fibres. Composition therefore REQUIRES the product page.
+//
+// GUARD: Akamai serves a behavioural interstitial as **HTTP 200 + ~2.7 KB**
+//   (<div id="sec-if-cpt-container"> … scf-akamai-protected-by). Never judge
+//   success by status alone. PDP traffic is thus best-effort: each style gets a
+//   few attempts with growing back-off, and a style that never gets through is
+//   still kept (images always come from the listing) while its missing
+//   description/composition is recorded in failed_styles.json.
+// ════════════════════════════════════════════════════════════════════════════
+
+const COS_HOME_URL = 'https://www.cos.com';
+const COS_LISTING_URLS = {
+  female: `${COS_HOME_URL}/en-us/women/most-popular`,
+  male: `${COS_HOME_URL}/en-us/men/most-popular`,
+};
+// The listing only answers a desktop UA; product pages only answer a mobile one.
+const COS_LISTING_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+const COS_PDP_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
+// Women's ranking is 45 entries; men's is 642. Both are capped so a runaway
+// listing can never turn into an unbounded download.
+const COS_RANKING_MAX = 60;
+
+// Akamai's behavioural interstitial comes back as 200 with a tiny body. Both
+// markers were observed on real responses; either one means "we were challenged".
+function isCosChallengePage(html) {
+  const text = String(html || '');
+  return /sec-if-cpt-container|scf-akamai-protected-by|behavioral-content/i.test(text)
+    || (text.length > 0 && text.length < 30000 && /__NEXT_DATA__/.test(text) === false && /<html/i.test(text));
+}
+
+// Pull `__NEXT_DATA__` out of a COS page. Returns null if the page is a shell
+// (which is exactly how a challenge shows up), so callers can retry.
+function parseCosNextData(html) {
+  const m = String(html || '').match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
+  if (!m) return null;
+  try {
+    return JSON.parse(m[1]);
+  } catch {
+    return null;
+  }
+}
+
+// Ordered copy of `__NEXT_DATA__` for a ranked category page.
+function readCosListingItems(nd) {
+  const blocks = nd?.props?.pageProps?.blocks || [];
+  const out = [];
+  let total = null;
+  for (const block of blocks) {
+    const result = block?.initialResult;
+    if (!result || !Array.isArray(result.items) || !result.items.length) continue;
+    if (total == null && Number.isFinite(result.totalItems)) total = result.totalItems;
+    for (const item of result.items) out.push(item);
+  }
+  return { items: out, total };
+}
+
+// `/en-us/{categoryUri}/product/{uri}` — see the header comment for why.
+function buildCosProductUrl(item) {
+  const category = String(item?.categoryUri || '').replace(/^\/+|\/+$/g, '');
+  const uri = String(item?.uri || '').replace(/^\/+|\/+$/g, '');
+  if (!category || !uri) return '';
+  return `${COS_HOME_URL}/en-us/${category}/product/${uri}`;
+}
+
+function cosStyleNumber(item) {
+  return String(item?.sku || item?.id || '').trim();
+}
+
+// COS prices arrive in three shapes depending on the page:
+//   listing: { value, formatted: '$135.00' }
+//   product: { currencyCode: 'USD', value: 449, formattedValue: '$449.00' }
+//   occasionally a bare string/number.
+// `formattedValue` MUST be preferred over `value`, otherwise the currency symbol
+// is silently dropped and the deck prints "449" next to "$135.00".
+function cosPriceText(price) {
+  if (price == null) return '';
+  if (typeof price === 'string' || typeof price === 'number') return String(price);
+  if (typeof price === 'object') {
+    const candidate = price.formattedValue ?? price.formatted ?? price.value ?? price.amount ?? price.price;
+    if (candidate == null) return '';
+    return typeof candidate === 'object' ? cosPriceText(candidate) : String(candidate);
+  }
+  return '';
+}
+
+// The "Details & description" panel is HTML (<p>, <ul><li>, &nbsp;). Flatten it
+// to plain text while keeping the bullet structure the deck relies on.
+function cosHtmlToText(html) {
+  return String(html || '')
+    .replace(/<li[^>]*>/gi, '\n• ')
+    .replace(/<\/(p|li|div|h[1-6])>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&rsquo;|&lsquo;/g, "'")
+    .replace(/&mdash;/g, '—')
+    .replace(/&ndash;/g, '–')
+    .split('\n')
+    .map((line) => line.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .join('\n');
+}
+
+// [{ type: 'Shell', materials: [{ material: 'Wool', percentage: 95 }] }]
+//   → 'Shell: Wool 95%, Polyamide 5% | Lining: Rayon 100%'
+function formatCosComposition(materialComposition) {
+  const parts = [];
+  for (const group of materialComposition || []) {
+    const materials = (group?.materials || [])
+      .map((mat) => {
+        const name = String(mat?.material || '').trim();
+        const pct = mat?.percentage;
+        if (!name) return '';
+        return Number.isFinite(pct) ? `${name} ${pct}%` : name;
+      })
+      .filter(Boolean);
+    if (!materials.length) continue;
+    const type = String(group?.type || '').trim();
+    parts.push(type ? `${type}: ${materials.join(', ')}` : materials.join(', '));
+  }
+  return parts.join(' | ');
+}
+
+// Product-page payload → the fields the deck needs. `null` when the page was a
+// challenge shell (so the caller can retry) or carried no product block.
+function readCosProductDetail(nd) {
+  const blocks = nd?.props?.pageProps?.blocks || [];
+  const product = blocks.find((b) => b?.component === 'pdp-category-template-block' && b?.product)?.product;
+  if (!product) return null;
+  const details = product.details || {};
+  const images = (product.media || [])
+    .filter((m) => m && !m.isSwatch && m.url)
+    .map((m) => String(m.url));
+  return {
+    sku: String(product.sku || '').trim(),
+    name: String(product.name || '').trim(),
+    price: cosPriceText(product.price),
+    description: cosHtmlToText(details.longDescription),
+    composition: formatCosComposition(details.materialComposition),
+    care: Array.isArray(details.careInstructions) ? details.careInstructions.filter(Boolean) : [],
+    fit: details.clothing?.fit || '',
+    otherSkus: (product.otherArticles || []).map((a) => String(a?.sku || '')).filter(Boolean),
+    imageUrls: images,
+  };
+}
+
+// One GET with UA + Accept-Language. Returns { ok, status, text } — never throws
+// on a network error, because the retry loop needs to keep going.
+async function cosFetchText(url, userAgent, referer = '') {
+  try {
+    const res = await fetch(url, {
+      redirect: 'follow',
+      headers: {
+        'user-agent': userAgent,
+        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'accept-language': 'en-US,en;q=0.9',
+        ...(referer ? { referer } : {}),
+      },
+    });
+    const text = Buffer.from(await res.arrayBuffer()).toString('utf8');
+    return { ok: res.status === 200, status: res.status, text, finalUrl: res.url };
+  } catch (error) {
+    return { ok: false, status: 0, text: '', error: error.message };
+  }
+}
+
+// Retry a COS page until it stops being a behavioural shell.
+// A challenge is HTTP 200 + a tiny body, so `res.ok` alone is NOT success —
+// the body has to be classified (isCosChallengePage) before the payload is
+// trusted. Back-off is deliberately long: the challenge is score-based, and
+// hammering it only entrenches the low score (measured: 12 attempts at 8 s = 0
+// successes).
+async function cosFetchParsed(url, userAgent, { attempts = 3, firstDelayMs = 2500, ensureActive = () => {}, referer = '' } = {}) {
+  let lastStatus = 0;
+  let lastReason = '';
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    ensureActive();
+    const res = await cosFetchText(url, userAgent, referer);
+    lastStatus = res.status;
+    if (res.ok) {
+      if (isCosChallengePage(res.text)) {
+        lastReason = 'akamai-challenge';
+      } else {
+        const nd = parseCosNextData(res.text);
+        if (nd) return { ok: true, nd, attempts: attempt, status: res.status };
+        lastReason = 'no-next-data';
+      }
+    } else {
+      lastReason = res.error ? `network: ${res.error}` : `http-${res.status}`;
+    }
+    if (attempt < attempts) {
+      await antiDetection.randomDelay(firstDelayMs + (attempt - 1) * 2500, firstDelayMs + 2000 + (attempt - 1) * 3000);
+    }
+  }
+  return { ok: false, nd: null, attempts, status: lastStatus, reason: lastReason };
+}
+
+// Walk the ranked listing for one gender. Stops when a page contributes no new
+// sku (women's page 3+ re-serves the same tail) or the cap is reached.
+async function collectCosRanking(gender, limit, emitLog, ensureActive) {
+  const base = COS_LISTING_URLS[gender] || COS_LISTING_URLS.female;
+  const seen = new Set();
+  const items = [];
+  let total = null;
+  for (let page = 1; page <= 20; page += 1) {
+    ensureActive();
+    const url = page === 1 ? base : `${base}?page=${page}`;
+    const { ok, nd } = await cosFetchParsed(url, COS_LISTING_UA, { attempts: 3, firstDelayMs: 2000, ensureActive });
+    if (!ok) {
+      if (page === 1) throw new Error(`COS listing unavailable (${url}) — the page never served its product payload.`);
+      emitLog(`    ⚠️ COS listing page ${page} could not be read; stopping at ${items.length} style(s).`, 'warning');
+      break;
+    }
+    const { items: pageItems, total: pageTotal } = readCosListingItems(nd);
+    if (pageTotal != null) total = pageTotal;
+    let added = 0;
+    for (const item of pageItems) {
+      const sku = cosStyleNumber(item);
+      if (!sku || seen.has(sku)) continue;
+      seen.add(sku);
+      items.push(item);
+      added += 1;
+      if (items.length >= limit) break;
+    }
+    emitLog(`    📄 COS listing page ${page}: ${pageItems.length} tile(s), ${added} new (total ${items.length}${total ? `/${total}` : ''}).`, 'info');
+    if (!added) break;                       // the tail re-served → we are done
+    if (items.length >= limit) break;
+    await antiDetection.randomDelay(400, 900);
+  }
+  return { items, total };
+}
+
+// Best-effort product-page read. Returns null when every attempt was challenged;
+// the caller keeps the listing data and records the miss.
+async function scrapeCosProductDetail(referer, emitLog, ensureActive, attempts = 3) {
+  const { ok, nd, reason, attempts: used } = await cosFetchParsed(referer, COS_PDP_UA, {
+    attempts, firstDelayMs: 3000, ensureActive, referer: COS_LISTING_URLS.female,
+  });
+  if (!ok || !nd) {
+    emitLog(`    ℹ️ COS product page not readable (${reason || 'no-next-data'}); keeping listing data.`, 'info');
+    return { detail: null, attempts: used };
+  }
+  return { detail: readCosProductDetail(nd), attempts: used };
+}
+
+// Turn one listing item into the product record the shared downloader expects.
+function buildCosProductRecord(item, detail) {
+  const styleNumber = cosStyleNumber(item);
+  const listingImages = (item.images || [])
+    .map((img) => (typeof img === 'string' ? img : img?.src))
+    .filter(Boolean)
+    .map((src) => String(src));
+  const primary = item.primaryImage?.src ? [String(item.primaryImage.src)] : [];
+  // Listing order is the plp order; the PDP gallery replaces it wholesale when
+  // the product page answered, because it is the same set in the site's own order.
+  const detailImages = detail?.imageUrls?.length ? detail.imageUrls : [];
+  const merged = detailImages.length ? detailImages : [...primary, ...listingImages];
+  const seen = new Set();
+  const imageUrls = [];
+  for (const url of merged) {
+    if (seen.has(url)) continue;
+    seen.add(url);
+    imageUrls.push(url);
+  }
+  const colourName = String(item.variantName || '').trim();
+  return {
+    styleNumber,
+    productId: styleNumber,
+    brand: 'COS',
+    name: detail?.name || String(item.name || '').trim(),
+    price: detail?.price || cosPriceText(item.price) || cosPriceText(item.lowestPrice),
+    colorRef: colourName,
+    colorName: colourName,
+    category: String(item.categoryUri || '').split('/').slice(-1)[0] || '',
+    url: buildCosProductUrl(item),
+    imageUrls,
+    description: detail?.description || '',
+    composition: detail?.composition || '',
+    care: detail?.care || [],
+    fit: detail?.fit || '',
+    otherSkus: detail?.otherSkus || [],
+  };
+}
+
+// Style Index (款号索引) for COS. A COS "style number" is the 10-digit sku that
+// ends the product URL (1353924001) and appears in the listing payload, so a
+// lookup needs the CATEGORY path — which the sku alone does not tell us. The
+// cheapest reliable route is the site's own search page:
+//   /en-us/search?q=<sku>  → the ranked payload lists matching tiles
+// then match the tile whose sku equals the requested one (COS also matches on
+// partial numbers, so equality — never "startsWith" — is what keeps a query from
+// resolving to a neighbouring style).
+// Description / composition come from the product page, exactly like the
+// bestseller path, and are best-effort for the same Akamai reason.
+async function runCosScraper(config, emitLog, emitProgress, taskController) {
+  let { styleNumbers, excelPath, outputDir } = config;
+  styleNumbers = normalizeManualStyleNumbers(styleNumbers);
+  const ensureActive = () => taskController?.throwIfCancelled?.();
+  const targetDir = !outputDir || outputDir === '未选择' ? path.join(app.getPath('desktop'), 'COS') : outputDir;
+  fs.mkdirSync(targetDir, { recursive: true });
+
+  if (excelPath) {
+    try {
+      emitLog(`Reading Excel file: ${excelPath}`, 'info');
+      const wb = XLSX.readFile(excelPath);
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      styleNumbers = [];
+      const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:B1');
+      for (let row = 1; row <= range.e.r; row += 1) {
+        const cell = ws[XLSX.utils.encode_cell({ r: row, c: 1 })];
+        if (!cell) continue;
+        const value = String(cell.w ?? cell.v ?? '').trim();
+        if (value) styleNumbers.push(value);
+      }
+      emitLog(`Loaded ${styleNumbers.length} COS style number(s) from Excel.`, 'success');
+    } catch (error) {
+      throw new Error(`Excel parse failed: ${error.message}`);
+    }
+  }
+
+  ensureActive();
+  if (!styleNumbers || styleNumbers.length === 0) throw new Error('No COS style numbers provided.');
+
+  emitLog(`📁 Output directory: ${targetDir}`, 'info');
+  emitLog(`🚀 COS: ${styleNumbers.length} style number(s) — site search → product page → Details`, 'warning');
+  emitProgress(5);
+
+  const products = [];
+  const total = styleNumbers.length;
+
+  for (let i = 0; i < total; i += 1) {
+    ensureActive();
+    const reference = styleNumbers[i];
+    const wanted = String(reference).replace(/[^0-9]/g, '');
+    emitLog(`🔄 Processing COS ${i + 1}/${total}: ${reference}`, 'warning');
+
+    try {
+      if (!wanted) throw new Error(`"${reference}" does not contain a COS style number.`);
+
+      // 1. resolve the sku through site search
+      const searchUrl = `${COS_HOME_URL}/en-us/search?q=${encodeURIComponent(wanted)}`;
+      const search = await cosFetchParsed(searchUrl, COS_LISTING_UA, { attempts: 3, firstDelayMs: 2500, ensureActive });
+      if (!search.ok) throw new Error(`COS search was challenged (${search.reason || 'unknown'}) — ${searchUrl}`);
+      const { items } = readCosListingItems(search.nd);
+      // Strict equality: COS happily returns partial matches, and picking the
+      // first tile would resolve to a neighbouring style.
+      const tile = items.find((item) => cosStyleNumber(item) === wanted);
+      if (!tile) {
+        throw new Error(`No COS product matched style ${wanted} (searched ${searchUrl}).`);
+      }
+
+      // 2. product page for description + composition + the full gallery
+      const productUrl = buildCosProductUrl(tile);
+      const { detail } = await scrapeCosProductDetail(productUrl, emitLog, ensureActive);
+      const record = buildCosProductRecord(tile, detail);
+      record.styleNumber = wanted;
+      record.productId = wanted;
+      if (!record.imageUrls.length) throw new Error('No product images found');
+      if (!record.composition) {
+        emitLog(`    ℹ️ COS ${wanted}: no composition read from the product page (challenged or absent).`, 'info');
+      }
+      products.push(record);
+    } catch (error) {
+      if (isCancellationError(error) || taskController?.cancelled) throw new TaskCancelledError();
+      emitLog(`    ⚠️ COS ${reference} failed: ${error.message}`, 'warning');
+      products.push({ styleNumber: reference, productId: reference, brand: 'COS', url: '', error: error.message, imageUrls: [] });
+    }
+
+    emitProgress(5 + Math.round(((i + 1) / total) * 45));
+    if (i < total - 1) await antiDetection.randomDelay(1500, 2600);
+  }
+
+  emitProgress(50);
+  const success = products.filter((p) => p.imageUrls?.length > 0 && !p.error);
+  const failed = products.filter((p) => !success.includes(p));
+  emitLog(`📊 COS summary: ${success.length} style(s) succeeded, ${failed.length} failed.`, 'info');
+  failed.forEach((p) => emitLog(`    ❌ ${p.styleNumber} - ${p.error || 'No product images found'}`, 'error'));
+
+  let totalImages = 0;
+  let savedImages = 0;
+  for (const product of success) {
+    ensureActive();
+    const cleanSku = sanitizeFileSegment(String(product.productId || product.styleNumber), 'cos-item');
+    const styleDir = path.join(targetDir, cleanSku);
+    fs.mkdirSync(styleDir, { recursive: true });
+
+    // Same F / B / NN labelling every other brand uses, so the deck's
+    // F,B,S,D ordering works unchanged on COS output.
+    const classified = buildNewYorkerImageMap(product.imageUrls);
+    const savedMap = {};
+    for (const [label, imgUrl] of Object.entries(classified)) {
+      ensureActive();
+      totalImages += 1;
+      const filename = `${cleanSku}_${label}.jpg`;
+      const filePath = path.join(styleDir, filename);
+      try {
+        const size = await downloadFile(imgUrl, filePath, {
+          headers: { Referer: product.url || `${COS_HOME_URL}/`, 'User-Agent': COS_LISTING_UA },
+          timeoutMs: 60000,
+        });
+        savedMap[label] = imgUrl;
+        savedImages += 1;
+        emitLog(`    ⬇️ [saved] ${filename} (${Number(size || 0).toFixed(1)} KB)`);
+      } catch (error) {
+        emitLog(`    ❌ [failed] ${filename}: ${error.message}`, 'error');
+      }
+      await antiDetection.randomDelay(120, 320);
+    }
+
+    const infoData = {
+      styleNumber: product.styleNumber,
+      productId: product.productId,
+      brand: 'COS',
+      name: product.name,
+      price: product.price,
+      colorName: product.colorName || '',
+      description: product.description || '',
+      composition: product.composition || null,
+      care: product.care || [],
+      fit: product.fit || '',
+      otherSkus: product.otherSkus || [],
+      url: product.url,
+      images: savedMap,
+    };
+    fs.writeFileSync(path.join(styleDir, `${cleanSku}_info.json`), JSON.stringify(infoData, null, 2), 'utf-8');
+    emitLog(`📄 Saved product metadata: ${cleanSku}_info.json`, 'success');
+  }
+
+  emitLog(`📦 COS images: ${savedImages}/${totalImages} downloaded.`, 'info');
+
+  // A style whose product page was challenged still ships its images; the miss
+  // is recorded here so a missing description never goes unnoticed.
+  const missingDetails = success.filter((p) => !p.composition || !p.description);
+  if (missingDetails.length) {
+    fs.writeFileSync(path.join(targetDir, 'failed_styles.json'), JSON.stringify(missingDetails.map((p) => ({
+      styleNumber: p.styleNumber,
+      reason: 'product page challenged — description/composition missing',
+      url: p.url,
+    })), null, 2), 'utf-8');
+    emitLog(`⚠️ ${missingDetails.length} style(s) have images but no description/composition — see failed_styles.json`, 'warning');
+  }
+
+  fs.writeFileSync(path.join(targetDir, 'summary.json'), JSON.stringify(products.map((p) => ({
+    styleNumber: p.styleNumber,
+    productId: p.productId,
+    brand: 'COS',
+    name: p.name || '',
+    price: p.price || '',
+    colorName: p.colorName || '',
+    description: p.description || '',
+    composition: p.composition || null,
+    images: p.imageUrls?.length || 0,
+    error: p.error || null,
+  })), null, 2), 'utf-8');
+  emitLog('📊 Saved summary.json', 'success');
+  emitLog(`🎉 COS scraping finished. Files saved to: ${targetDir}`, 'success');
+}
+
 // ════════════════════════════════════════════════════════════════════════════
 // Bestseller Analysis — list-page harvest + per-style detail + LLM trend report.
 //   New Yorker editorial bestseller pages, e.g.
@@ -18928,6 +20097,34 @@ const BESTSELLER_SOURCES = {
   // visit is needed. See collectPrincessPollyBestsellerProducts().
   'princesspolly|male': 'https://us.princesspolly.com/collections/best-selling',
   'princesspolly|female': 'https://us.princesspolly.com/collections/best-selling',
+  // American Eagle. Two genuinely different ranked lists (women / men), unlike
+  // Free People and Princess Polly. Both are Akamai-fronted and are the *page*
+  // URLs only — the products come from the listing XHR those pages fire, i.e.
+  //   /ugp-api/browse/v1/category/<handle>?offset=N → `included[]`
+  // (a direct fetch of that endpoint 401s; see the AE block comment).
+  // Handles verified 2026-10-16.
+  'americaneagle|female': 'https://www.ae.com/us/en/c/women/bestsellers/brg_dyn_kk6r6txkiw',
+  'americaneagle|male': 'https://www.ae.com/us/en/c/men/bestsellers/brg_dyn_q2quyg3luh',
+  // Aerie (American Eagle's women's brand). ONE aggregated ranking (aerie has
+  // no men's line), so both gender buckets point at the same URL — same
+  // treatment as Free People / Princess Polly, and the wizard hides the gender
+  // step for it. Verified 2026-10-16: the page fires the SAME listing XHR
+  // (`/ugp-api/browse/v1/category/cat3140015?offset=30|60|90`) and yields 81
+  // products whose `attrs.url` sits under `/p/aerie/...` (brand key 'aerie'
+  // rides the shared runBestsellerScraper AE branch).
+  //
+  // NOTE the URL the user supplied (`/c/aerie/cat4840006`) is a NAVIGATION
+  // LANDING page — 0 products, no listing XHR. The real ranking lives at the
+  // `featured/bestsellers` child category below.
+  'aerie|female': 'https://www.ae.com/us/en/c/aerie/featured/bestsellers/cat3140015',
+  'aerie|male': 'https://www.ae.com/us/en/c/aerie/featured/bestsellers/cat3140015',
+  // COS. The ranked pages are Next.js SSR and — unlike every other brand here —
+  // need no browser at all; `__NEXT_DATA__` is parsed with a plain GET (see the
+  // COS block above collectCosRanking). Women's ranking holds 45 entries, men's
+  // 642; the collector stops on the first page that adds no new sku, because
+  // page 3+ of the women's list re-serves page 2 verbatim under the same `rid`.
+  'cos|female': 'https://www.cos.com/en-us/women/most-popular',
+  'cos|male': 'https://www.cos.com/en-us/men/most-popular',
 };
 
 function resolveBestsellerSource(brand, gender) {
@@ -18936,6 +20133,94 @@ function resolveBestsellerSource(brand, gender) {
   const gNorm = /^(m|male|men|man|男|男装)$/.test(g) ? 'male'
     : /^(f|female|women|woman|w|女|女装)$/.test(g) ? 'female' : g;
   return BESTSELLER_SOURCES[`${b}|${gNorm}`] || '';
+}
+
+// ── American Eagle bestseller listing collector ─────────────────────────────
+// The ranked grid is fed by the page's own XHR
+//   /ugp-api/browse/v1/category/<handle>?offset=N
+// whose payload holds the ranked products in `included[]`. That endpoint
+// cannot be fetched directly — it answers 401 (`apicg.token.invalid`) because
+// the real request carries a token minted inside the page — so the response is
+// intercepted, exactly like the Aritzia / Facebook responses are.
+//
+// Each entry already carries name, price, colour, url and the full preset-less
+// Scene7 gallery, so no PDP is needed for those; a PDP is visited later ONLY
+// for the description + composition that live in "The Details".
+//
+// The page is handed back to the caller instead of being closed, because that
+// same tab is reused for those PDP visits: the session that cleared Akamai is
+// the one that must drive them.
+async function collectAeBestsellerProducts(browser, listingUrl, limit, emitLog, ensureActive, brandName = 'American Eagle') {
+  const page = await browser.newPage();
+  await antiDetection.applyRetailBrowsingProfile(page);
+  await page.setViewport(antiDetection.getRandomViewport());
+
+  const byPid = new Map();
+  let listingResponses = 0;
+  page.on('response', (res) => {
+    try {
+      if (!AE_LISTING_API_RE.test(res.url())) return;
+      if (res.status() !== 200) return;
+      res.json().then((json) => {
+        listingResponses += 1;
+        const items = Array.isArray(json?.included) ? json.included : [];
+        for (const item of items) {
+          const pid = String(item?.id || '');
+          if (!/^\d{4}_\d{4}_\d{3,4}$/.test(pid)) continue;
+          if (byPid.has(pid)) continue;
+          const attrs = item?.attributes || {};
+          const images = (Array.isArray(attrs.plpImages) ? attrs.plpImages : [])
+            .map((u) => { const n = normalizeAeImageUrl(u); return n ? n.url : ''; })
+            .filter(Boolean);
+          byPid.set(pid, {
+            styleNumber: `${pid.slice(0, 4)}-${pid.slice(5, 9)}`,
+            productId: pid,
+            brand: brandName,
+            name: String(attrs.displayName || '').trim(),
+            price: attrs.salePrice ?? attrs.listPrice ?? '',
+            colorRef: pid.slice(10),
+            url: attrs.url ? `${AE_HOME_URL}${attrs.url}` : '',
+            imageUrls: images,
+            flags: String(attrs.plpMerchantFlags || ''),
+          });
+        }
+      }).catch(() => {});
+    } catch { /* noop */ }
+  });
+
+  try {
+    emitLog(`    🌐 Opening ${brandName} ranking: ${listingUrl}`, 'info');
+    await page.goto(listingUrl, { waitUntil: 'domcontentloaded', timeout: 90000 });
+    await antiDetection.randomDelay(2200, 3400);
+    await dismissCookieBanners(page, { waitMs: 8000 }).catch(() => {});
+
+    // Scroll until the ranking stops growing (the grid pages in by offset, not
+    // by a "load more" button).
+    let stable = 0;
+    let last = -1;
+    for (let round = 0; round < 40 && stable < 3 && byPid.size < limit; round += 1) {
+      ensureActive();
+      await page.evaluate(async () => {
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+        for (let i = 0; i < 5; i += 1) { window.scrollBy(0, window.innerHeight * 1.6); await sleep(320); }
+      }).catch(() => {});
+      await antiDetection.randomDelay(1200, 2000);
+
+      const count = byPid.size;
+      emitLog(`    📦 ${brandName} ranking: ${count} product(s) captured so far (round ${round + 1})…`, 'info');
+      if (count === last) stable += 1; else stable = 0;
+      last = count;
+    }
+
+    if (!byPid.size) {
+      throw new Error(`No ${brandName} products were captured from the category listing API — the page never served its ranking. Check the listing URL and retry.`);
+    }
+    emitLog(`    ✅ ${brandName} ranking harvested ${byPid.size} product(s) from ${listingResponses} listing response(s).`, 'success');
+    return { page, entries: [...byPid.values()] };
+  } catch (error) {
+    await page.close().catch(() => {});
+    throw error;
+  }
 }
 
 // Pull every plausible New Yorker article id out of an arbitrary JSON payload.
@@ -20526,7 +21811,7 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
   } else {
     listingUrl = resolveBestsellerSource(brand, gender);
   }
-  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker, UNIQLO, H&M, Free People (male/female), Princess Polly (male/female), Intersport (male/female + category).`);
+  if (!listingUrl) throw new Error(`No bestseller source URL for ${brand} / ${gender}. Supported: New Yorker, UNIQLO, H&M, Free People (male/female), Princess Polly (male/female), American Eagle (male/female), Aerie, Intersport (male/female + category).`);
 
   const brandLabel = brandKey === 'intersport' ? 'Intersport' : (getScraperOutputFolderName(brand) || 'New Yorker');
   const targetDir = !outputDir || outputDir === '未选择'
@@ -20889,6 +22174,140 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
         emitProgress(10 + Math.round(((i + 1) / Math.max(ppLinks.length, 1)) * 40));
         await antiDetection.randomDelay(120, 320);
       }
+    } else if (brandKey === 'americaneagle' || brandKey === 'aerie') {
+      // ── American Eagle / Aerie: the ranked category JSON arrives from the
+      // page's own XHR (`/ugp-api/browse/v1/category/<handle|catId>?offset=N`,
+      // products in `included[]`) — a direct fetch 401s, see
+      // collectAeBestsellerProducts. Aerie is the SAME site and the SAME API
+      // (only the category id and the `/p/aerie/...` slug differ), so it rides
+      // this branch with `brandName` swapped.
+      // That payload already carries name / price / colour / gallery; the PDP
+      // is visited ONLY for the description + composition that live in the
+      // collapsed "The Details" accordion. Three consecutive PDP failures
+      // suspend PDP visits for the rest of the run, keeping the listing data —
+      // same degradation contract as Free People.
+      //
+      // "All colours": the ranking tile carries exactly ONE colourway (its own
+      // swatch list has a single entry, probe5), so the expansion has to come
+      // from the PDP colour board — and each colourway's gallery is read after
+      // its swatch is clicked, because the colours do NOT share a view list
+      // (001 has `f` only; reusing 318's list would download Scene7 placeholders).
+      const aeBrandName = brandKey === 'aerie' ? 'Aerie' : 'American Eagle';
+      const rawAeLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+      const wantsAllAe = !Number.isFinite(rawAeLimit) || rawAeLimit === 0;
+      const aeLimit = rawAeLimit > 0 ? Math.min(Math.floor(rawAeLimit), AE_BESTSELLER_MAX) : AE_BESTSELLER_MAX;
+      const aeAllColors = config?.allColors === true;
+
+      const { page: aePage, entries: aeEntries } = await collectAeBestsellerProducts(browser, listingUrl, aeLimit, emitLog, ensureActive, aeBrandName);
+      emitProgress(10);
+      const aeLabel = wantsAllAe ? `all (cap ${AE_BESTSELLER_MAX})` : String(aeLimit);
+      emitLog(`    🚀 Step 2/2: collecting ${aeLabel} ${aeBrandName} style(s) (ranking + product-page details)…`, 'warning');
+      emitLog(aeAllColors
+        ? '    🎨 Colour mode: all colourways — every colour on each product page becomes its own record.'
+        : '    🎨 Colour mode: one per style — each ranked colourway, as listed.', 'info');
+
+      let aeStyleCount = 0;
+      let aeDetailFails = 0;
+      let aeDetailSuspended = false;
+      try {
+        for (let i = 0; i < aeEntries.length; i += 1) {
+          ensureActive();
+          if (aeStyleCount >= aeLimit) {
+            if (!wantsAllAe) {
+              emitLog(`    ✋ Reached the requested ${aeLimit} apparel style(s); ${aeEntries.length - i} candidate(s) left unprocessed.`, 'info');
+            }
+            break;
+          }
+
+          const entry = aeEntries[i];
+          const product = {
+            styleNumber: entry.styleNumber,
+            productId: entry.productId,
+            brand: aeBrandName,
+            name: entry.name,
+            price: entry.price,
+            colorRef: entry.colorRef,
+            url: entry.url,
+            imageUrls: entry.imageUrls,
+            description: '',
+            composition: null,
+          };
+
+          if (excludeApparelActive && isNonApparelBestseller('', product.name)) {
+            skippedNonApparel += 1;
+            emitLog(`    🚫 Skipped non-apparel: ${product.name || product.productId}`, 'info');
+          } else {
+            let detail = null;
+            if (!aeDetailSuspended && product.url) {
+              try {
+                detail = await scrapeAeProductDetail(
+                  aePage,
+                  { url: product.url, productId: product.productId },
+                  emitLog,
+                  ensureActive,
+                  { allColors: aeAllColors },
+                );
+                aeDetailFails = 0;
+                if (detail.name && !product.name) product.name = detail.name;
+                if (!product.price && detail.price) product.price = detail.price;
+                product.description = detail.description || '';
+                product.composition = detail.composition
+                  ? { outerShell: null, lining: null, other: detail.composition }
+                  : null;
+              } catch (err) {
+                if (isCancellationError(err) || taskController?.cancelled) throw new TaskCancelledError();
+                aeDetailFails += 1;
+                detail = null;
+                emitLog(`    ⚠️ ${product.productId}: product page failed (${err.message}); keeping listing data.`, 'warning');
+                if (aeDetailFails >= 3) {
+                  aeDetailSuspended = true;
+                  emitLog('    ⚠️ Three product pages failed in a row — suspending PDP visits; remaining styles keep listing data only.', 'warning');
+                }
+              }
+            }
+
+            // One record per kept colourway. Without the expansion (or when the
+            // PDP could not be read) this is exactly the single ranked colour.
+            const colourways = (aeAllColors && detail?.colourways?.length)
+              ? detail.colourways
+              : [{ code: product.colorRef, name: '', productId: product.productId, imageUrls: product.imageUrls }];
+
+            let pushed = 0;
+            for (const cw of colourways) {
+              ensureActive();
+              const cwPid = cw.productId || `${detail.stylePrefix}_${cw.code}`;
+              const cwImages = (cw.imageUrls || []).length
+                ? cw.imageUrls
+                : (cw.views || []).map((v) => buildAeOriginalImageUrl(cwPid, v));
+              if (!cwImages.length) continue;
+              products.push({
+                ...product,
+                productId: cwPid,
+                colorRef: cw.code,
+                name: cw.name ? `${product.name || product.styleNumber} · ${cw.name}` : product.name,
+                imageUrls: cwImages,
+              });
+              pushed += 1;
+            }
+
+            if (pushed) {
+              if (!product.composition) {
+                emitLog(`    ℹ️ ${product.productId}: no composition found in "The Details".`, 'info');
+              }
+              // The budget counts DISTINCT STYLES, the same unit H&M / Free
+              // People / Princess Polly use — never the colourway records.
+              aeStyleCount += 1;
+            } else {
+              emitLog(`    ⚠️ ${product.productId}: no images available, skipped.`, 'warning');
+            }
+          }
+
+          emitProgress(10 + Math.round(((i + 1) / Math.max(aeEntries.length, 1)) * 40));
+          await antiDetection.randomDelay(300, 700);
+        }
+      } finally {
+        await aePage.close().catch(() => {});
+      }
     } else if (brandKey === 'hm') {
       // ── H&M: the listing's own Next.js payload already carries, per ranked
       // style, the product name, price, category AND the full image set
@@ -21010,6 +22429,96 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
 
       // Done with the shared listing/detail tab.
       await listingPage.close().catch(() => {});
+    } else if (brandKey === 'cos') {
+      // ── COS: no browser at all. The ranked listing is SSR'd and the tiles
+      // carry sku / name / price / colour / the full image set, so images never
+      // depend on a product page. Product pages are visited ONLY for the
+      // description + composition, and they are best-effort: Akamai answers
+      // with a behavioural interstitial (HTTP 200 + ~2.7 KB) when it does not
+      // like the traffic, so a style that never gets through still ships with
+      // its images and is reported in failed_styles.json instead.
+      const rawCosLimit = Number(config?.productCount ?? config?.imagesPerStyle);
+      const wantsAllCos = !Number.isFinite(rawCosLimit) || rawCosLimit <= 0;
+      const cosLimit = wantsAllCos ? COS_RANKING_MAX : Math.min(Math.floor(rawCosLimit), COS_RANKING_MAX);
+      const cosGender = /male|man|men|男/i.test(gender) && !/female|woman|women|女/i.test(gender) ? 'male' : 'female';
+
+      emitLog(`    🌐 Reading the COS ranked listing (${cosGender === 'male' ? 'men' : 'women'})…`, 'info');
+      const { items: cosItems, total: cosTotal } = await collectCosRanking(cosGender, cosLimit, emitLog, ensureActive);
+      if (!cosItems.length) throw new Error('No COS styles were found on the ranked listing.');
+      emitProgress(10);
+      emitLog(`    ✅ COS ranking: ${cosItems.length} style(s)${cosTotal ? ` of ${cosTotal}` : ''} — now reading description + composition per style…`, 'success');
+
+      // A challenge we keep hitting means the whole run should stop paying the
+      // PDP tax: after five consecutive shells, skip product pages entirely and
+      // keep the listing data (the images are already complete).
+      let cosDetailFailStreak = 0;
+      const COS_DETAIL_FAIL_LIMIT = 5;
+
+      for (let i = 0; i < cosItems.length; i += 1) {
+        ensureActive();
+        const item = cosItems[i];
+        const sku = cosStyleNumber(item);
+
+        let detail = null;
+        if (cosDetailFailStreak < COS_DETAIL_FAIL_LIMIT) {
+          const url = buildCosProductUrl(item);
+          if (url) {
+            const result = await scrapeCosProductDetail(url, emitLog, ensureActive);
+            detail = result.detail;
+            if (detail) {
+              cosDetailFailStreak = 0;
+            } else {
+              cosDetailFailStreak += 1;
+              emitLog(`    ⚠️ COS ${sku}: product page was challenged (${result.attempts} attempt(s)); keeping listing data.`, 'warning');
+              if (cosDetailFailStreak === COS_DETAIL_FAIL_LIMIT) {
+                emitLog('    ⚠️ COS product pages keep being challenged — skipping them for the rest of this run; descriptions/compositions will be missing.', 'warning');
+              }
+            }
+          }
+        }
+
+        const record = buildCosProductRecord(item, detail);
+
+        if (excludeApparelActive && isNonApparelBestseller(record.category, record.name)) {
+          skippedNonApparel += 1;
+          emitLog(`    🚫 Skipped non-apparel: ${record.name || sku}`, 'info');
+        } else if (!record.imageUrls.length) {
+          emitLog(`    ⚠️ COS ${sku}: no images available, skipped.`, 'warning');
+        } else {
+          products.push(record);
+          const bits = [`#${i + 1}`, sku, record.name || '(no title)', `${record.imageUrls.length} image(s)`];
+          if (record.composition) bits.push(record.composition);
+          else bits.push('no composition');
+          emitLog(`    ✅ COS ${bits.join(' · ')}`, 'info');
+        }
+
+        emitProgress(10 + Math.round(((i + 1) / Math.max(cosItems.length, 1)) * 40));
+        await antiDetection.randomDelay(600, 1300);
+      }
+
+      // Best-effort contract: images are complete either way, but a missing
+      // description/composition must never disappear silently. Write the same
+      // failed_styles.json the Style Index path writes, so both COS entry points
+      // report misses the same way.
+      const cosMissing = products.filter((p) => !p.composition || !p.description);
+      if (cosMissing.length) {
+        try {
+          const reportDir = config?.outputDir && config.outputDir !== '未选择'
+            ? config.outputDir
+            : path.join(app.getPath('desktop'), getScraperOutputFolderName(config.brand));
+          fs.mkdirSync(reportDir, { recursive: true });
+          fs.writeFileSync(path.join(reportDir, 'failed_styles.json'), JSON.stringify(cosMissing.map((p) => ({
+            styleNumber: p.styleNumber,
+            reason: 'product page challenged — description/composition missing',
+            url: p.url,
+          })), null, 2), 'utf-8');
+        } catch (error) {
+          emitLog(`    ⚠️ Could not write failed_styles.json: ${error.message}`, 'warning');
+        }
+        emitLog(`    ⚠️ COS: ${cosMissing.length}/${products.length} style(s) have images but no description/composition — see failed_styles.json`, 'warning');
+      } else if (products.length) {
+        emitLog(`    ✅ COS: description + composition read for all ${products.length} style(s).`, 'success');
+      }
     } else {
       // ── New Yorker: JSON API path ──
       const { tiles, apiIds } = await collectBestsellerArticleIds(browser, listingUrl, emitLog, ensureActive);
@@ -21081,7 +22590,8 @@ async function runBestsellerScraper(config, emitLog, emitProgress, taskControlle
       const referer = brandKey === 'intersport' ? 'https://www.intersport.ch/'
         : brandKey === 'freepeople' ? 'https://www.freepeople.com/'
           : brandKey === 'princesspolly' ? `${PRINCESS_POLLY_HOME_URL}/`
-            : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
+            : brandKey === 'americaneagle' || brandKey === 'aerie' ? `${AE_HOME_URL}/`
+              : (product.brand === 'Zara' ? 'https://www.zara.com/' : 'https://www.newyorker.de/');
       for (const [label, imgUrl] of Object.entries(classified)) {
         const ext = getUrlExtension(imgUrl, '.jpg');
         const filename = `${cleanSku}_${label}${ext}`;
@@ -21576,6 +23086,16 @@ async function runScraper(config, emitLog, emitProgress, taskController, preview
 
   if (config?.brand === 'aritzia') {
     return runAritziaScraper(config, emitLog, emitProgress, taskController, previewBridge);
+  }
+
+  // American Eagle and its sister line Aerie share one scraper (they are the
+  // same site — see runAeScraper); the brand key only picks the label/folder.
+  if (config?.brand === 'americaneagle' || config?.brand === 'aerie') {
+    return runAeScraper(config, emitLog, emitProgress, taskController, previewBridge);
+  }
+
+  if (config?.brand === 'cos') {
+    return runCosScraper(config, emitLog, emitProgress, taskController, previewBridge);
   }
 
   let { styleNumbers, excelPath, outputDir, tabConcurrency, downloadConcurrency } = config;

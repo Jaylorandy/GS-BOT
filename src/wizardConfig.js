@@ -204,6 +204,9 @@ export const WIZARD_CONFIG = {
               { value: 'gu', label: { en: 'GU', zh: 'GU' } },
               { value: 'abercrombie', label: { en: 'Abercrombie', zh: 'Abercrombie' } },
               { value: 'aritzia', label: { en: 'Aritzia (US)', zh: 'Aritzia（美国站）' } },
+              { value: 'americaneagle', label: { en: 'American Eagle (US)', zh: 'American Eagle（美国站）' } },
+              { value: 'aerie', label: { en: 'Aerie (US)', zh: 'Aerie（美国站）' } },
+              { value: 'cos', label: { en: 'COS (US)', zh: 'COS（美国站）' } },
               { value: 'mixed', label: { en: 'Mixed Brands', zh: '多品牌混合' } },
             ],
           },
@@ -272,6 +275,9 @@ export const WIZARD_CONFIG = {
               { value: 'hm', label: { en: 'H&M (US)', zh: 'H&M（美国站）' } },
               { value: 'freepeople', label: { en: 'Free People (US)', zh: 'Free People（美国站）' } },
               { value: 'princesspolly', label: { en: 'Princess Polly (US)', zh: 'Princess Polly（美国站）' } },
+              { value: 'americaneagle', label: { en: 'American Eagle (US)', zh: 'American Eagle（美国站）' } },
+              { value: 'aerie', label: { en: 'Aerie (US)', zh: 'Aerie（美国站）' } },
+              { value: 'cos', label: { en: 'COS (US)', zh: 'COS（美国站）' } },
               { value: 'intersport', label: { en: 'Intersport', zh: 'Intersport' } },
             ],
           },
@@ -338,7 +344,11 @@ export const WIZARD_CONFIG = {
             // Free People publishes ONE aggregated bestseller list (no gender
             // split), so the choice would be meaningless there. Princess Polly
             // is the same: its /collections/best-selling is a single ranking.
-            showWhen: (p) => !['freepeople', 'princesspolly'].includes(p.brand),
+            // Aerie too — it is a women's line, its bestsellers category is a
+            // single ranked list. COS is here because the user asked for the
+            // women's ranking only (the men's list exists but is out of scope),
+            // and leaving a gender switch would imply men's support.
+            showWhen: (p) => !['freepeople', 'princesspolly', 'aerie', 'cos'].includes(p.brand),
             options: [
               { value: 'female', label: { en: "Women's", zh: '女装' } },
               { value: 'male', label: { en: "Men's", zh: '男装' } },
@@ -378,13 +388,15 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'productCount', type: 'select', label: { en: 'Product Count', zh: '下载数量' },
-            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm' || p.brand === 'freepeople' || p.brand === 'princesspolly',
+            showWhen: (p) => p.brand === 'intersport' || p.brand === 'uniqlo' || p.brand === 'hm' || p.brand === 'freepeople' || p.brand === 'princesspolly' || p.brand === 'americaneagle' || p.brand === 'aerie' || p.brand === 'cos',
             options: [
               { value: 10, label: { en: '10', zh: '10款' } },
               { value: 20, label: { en: '20', zh: '20款' } },
               { value: 30, label: { en: '30', zh: '30款' } },
               { value: 50, label: { en: '50', zh: '50款' } },
               { value: 100, label: { en: '100', zh: '100款' } },
+              // COS's women's ranking holds 45 styles, so "All" really is 45.
+              // Men's (642) is out of scope; the run is capped at 60 regardless.
               { value: 0, label: { en: 'All (full ranking)', zh: '全部（完整榜单）' } },
             ],
           },
@@ -404,15 +416,22 @@ export const WIZARD_CONFIG = {
           },
           {
             key: 'allColors', type: 'toggle', label: { en: 'All Colors', zh: '全部颜色' },
-            // Only three branches read this flag:
-            //   New Yorker  → scrapeNewYorkerProduct({ allVariants })
-            //   H&M         → collectHmBestsellerLinks({ allColors })
-            //   Free People → PDP swatch list expands one record per colour
+            // Four branches read this flag:
+            //   New Yorker      → scrapeNewYorkerProduct({ allVariants })
+            //   H&M             → collectHmBestsellerLinks({ allColors })
+            //   Free People     → PDP swatch list expands one record per colour
+            //   American Eagle  → PDP colour board; each colourway's gallery is
+            //                     read after its swatch is clicked (the colourways
+            //                     do NOT share a view list). Aerie rides the same
+            //                     branch — identical /is/image/aeo/ data.
             // UNIQLO ignores it — its ranked-products payload already carries every
             // colour's images, so the switch cannot turn anything off — and
             // Intersport's Shopify images carry no colour dimension at all.
+            // COS is deliberately absent: its colourways are separate skus that
+            // each need their own (challenge-prone) product page, so the switch
+            // could not be honoured reliably — better not to offer it.
             // Offering it there promised something the run could not deliver.
-            showWhen: (p) => ['newyorker', 'hm', 'freepeople'].includes(p.brand),
+            showWhen: (p) => ['newyorker', 'hm', 'freepeople', 'americaneagle', 'aerie'].includes(p.brand),
             desc: {
               en: 'Off: one representative colour per style. On: one record per colourway.',
               zh: '关闭：每款取代表色一条记录。开启：每个颜色一条记录。',
